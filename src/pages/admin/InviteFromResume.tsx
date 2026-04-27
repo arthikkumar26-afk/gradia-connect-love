@@ -7,6 +7,7 @@ import {
   ClipboardList, UserCog, MessageSquare, Ticket, Bell, BarChart3,
   FileText, Settings, ShieldCheck, Upload, Mail, Send, Loader2, FileUp,
   Sparkles, MapPin, Wand2, Search, Save, Database, Eye, FileEdit,
+  Activity, RefreshCw, Clock, CheckCircle2, XCircle, UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -417,6 +418,40 @@ const InviteFromResume = () => {
   const [bulkParsing, setBulkParsing] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
 
+  // Invite status tracking
+  type InviteRecord = {
+    id: string;
+    candidate_name: string | null;
+    recipient_email: string;
+    subject: string | null;
+    status: "pending" | "sent" | "failed" | "accepted";
+    error_message: string | null;
+    sent_at: string | null;
+    accepted_at: string | null;
+    created_at: string;
+  };
+  const [invites, setInvites] = useState<InviteRecord[]>([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
+  const [inviteStatusFilter, setInviteStatusFilter] = useState<"all" | "pending" | "sent" | "accepted" | "failed">("all");
+  const [inviteSearch, setInviteSearch] = useState("");
+
+  const loadInvites = async () => {
+    setInvitesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("resume_invites")
+        .select("id,candidate_name,recipient_email,subject,status,error_message,sent_at,accepted_at,created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      setInvites((data || []) as InviteRecord[]);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load invite status");
+    } finally {
+      setInvitesLoading(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -449,6 +484,14 @@ const InviteFromResume = () => {
       } catch { /* ignore */ }
     })();
   }, [navigate]);
+
+  // Auto-load invite history when Status tab is opened
+  useEffect(() => {
+    if (activeTab === "status" && authorized) {
+      loadInvites();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, authorized]);
 
   const handleBulkFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -534,7 +577,7 @@ const InviteFromResume = () => {
           showTerms,
         });
         const { data, error } = await supabase.functions.invoke("send-resume-invite-email", {
-          body: { to: row.email.trim(), subject: subject.trim(), html: personalizedHtml, fromName: companyName },
+          body: { to: row.email.trim(), subject: subject.trim(), html: personalizedHtml, fromName: companyName, candidateName: row.name || null },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
@@ -625,7 +668,7 @@ const InviteFromResume = () => {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-resume-invite-email", {
-        body: { to: candidateEmail.trim(), subject: subject.trim(), html: finalHtml, fromName: companyName },
+        body: { to: candidateEmail.trim(), subject: subject.trim(), html: finalHtml, fromName: companyName, candidateName: candidateName || null },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -700,10 +743,11 @@ const InviteFromResume = () => {
 
           <div className="p-6 max-w-6xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-3 w-full max-w-xl mx-auto mb-6">
+              <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto mb-6">
                 <TabsTrigger value="resume"><FileText className="h-4 w-4 mr-2" />Resume Info</TabsTrigger>
                 <TabsTrigger value="preview"><Eye className="h-4 w-4 mr-2" />Email Preview</TabsTrigger>
                 <TabsTrigger value="send"><Send className="h-4 w-4 mr-2" />Send</TabsTrigger>
+                <TabsTrigger value="status"><Activity className="h-4 w-4 mr-2" />Invite Status</TabsTrigger>
               </TabsList>
 
               {/* TAB 1: RESUME INFO */}
@@ -1088,6 +1132,161 @@ const InviteFromResume = () => {
                     <p className="text-[11px] text-muted-foreground text-center">
                       Each email is personalized with the candidate's name and sent from <strong>noreply@gradia.co.in</strong>.
                     </p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Invite Status Dashboard */}
+              <TabsContent value="status" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Activity className="h-5 w-5 text-primary" />
+                          Invite Status
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Track every invitation: pending, sent, accepted (signed up), or failed.
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={loadInvites} disabled={invitesLoading}>
+                        {invitesLoading ? (
+                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Refreshing</>
+                        ) : (
+                          <><RefreshCw className="h-4 w-4 mr-2" />Refresh</>
+                        )}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {/* Summary Stats */}
+                    {(() => {
+                      const total = invites.length;
+                      const pending = invites.filter((i) => i.status === "pending").length;
+                      const sent = invites.filter((i) => i.status === "sent").length;
+                      const accepted = invites.filter((i) => i.status === "accepted").length;
+                      const failed = invites.filter((i) => i.status === "failed").length;
+                      const cards: Array<{ key: typeof inviteStatusFilter; label: string; value: number; icon: any; color: string }> = [
+                        { key: "all", label: "Total", value: total, icon: Mail, color: "text-foreground" },
+                        { key: "pending", label: "Pending", value: pending, icon: Clock, color: "text-amber-600" },
+                        { key: "sent", label: "Sent", value: sent, icon: CheckCircle2, color: "text-blue-600" },
+                        { key: "accepted", label: "Accepted", value: accepted, icon: UserPlus, color: "text-emerald-600" },
+                        { key: "failed", label: "Failed", value: failed, icon: XCircle, color: "text-destructive" },
+                      ];
+                      return (
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                          {cards.map((c) => {
+                            const Icon = c.icon;
+                            const active = inviteStatusFilter === c.key;
+                            return (
+                              <button
+                                key={c.key}
+                                type="button"
+                                onClick={() => setInviteStatusFilter(c.key)}
+                                className={`text-left p-3 rounded-lg border transition-all ${
+                                  active ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/40"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                    {c.label}
+                                  </span>
+                                  <Icon className={`h-4 w-4 ${c.color}`} />
+                                </div>
+                                <p className={`text-2xl font-bold mt-1 ${c.color}`}>{c.value}</p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Search */}
+                    <div className="relative">
+                      <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name or email…"
+                        value={inviteSearch}
+                        onChange={(e) => setInviteSearch(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+
+                    {/* List */}
+                    {invitesLoading ? (
+                      <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (() => {
+                      const q = inviteSearch.trim().toLowerCase();
+                      const filtered = invites.filter((i) => {
+                        if (inviteStatusFilter !== "all" && i.status !== inviteStatusFilter) return false;
+                        if (!q) return true;
+                        return (
+                          i.recipient_email.toLowerCase().includes(q) ||
+                          (i.candidate_name || "").toLowerCase().includes(q)
+                        );
+                      });
+                      if (!filtered.length) {
+                        return (
+                          <div className="text-center py-10 text-sm text-muted-foreground border rounded-lg">
+                            No invites found for the current filter.
+                          </div>
+                        );
+                      }
+                      const statusBadge = (s: InviteRecord["status"]) => {
+                        switch (s) {
+                          case "accepted":
+                            return <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">Accepted</Badge>;
+                          case "sent":
+                            return <Badge className="bg-blue-600 hover:bg-blue-600 text-white">Sent</Badge>;
+                          case "pending":
+                            return <Badge className="bg-amber-500 hover:bg-amber-500 text-white">Pending</Badge>;
+                          case "failed":
+                            return <Badge variant="destructive">Failed</Badge>;
+                        }
+                      };
+                      const fmt = (d: string | null) => d ? new Date(d).toLocaleString() : "—";
+                      return (
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="max-h-[480px] overflow-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted/50 sticky top-0">
+                                <tr className="text-left">
+                                  <th className="px-3 py-2 font-medium">Candidate</th>
+                                  <th className="px-3 py-2 font-medium">Email</th>
+                                  <th className="px-3 py-2 font-medium">Status</th>
+                                  <th className="px-3 py-2 font-medium">Sent</th>
+                                  <th className="px-3 py-2 font-medium">Accepted</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filtered.map((i) => (
+                                  <tr key={i.id} className="border-t hover:bg-muted/30">
+                                    <td className="px-3 py-2">
+                                      <div className="font-medium">{i.candidate_name || "—"}</div>
+                                      {i.error_message && (
+                                        <div className="text-[11px] text-destructive truncate max-w-[200px]" title={i.error_message}>
+                                          {i.error_message}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 text-muted-foreground">{i.recipient_email}</td>
+                                    <td className="px-3 py-2">{statusBadge(i.status)}</td>
+                                    <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{fmt(i.sent_at || i.created_at)}</td>
+                                    <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{fmt(i.accepted_at)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="px-3 py-2 border-t bg-muted/30 text-[11px] text-muted-foreground">
+                            Showing {filtered.length} of {invites.length} invite(s)
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </TabsContent>
