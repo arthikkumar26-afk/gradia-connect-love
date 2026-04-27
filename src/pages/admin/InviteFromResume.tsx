@@ -810,33 +810,10 @@ const InviteFromResume = () => {
                 <Card className="shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-base">
-                      <Sparkles className="h-4 w-4 text-primary" /> Extracted / Editable Profile
+                      <Sparkles className="h-4 w-4 text-primary" /> Email Content (Roles, Salaries &amp; Openings)
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Candidate Name</Label>
-                        <Input value={candidateName} onChange={(e) => setCandidateName(e.target.value)} placeholder="Full name" />
-                      </div>
-                      <div>
-                        <Label>Email</Label>
-                        <Input type="email" value={candidateEmail} onChange={(e) => setCandidateEmail(e.target.value)} placeholder="candidate@example.com" />
-                      </div>
-                      {parsed && (
-                        <>
-                          <div>
-                            <Label className="text-xs text-muted-foreground">Phone</Label>
-                            <p className="text-sm font-medium">{parsed.mobile || "—"}</p>
-                          </div>
-                          <div>
-                            <Label className="text-xs text-muted-foreground flex items-center gap-1"><MapPin className="h-3 w-3" />Location</Label>
-                            <p className="text-sm font-medium">{parsed.location || "—"}</p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
                     <div>
                       <Label className="mb-2 block">Apply Now Link (used for all "Apply Now" buttons in the email)</Label>
                       <Input
@@ -847,7 +824,7 @@ const InviteFromResume = () => {
                     </div>
 
                     <div>
-                      <Label className="mb-2 block">Suggested Job Roles &amp; Salaries (AI-prefilled, editable)</Label>
+                      <Label className="mb-2 block">Suggested Job Roles &amp; Salaries (editable)</Label>
                       <div className="space-y-2">
                         {jobRoles.map((r, i) => (
                           <div key={i} className="grid grid-cols-12 gap-2 items-center">
@@ -891,19 +868,8 @@ const InviteFromResume = () => {
                       </div>
                     </div>
 
-                    {parsed?.skills?.length ? (
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Top Skills (from resume)</Label>
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {parsed.skills.slice(0, 20).map((s) => (
-                            <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-
                     <div className="flex justify-end pt-2">
-                      <Button onClick={() => setActiveTab("preview")} disabled={!candidateName || !candidateEmail}>
+                      <Button onClick={() => setActiveTab("preview")}>
                         Continue to Preview <Eye className="h-4 w-4 ml-2" />
                       </Button>
                     </div>
