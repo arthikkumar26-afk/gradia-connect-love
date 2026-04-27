@@ -158,7 +158,7 @@ const buildEmailHtml = (opts: {
 
   const roleCount = Math.max(jobRoles.length, jobSalaries.length, 1);
   const roleList = Array.from({ length: roleCount }, (_, i) =>
-    renderJobRow(String.fromCharCode(65 + (i % 26)), jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
+    renderJobRow("", jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
   ).join("");
 
   const moreButton = `
