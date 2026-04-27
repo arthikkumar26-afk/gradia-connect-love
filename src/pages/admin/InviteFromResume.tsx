@@ -223,7 +223,7 @@ const buildEmailHtml = (opts: {
   <p style="font-size:15px;line-height:1.6;">Additionally, based on your qualifications and experience, we will guide you toward job opportunities that closely match your profile.</p>
   <p style="font-size:15px;line-height:1.6;">If you have any questions or need further assistance, please feel free to reach out to us.</p>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;">STEP 2 — Based on your CV, suitable openings:</h3>
+  <h3 style="color:#1e3a8a;margin-top:24px;">Based on your CV, suitable openings:</h3>
   <ul style="font-size:14px;line-height:1.7;">
     <li>Principal – State Board (Hyderabad)</li>
     <li>Principal – State Board (Nizamabad)</li>
@@ -233,7 +233,7 @@ const buildEmailHtml = (opts: {
     <li>HOD / Senior Teacher</li>
   </ul>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;">STEP 3 — Suitable Jobs according to your qualifications:</h3>
+  <h3 style="color:#1e3a8a;margin-top:24px;">Suitable Jobs according to your qualifications:</h3>
   <ul style="font-size:14px;line-height:1.7;list-style:none;padding-left:0;">${roleList}</ul>
 
   <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
@@ -250,7 +250,7 @@ const buildEmailHtml = (opts: {
   ${paymentBlock}
   ${termsBlock}
 
-  <p style="font-size:15px;margin-top:24px;">We will keep you updated with the next steps shortly.</p>
+  <p style="font-size:15px;margin-top:24px;">We will keep you updated shortly.</p>
   <p style="font-size:15px;margin-top:16px;">Best regards,<br/><strong>${adminName}</strong><br/>${companyName}<br/>${contactInfo}</p>
 </div>`;
 };
