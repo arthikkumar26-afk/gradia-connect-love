@@ -542,6 +542,7 @@ export type Database = {
       }
       cv_unlocks: {
         Row: {
+          application_id: string | null
           candidate_id: string
           created_at: string
           employer_id: string
@@ -550,6 +551,7 @@ export type Database = {
           points_spent: number
         }
         Insert: {
+          application_id?: string | null
           candidate_id: string
           created_at?: string
           employer_id: string
@@ -558,6 +560,7 @@ export type Database = {
           points_spent?: number
         }
         Update: {
+          application_id?: string | null
           candidate_id?: string
           created_at?: string
           employer_id?: string
@@ -565,7 +568,15 @@ export type Database = {
           job_id?: string | null
           points_spent?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cv_unlocks_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       discount_coupons: {
         Row: {
