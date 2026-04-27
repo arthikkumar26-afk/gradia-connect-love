@@ -3117,6 +3117,57 @@ export type Database = {
         }
         Relationships: []
       }
+      resume_invites: {
+        Row: {
+          accepted_at: string | null
+          candidate_name: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          recipient_email: string
+          resend_message_id: string | null
+          sender_name: string | null
+          sender_user_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          candidate_name?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient_email: string
+          resend_message_id?: string | null
+          sender_name?: string | null
+          sender_user_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          candidate_name?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          recipient_email?: string
+          resend_message_id?: string | null
+          sender_name?: string | null
+          sender_user_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       slot_bookings: {
         Row: {
           booking_date: string
