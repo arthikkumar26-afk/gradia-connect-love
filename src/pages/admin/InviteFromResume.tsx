@@ -342,7 +342,8 @@ const buildEmailHtml = (opts: {
   </table>
   ${moreButton.replace('<a ', '<a class="gradia-more-btn" ')}
 
-  <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
+  <p style="font-size:14px;margin-top:16px;">Before applying for the job, would you like to attend the interview process and assess your suitability for the position?</p>
+  <p style="font-size:14px;margin-top:12px;"><strong>Please confirm your preference:</strong></p>
   
 
   <h3 style="color:#1e3a8a;margin-top:24px;">⚖️ Comparison Overview</h3>
