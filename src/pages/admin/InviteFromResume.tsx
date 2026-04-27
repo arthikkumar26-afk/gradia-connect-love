@@ -556,7 +556,6 @@ const InviteFromResume = () => {
           companyName,
           contactInfo,
           showSubscription,
-          showPayment,
           showTerms,
         });
         const { data, error } = await supabase.functions.invoke("send-resume-invite-email", {
