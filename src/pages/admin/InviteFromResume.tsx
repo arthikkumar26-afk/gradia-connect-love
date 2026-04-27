@@ -233,7 +233,7 @@ const buildEmailHtml = (opts: {
     <li>HOD / Senior Teacher</li>
   </ul>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;">STEP 3 — Suitable Jobs according to your qualifications:</h3>
+  <h3 style="color:#1e3a8a;margin-top:24px;">Suitable Jobs according to your qualifications:</h3>
   <ul style="font-size:14px;line-height:1.7;list-style:none;padding-left:0;">${roleList}</ul>
 
   <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
