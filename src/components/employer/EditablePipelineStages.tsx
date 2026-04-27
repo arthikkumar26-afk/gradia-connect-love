@@ -31,6 +31,23 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [automationConfig, setAutomationConfig] = useState<any>(null);
   const [disabledOptionalStages, setDisabledOptionalStages] = useState<Set<number>>(new Set());
+  const [showStagePicker, setShowStagePicker] = useState(false);
+
+  const stageCatalog = useMemo<CatalogStage[]>(() => getAllPipelineStagesCatalog(), []);
+  const existingNames = useMemo(
+    () => new Set(stages.map((s) => s.name.trim().toLowerCase())),
+    [stages]
+  );
+
+  const applyCatalogStage = (cs: CatalogStage) => {
+    setNewStageName(cs.name);
+    setNewStageDesc(cs.description);
+    setNewStageType(cs.isAutomated ? "ai" : "manual");
+    setAutomationConfig(null);
+    setShowStagePicker(false);
+    toast.success(`Loaded "${cs.name}" — review and save.`);
+  };
+
 
   const handleToggleOptionalStage = (index: number) => {
     const newDisabled = new Set(disabledOptionalStages);
