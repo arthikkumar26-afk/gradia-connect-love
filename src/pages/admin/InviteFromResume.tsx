@@ -973,12 +973,12 @@ const InviteFromResume = () => {
                   <CardContent className="space-y-4">
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">To</span>
-                        <span className="font-medium">{candidateEmail || "—"}</span>
-                      </div>
-                      <div className="flex justify-between border-b pb-2">
-                        <span className="text-muted-foreground">Recipient</span>
-                        <span className="font-medium">{candidateName || "—"}</span>
+                        <span className="text-muted-foreground">Recipients</span>
+                        <span className="font-medium">
+                          {bulkRows.filter((r) => r.email && r.status !== "sent").length} pending
+                          {bulkRows.filter((r) => r.status === "sent").length > 0 &&
+                            ` · ${bulkRows.filter((r) => r.status === "sent").length} already sent`}
+                        </span>
                       </div>
                       <div className="flex justify-between border-b pb-2">
                         <span className="text-muted-foreground">Subject</span>
@@ -996,17 +996,55 @@ const InviteFromResume = () => {
                       </div>
                     </div>
 
+                    {bulkRows.length > 0 && (
+                      <div className="border rounded-md max-h-64 overflow-auto divide-y">
+                        {bulkRows.map((r) => (
+                          <div key={r.id} className="px-3 py-2 text-xs flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate">{r.name || r.fileName}</p>
+                              <p className="text-muted-foreground truncate">{r.email || "no email"}</p>
+                            </div>
+                            <Badge
+                              variant={
+                                r.status === "sent" ? "default"
+                                  : r.status === "failed" ? "destructive"
+                                  : r.status === "ready" ? "secondary"
+                                  : "outline"
+                              }
+                              className="text-[10px]"
+                            >
+                              {r.status}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {bulkRows.length === 0 && (
+                      <div className="bg-muted/50 border rounded-md p-4 text-center text-xs text-muted-foreground">
+                        No recipients yet. Go to <strong>Resume Info</strong> tab and upload resumes via <strong>Bulk Mail Send</strong>.
+                      </div>
+                    )}
+
                     <div className="flex flex-col sm:flex-row gap-2 pt-2">
                       <Button variant="outline" className="flex-1" onClick={handleSaveDraft}>
                         <Save className="h-4 w-4 mr-2" />Save as Draft
                       </Button>
-                      <Button className="flex-1" onClick={handleSend} disabled={sending || !candidateEmail}>
-                        {sending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending…</> : <><Send className="h-4 w-4 mr-2" />Send Email</>}
+                      <Button
+                        className="flex-1"
+                        onClick={sendBulk}
+                        disabled={bulkSending || bulkParsing || bulkRows.filter((r) => r.email && r.email.includes("@") && r.status !== "sent").length === 0}
+                      >
+                        {bulkSending ? (
+                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending…</>
+                        ) : (
+                          <><Send className="h-4 w-4 mr-2" />Send to {bulkRows.filter((r) => r.email && r.email.includes("@") && r.status !== "sent").length} recipient(s)</>
+                        )}
                       </Button>
                     </div>
 
                     <p className="text-[11px] text-muted-foreground text-center">
-                      Email is sent from <strong>noreply@gradia.co.in</strong>. Drafts are saved locally in this browser.
+                      Each email is personalized with the candidate's name and sent from <strong>noreply@gradia.co.in</strong>.
                     </p>
                   </CardContent>
                 </Card>
