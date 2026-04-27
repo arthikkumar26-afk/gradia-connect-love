@@ -290,6 +290,7 @@ const buildEmailHtml = (opts: {
     </thead>
     <tbody>${cvOpeningsRows}</tbody>
   </table>
+  ${moreButton}
 
   <h3 style="color:#1e3a8a;margin-top:24px;font-weight:600;">Suitable Jobs according to your qualifications &amp; Experience:</h3>
   <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
@@ -302,6 +303,7 @@ const buildEmailHtml = (opts: {
     </thead>
     <tbody>${roleList}</tbody>
   </table>
+  ${moreButton}
 
   <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
   
