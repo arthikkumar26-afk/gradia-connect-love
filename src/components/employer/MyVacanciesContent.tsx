@@ -226,10 +226,10 @@ export const MyVacanciesContent = () => {
       });
       if (unlockErr && !unlockErr.message?.includes("duplicate")) throw unlockErr;
 
-      // Update local state
+      // Update local state — match by applicationId so duplicate-candidate rows don't all flip
       setApplicants((prev) =>
         prev.map((a) =>
-          a.candidate_id === confirmUnlock.candidate_id ? { ...a, unlocked: true } : a
+          a.applicationId === confirmUnlock.applicationId ? { ...a, unlocked: true } : a
         )
       );
       setWalletPoints(newBalance);
