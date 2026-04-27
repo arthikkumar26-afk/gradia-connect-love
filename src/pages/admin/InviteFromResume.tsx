@@ -162,8 +162,8 @@ const buildEmailHtml = (opts: {
   ).join("");
 
   const moreButton = `
-    <div style="text-align:center;margin-top:12px;">
-      <a href="https://gradiaa.com/jobs" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:10px 20px;border-radius:6px;display:inline-block;">More Jobs →</a>
+    <div style="text-align:center;margin-top:14px;margin-bottom:6px;">
+      <a href="https://gradiaa.com/jobs" role="button" aria-label="View more jobs on Gradia jobs portal" title="View more jobs on Gradia" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:6px;display:inline-block;min-width:160px;text-align:center;">More Jobs →</a>
     </div>`;
 
   const planTiers: {
