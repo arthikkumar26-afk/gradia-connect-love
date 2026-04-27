@@ -297,7 +297,62 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
             <DialogTitle>{editingIndex !== null ? "Edit Stage" : "Add Custom Stage"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* Pick from existing stages catalog */}
+            <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Library className="h-4 w-4 text-primary" />
+                  <span>Choose from existing stages</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground">{stageCatalog.length} available</span>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" className="w-full justify-start gap-1.5 h-8 text-xs font-normal">
+                    <Library className="h-3 w-3" />
+                    Browse & pick a stage to auto-fill fields below…
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[440px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search stages..." />
+                    <CommandList className="max-h-[300px]">
+                      <CommandEmpty>No matching stages.</CommandEmpty>
+                      <CommandGroup heading="Existing pipeline stages">
+                        {stageCatalog.map((cs) => (
+                          <CommandItem
+                            key={cs.name}
+                            value={`${cs.name} ${cs.description}`}
+                            onSelect={() => applyCatalogStage(cs)}
+                            className="items-start gap-2"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm font-medium truncate">{cs.name}</span>
+                                <Badge variant={cs.isAutomated ? "default" : "outline"} className="text-[9px] h-4 px-1 gap-0.5">
+                                  {cs.isAutomated ? <Bot className="h-2.5 w-2.5" /> : <User className="h-2.5 w-2.5" />}
+                                  {cs.isAutomated ? "AI" : "Manual"}
+                                </Badge>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground truncate">{cs.description}</p>
+                              <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
+                                Used in: {cs.sources.slice(0, 2).join(", ")}{cs.sources.length > 2 ? ` +${cs.sources.length - 2} more` : ""}
+                              </p>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <p className="text-[10px] text-muted-foreground">
+                Picking a stage fills name, description and type — you can still tweak before saving.
+              </p>
+            </div>
+
             {/* AI Prompt Section */}
+
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
               <button
                 type="button"
