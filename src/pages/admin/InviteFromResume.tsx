@@ -167,21 +167,62 @@ const buildEmailHtml = (opts: {
     </div>`;
 
   const subscriptionBlock = showSubscription ? `
-    <h3 style="color:#1e3a8a;margin-top:24px;">💼 Subscription Plans Comparison</h3>
-    <table role="table" style="width:100%;border-collapse:collapse;font-size:12px;line-height:1.45;table-layout:fixed;margin-top:8px;">
-      <thead>
-        <tr style="background:#1e3a8a;color:#ffffff;">
-          <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;width:30%;">Plan</th>
-          <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;width:70%;">Included Benefits</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td style="border:1px solid #e5e7eb;padding:8px;font-weight:700;vertical-align:top;word-break:break-word;">Basic (Free)</td><td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;word-break:break-word;">Resume submission, limited job listings, general job alerts.</td></tr>
-        <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:8px;font-weight:700;vertical-align:top;word-break:break-word;">Standard Plan</td><td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;word-break:break-word;">Extended job access, priority alerts, suggested roles, basic interview guidance.</td></tr>
-        <tr><td style="border:1px solid #e5e7eb;padding:8px;font-weight:700;vertical-align:top;word-break:break-word;">Premium Plan</td><td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;word-break:break-word;">Full job access, resume review, interview scheduling assistance, dedicated support.</td></tr>
-        <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:8px;font-weight:700;vertical-align:top;word-break:break-word;">Professional Plan</td><td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;word-break:break-word;">All Premium benefits plus personalized career guidance and priority support.</td></tr>
-      </tbody>
+    <h3 style="color:#dc2626;margin-top:24px;text-align:center;font-size:22px;font-style:italic;">Subscription Plans</h3>
+    <table role="presentation" style="width:100%;border-collapse:separate;border-spacing:8px;table-layout:fixed;margin-top:8px;">
+      <tr style="vertical-align:top;">
+        <td style="width:25%;border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#ffffff;vertical-align:top;">
+          <div style="text-align:center;font-weight:700;color:#1e3a8a;font-size:15px;margin-bottom:8px;">Basic</div>
+          <div style="font-size:12px;line-height:1.6;color:#111827;">
+            <div>✔ Apply to job</div>
+            <div>✔ Resume export (1×)</div>
+            <div>✔ ATS score check</div>
+            <div style="color:#9ca3af;">✘ Mock interview</div>
+            <div style="color:#9ca3af;">✘ AI feedback report</div>
+            <div style="color:#9ca3af;">✘ Featured profile boost</div>
+          </div>
+        </td>
+        <td style="width:25%;border:1px solid #1e3a8a;border-radius:8px;padding:12px;background:#ffffff;vertical-align:top;">
+          <div style="text-align:center;font-weight:700;color:#1e3a8a;font-size:15px;margin-bottom:8px;">Standard</div>
+          <div style="font-size:12px;line-height:1.6;color:#111827;">
+            <div>✔ Apply to job</div>
+            <div>✔ Resume export (1×)</div>
+            <div>✔ ATS score check</div>
+            <div><strong>✔ 1× Mock Interview</strong></div>
+            <div style="color:#6b7280;font-size:11px;margin-left:12px;">(Aptitude + 1 Technical round)</div>
+            <div>✔ Basic AI feedback</div>
+            <div style="color:#9ca3af;">✘ Featured boost</div>
+          </div>
+        </td>
+        <td style="width:25%;border:1px solid #f59e0b;border-radius:8px;padding:12px;background:#fffbeb;vertical-align:top;">
+          <div style="text-align:center;font-weight:700;color:#b45309;font-size:15px;margin-bottom:4px;">Premium</div>
+          <div style="text-align:center;margin-bottom:8px;"><span style="background:#f59e0b;color:#ffffff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">POPULAR</span></div>
+          <div style="font-size:12px;line-height:1.6;color:#111827;">
+            <div>✔ Apply to job</div>
+            <div>✔ Resume export (2×)</div>
+            <div>✔ ATS score check</div>
+            <div><strong>✔ 2× Mock Interviews</strong></div>
+            <div style="color:#6b7280;font-size:11px;margin-left:12px;">(Aptitude + Technical + HR rounds)</div>
+            <div>✔ Detailed AI feedback report</div>
+            <div>✔ Featured profile boost (1×)</div>
+            <div>✔ Priority application tag</div>
+          </div>
+        </td>
+        <td style="width:25%;border:1px solid #047857;border-radius:8px;padding:12px;background:#ffffff;vertical-align:top;">
+          <div style="text-align:center;font-weight:700;color:#047857;font-size:15px;margin-bottom:8px;">Professional</div>
+          <div style="font-size:12px;line-height:1.6;color:#111827;">
+            <div>✔ Apply to job</div>
+            <div>✔ Unlimited resume exports</div>
+            <div>✔ ATS score check</div>
+            <div><strong>✔ 5× Mock Interviews</strong></div>
+            <div style="color:#6b7280;font-size:11px;margin-left:12px;">(Aptitude + Technical + Coding/Demo + HR + Final rounds)</div>
+            <div>✔ Full AI feedback + improvement plan</div>
+            <div>✔ Featured profile boost (3×)</div>
+            <div>✔ Priority support &amp; faster shortlisting</div>
+          </div>
+        </td>
+      </tr>
     </table>` : "";
+
 
 
 
