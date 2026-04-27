@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap, Star, Rocket, Building2, Phone, Sparkles, Brain, BarChart3, Share2, Wallet } from "lucide-react";
+import { Check, Crown, Zap, Star, Rocket, Building2, Phone, Sparkles, Brain, BarChart3, Share2, Wallet, Plus, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -102,6 +102,34 @@ const specialFeatures = [
   { icon: Share2, title: "SMM Marketing Suite", desc: "AI flyers, one-click social sharing across platforms" },
 ];
 
+// Add-on services priced in wallet points (1 pt = ₹5).
+const POINT_TO_RUPEE = 5;
+
+interface AddonService {
+  id: string;
+  name: string;
+  description: string;
+  points: number;
+}
+
+const addonServices: AddonService[] = [
+  { id: 'vacancy_list', name: 'Vacancy List', description: 'Browse and manage all open vacancies in one place.', points: 320 },
+  { id: 'smart_assessment', name: 'Smart Assessment', description: 'AI-powered candidate assessment & scoring engine.', points: 480 },
+  { id: 'test_papers', name: 'Test Papers', description: 'Custom test paper creation and assignment toolkit.', points: 360 },
+  { id: 'smm', name: 'SMM (Social Media Marketing)', description: 'Auto-post jobs to LinkedIn, Facebook, Instagram & more.', points: 540 },
+  { id: 'my_vacancies', name: 'My Vacancies', description: 'Centralised vacancy templates & quick re-posting.', points: 310 },
+  { id: 'candidate_data', name: 'Candidate Data', description: 'Talent pool with advanced multi-criteria filters.', points: 620 },
+  { id: 'interview_pipeline', name: 'Interview Pipeline', description: 'End-to-end automated hiring pipeline & rounds.', points: 720 },
+  { id: 'email_template', name: 'Email Template', description: 'Branded transactional & marketing email templates.', points: 340 },
+  { id: 'feedback_matrix', name: 'Feedback Matrix', description: 'Structured observer feedback across all rounds.', points: 410 },
+  { id: 'candidate_confirmation', name: 'Candidate Confirmation', description: 'Automated joining & onboarding confirmations.', points: 380 },
+  { id: 'offer_letter', name: 'Offer Letter', description: 'AI-generated, brand-styled offer letter automation.', points: 560 },
+  { id: 'approvals', name: 'Approvals', description: 'Multi-level internal approval workflow tools.', points: 330 },
+  { id: 'candidates', name: 'Candidates', description: 'Unified directory of all registered candidates.', points: 470 },
+  { id: 'campaigns', name: 'Campaigns', description: 'Email & invite campaigns with tracking analytics.', points: 520 },
+  { id: 'suggested_candidates', name: 'Suggested Candidates', description: 'AI-recommended candidates matching your roles.', points: 690 },
+];
+
 export const UpgradePlanContent = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
@@ -111,6 +139,20 @@ export const UpgradePlanContent = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string } | null>(null);
   const [selectedPlanForCoupon, setSelectedPlanForCoupon] = useState<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState<Record<string, boolean>>({});
+
+  const toggleAddon = (id: string) =>
+    setSelectedAddons((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const { addonPoints, addonRupees, selectedAddonList } = useMemo(() => {
+    const list = addonServices.filter((s) => selectedAddons[s.id]);
+    const points = list.reduce((sum, s) => sum + s.points, 0);
+    return {
+      selectedAddonList: list,
+      addonPoints: points,
+      addonRupees: points * POINT_TO_RUPEE,
+    };
+  }, [selectedAddons]);
 
   // Load Razorpay checkout script once.
   useEffect(() => {
@@ -166,7 +208,8 @@ export const UpgradePlanContent = () => {
 
     const pointsCost = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : selectedPlan.points;
     // ₹5 = 1 point (project-wide wallet pricing). Razorpay charges in INR.
-    const amountInRupees = pointsCost * 5;
+    const planRupees = pointsCost * 5;
+    const amountInRupees = planRupees + addonRupees;
 
     if (amountInRupees <= 0) {
       toast({ title: "Invalid plan amount", description: "This plan can't be activated via payment.", variant: "destructive" });
@@ -189,6 +232,8 @@ export const UpgradePlanContent = () => {
           plan_name: `${selectedPlan.name} Plan (Upgrade)`,
           employer_id: user.id,
           receipt: `upg_${selectedPlan.id}_${Date.now()}`,
+          addon_points: addonPoints,
+          addon_services: selectedAddonList.map((s) => ({ id: s.id, name: s.name, points: s.points })),
         },
       });
 
@@ -417,8 +462,8 @@ export const UpgradePlanContent = () => {
                     : plan.cta === "free"
                     ? "Get Started Free"
                     : isUpgrade
-                    ? `Upgrade – Pay ₹${(plan.points * 5).toLocaleString("en-IN")}`
-                    : `Switch – Pay ₹${(plan.points * 5).toLocaleString("en-IN")}`}
+                    ? `Upgrade – Pay ₹${(plan.points * 5 + addonRupees).toLocaleString("en-IN")}${addonRupees ? ` (+${addonPoints} pts add-ons)` : ''}`
+                    : `Switch – Pay ₹${(plan.points * 5 + addonRupees).toLocaleString("en-IN")}${addonRupees ? ` (+${addonPoints} pts add-ons)` : ''}`}
                 </Button>
 
                 {/* Coupon Input for paid plans */}
@@ -450,6 +495,84 @@ export const UpgradePlanContent = () => {
           );
         })}
       </div>
+
+      {/* Add-on Services */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-bold text-foreground">Add-on Services</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Tap <span className="font-semibold text-primary">+</span> to add a service. Each service is billed in wallet points
+          (1 point = ₹{POINT_TO_RUPEE}). Add-on charges are added to your selected plan price below.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {addonServices.map((s) => {
+            const isOn = !!selectedAddons[s.id];
+            return (
+              <div
+                key={s.id}
+                className={`flex items-start justify-between gap-3 p-3 rounded-lg border transition-colors ${
+                  isOn ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-primary/30'
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm text-foreground">{s.name}</span>
+                    <Badge variant="outline" className="text-[11px] py-0 h-5">
+                      {s.points} pts
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 leading-snug">{s.description}</p>
+                  {isOn && (
+                    <p className="text-[11px] text-primary font-medium mt-1">
+                      Added — ₹{(s.points * POINT_TO_RUPEE).toLocaleString('en-IN')}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={isOn ? 'default' : 'outline'}
+                  onClick={() => toggleAddon(s.id)}
+                  aria-label={isOn ? `Remove ${s.name}` : `Add ${s.name}`}
+                  className="h-8 w-8 flex-shrink-0"
+                >
+                  {isOn ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        {selectedAddonList.length > 0 && (
+          <div className="mt-5 border-t border-border pt-4 space-y-2 text-sm">
+            <div className="text-xs font-semibold text-muted-foreground uppercase">
+              Selected add-ons ({selectedAddonList.length})
+            </div>
+            {selectedAddonList.map((s) => (
+              <div key={s.id} className="flex justify-between">
+                <span className="text-muted-foreground">
+                  {s.name} <span className="text-xs">({s.points} pts)</span>
+                </span>
+                <span className="font-medium text-foreground">
+                  ₹{(s.points * POINT_TO_RUPEE).toLocaleString('en-IN')}
+                </span>
+              </div>
+            ))}
+            <div className="flex justify-between pt-2 border-t border-border">
+              <span className="font-semibold text-foreground">Add-on Total</span>
+              <span className="font-bold text-primary">
+                {addonPoints} pts · ₹{addonRupees.toLocaleString('en-IN')}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              The add-on total will be added to the plan price when you click <span className="font-semibold">Pay</span> on any paid plan above.
+            </p>
+          </div>
+        )}
+      </Card>
 
       {/* Special AI Features */}
       <div>
