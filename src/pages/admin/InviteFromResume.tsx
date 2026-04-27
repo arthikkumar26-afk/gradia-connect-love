@@ -120,16 +120,19 @@ const renderJobRow = (
   applyUrl: string,
 ) => {
   const safeUrl = buildApplyUrl(applyUrl, title);
+  const displayTitle = `${label ? `${label}. ` : ""}${title}`;
+  const salaryText = salary || "Negotiable";
+  const ariaLabel = `Apply for ${displayTitle.replace(/"/g, "&quot;")} — Salary ${salaryText.replace(/"/g, "&quot;")}`;
   return `
     <tr>
-      <td style="border:1px solid #e5e7eb;padding:10px;font-size:14px;vertical-align:middle;">
+      <td data-label="Vacancy" style="border:1px solid #e5e7eb;padding:12px 14px;font-size:14px;line-height:1.5;vertical-align:middle;word-break:break-word;">
         ${label ? `<strong>${label}.</strong> ` : ""}${title}
       </td>
-      <td style="border:1px solid #e5e7eb;padding:10px;font-size:13px;color:#047857;font-weight:600;white-space:nowrap;vertical-align:middle;">
-        ${salary || "Negotiable"}
+      <td data-label="Salary" style="border:1px solid #e5e7eb;padding:12px 14px;font-size:13px;color:#047857;font-weight:600;vertical-align:middle;white-space:nowrap;">
+        ${salaryText}
       </td>
-      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;vertical-align:middle;white-space:nowrap;">
-        <a href="${safeUrl}" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;display:inline-block;">Apply Now</a>
+      <td data-label="Action" style="border:1px solid #e5e7eb;padding:12px 14px;text-align:center;vertical-align:middle;white-space:nowrap;">
+        <a href="${safeUrl}" role="button" aria-label="${ariaLabel}" title="${ariaLabel}" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:10px 18px;border-radius:6px;display:inline-block;min-width:96px;text-align:center;">Apply Now</a>
       </td>
     </tr>`;
 };
