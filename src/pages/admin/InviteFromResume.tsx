@@ -349,28 +349,28 @@ const buildEmailHtml = (opts: {
   <h3 style="color:#1e3a8a;margin-top:24px;">⚖️ Comparison Overview</h3>
   <table style="width:100%;border-collapse:collapse;font-size:13px;">
     <tr style="background:#f3f4f6;">
-      <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#dc2626;">With GRADIAA</th>
-      <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#dc2626;">Without GRADIAA</th>
+      <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#dc2626;">Without GRADIA</th>
+      <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#dc2626;">Without GRADIA</th>
     </tr>
     <tr>
       <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;"><u>Internal Interview Process</u></td>
-      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">A. Interview will be conducted by management</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Interview will be conducted by management</td>
     </tr>
     <tr>
       <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Review Your Feedback</td>
-      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">B. Decision will be based on the employer</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Decision will be based on the employer</td>
     </tr>
     <tr>
       <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Strengths and Weaknesses</td>
-      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">C. Selected – Direct joining</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Selected – Direct joining</td>
     </tr>
     <tr>
       <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Areas for Improvement</td>
-      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">D. Rejected – No further opportunity</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Rejected – No further opportunity</td>
     </tr>
     <tr>
       <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Selected – Recommended to Management</td>
-      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">E. No suggestions or recommendations provided</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">No suggestions or recommendations provided</td>
     </tr>
     <tr>
       <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Rejected – Suggested for Training/Improvement</td>
