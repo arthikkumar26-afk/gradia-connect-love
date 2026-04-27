@@ -360,6 +360,11 @@ const InviteFromResume = () => {
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/admin/login");
+  };
+
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [parsing, setParsing] = useState(false);
