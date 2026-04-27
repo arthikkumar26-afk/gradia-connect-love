@@ -298,7 +298,7 @@ const buildEmailHtml = (opts: {
   </table>
 
   <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
-  <p style="font-size:14px;">☐ With Interview &nbsp;&nbsp; ☐ Without Interview</p>
+  
 
   <h3 style="color:#1e3a8a;margin-top:24px;">⚖️ Comparison Overview</h3>
   <table style="width:100%;border-collapse:collapse;font-size:13px;">
