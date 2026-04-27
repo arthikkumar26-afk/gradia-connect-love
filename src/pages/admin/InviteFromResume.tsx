@@ -343,7 +343,6 @@ const buildEmailHtml = (opts: {
   <p style="font-size:13px;margin-top:10px;color:#6b7280;"><strong>Please note:</strong> Subscription plans enhance your job search experience and support but do not guarantee job placement. Feel free to contact us if you need help selecting a plan.</p>
 
   ${subscriptionBlock}
-  ${paymentBlock}
   ${termsBlock}
 
   <p style="font-size:15px;margin-top:24px;">We will keep you updated shortly.</p>
