@@ -304,6 +304,33 @@ const buildEmailHtml = (opts: {
     </tr>
   </table>
 
+  <h3 style="color:#1e3a8a;margin-top:24px;">💼 Subscription Plans Comparison</h3>
+  <p style="font-size:14px;margin:6px 0 12px;">Please find below a clear comparison of our subscription plans to help you choose the one that best suits your needs:</p>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="background:#1e3a8a;color:#ffffff;">
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Features</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Basic (Free)</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Standard Plan</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Premium Plan</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Professional Plan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td style="border:1px solid #e5e7eb;padding:8px;">Resume Submission</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td></tr>
+      <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:8px;">Access to Job Listings</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Limited</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Extended</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Full Access</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Full Access</td></tr>
+      <tr><td style="border:1px solid #e5e7eb;padding:8px;">Job Alerts</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">General</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Priority</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Priority</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Priority</td></tr>
+      <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:8px;">Suggested Roles for Skill Set</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td></tr>
+      <tr><td style="border:1px solid #e5e7eb;padding:8px;">Interview Guidance</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Basic</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Advanced</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Advanced</td></tr>
+      <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:8px;">Resume Review</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td></tr>
+      <tr><td style="border:1px solid #e5e7eb;padding:8px;">Interview Scheduling Assistance</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td></tr>
+      <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:8px;">Dedicated Support</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td></tr>
+      <tr><td style="border:1px solid #e5e7eb;padding:8px;">Personalized Career Guidance</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td></tr>
+      <tr style="background:#f9fafb;"><td style="border:1px solid #e5e7eb;padding:8px;">Direct Employer Connection</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#b91c1c;">✖</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Limited</td><td style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">✔</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:13px;margin-top:10px;color:#6b7280;"><strong>Please note:</strong> Subscription plans enhance your job search experience and support but do not guarantee job placement. Feel free to contact us if you need help selecting a plan.</p>
+
   ${subscriptionBlock}
   ${paymentBlock}
   ${termsBlock}
