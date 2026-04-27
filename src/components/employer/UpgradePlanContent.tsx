@@ -496,6 +496,84 @@ export const UpgradePlanContent = () => {
         })}
       </div>
 
+      {/* Add-on Services */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-bold text-foreground">Add-on Services</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Tap <span className="font-semibold text-primary">+</span> to add a service. Each service is billed in wallet points
+          (1 point = ₹{POINT_TO_RUPEE}). Add-on charges are added to your selected plan price below.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {addonServices.map((s) => {
+            const isOn = !!selectedAddons[s.id];
+            return (
+              <div
+                key={s.id}
+                className={`flex items-start justify-between gap-3 p-3 rounded-lg border transition-colors ${
+                  isOn ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-primary/30'
+                }`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm text-foreground">{s.name}</span>
+                    <Badge variant="outline" className="text-[11px] py-0 h-5">
+                      {s.points} pts
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 leading-snug">{s.description}</p>
+                  {isOn && (
+                    <p className="text-[11px] text-primary font-medium mt-1">
+                      Added — ₹{(s.points * POINT_TO_RUPEE).toLocaleString('en-IN')}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant={isOn ? 'default' : 'outline'}
+                  onClick={() => toggleAddon(s.id)}
+                  aria-label={isOn ? `Remove ${s.name}` : `Add ${s.name}`}
+                  className="h-8 w-8 flex-shrink-0"
+                >
+                  {isOn ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        {selectedAddonList.length > 0 && (
+          <div className="mt-5 border-t border-border pt-4 space-y-2 text-sm">
+            <div className="text-xs font-semibold text-muted-foreground uppercase">
+              Selected add-ons ({selectedAddonList.length})
+            </div>
+            {selectedAddonList.map((s) => (
+              <div key={s.id} className="flex justify-between">
+                <span className="text-muted-foreground">
+                  {s.name} <span className="text-xs">({s.points} pts)</span>
+                </span>
+                <span className="font-medium text-foreground">
+                  ₹{(s.points * POINT_TO_RUPEE).toLocaleString('en-IN')}
+                </span>
+              </div>
+            ))}
+            <div className="flex justify-between pt-2 border-t border-border">
+              <span className="font-semibold text-foreground">Add-on Total</span>
+              <span className="font-bold text-primary">
+                {addonPoints} pts · ₹{addonRupees.toLocaleString('en-IN')}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              The add-on total will be added to the plan price when you click <span className="font-semibold">Pay</span> on any paid plan above.
+            </p>
+          </div>
+        )}
+      </Card>
+
       {/* Special AI Features */}
       <div>
         <div className="text-center mb-4">
