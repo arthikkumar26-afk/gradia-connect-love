@@ -81,9 +81,42 @@ const buildSuggestedRoles = (p: ParsedResume | null): string[] => {
   return Array.from(roles).slice(0, 5);
 };
 
+const DEFAULT_CV_OPENINGS: { title: string; salary: string }[] = [
+  { title: "Principal – State Board (Hyderabad)", salary: "₹60,000 – ₹90,000 / month" },
+  { title: "Principal – State Board (Nizamabad)", salary: "₹55,000 – ₹85,000 / month" },
+  { title: "Principal – CBSE Board", salary: "₹70,000 – ₹1,10,000 / month" },
+  { title: "SME (Subject Matter Expert)", salary: "₹35,000 – ₹60,000 / month" },
+  { title: "Resource Person", salary: "₹25,000 – ₹45,000 / month" },
+  { title: "HOD / Senior Teacher", salary: "₹40,000 – ₹65,000 / month" },
+];
+
+const renderJobRow = (
+  label: string,
+  title: string,
+  salary: string,
+  applyUrl: string,
+) => {
+  const safeUrl = applyUrl && /^https?:\/\//i.test(applyUrl) ? applyUrl : "https://gradiaa.com/jobs";
+  return `
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:10px;font-size:14px;vertical-align:middle;">
+        ${label ? `<strong>${label}.</strong> ` : ""}${title}
+      </td>
+      <td style="border:1px solid #e5e7eb;padding:10px;font-size:13px;color:#047857;font-weight:600;white-space:nowrap;vertical-align:middle;">
+        ${salary || "Negotiable"}
+      </td>
+      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;vertical-align:middle;white-space:nowrap;">
+        <a href="${safeUrl}" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;display:inline-block;">Apply Now</a>
+      </td>
+    </tr>`;
+};
+
 const buildEmailHtml = (opts: {
   candidateName: string;
   jobRoles: string[];
+  jobSalaries: string[];
+  cvOpenings: { title: string; salary: string }[];
+  applyUrl: string;
   adminName: string;
   companyName: string;
   contactInfo: string;
@@ -91,9 +124,15 @@ const buildEmailHtml = (opts: {
   showPayment: boolean;
   showTerms: boolean;
 }) => {
-  const { candidateName, jobRoles, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms } = opts;
+  const { candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms } = opts;
+
+  const cvOpeningsRows = cvOpenings
+    .filter((o) => o.title && o.title.trim())
+    .map((o) => renderJobRow("", o.title, o.salary, applyUrl))
+    .join("");
+
   const roleList = Array.from({ length: 5 }, (_, i) =>
-    `<li>${String.fromCharCode(65 + i)}. ${jobRoles[i] || `Suitable Role ${i + 1}`}</li>`
+    renderJobRow(String.fromCharCode(65 + i), jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
   ).join("");
 
   const planTiers: {
@@ -224,17 +263,28 @@ const buildEmailHtml = (opts: {
   <p style="font-size:15px;line-height:1.6;">If you have any questions or need further assistance, please feel free to reach out to us.</p>
 
   <h3 style="color:#1e3a8a;margin-top:24px;">Based on your CV, suitable openings:</h3>
-  <ul style="font-size:14px;line-height:1.7;">
-    <li>Principal – State Board (Hyderabad)</li>
-    <li>Principal – State Board (Nizamabad)</li>
-    <li>Principal – CBSE Board</li>
-    <li>SME (Subject Matter Expert)</li>
-    <li>Resource Person</li>
-    <li>HOD / Senior Teacher</li>
-  </ul>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+    <thead>
+      <tr style="background:#f3f4f6;">
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Vacancy</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Salary</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Action</th>
+      </tr>
+    </thead>
+    <tbody>${cvOpeningsRows}</tbody>
+  </table>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;">Suitable Jobs according to your qualifications:</h3>
-  <ul style="font-size:14px;line-height:1.7;list-style:none;padding-left:0;">${roleList}</ul>
+  <h3 style="color:#1e3a8a;margin-top:24px;">Suitable Jobs according to your qualifications &amp; Experience:</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+    <thead>
+      <tr style="background:#f3f4f6;">
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Vacancy</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Salary</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Action</th>
+      </tr>
+    </thead>
+    <tbody>${roleList}</tbody>
+  </table>
 
   <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
   <p style="font-size:14px;">☐ With Interview &nbsp;&nbsp; ☐ Without Interview</p>
@@ -273,6 +323,9 @@ const InviteFromResume = () => {
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [jobRoles, setJobRoles] = useState<string[]>(["", "", "", "", ""]);
+  const [jobSalaries, setJobSalaries] = useState<string[]>(["", "", "", "", ""]);
+  const [cvOpenings, setCvOpenings] = useState<{ title: string; salary: string }[]>(DEFAULT_CV_OPENINGS);
+  const [applyUrl, setApplyUrl] = useState<string>("https://gradiaa.com/jobs");
 
   // Email
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
@@ -306,6 +359,9 @@ const InviteFromResume = () => {
           if (d.candidateName) setCandidateName(d.candidateName);
           if (d.candidateEmail) setCandidateEmail(d.candidateEmail);
           if (d.jobRoles) setJobRoles(d.jobRoles);
+          if (d.jobSalaries) setJobSalaries(d.jobSalaries);
+          if (d.cvOpenings) setCvOpenings(d.cvOpenings);
+          if (d.applyUrl) setApplyUrl(d.applyUrl);
           if (d.subject) setSubject(d.subject);
           if (d.adminName) setAdminName(d.adminName);
           if (d.companyName) setCompanyName(d.companyName);
@@ -398,6 +454,9 @@ const InviteFromResume = () => {
       buildEmailHtml({
         candidateName: candidateName || "Candidate",
         jobRoles,
+        jobSalaries,
+        cvOpenings,
+        applyUrl,
         adminName,
         companyName,
         contactInfo,
@@ -405,14 +464,14 @@ const InviteFromResume = () => {
         showPayment,
         showTerms,
       }),
-    [candidateName, jobRoles, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms]
+    [candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms]
   );
 
   const finalHtml = editedHtml ?? generatedHtml;
 
   const handleSaveDraft = () => {
     const payload = {
-      candidateName, candidateEmail, jobRoles, subject,
+      candidateName, candidateEmail, jobRoles, jobSalaries, cvOpenings, applyUrl, subject,
       adminName, companyName, contactInfo, editedHtml,
       showSubscription, showPayment, showTerms,
     };
@@ -602,15 +661,53 @@ const InviteFromResume = () => {
                     </div>
 
                     <div>
-                      <Label className="mb-2 block">Suggested Job Roles (AI-prefilled, editable)</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <Label className="mb-2 block">Apply Now Link (used for all "Apply Now" buttons in the email)</Label>
+                      <Input
+                        value={applyUrl}
+                        onChange={(e) => setApplyUrl(e.target.value)}
+                        placeholder="https://gradiaa.com/jobs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="mb-2 block">Suggested Job Roles &amp; Salaries (AI-prefilled, editable)</Label>
+                      <div className="space-y-2">
                         {jobRoles.map((r, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <span className="text-xs font-semibold w-5">{String.fromCharCode(65 + i)}.</span>
+                          <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                            <span className="text-xs font-semibold col-span-1 text-center">{String.fromCharCode(65 + i)}.</span>
                             <Input
+                              className="col-span-7"
                               value={r}
                               onChange={(e) => setJobRoles((prev) => prev.map((x, idx) => idx === i ? e.target.value : x))}
                               placeholder={`Job role ${i + 1}`}
+                            />
+                            <Input
+                              className="col-span-4"
+                              value={jobSalaries[i] || ""}
+                              onChange={(e) => setJobSalaries((prev) => prev.map((x, idx) => idx === i ? e.target.value : x))}
+                              placeholder="Salary (e.g. ₹40k–₹60k)"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="mb-2 block">CV-Based Suitable Openings (editable)</Label>
+                      <div className="space-y-2">
+                        {cvOpenings.map((o, i) => (
+                          <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                            <Input
+                              className="col-span-8"
+                              value={o.title}
+                              onChange={(e) => setCvOpenings((prev) => prev.map((x, idx) => idx === i ? { ...x, title: e.target.value } : x))}
+                              placeholder={`Opening ${i + 1}`}
+                            />
+                            <Input
+                              className="col-span-4"
+                              value={o.salary}
+                              onChange={(e) => setCvOpenings((prev) => prev.map((x, idx) => idx === i ? { ...x, salary: e.target.value } : x))}
+                              placeholder="Salary"
                             />
                           </div>
                         ))}
