@@ -232,6 +232,8 @@ export const UpgradePlanContent = () => {
           plan_name: `${selectedPlan.name} Plan (Upgrade)`,
           employer_id: user.id,
           receipt: `upg_${selectedPlan.id}_${Date.now()}`,
+          addon_points: addonPoints,
+          addon_services: selectedAddonList.map((s) => ({ id: s.id, name: s.name, points: s.points })),
         },
       });
 
