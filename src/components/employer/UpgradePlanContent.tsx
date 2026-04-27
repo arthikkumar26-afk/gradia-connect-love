@@ -690,8 +690,27 @@ export const UpgradePlanContent = () => {
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              The add-on total will be added to the plan price when you click <span className="font-semibold">Pay</span> on any paid plan above.
+              Click <span className="font-semibold">Buy Add-ons</span> to purchase only these services, or <span className="font-semibold">Pay</span> on any paid plan above to bundle them with your plan.
             </p>
+
+            {/* Buy add-ons standalone via Razorpay */}
+            <div className="mt-3 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between bg-background border border-border rounded-md p-3">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                A branded GST invoice will be emailed to <span className="font-semibold text-foreground">{user?.email || "your registered email"}</span> after payment.
+              </div>
+              <Button
+                onClick={handleBuyAddons}
+                disabled={loading === "addons" || !scriptLoaded || addonRupees <= 0}
+                size="sm"
+                className="shrink-0"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                {loading === "addons"
+                  ? "Processing…"
+                  : `Buy Add-ons – Pay ₹${addonRupees.toLocaleString("en-IN")}`}
+              </Button>
+            </div>
           </div>
         )}
       </Card>
