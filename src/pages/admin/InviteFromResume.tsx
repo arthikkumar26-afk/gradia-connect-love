@@ -7,7 +7,7 @@ import {
   ClipboardList, UserCog, MessageSquare, Ticket, Bell, BarChart3,
   FileText, Settings, ShieldCheck, Upload, Mail, Send, Loader2, FileUp,
   Sparkles, MapPin, Wand2, Search, Save, Database, Eye, FileEdit,
-  Activity, RefreshCw, Clock, CheckCircle2, XCircle, UserPlus,
+  Activity, RefreshCw, Clock, CheckCircle2, XCircle, UserPlus, LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
