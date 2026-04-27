@@ -139,6 +139,20 @@ export const UpgradePlanContent = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string } | null>(null);
   const [selectedPlanForCoupon, setSelectedPlanForCoupon] = useState<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState<Record<string, boolean>>({});
+
+  const toggleAddon = (id: string) =>
+    setSelectedAddons((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const { addonPoints, addonRupees, selectedAddonList } = useMemo(() => {
+    const list = addonServices.filter((s) => selectedAddons[s.id]);
+    const points = list.reduce((sum, s) => sum + s.points, 0);
+    return {
+      selectedAddonList: list,
+      addonPoints: points,
+      addonRupees: points * POINT_TO_RUPEE,
+    };
+  }, [selectedAddons]);
 
   // Load Razorpay checkout script once.
   useEffect(() => {
