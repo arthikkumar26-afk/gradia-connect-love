@@ -208,7 +208,8 @@ export const UpgradePlanContent = () => {
 
     const pointsCost = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : selectedPlan.points;
     // ₹5 = 1 point (project-wide wallet pricing). Razorpay charges in INR.
-    const amountInRupees = pointsCost * 5;
+    const planRupees = pointsCost * 5;
+    const amountInRupees = planRupees + addonRupees;
 
     if (amountInRupees <= 0) {
       toast({ title: "Invalid plan amount", description: "This plan can't be activated via payment.", variant: "destructive" });
