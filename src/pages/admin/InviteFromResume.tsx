@@ -274,11 +274,10 @@ const buildEmailHtml = (opts: {
   </style>
   <span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;font-size:1px;line-height:1px;mso-hide:all;overflow:hidden;">Job opportunities for ${candidateName} — ${uniqueRef}</span>
   <h2 style="color:#1e3a8a;margin:0 0 14px;font-size:18px;">Dear ${candidateName},</h2>
-  <p style="font-size:13px;line-height:1.6;">Greetings!</p>
-  <p style="font-size:13px;line-height:1.6;">We have received your resume/CV through our job portal. Thank you for your interest in exploring opportunities with us.</p>
-  <p style="font-size:13px;line-height:1.6;">Our team is currently reviewing your profile, and we will be scheduling the interview process at the earliest possible time. You will be notified with further details shortly.</p>
-  <p style="font-size:13px;line-height:1.6;">Additionally, based on your qualifications and experience, we will guide you toward job opportunities that closely match your profile.</p>
-  <p style="font-size:13px;line-height:1.6;">If you have any questions or need further assistance, please feel free to reach out to us.</p>
+  <p style="font-size:13px;line-height:1.6;">Greetings,</p>
+  <p style="font-size:13px;line-height:1.6;">Thank you for submitting your resume through our GRADIA job portal. We appreciate your interest in opportunities with us.</p>
+  <p style="font-size:13px;line-height:1.6;">Our team is currently reviewing your profile and will schedule the interview process soon. You will receive further details shortly. Based on your qualifications and experience, we will also guide you toward suitable job opportunities.</p>
+  <p style="font-size:13px;line-height:1.6;">If you have any questions or need assistance, feel free to contact us.</p>
 
   <h3 id="cv-openings-heading" style="color:#1e3a8a;margin-top:24px;font-weight:600;">Based on your CV, suitable openings:</h3>
   <table class="gradia-job-table" role="table" aria-labelledby="cv-openings-heading" style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
