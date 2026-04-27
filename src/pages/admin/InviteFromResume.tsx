@@ -250,7 +250,7 @@ const buildEmailHtml = (opts: {
   ${paymentBlock}
   ${termsBlock}
 
-  <p style="font-size:15px;margin-top:24px;">We will keep you updated with the next steps shortly.</p>
+  <p style="font-size:15px;margin-top:24px;">We will keep you updated shortly.</p>
   <p style="font-size:15px;margin-top:16px;">Best regards,<br/><strong>${adminName}</strong><br/>${companyName}<br/>${contactInfo}</p>
 </div>`;
 };
