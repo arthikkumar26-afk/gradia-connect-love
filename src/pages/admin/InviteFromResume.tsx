@@ -81,9 +81,42 @@ const buildSuggestedRoles = (p: ParsedResume | null): string[] => {
   return Array.from(roles).slice(0, 5);
 };
 
+const DEFAULT_CV_OPENINGS: { title: string; salary: string }[] = [
+  { title: "Principal – State Board (Hyderabad)", salary: "₹60,000 – ₹90,000 / month" },
+  { title: "Principal – State Board (Nizamabad)", salary: "₹55,000 – ₹85,000 / month" },
+  { title: "Principal – CBSE Board", salary: "₹70,000 – ₹1,10,000 / month" },
+  { title: "SME (Subject Matter Expert)", salary: "₹35,000 – ₹60,000 / month" },
+  { title: "Resource Person", salary: "₹25,000 – ₹45,000 / month" },
+  { title: "HOD / Senior Teacher", salary: "₹40,000 – ₹65,000 / month" },
+];
+
+const renderJobRow = (
+  label: string,
+  title: string,
+  salary: string,
+  applyUrl: string,
+) => {
+  const safeUrl = applyUrl && /^https?:\/\//i.test(applyUrl) ? applyUrl : "https://gradiaa.com/jobs";
+  return `
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:10px;font-size:14px;vertical-align:middle;">
+        ${label ? `<strong>${label}.</strong> ` : ""}${title}
+      </td>
+      <td style="border:1px solid #e5e7eb;padding:10px;font-size:13px;color:#047857;font-weight:600;white-space:nowrap;vertical-align:middle;">
+        ${salary || "Negotiable"}
+      </td>
+      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;vertical-align:middle;white-space:nowrap;">
+        <a href="${safeUrl}" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;display:inline-block;">Apply Now</a>
+      </td>
+    </tr>`;
+};
+
 const buildEmailHtml = (opts: {
   candidateName: string;
   jobRoles: string[];
+  jobSalaries: string[];
+  cvOpenings: { title: string; salary: string }[];
+  applyUrl: string;
   adminName: string;
   companyName: string;
   contactInfo: string;
@@ -91,9 +124,15 @@ const buildEmailHtml = (opts: {
   showPayment: boolean;
   showTerms: boolean;
 }) => {
-  const { candidateName, jobRoles, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms } = opts;
+  const { candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms } = opts;
+
+  const cvOpeningsRows = cvOpenings
+    .filter((o) => o.title && o.title.trim())
+    .map((o) => renderJobRow("", o.title, o.salary, applyUrl))
+    .join("");
+
   const roleList = Array.from({ length: 5 }, (_, i) =>
-    `<li>${String.fromCharCode(65 + i)}. ${jobRoles[i] || `Suitable Role ${i + 1}`}</li>`
+    renderJobRow(String.fromCharCode(65 + i), jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
   ).join("");
 
   const planTiers: {
