@@ -139,13 +139,15 @@ export const MyVacanciesContent = () => {
         .in("id", candidateIds),
       supabase
         .from("cv_unlocks")
-        .select("candidate_id")
+        .select("application_id, candidate_id")
         .eq("employer_id", user!.id)
         .eq("job_id", job.id)
         .in("candidate_id", candidateIds),
     ]);
 
-    const unlockedSet = new Set((unlocks || []).map((u: any) => u.candidate_id));
+    const unlockedAppIds = new Set(
+      (unlocks || []).map((u: any) => u.application_id).filter(Boolean)
+    );
     const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
 
     const rows: ApplicantRow[] = apps.map((a: any) => {
@@ -160,7 +162,7 @@ export const MyVacanciesContent = () => {
         resume_url: p.resume_url || null,
         applied_date: a.applied_date,
         status: a.status,
-        unlocked: unlockedSet.has(a.candidate_id),
+        unlocked: unlockedAppIds.has(a.id),
       };
     });
 
@@ -217,11 +219,12 @@ export const MyVacanciesContent = () => {
         description: `Unlocked CV: ${confirmUnlock.full_name || "Candidate"} for ${selectedJob.job_title}`,
       });
 
-      // Insert unlock record
+      // Insert unlock record (per application, not per candidate)
       const { error: unlockErr } = await supabase.from("cv_unlocks").insert({
         employer_id: user.id,
         candidate_id: confirmUnlock.candidate_id,
         job_id: selectedJob.id,
+        application_id: confirmUnlock.applicationId,
         points_spent: UNLOCK_COST,
       });
       if (unlockErr && !unlockErr.message?.includes("duplicate")) throw unlockErr;
