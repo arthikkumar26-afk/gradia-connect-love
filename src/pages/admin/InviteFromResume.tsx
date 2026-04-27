@@ -294,6 +294,14 @@ const buildEmailHtml = (opts: {
     <tr style="background:#f3f4f6;"><th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">With Interview</th><th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Without Interview</th></tr>
     <tr><td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">• Selection based on interview performance<br/>• Direct interaction with employer<br/>• Multi-stage evaluation<br/>• Higher transparency</td>
         <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">• Selection based on resume/profile<br/>• Faster hiring process<br/>• Limited interaction<br/>• Quick employer decision</td></tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;">
+        <a href="https://gradiaa.com/candidate/signup?mode=with-interview" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 14px;border-radius:6px;display:inline-block;">Sign Up – With Interview</a>
+      </td>
+      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;">
+        <a href="https://gradiaa.com/candidate/signup?mode=without-interview" style="background:#047857;color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 14px;border-radius:6px;display:inline-block;">Sign Up – Without Interview</a>
+      </td>
+    </tr>
   </table>
 
   ${subscriptionBlock}
