@@ -423,33 +423,105 @@ const InviteFromResume = () => {
     })();
   }, [navigate]);
 
-  const loadCandidates = async () => {
-    setLoadingCandidates(true);
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, email, mobile, location, resume_url, preferred_role")
-        .eq("role", "candidate")
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      setCandidates((data || []) as CandidateRow[]);
-    } catch (e: any) {
-      toast.error(e.message || "Failed to load candidates");
-    } finally {
-      setLoadingCandidates(false);
+  const handleBulkFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setBulkParsing(true);
+    const initial: BulkRow[] = files.map((f) => ({
+      id: `${f.name}-${f.size}-${Math.random().toString(36).slice(2, 8)}`,
+      fileName: f.name,
+      name: "",
+      email: "",
+      status: "parsing",
+    }));
+    setBulkRows((prev) => [...prev, ...initial]);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const rowId = initial[i].id;
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const { data, error } = await supabase.functions.invoke("parse-resume", { body: fd });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        const name = data?.full_name || "";
+        const email = data?.email || "";
+        setBulkRows((prev) => prev.map((r) => r.id === rowId ? {
+          ...r,
+          name,
+          email,
+          status: email ? "ready" : "failed",
+          error: email ? undefined : "No email found in resume",
+        } : r));
+      } catch (err: any) {
+        setBulkRows((prev) => prev.map((r) => r.id === rowId ? {
+          ...r,
+          status: "failed",
+          error: err.message || "Parse failed",
+        } : r));
+      }
     }
+    setBulkParsing(false);
+    if (e.target) e.target.value = "";
+    toast.success(`Parsed ${files.length} resume${files.length > 1 ? "s" : ""}`);
   };
 
-  const filteredCandidates = useMemo(() => {
-    const q = candidateSearch.trim().toLowerCase();
-    if (!q) return candidates;
-    return candidates.filter((c) =>
-      [c.full_name, c.email, c.mobile, c.location, c.preferred_role]
-        .filter(Boolean)
-        .some((v) => (v as string).toLowerCase().includes(q))
-    );
-  }, [candidates, candidateSearch]);
+  const removeBulkRow = (id: string) => {
+    setBulkRows((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const updateBulkRow = (id: string, patch: Partial<BulkRow>) => {
+    setBulkRows((prev) => prev.map((r) => r.id === id ? { ...r, ...patch } : r));
+  };
+
+  const clearBulk = () => setBulkRows([]);
+
+  const sendBulk = async () => {
+    const recipients = bulkRows.filter((r) => r.email && r.email.includes("@") && r.status !== "sent");
+    if (!recipients.length) {
+      toast.error("No valid recipients to send to");
+      return;
+    }
+    if (!subject.trim()) {
+      toast.error("Subject is required (set it in the Preview tab)");
+      return;
+    }
+    setBulkSending(true);
+    let successCount = 0;
+    let failCount = 0;
+    for (const row of recipients) {
+      updateBulkRow(row.id, { status: "sending" });
+      try {
+        const personalizedHtml = buildEmailHtml({
+          candidateName: row.name || "Candidate",
+          jobRoles,
+          jobSalaries,
+          cvOpenings,
+          applyUrl,
+          adminName,
+          companyName,
+          contactInfo,
+          showSubscription,
+          showPayment,
+          showTerms,
+        });
+        const { data, error } = await supabase.functions.invoke("send-resume-invite-email", {
+          body: { to: row.email.trim(), subject: subject.trim(), html: personalizedHtml, fromName: companyName },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        updateBulkRow(row.id, { status: "sent" });
+        successCount++;
+        await new Promise((r) => setTimeout(r, 250));
+      } catch (err: any) {
+        updateBulkRow(row.id, { status: "failed", error: err.message || "Send failed" });
+        failCount++;
+      }
+    }
+    setBulkSending(false);
+    toast.success(`Bulk send complete: ${successCount} sent, ${failCount} failed`);
+  };
 
   const applyParsed = (p: ParsedResume) => {
     setParsed(p);
