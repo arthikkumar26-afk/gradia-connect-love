@@ -144,10 +144,9 @@ const buildEmailHtml = (opts: {
   companyName: string;
   contactInfo: string;
   showSubscription: boolean;
-  showPayment: boolean;
   showTerms: boolean;
 }) => {
-  const { candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms } = opts;
+  const { candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showTerms } = opts;
 
   const cvOpeningsRows = cvOpenings
     .filter((o) => o.title && o.title.trim())
@@ -250,25 +249,7 @@ const buildEmailHtml = (opts: {
     </table>` : "";
 
 
-  const paymentBlock = showPayment ? `
-    <h3 style="color:#1e3a8a;margin-top:24px;">💳 Payment Methods</h3>
-    <ul style="font-size:14px;line-height:1.7;">
-      <li>UPI (GPay, PhonePe, Paytm, BHIM)</li>
-      <li>Credit / Debit Cards</li>
-      <li>Net Banking</li>
-      <li>Wallets</li>
-      <li>Bank Transfer</li>
-    </ul>
-    <div style="background:#fff7ed;border-left:4px solid #f97316;padding:12px;margin-top:12px;font-size:13px;">
-      <strong>Important Notes:</strong>
-      <ul style="margin:6px 0 0 18px;padding:0;line-height:1.7;">
-        <li>All payments are processed through secure payment gateways.</li>
-        <li>Please ensure you receive a payment confirmation/receipt after successful transaction.</li>
-        <li>Subscription will be activated only after payment verification.</li>
-        <li>Fees once paid are non-refundable unless stated otherwise in our policy.</li>
-      </ul>
-      <p style="margin:10px 0 0;font-size:13px;">If you need assistance with payment or have any questions, feel free to contact us.</p>
-    </div>` : "";
+
 
   const termsBlock = showTerms ? `
     <h3 style="color:#1e3a8a;margin-top:24px;">📜 Terms &amp; Conditions</h3>
@@ -362,7 +343,6 @@ const buildEmailHtml = (opts: {
   <p style="font-size:13px;margin-top:10px;color:#6b7280;"><strong>Please note:</strong> Subscription plans enhance your job search experience and support but do not guarantee job placement. Feel free to contact us if you need help selecting a plan.</p>
 
   ${subscriptionBlock}
-  ${paymentBlock}
   ${termsBlock}
 
   <p style="font-size:15px;margin-top:24px;">We will keep you updated shortly.</p>
@@ -403,7 +383,6 @@ const InviteFromResume = () => {
   const [companyName, setCompanyName] = useState("Gradia");
   const [contactInfo, setContactInfo] = useState("info@gradiaa.com");
   const [showSubscription, setShowSubscription] = useState(true);
-  const [showPayment, setShowPayment] = useState(true);
   const [showTerms, setShowTerms] = useState(true);
   const [editedHtml, setEditedHtml] = useState<string | null>(null);
 
@@ -481,7 +460,6 @@ const InviteFromResume = () => {
           if (d.contactInfo) setContactInfo(d.contactInfo);
           if (typeof d.editedHtml === "string") setEditedHtml(d.editedHtml);
           if (typeof d.showSubscription === "boolean") setShowSubscription(d.showSubscription);
-          if (typeof d.showPayment === "boolean") setShowPayment(d.showPayment);
           if (typeof d.showTerms === "boolean") setShowTerms(d.showTerms);
         }
       } catch { /* ignore */ }
@@ -576,7 +554,6 @@ const InviteFromResume = () => {
           companyName,
           contactInfo,
           showSubscription,
-          showPayment,
           showTerms,
         });
         const { data, error } = await supabase.functions.invoke("send-resume-invite-email", {
@@ -639,10 +616,9 @@ const InviteFromResume = () => {
         companyName,
         contactInfo,
         showSubscription,
-        showPayment,
         showTerms,
       }),
-    [candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms]
+    [candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showTerms]
   );
 
   const finalHtml = editedHtml ?? generatedHtml;
@@ -651,7 +627,7 @@ const InviteFromResume = () => {
     const payload = {
       candidateName, candidateEmail, jobRoles, jobSalaries, cvOpenings, applyUrl, subject,
       adminName, companyName, contactInfo, editedHtml,
-      showSubscription, showPayment, showTerms,
+      showSubscription, showTerms,
     };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
     toast.success("Draft saved locally");
@@ -995,10 +971,6 @@ const InviteFromResume = () => {
                           <Switch checked={showSubscription} onCheckedChange={setShowSubscription} />
                         </div>
                         <div className="flex items-center justify-between">
-                          <Label className="text-sm font-normal">Payment Methods</Label>
-                          <Switch checked={showPayment} onCheckedChange={setShowPayment} />
-                        </div>
-                        <div className="flex items-center justify-between">
                           <Label className="text-sm font-normal">Terms &amp; Conditions</Label>
                           <Switch checked={showTerms} onCheckedChange={setShowTerms} />
                         </div>
@@ -1076,7 +1048,7 @@ const InviteFromResume = () => {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Sections enabled</span>
                         <span className="font-medium text-xs">
-                          {[showSubscription && "Subscription", showPayment && "Payment", showTerms && "Terms"].filter(Boolean).join(", ") || "Core only"}
+                          {[showSubscription && "Subscription", showTerms && "Terms"].filter(Boolean).join(", ") || "Core only"}
                         </span>
                       </div>
                     </div>
