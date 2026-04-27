@@ -685,7 +685,7 @@ const InviteFromResume = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-muted/30">
         <Sidebar>
-          <SidebarContent>
+          <SidebarContent className="flex flex-col h-full">
             <div className="p-4 border-b">
               <Link to="/admin/dashboard" className="flex items-center gap-2">
                 <ShieldCheck className="h-6 w-6 text-primary" />
@@ -709,6 +709,16 @@ const InviteFromResume = () => {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+            <div className="mt-auto p-4 border-t">
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            </div>
           </SidebarContent>
         </Sidebar>
 
