@@ -701,10 +701,11 @@ const InviteFromResume = () => {
 
           <div className="p-6 max-w-6xl mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid grid-cols-3 w-full max-w-xl mx-auto mb-6">
+              <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto mb-6">
                 <TabsTrigger value="resume"><FileText className="h-4 w-4 mr-2" />Resume Info</TabsTrigger>
                 <TabsTrigger value="preview"><Eye className="h-4 w-4 mr-2" />Email Preview</TabsTrigger>
                 <TabsTrigger value="send"><Send className="h-4 w-4 mr-2" />Send</TabsTrigger>
+                <TabsTrigger value="status"><Activity className="h-4 w-4 mr-2" />Invite Status</TabsTrigger>
               </TabsList>
 
               {/* TAB 1: RESUME INFO */}
