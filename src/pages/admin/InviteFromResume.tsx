@@ -625,7 +625,7 @@ const InviteFromResume = () => {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-resume-invite-email", {
-        body: { to: candidateEmail.trim(), subject: subject.trim(), html: finalHtml, fromName: companyName },
+        body: { to: candidateEmail.trim(), subject: subject.trim(), html: finalHtml, fromName: companyName, candidateName: candidateName || null },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
