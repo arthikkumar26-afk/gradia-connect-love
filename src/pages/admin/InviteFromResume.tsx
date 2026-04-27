@@ -223,7 +223,7 @@ const buildEmailHtml = (opts: {
   <p style="font-size:15px;line-height:1.6;">Additionally, based on your qualifications and experience, we will guide you toward job opportunities that closely match your profile.</p>
   <p style="font-size:15px;line-height:1.6;">If you have any questions or need further assistance, please feel free to reach out to us.</p>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;">STEP 2 — Based on your CV, suitable openings:</h3>
+  <h3 style="color:#1e3a8a;margin-top:24px;">Based on your CV, suitable openings:</h3>
   <ul style="font-size:14px;line-height:1.7;">
     <li>Principal – State Board (Hyderabad)</li>
     <li>Principal – State Board (Nizamabad)</li>
