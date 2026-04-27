@@ -156,7 +156,7 @@ const buildEmailHtml = (opts: {
     .map((o) => renderJobRow("", o.title, o.salary, applyUrl))
     .join("");
 
-  const roleCount = Math.min(4, Math.max(jobRoles.length, jobSalaries.length, 1));
+  const roleCount = Math.min(3, Math.max(jobRoles.length, jobSalaries.length, 1));
   const roleList = Array.from({ length: roleCount }, (_, i) =>
     renderJobRow("", jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
   ).join("");
