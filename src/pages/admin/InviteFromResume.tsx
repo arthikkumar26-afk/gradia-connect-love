@@ -144,10 +144,9 @@ const buildEmailHtml = (opts: {
   companyName: string;
   contactInfo: string;
   showSubscription: boolean;
-  showPayment: boolean;
   showTerms: boolean;
 }) => {
-  const { candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms } = opts;
+  const { candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showTerms } = opts;
 
   const cvOpeningsRows = cvOpenings
     .filter((o) => o.title && o.title.trim())
