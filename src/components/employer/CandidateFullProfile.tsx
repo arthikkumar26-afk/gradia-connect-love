@@ -1146,10 +1146,10 @@ export const CandidateFullProfile = () => {
             <AlertDialogDescription className="space-y-2 pt-2">
               <span className="block">
                 To take interviews with <strong>{candidate?.name}</strong>, pay{" "}
-                <strong>₹{INTERVIEW_UNLOCK_COST}</strong> from your wallet.
+                <strong>{INTERVIEW_UNLOCK_COST} pts</strong> from your wallet.
               </span>
               <span className="block text-sm">
-                Your balance: <strong>₹{walletPoints}</strong>
+                Your balance: <strong>{walletPoints} pts</strong>
                 {walletPoints < INTERVIEW_UNLOCK_COST && (
                   <span className="text-destructive"> — Insufficient balance</span>
                 )}
@@ -1165,7 +1165,7 @@ export const CandidateFullProfile = () => {
               onClick={(e) => { e.preventDefault(); handleConfirmUnlock(); }}
               disabled={unlocking || walletPoints < INTERVIEW_UNLOCK_COST}
             >
-              {unlocking ? 'Processing...' : `Pay ₹${INTERVIEW_UNLOCK_COST}`}
+              {unlocking ? 'Processing...' : `Pay ${INTERVIEW_UNLOCK_COST} pts`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

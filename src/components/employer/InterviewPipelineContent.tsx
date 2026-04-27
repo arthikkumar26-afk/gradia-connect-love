@@ -3185,7 +3185,7 @@ export const InterviewPipelineContent = () => {
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-primary/30 bg-primary/5">
             <Wallet className="h-4 w-4 text-primary" />
             <div className="leading-tight">
-              <p className="text-sm font-bold text-foreground">₹{walletPoints.toLocaleString()}</p>
+              <p className="text-sm font-bold text-foreground">{walletPoints.toLocaleString()} pts</p>
               <p className="text-[10px] text-muted-foreground">Wallet Balance</p>
             </div>
           </div>
