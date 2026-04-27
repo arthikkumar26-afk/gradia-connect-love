@@ -249,25 +249,7 @@ const buildEmailHtml = (opts: {
     </table>` : "";
 
 
-  const paymentBlock = showPayment ? `
-    <h3 style="color:#1e3a8a;margin-top:24px;">💳 Payment Methods</h3>
-    <ul style="font-size:14px;line-height:1.7;">
-      <li>UPI (GPay, PhonePe, Paytm, BHIM)</li>
-      <li>Credit / Debit Cards</li>
-      <li>Net Banking</li>
-      <li>Wallets</li>
-      <li>Bank Transfer</li>
-    </ul>
-    <div style="background:#fff7ed;border-left:4px solid #f97316;padding:12px;margin-top:12px;font-size:13px;">
-      <strong>Important Notes:</strong>
-      <ul style="margin:6px 0 0 18px;padding:0;line-height:1.7;">
-        <li>All payments are processed through secure payment gateways.</li>
-        <li>Please ensure you receive a payment confirmation/receipt after successful transaction.</li>
-        <li>Subscription will be activated only after payment verification.</li>
-        <li>Fees once paid are non-refundable unless stated otherwise in our policy.</li>
-      </ul>
-      <p style="margin:10px 0 0;font-size:13px;">If you need assistance with payment or have any questions, feel free to contact us.</p>
-    </div>` : "";
+
 
   const termsBlock = showTerms ? `
     <h3 style="color:#1e3a8a;margin-top:24px;">📜 Terms &amp; Conditions</h3>
