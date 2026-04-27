@@ -831,7 +831,7 @@ const InviteFromResume = () => {
                       <Input
                         value={applyUrl}
                         onChange={(e) => setApplyUrl(e.target.value)}
-                        placeholder="https://gradiaa.com/jobs"
+                        placeholder="https://gradiaa.com/jobs-results"
                       />
                     </div>
 
