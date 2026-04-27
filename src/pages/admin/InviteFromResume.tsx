@@ -121,17 +121,17 @@ const renderJobRow = (
 ) => {
   const safeUrl = buildApplyUrl(applyUrl, title);
   return `
-    <tr>
-      <td style="border:1px solid #e5e7eb;padding:10px;font-size:14px;vertical-align:middle;">
+    <div style="border:1px solid #e5e7eb;border-radius:6px;padding:14px 16px;margin-bottom:10px;background:#ffffff;">
+      <div style="font-size:14px;color:#111827;margin-bottom:6px;">
         ${label ? `<strong>${label}.</strong> ` : ""}${title}
-      </td>
-      <td style="border:1px solid #e5e7eb;padding:10px;font-size:13px;color:#047857;font-weight:600;white-space:nowrap;vertical-align:middle;">
+      </div>
+      <div style="font-size:13px;color:#047857;font-weight:600;margin-bottom:10px;">
         ${salary || "Negotiable"}
-      </td>
-      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;vertical-align:middle;white-space:nowrap;">
+      </div>
+      <div>
         <a href="${safeUrl}" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;display:inline-block;">Apply Now</a>
-      </td>
-    </tr>`;
+      </div>
+    </div>`;
 };
 
 const buildEmailHtml = (opts: {
