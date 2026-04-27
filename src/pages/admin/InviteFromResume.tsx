@@ -348,9 +348,34 @@ const buildEmailHtml = (opts: {
 
   <h3 style="color:#1e3a8a;margin-top:24px;">⚖️ Comparison Overview</h3>
   <table style="width:100%;border-collapse:collapse;font-size:13px;">
-    <tr style="background:#f3f4f6;"><th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">With Interview</th><th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Without Interview</th></tr>
-    <tr><td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">• Selection based on interview performance<br/>• Direct interaction with employer<br/>• Multi-stage evaluation<br/>• Higher transparency</td>
-        <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">• Selection based on resume/profile<br/>• Faster hiring process<br/>• Limited interaction<br/>• Quick employer decision</td></tr>
+    <tr style="background:#f3f4f6;">
+      <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#dc2626;">With GRADIAA</th>
+      <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#dc2626;">Without GRADIAA</th>
+    </tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;"><u>Internal Interview Process</u></td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">A. Interview will be conducted by management</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Review Your Feedback</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">B. Decision will be based on the employer</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Strengths and Weaknesses</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">C. Selected – Direct joining</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Areas for Improvement</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">D. Rejected – No further opportunity</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Selected – Recommended to Management</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">E. No suggestions or recommendations provided</td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">Rejected – Suggested for Training/Improvement</td>
+      <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">&nbsp;</td>
+    </tr>
     <tr>
       <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;">
         <a href="https://gradiaa.com/candidate/signup?mode=with-interview" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 14px;border-radius:6px;display:inline-block;">Sign Up – With Interview</a>
