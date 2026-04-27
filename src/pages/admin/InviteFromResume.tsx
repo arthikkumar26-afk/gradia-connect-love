@@ -376,10 +376,19 @@ const InviteFromResume = () => {
   const [showTerms, setShowTerms] = useState(true);
   const [editedHtml, setEditedHtml] = useState<string | null>(null);
 
-  // Candidate DB selector
-  const [candidateSearch, setCandidateSearch] = useState("");
-  const [candidates, setCandidates] = useState<CandidateRow[]>([]);
-  const [loadingCandidates, setLoadingCandidates] = useState(false);
+  // Bulk send
+  const bulkFileRef = useRef<HTMLInputElement>(null);
+  type BulkRow = {
+    id: string;
+    fileName: string;
+    name: string;
+    email: string;
+    status: "pending" | "parsing" | "ready" | "sending" | "sent" | "failed";
+    error?: string;
+  };
+  const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
+  const [bulkParsing, setBulkParsing] = useState(false);
+  const [bulkSending, setBulkSending] = useState(false);
 
   useEffect(() => {
     (async () => {
