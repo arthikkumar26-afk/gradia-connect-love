@@ -180,9 +180,70 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
             Interview Pipeline Stages ({stages.length})
           </h4>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={openAddDialog} className="gap-1 h-7 text-xs">
-          <Plus className="h-3 w-3" /> Add Stage
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Popover open={showStagePicker} onOpenChange={setShowStagePicker}>
+            <PopoverTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="gap-1 h-7 text-xs">
+                <Library className="h-3 w-3" /> Browse Existing
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[420px] p-0">
+              <Command>
+                <CommandInput placeholder="Search existing stages by name..." />
+                <CommandList className="max-h-[320px]">
+                  <CommandEmpty>No matching stages found.</CommandEmpty>
+                  <CommandGroup heading={`From other pipelines (${stageCatalog.length})`}>
+                    {stageCatalog.map((cs) => {
+                      const used = existingNames.has(cs.name.trim().toLowerCase());
+                      return (
+                        <CommandItem
+                          key={cs.name}
+                          value={`${cs.name} ${cs.description}`}
+                          onSelect={() => {
+                            if (used) {
+                              toast.info(`"${cs.name}" is already in this pipeline.`);
+                              return;
+                            }
+                            const newStage: PipelineStage = {
+                              order: stages.length + 1,
+                              name: cs.name,
+                              description: cs.description,
+                              isAutomated: cs.isAutomated,
+                              ...(cs.isOptional ? { isOptional: true } : {}),
+                            };
+                            onStagesChange([...stages, newStage]);
+                            setShowStagePicker(false);
+                            toast.success(`Added "${cs.name}" stage.`);
+                          }}
+                          className="items-start gap-2"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium truncate">{cs.name}</span>
+                              <Badge variant={cs.isAutomated ? "default" : "outline"} className="text-[9px] h-4 px-1 gap-0.5">
+                                {cs.isAutomated ? <Bot className="h-2.5 w-2.5" /> : <User className="h-2.5 w-2.5" />}
+                                {cs.isAutomated ? "AI" : "Manual"}
+                              </Badge>
+                              {used && <Check className="h-3 w-3 text-green-600 ml-auto" />}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground truncate">{cs.description}</p>
+                            <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
+                              Used in: {cs.sources.slice(0, 2).join(", ")}{cs.sources.length > 2 ? ` +${cs.sources.length - 2} more` : ""}
+                            </p>
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+          <Button type="button" variant="outline" size="sm" onClick={openAddDialog} className="gap-1 h-7 text-xs">
+            <Plus className="h-3 w-3" /> Add Stage
+          </Button>
+        </div>
+
       </div>
 
       <div className="space-y-2">
