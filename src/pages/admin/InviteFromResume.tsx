@@ -273,7 +273,7 @@ const buildEmailHtml = (opts: {
   <p style="font-size:15px;line-height:1.6;">Additionally, based on your qualifications and experience, we will guide you toward job opportunities that closely match your profile.</p>
   <p style="font-size:15px;line-height:1.6;">If you have any questions or need further assistance, please feel free to reach out to us.</p>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;">Based on your CV, suitable openings:</h3>
+  <h3 style="color:#1e3a8a;margin-top:24px;font-weight:600;">Based on your CV, suitable openings:</h3>
   <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
     <thead>
       <tr style="background:#f3f4f6;">
@@ -285,7 +285,7 @@ const buildEmailHtml = (opts: {
     <tbody>${cvOpeningsRows}</tbody>
   </table>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;">Suitable Jobs according to your qualifications &amp; Experience:</h3>
+  <h3 style="color:#1e3a8a;margin-top:24px;font-weight:600;">Suitable Jobs according to your qualifications &amp; Experience:</h3>
   <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
     <thead>
       <tr style="background:#f3f4f6;">
