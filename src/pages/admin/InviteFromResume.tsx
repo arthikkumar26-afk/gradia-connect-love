@@ -78,8 +78,8 @@ const buildSuggestedRoles = (p: ParsedResume | null): string[] => {
   const roles = new Set<string>();
   if (p.preferred_role) roles.add(p.preferred_role);
   (p.experience || []).forEach((e) => e.designation && roles.add(e.designation));
-  (p.skills || []).slice(0, 3).forEach((s) => roles.add(`${s} Specialist`));
-  return Array.from(roles).slice(0, 5);
+  (p.skills || []).forEach((s) => roles.add(`${s} Specialist`));
+  return Array.from(roles);
 };
 
 const DEFAULT_CV_OPENINGS: { title: string; salary: string }[] = [
