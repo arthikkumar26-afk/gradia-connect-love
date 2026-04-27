@@ -102,6 +102,34 @@ const specialFeatures = [
   { icon: Share2, title: "SMM Marketing Suite", desc: "AI flyers, one-click social sharing across platforms" },
 ];
 
+// Add-on services priced in wallet points (1 pt = ₹5).
+const POINT_TO_RUPEE = 5;
+
+interface AddonService {
+  id: string;
+  name: string;
+  description: string;
+  points: number;
+}
+
+const addonServices: AddonService[] = [
+  { id: 'vacancy_list', name: 'Vacancy List', description: 'Browse and manage all open vacancies in one place.', points: 320 },
+  { id: 'smart_assessment', name: 'Smart Assessment', description: 'AI-powered candidate assessment & scoring engine.', points: 480 },
+  { id: 'test_papers', name: 'Test Papers', description: 'Custom test paper creation and assignment toolkit.', points: 360 },
+  { id: 'smm', name: 'SMM (Social Media Marketing)', description: 'Auto-post jobs to LinkedIn, Facebook, Instagram & more.', points: 540 },
+  { id: 'my_vacancies', name: 'My Vacancies', description: 'Centralised vacancy templates & quick re-posting.', points: 310 },
+  { id: 'candidate_data', name: 'Candidate Data', description: 'Talent pool with advanced multi-criteria filters.', points: 620 },
+  { id: 'interview_pipeline', name: 'Interview Pipeline', description: 'End-to-end automated hiring pipeline & rounds.', points: 720 },
+  { id: 'email_template', name: 'Email Template', description: 'Branded transactional & marketing email templates.', points: 340 },
+  { id: 'feedback_matrix', name: 'Feedback Matrix', description: 'Structured observer feedback across all rounds.', points: 410 },
+  { id: 'candidate_confirmation', name: 'Candidate Confirmation', description: 'Automated joining & onboarding confirmations.', points: 380 },
+  { id: 'offer_letter', name: 'Offer Letter', description: 'AI-generated, brand-styled offer letter automation.', points: 560 },
+  { id: 'approvals', name: 'Approvals', description: 'Multi-level internal approval workflow tools.', points: 330 },
+  { id: 'candidates', name: 'Candidates', description: 'Unified directory of all registered candidates.', points: 470 },
+  { id: 'campaigns', name: 'Campaigns', description: 'Email & invite campaigns with tracking analytics.', points: 520 },
+  { id: 'suggested_candidates', name: 'Suggested Candidates', description: 'AI-recommended candidates matching your roles.', points: 690 },
+];
+
 export const UpgradePlanContent = () => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
