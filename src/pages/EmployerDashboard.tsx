@@ -81,6 +81,7 @@ import { AllCandidatesContent } from "@/components/employer/AllCandidatesContent
 
 import WalletTab from "@/components/candidate/WalletTab";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
+import { BranchProjectionContent } from "@/components/employer/BranchProjectionContent";
 import { EmployerNotifications } from "@/components/employer/EmployerNotifications";
 
 const EmployerDashboard = () => {
