@@ -1,11 +1,61 @@
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Building2, Users, UserCog, Briefcase, User, Map, Globe2, Compass } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import {
+  Building2,
+  Users,
+  UserCog,
+  Briefcase,
+  User,
+  Map,
+  Globe2,
+  Compass,
+  MapPin,
+  Eye,
+  UserPlus,
+  Pencil,
+  Phone,
+} from "lucide-react";
+
+type BranchDetails = {
+  location: string;
+  headcount: number;
+  manager: string;
+  contact: string;
+};
 
 type TreeNode = {
   label: string;
   icon: React.ElementType;
   color: string;
   children?: TreeNode[];
+  branchDetails?: BranchDetails;
+};
+
+const branchA: BranchDetails = {
+  location: "Bangalore, Karnataka",
+  headcount: 124,
+  manager: "Anita Rao",
+  contact: "+91 98450 12345",
+};
+const branchB: BranchDetails = {
+  location: "Hyderabad, Telangana",
+  headcount: 86,
+  manager: "Rahul Verma",
+  contact: "+91 99887 65432",
+};
+const branchC: BranchDetails = {
+  location: "Mumbai, Maharashtra",
+  headcount: 152,
+  manager: "Priya Nair",
+  contact: "+91 90000 11223",
 };
 
 const rootChildren: TreeNode[] = [
@@ -14,9 +64,9 @@ const rootChildren: TreeNode[] = [
     icon: Building2,
     color: "bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-300",
     children: [
-      { label: "Branch A", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
-      { label: "Branch B", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
-      { label: "Branch C", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
+      { label: "Branch A", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20", branchDetails: branchA },
+      { label: "Branch B", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20", branchDetails: branchB },
+      { label: "Branch C", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20", branchDetails: branchC },
     ],
   },
   {
@@ -75,31 +125,50 @@ const rootChildren: TreeNode[] = [
   },
 ];
 
-const NodeBox = ({ node }: { node: TreeNode }) => {
+type SelectedBranch = { name: string; details: BranchDetails } | null;
+
+const NodeBox = ({
+  node,
+  onBranchClick,
+}: {
+  node: TreeNode;
+  onBranchClick?: (name: string, details: BranchDetails) => void;
+}) => {
   const Icon = node.icon;
+  const isClickable = !!node.branchDetails;
   return (
-    <div
-      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 shadow-sm ${node.color} font-medium text-sm whitespace-nowrap`}
+    <button
+      type="button"
+      disabled={!isClickable}
+      onClick={() => isClickable && onBranchClick?.(node.label, node.branchDetails!)}
+      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 shadow-sm ${node.color} font-medium text-sm whitespace-nowrap transition ${
+        isClickable ? "cursor-pointer hover:scale-[1.03] hover:shadow-md" : "cursor-default"
+      }`}
     >
       <Icon className="h-4 w-4" />
       <span>{node.label}</span>
-    </div>
+    </button>
   );
 };
 
-const TreeBranch = ({ node, isRoot = false }: { node: TreeNode; isRoot?: boolean }) => {
+const TreeBranch = ({
+  node,
+  onBranchClick,
+}: {
+  node: TreeNode;
+  isRoot?: boolean;
+  onBranchClick?: (name: string, details: BranchDetails) => void;
+}) => {
   const hasChildren = node.children && node.children.length > 0;
 
   return (
     <div className="flex flex-col items-center">
-      <NodeBox node={node} />
+      <NodeBox node={node} onBranchClick={onBranchClick} />
 
       {hasChildren && (
         <>
-          {/* vertical line down from parent */}
           <div className="w-px h-6 bg-border" />
 
-          {/* horizontal connector */}
           <div className="relative flex items-start justify-center gap-6 md:gap-10">
             {node.children!.length > 1 && (
               <div
@@ -113,9 +182,8 @@ const TreeBranch = ({ node, isRoot = false }: { node: TreeNode; isRoot?: boolean
 
             {node.children!.map((child, idx) => (
               <div key={idx} className="flex flex-col items-center">
-                {/* vertical line up from child */}
                 <div className="w-px h-6 bg-border" />
-                <TreeBranch node={child} />
+                <TreeBranch node={child} onBranchClick={onBranchClick} />
               </div>
             ))}
           </div>
@@ -126,19 +194,25 @@ const TreeBranch = ({ node, isRoot = false }: { node: TreeNode; isRoot?: boolean
 };
 
 export const BranchProjectionContent = () => {
+  const [selected, setSelected] = useState<SelectedBranch>(null);
+
+  const handleBranchClick = (name: string, details: BranchDetails) => {
+    setSelected({ name, details });
+  };
+
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold text-foreground">Branch Projection</h3>
         <p className="text-sm text-muted-foreground">
-          Visualize your organization structure across branches, HR teams, and management hierarchy.
+          Visualize your organization structure across branches, HR teams, and management hierarchy. Click a branch for details.
         </p>
       </div>
 
       <Card className="p-6 md:p-10 overflow-x-auto">
         <div className="min-w-fit mx-auto flex items-start justify-center gap-6 md:gap-10">
           {rootChildren.map((node, idx) => (
-            <TreeBranch key={idx} node={node} isRoot />
+            <TreeBranch key={idx} node={node} isRoot onBranchClick={handleBranchClick} />
           ))}
         </div>
       </Card>
@@ -173,6 +247,66 @@ export const BranchProjectionContent = () => {
           </div>
         </Card>
       </div>
+
+      <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          {selected && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-blue-600" />
+                  {selected.name}
+                </SheetTitle>
+                <SheetDescription>Branch overview and quick actions</SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-6 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> Location
+                    </p>
+                    <p className="text-sm font-medium mt-1">{selected.details.location}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Users className="h-3 w-3" /> Headcount
+                    </p>
+                    <p className="text-sm font-medium mt-1">{selected.details.headcount} employees</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <UserCog className="h-3 w-3" /> Branch Manager
+                    </p>
+                    <p className="text-sm font-medium mt-1">{selected.details.manager}</p>
+                  </Card>
+                  <Card className="p-3">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3" /> Contact
+                    </p>
+                    <p className="text-sm font-medium mt-1">{selected.details.contact}</p>
+                  </Card>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold mb-2">Quick Actions</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Button variant="outline" className="justify-start gap-2">
+                      <Eye className="h-4 w-4" /> View Employees
+                    </Button>
+                    <Button variant="outline" className="justify-start gap-2">
+                      <UserPlus className="h-4 w-4" /> Add Employee
+                    </Button>
+                    <Button variant="outline" className="justify-start gap-2">
+                      <Pencil className="h-4 w-4" /> Edit Branch Details
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
