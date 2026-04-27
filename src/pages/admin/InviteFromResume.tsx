@@ -383,7 +383,6 @@ const InviteFromResume = () => {
   const [companyName, setCompanyName] = useState("Gradia");
   const [contactInfo, setContactInfo] = useState("info@gradiaa.com");
   const [showSubscription, setShowSubscription] = useState(true);
-  const [showPayment, setShowPayment] = useState(true);
   const [showTerms, setShowTerms] = useState(true);
   const [editedHtml, setEditedHtml] = useState<string | null>(null);
 
