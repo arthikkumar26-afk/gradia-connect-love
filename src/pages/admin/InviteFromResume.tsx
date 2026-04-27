@@ -622,6 +622,18 @@ const InviteFromResume = () => {
     }
   };
 
+  const pendingBulkRecipients = bulkRows.filter((r) => r.email && r.email.includes("@") && r.status !== "sent");
+  const singleRecipientReady = candidateEmail.includes("@") && pendingBulkRecipients.length === 0;
+  const pendingRecipientCount = pendingBulkRecipients.length || (singleRecipientReady ? 1 : 0);
+  const sentBulkCount = bulkRows.filter((r) => r.status === "sent").length;
+  const handleSendCurrent = () => {
+    if (pendingBulkRecipients.length > 0) {
+      sendBulk();
+      return;
+    }
+    handleSend();
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -987,9 +999,8 @@ const InviteFromResume = () => {
                       <div className="flex justify-between border-b pb-2">
                         <span className="text-muted-foreground">Recipients</span>
                         <span className="font-medium">
-                          {bulkRows.filter((r) => r.email && r.status !== "sent").length} pending
-                          {bulkRows.filter((r) => r.status === "sent").length > 0 &&
-                            ` · ${bulkRows.filter((r) => r.status === "sent").length} already sent`}
+                          {pendingRecipientCount} pending
+                          {sentBulkCount > 0 && ` · ${sentBulkCount} already sent`}
                         </span>
                       </div>
                       <div className="flex justify-between border-b pb-2">
@@ -1034,7 +1045,11 @@ const InviteFromResume = () => {
 
                     {bulkRows.length === 0 && (
                       <div className="bg-muted/50 border rounded-md p-4 text-center text-xs text-muted-foreground">
-                        No recipients yet. Go to <strong>Resume Info</strong> tab and upload resumes via <strong>Bulk Mail Send</strong>.
+                        {singleRecipientReady ? (
+                          <>Ready to send to <strong>{candidateName || "Candidate"}</strong> ({candidateEmail}).</>
+                        ) : (
+                          <>No recipients yet. Go to <strong>Resume Info</strong> tab and upload a resume or use <strong>Bulk Mail Send</strong>.</>
+                        )}
                       </div>
                     )}
 
@@ -1044,13 +1059,13 @@ const InviteFromResume = () => {
                       </Button>
                       <Button
                         className="flex-1"
-                        onClick={sendBulk}
-                        disabled={bulkSending || bulkParsing || bulkRows.filter((r) => r.email && r.email.includes("@") && r.status !== "sent").length === 0}
+                        onClick={handleSendCurrent}
+                        disabled={bulkSending || bulkParsing || sending || pendingRecipientCount === 0}
                       >
-                        {bulkSending ? (
+                        {bulkSending || sending ? (
                           <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending…</>
                         ) : (
-                          <><Send className="h-4 w-4 mr-2" />Send to {bulkRows.filter((r) => r.email && r.email.includes("@") && r.status !== "sent").length} recipient(s)</>
+                          <><Send className="h-4 w-4 mr-2" />Send to {pendingRecipientCount} recipient(s)</>
                         )}
                       </Button>
                     </div>
