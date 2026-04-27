@@ -372,10 +372,7 @@ const buildEmailHtml = (opts: {
   </div>
 
   <p style="font-size:15px;margin-top:16px;">Best regards,<br/><strong>${adminName}</strong><br/>${companyName}<br/>${contactInfo}</p>
-  <p style="font-size:10px;color:#9ca3af;margin-top:18px;text-align:center;">Reference: ${uniqueRef}</p>
-</div>
-</body>
-</html>`;
+</div>`;
 };
 
 const InviteFromResume = () => {
