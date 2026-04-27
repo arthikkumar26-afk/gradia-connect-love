@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap, Star, Rocket, Building2, Phone, Sparkles, Brain, BarChart3, Share2, Wallet, Plus, Minus } from "lucide-react";
+import { Check, Crown, Zap, Star, Rocket, Building2, Phone, Sparkles, Brain, BarChart3, Share2, Wallet, Plus, Minus, CreditCard, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
