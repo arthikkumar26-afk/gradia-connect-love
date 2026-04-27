@@ -661,15 +661,53 @@ const InviteFromResume = () => {
                     </div>
 
                     <div>
-                      <Label className="mb-2 block">Suggested Job Roles (AI-prefilled, editable)</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <Label className="mb-2 block">Apply Now Link (used for all "Apply Now" buttons in the email)</Label>
+                      <Input
+                        value={applyUrl}
+                        onChange={(e) => setApplyUrl(e.target.value)}
+                        placeholder="https://gradiaa.com/jobs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="mb-2 block">Suggested Job Roles &amp; Salaries (AI-prefilled, editable)</Label>
+                      <div className="space-y-2">
                         {jobRoles.map((r, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <span className="text-xs font-semibold w-5">{String.fromCharCode(65 + i)}.</span>
+                          <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                            <span className="text-xs font-semibold col-span-1 text-center">{String.fromCharCode(65 + i)}.</span>
                             <Input
+                              className="col-span-7"
                               value={r}
                               onChange={(e) => setJobRoles((prev) => prev.map((x, idx) => idx === i ? e.target.value : x))}
                               placeholder={`Job role ${i + 1}`}
+                            />
+                            <Input
+                              className="col-span-4"
+                              value={jobSalaries[i] || ""}
+                              onChange={(e) => setJobSalaries((prev) => prev.map((x, idx) => idx === i ? e.target.value : x))}
+                              placeholder="Salary (e.g. ₹40k–₹60k)"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="mb-2 block">CV-Based Suitable Openings (editable)</Label>
+                      <div className="space-y-2">
+                        {cvOpenings.map((o, i) => (
+                          <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                            <Input
+                              className="col-span-8"
+                              value={o.title}
+                              onChange={(e) => setCvOpenings((prev) => prev.map((x, idx) => idx === i ? { ...x, title: e.target.value } : x))}
+                              placeholder={`Opening ${i + 1}`}
+                            />
+                            <Input
+                              className="col-span-4"
+                              value={o.salary}
+                              onChange={(e) => setCvOpenings((prev) => prev.map((x, idx) => idx === i ? { ...x, salary: e.target.value } : x))}
+                              placeholder="Salary"
                             />
                           </div>
                         ))}
