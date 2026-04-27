@@ -554,21 +554,6 @@ const InviteFromResume = () => {
     }
   };
 
-  const selectCandidate = (c: CandidateRow) => {
-    setCandidateName(c.full_name || "");
-    setCandidateEmail(c.email || "");
-    setFileName(c.full_name ? `${c.full_name} (from database)` : "Candidate selected");
-    const synthetic: ParsedResume = {
-      full_name: c.full_name,
-      email: c.email,
-      mobile: c.mobile,
-      location: c.location,
-      preferred_role: c.preferred_role,
-    };
-    applyParsed(synthetic);
-    toast.success(`Selected ${c.full_name || c.email}`);
-  };
-
   const generatedHtml = useMemo(
     () =>
       buildEmailHtml({
