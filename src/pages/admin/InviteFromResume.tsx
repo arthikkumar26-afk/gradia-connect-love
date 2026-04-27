@@ -627,7 +627,7 @@ const InviteFromResume = () => {
     const payload = {
       candidateName, candidateEmail, jobRoles, jobSalaries, cvOpenings, applyUrl, subject,
       adminName, companyName, contactInfo, editedHtml,
-      showSubscription, showPayment, showTerms,
+      showSubscription, showTerms,
     };
     localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
     toast.success("Draft saved locally");
