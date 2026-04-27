@@ -153,12 +153,12 @@ const buildEmailHtml = (opts: {
 
   const cvOpeningsRows = cvOpenings
     .filter((o) => o.title && o.title.trim())
-    .slice(0, 4)
     .map((o) => renderJobRow("", o.title, o.salary, applyUrl))
     .join("");
 
-  const roleList = Array.from({ length: 4 }, (_, i) =>
-    renderJobRow(String.fromCharCode(65 + i), jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
+  const roleCount = Math.max(jobRoles.length, jobSalaries.length, 1);
+  const roleList = Array.from({ length: roleCount }, (_, i) =>
+    renderJobRow(String.fromCharCode(65 + (i % 26)), jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
   ).join("");
 
   const moreButton = `
