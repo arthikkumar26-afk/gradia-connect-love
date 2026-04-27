@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,10 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { CheckCircle2, Bot, User, X, Plus, GripVertical, Pencil, Sparkles, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { CheckCircle2, Bot, User, X, Plus, GripVertical, Pencil, Sparkles, Loader2, Library, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { PipelineStage } from "@/data/interviewPipelineConfig";
+import { getAllPipelineStagesCatalog, type PipelineStage, type CatalogStage } from "@/data/interviewPipelineConfig";
+
 
 interface EditablePipelineStagesProps {
   stages: PipelineStage[];
