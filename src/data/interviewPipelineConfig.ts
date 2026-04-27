@@ -1983,3 +1983,52 @@ export const getPipelineStages = (interviewType: string, pipelineType: string, r
   return pipeline?.stages || [];
 };
 
+// Catalog of every unique stage defined across all pipelines & roles, deduped by name.
+// Useful for offering a "pick from existing stages" UI when users are building/editing pipelines.
+export interface CatalogStage {
+  name: string;
+  description: string;
+  isAutomated: boolean;
+  isOptional?: boolean;
+  sources: string[]; // human-readable list of pipelines this stage appears in
+}
+
+export const getAllPipelineStagesCatalog = (): CatalogStage[] => {
+  const map = new Map<string, CatalogStage>();
+
+  const add = (stage: PipelineStage, sourceLabel: string) => {
+    const key = stage.name.trim().toLowerCase();
+    if (!key) return;
+    const existing = map.get(key);
+    if (existing) {
+      if (!existing.sources.includes(sourceLabel)) existing.sources.push(sourceLabel);
+      return;
+    }
+    map.set(key, {
+      name: stage.name,
+      description: stage.description,
+      isAutomated: stage.isAutomated,
+      isOptional: stage.isOptional,
+      sources: [sourceLabel],
+    });
+  };
+
+  // From all interview type → pipeline type pipelines
+  interviewPipelineConfig.forEach((it) => {
+    it.pipelineTypes.forEach((pt) => {
+      const label = `${it.label} → ${pt.label}`;
+      pt.stages.forEach((s) => add(s, label));
+    });
+  });
+
+  // From software engineer role-specific pipelines
+  Object.entries(softwareEngineerRolePipelines).forEach(([role, stages]) => {
+    const label = `IT Corporate → Software Engineer → ${role}`;
+    stages.forEach((s) => add(s, label));
+  });
+
+  // Sort alphabetically for predictable UX
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+};
+
+
