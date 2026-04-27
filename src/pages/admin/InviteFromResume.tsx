@@ -342,55 +342,22 @@ const buildEmailHtml = (opts: {
   </table>
   ${moreButton.replace('<a ', '<a class="gradia-more-btn" ')}
 
-  <div style="margin-top:24px;font-size:13px;line-height:1.7;">
-    <p style="margin:0 0 6px;">Before applying for the job,</p>
-    <p style="margin:0 0 6px;">would you like to attend the interview process</p>
-    <p style="margin:0 0 6px;">and</p>
-    <p style="margin:0 0 6px;">assess your suitability for the position?</p>
-    <p style="margin:12px 0 0;font-weight:600;color:#1e3a8a;">Please confirm your interview preference.</p>
-  </div>
+  <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
+  
 
-  <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:14px;">
-    <thead>
-      <tr style="background:#f3f4f6;">
-        <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;color:#1e3a8a;">With GRADIAA</th>
-        <th style="border:1px solid #e5e7eb;padding:10px;text-align:left;color:#1e3a8a;">Without GRADIAA</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;font-weight:600;">Internal Interview Process</td>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">A. Interview will be conducted by management</td>
-      </tr>
-      <tr>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">Review Your Feedback</td>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">B. Decision will be based on the employer</td>
-      </tr>
-      <tr>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">Strengths and Weaknesses</td>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">C. Selected – Direct joining</td>
-      </tr>
-      <tr>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">Areas for Improvement</td>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">D. Rejected – No further opportunity</td>
-      </tr>
-      <tr>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">Selected – Recommended to Management</td>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">E. No suggestions or recommendations provided</td>
-      </tr>
-      <tr>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">Rejected – Suggested for Training/Improvement</td>
-        <td style="border:1px solid #e5e7eb;padding:10px;vertical-align:top;">&nbsp;</td>
-      </tr>
-      <tr>
-        <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;">
-          <a href="https://gradiaa.com/candidate/signup?mode=with-interview" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 14px;border-radius:6px;display:inline-block;">Sign Up – With GRADIAA</a>
-        </td>
-        <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;">
-          <a href="https://gradiaa.com/candidate/signup?mode=without-interview" style="background:#047857;color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 14px;border-radius:6px;display:inline-block;">Sign Up – Without GRADIAA</a>
-        </td>
-      </tr>
-    </tbody>
+  <h3 style="color:#1e3a8a;margin-top:24px;">⚖️ Comparison Overview</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <tr style="background:#f3f4f6;"><th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">With Interview</th><th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Without Interview</th></tr>
+    <tr><td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">• Selection based on interview performance<br/>• Direct interaction with employer<br/>• Multi-stage evaluation<br/>• Higher transparency</td>
+        <td style="border:1px solid #e5e7eb;padding:8px;vertical-align:top;">• Selection based on resume/profile<br/>• Faster hiring process<br/>• Limited interaction<br/>• Quick employer decision</td></tr>
+    <tr>
+      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;">
+        <a href="https://gradiaa.com/candidate/signup?mode=with-interview" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 14px;border-radius:6px;display:inline-block;">Sign Up – With Interview</a>
+      </td>
+      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;">
+        <a href="https://gradiaa.com/candidate/signup?mode=without-interview" style="background:#047857;color:#ffffff;text-decoration:none;font-size:12px;font-weight:600;padding:8px 14px;border-radius:6px;display:inline-block;">Sign Up – Without Interview</a>
+      </td>
+    </tr>
   </table>
 
   ${termsBlock}
