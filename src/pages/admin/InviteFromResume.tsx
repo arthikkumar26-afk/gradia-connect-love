@@ -971,10 +971,6 @@ const InviteFromResume = () => {
                           <Switch checked={showSubscription} onCheckedChange={setShowSubscription} />
                         </div>
                         <div className="flex items-center justify-between">
-                          <Label className="text-sm font-normal">Payment Methods</Label>
-                          <Switch checked={showPayment} onCheckedChange={setShowPayment} />
-                        </div>
-                        <div className="flex items-center justify-between">
                           <Label className="text-sm font-normal">Terms &amp; Conditions</Label>
                           <Switch checked={showTerms} onCheckedChange={setShowTerms} />
                         </div>
