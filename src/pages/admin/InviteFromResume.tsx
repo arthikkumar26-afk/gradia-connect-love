@@ -120,16 +120,19 @@ const renderJobRow = (
   applyUrl: string,
 ) => {
   const safeUrl = buildApplyUrl(applyUrl, title);
+  const displayTitle = `${label ? `${label}. ` : ""}${title}`;
+  const salaryText = salary || "Negotiable";
+  const ariaLabel = `Apply for ${displayTitle.replace(/"/g, "&quot;")} — Salary ${salaryText.replace(/"/g, "&quot;")}`;
   return `
     <tr>
-      <td style="border:1px solid #e5e7eb;padding:10px;font-size:14px;vertical-align:middle;">
+      <td data-label="Vacancy" style="border:1px solid #e5e7eb;padding:12px 14px;font-size:14px;line-height:1.5;vertical-align:middle;word-break:break-word;">
         ${label ? `<strong>${label}.</strong> ` : ""}${title}
       </td>
-      <td style="border:1px solid #e5e7eb;padding:10px;font-size:13px;color:#047857;font-weight:600;white-space:nowrap;vertical-align:middle;">
-        ${salary || "Negotiable"}
+      <td data-label="Salary" style="border:1px solid #e5e7eb;padding:12px 14px;font-size:13px;color:#047857;font-weight:600;vertical-align:middle;white-space:nowrap;">
+        ${salaryText}
       </td>
-      <td style="border:1px solid #e5e7eb;padding:10px;text-align:center;vertical-align:middle;white-space:nowrap;">
-        <a href="${safeUrl}" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 16px;border-radius:6px;display:inline-block;">Apply Now</a>
+      <td data-label="Action" style="border:1px solid #e5e7eb;padding:12px 14px;text-align:center;vertical-align:middle;white-space:nowrap;">
+        <a href="${safeUrl}" role="button" aria-label="${ariaLabel}" title="${ariaLabel}" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:10px 18px;border-radius:6px;display:inline-block;min-width:96px;text-align:center;">Apply Now</a>
       </td>
     </tr>`;
 };
@@ -159,8 +162,8 @@ const buildEmailHtml = (opts: {
   ).join("");
 
   const moreButton = `
-    <div style="text-align:center;margin-top:12px;">
-      <a href="https://gradiaa.com/jobs" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:10px 20px;border-radius:6px;display:inline-block;">More Jobs →</a>
+    <div style="text-align:center;margin-top:14px;margin-bottom:6px;">
+      <a href="https://gradiaa.com/jobs" role="button" aria-label="View more jobs on Gradia jobs portal" title="View more jobs on Gradia" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 24px;border-radius:6px;display:inline-block;min-width:160px;text-align:center;">More Jobs →</a>
     </div>`;
 
   const planTiers: {
@@ -271,6 +274,38 @@ const buildEmailHtml = (opts: {
   const uniqueRef = `${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
   return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#111827;background:#ffffff;">
+  <style>
+    @media only screen and (max-width: 480px) {
+      .gradia-job-table { font-size: 13px !important; }
+      .gradia-job-table thead { display: none !important; }
+      .gradia-job-table tr {
+        display: block !important;
+        margin-bottom: 12px !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 6px !important;
+        overflow: hidden !important;
+      }
+      .gradia-job-table td {
+        display: block !important;
+        width: 100% !important;
+        border: 0 !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        padding: 10px 14px !important;
+        text-align: left !important;
+        white-space: normal !important;
+      }
+      .gradia-job-table td:last-child { border-bottom: 0 !important; text-align: center !important; }
+      .gradia-job-table td::before {
+        content: attr(data-label) ": ";
+        font-weight: 700;
+        color: #475569;
+        display: inline-block;
+        margin-right: 6px;
+      }
+      .gradia-job-table td:last-child::before { content: ""; margin: 0; }
+      .gradia-more-btn { width: 100% !important; box-sizing: border-box !important; }
+    }
+  </style>
   <span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;font-size:1px;line-height:1px;mso-hide:all;overflow:hidden;">Job opportunities for ${candidateName} — ${uniqueRef}</span>
   <h2 style="color:#1e3a8a;margin:0 0 16px;">Dear ${candidateName},</h2>
   <p style="font-size:15px;line-height:1.6;">Greetings!</p>
@@ -279,31 +314,33 @@ const buildEmailHtml = (opts: {
   <p style="font-size:15px;line-height:1.6;">Additionally, based on your qualifications and experience, we will guide you toward job opportunities that closely match your profile.</p>
   <p style="font-size:15px;line-height:1.6;">If you have any questions or need further assistance, please feel free to reach out to us.</p>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;font-weight:600;">Based on your CV, suitable openings:</h3>
-  <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+  <h3 id="cv-openings-heading" style="color:#1e3a8a;margin-top:24px;font-weight:600;">Based on your CV, suitable openings:</h3>
+  <table class="gradia-job-table" role="table" aria-labelledby="cv-openings-heading" style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+    <caption style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">Suitable job openings based on your CV</caption>
     <thead>
       <tr style="background:#f3f4f6;">
-        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Vacancy</th>
-        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Salary</th>
-        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Action</th>
+        <th scope="col" style="border:1px solid #e5e7eb;padding:10px;text-align:left;">Vacancy</th>
+        <th scope="col" style="border:1px solid #e5e7eb;padding:10px;text-align:left;">Salary</th>
+        <th scope="col" style="border:1px solid #e5e7eb;padding:10px;text-align:center;">Action</th>
       </tr>
     </thead>
     <tbody>${cvOpeningsRows}</tbody>
   </table>
-  ${moreButton}
+  ${moreButton.replace('<a ', '<a class="gradia-more-btn" ')}
 
-  <h3 style="color:#1e3a8a;margin-top:24px;font-weight:600;">Suitable Jobs according to your qualifications &amp; Experience:</h3>
-  <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+  <h3 id="suitable-jobs-heading" style="color:#1e3a8a;margin-top:24px;font-weight:600;">Suitable Jobs according to your qualifications &amp; Experience:</h3>
+  <table class="gradia-job-table" role="table" aria-labelledby="suitable-jobs-heading" style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+    <caption style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">Suitable jobs matching your qualifications and experience</caption>
     <thead>
       <tr style="background:#f3f4f6;">
-        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Vacancy</th>
-        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Salary</th>
-        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Action</th>
+        <th scope="col" style="border:1px solid #e5e7eb;padding:10px;text-align:left;">Vacancy</th>
+        <th scope="col" style="border:1px solid #e5e7eb;padding:10px;text-align:left;">Salary</th>
+        <th scope="col" style="border:1px solid #e5e7eb;padding:10px;text-align:center;">Action</th>
       </tr>
     </thead>
     <tbody>${roleList}</tbody>
   </table>
-  ${moreButton}
+  ${moreButton.replace('<a ', '<a class="gradia-more-btn" ')}
 
   <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
   
