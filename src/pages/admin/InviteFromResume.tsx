@@ -90,13 +90,25 @@ const DEFAULT_CV_OPENINGS: { title: string; salary: string }[] = [
   { title: "HOD / Senior Teacher", salary: "₹40,000 – ₹65,000 / month" },
 ];
 
+const buildApplyUrl = (baseUrl: string, title: string) => {
+  const fallback = "https://gradiaa.com/jobs-results";
+  let base = baseUrl && /^https?:\/\//i.test(baseUrl) ? baseUrl : fallback;
+  // Strip any existing query/hash so we cleanly attach the job title filter
+  base = base.split("#")[0].split("?")[0];
+  // If user pointed at /jobs, redirect to /jobs-results which supports ?q= filter
+  base = base.replace(/\/jobs\/?$/i, "/jobs-results");
+  const cleanTitle = (title || "").trim();
+  if (!cleanTitle) return base;
+  return `${base}?q=${encodeURIComponent(cleanTitle)}`;
+};
+
 const renderJobRow = (
   label: string,
   title: string,
   salary: string,
   applyUrl: string,
 ) => {
-  const safeUrl = applyUrl && /^https?:\/\//i.test(applyUrl) ? applyUrl : "https://gradiaa.com/jobs";
+  const safeUrl = buildApplyUrl(applyUrl, title);
   return `
     <tr>
       <td style="border:1px solid #e5e7eb;padding:10px;font-size:14px;vertical-align:middle;">
