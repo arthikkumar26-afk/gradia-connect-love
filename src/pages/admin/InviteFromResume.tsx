@@ -281,17 +281,10 @@ const buildEmailHtml = (opts: {
     </ul>
     <p style="font-size:13px;line-height:1.6;color:#4b5563;margin-top:10px;">We will keep you updated shortly. If you have any questions, please feel free to contact us.</p>` : "";
 
-  const uniqueRef = `REF-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
+  const uniqueRef = `${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Job Opportunity - ${candidateName}</title>
-</head>
-<body style="margin:0;padding:0;background:#ffffff;">
-<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#111827;background:#ffffff;">
+  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#111827;background:#ffffff;">
+  <span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;font-size:1px;line-height:1px;mso-hide:all;overflow:hidden;">Job opportunities for ${candidateName} — ${uniqueRef}</span>
   <h2 style="color:#1e3a8a;margin:0 0 16px;">Dear ${candidateName},</h2>
   <p style="font-size:15px;line-height:1.6;">Greetings!</p>
   <p style="font-size:15px;line-height:1.6;">We have received your resume/CV through our job portal. Thank you for your interest in exploring opportunities with us.</p>
@@ -379,10 +372,7 @@ const buildEmailHtml = (opts: {
   </div>
 
   <p style="font-size:15px;margin-top:16px;">Best regards,<br/><strong>${adminName}</strong><br/>${companyName}<br/>${contactInfo}</p>
-  <p style="font-size:10px;color:#9ca3af;margin-top:18px;text-align:center;">Reference: ${uniqueRef}</p>
-</div>
-</body>
-</html>`;
+</div>`;
 };
 
 const InviteFromResume = () => {
