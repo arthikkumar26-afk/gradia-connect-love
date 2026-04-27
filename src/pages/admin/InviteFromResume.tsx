@@ -323,6 +323,9 @@ const InviteFromResume = () => {
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [jobRoles, setJobRoles] = useState<string[]>(["", "", "", "", ""]);
+  const [jobSalaries, setJobSalaries] = useState<string[]>(["", "", "", "", ""]);
+  const [cvOpenings, setCvOpenings] = useState<{ title: string; salary: string }[]>(DEFAULT_CV_OPENINGS);
+  const [applyUrl, setApplyUrl] = useState<string>("https://gradiaa.com/jobs");
 
   // Email
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
