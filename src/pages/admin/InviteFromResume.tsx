@@ -697,40 +697,112 @@ const InviteFromResume = () => {
                   <Card className="shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-base">
-                        <Database className="h-4 w-4" /> Or Select from Database
+                        <Send className="h-4 w-4" /> Bulk Mail Send
                       </CardTitle>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload multiple resumes from your device. We'll auto-extract each candidate's name &amp; email and send the invite to all of them.
+                      </p>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Search by name, email, role…"
-                            value={candidateSearch}
-                            onChange={(e) => setCandidateSearch(e.target.value)}
-                            className="pl-8"
-                          />
+                      <div
+                        onClick={() => bulkFileRef.current?.click()}
+                        className="border-2 border-dashed border-border rounded-xl p-5 text-center cursor-pointer hover:bg-muted/50 transition"
+                      >
+                        <FileUp className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                        <p className="font-medium text-sm">Click to select multiple resumes</p>
+                        <p className="text-xs text-muted-foreground mt-1">PDF / DOCX / Image — select many at once</p>
+                      </div>
+                      <input
+                        ref={bulkFileRef}
+                        type="file"
+                        multiple
+                        accept=".pdf,.docx,.doc,.png,.jpg,.jpeg"
+                        onChange={handleBulkFiles}
+                        className="hidden"
+                      />
+
+                      {bulkParsing && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Loader2 className="h-3 w-3 animate-spin" /> Parsing resumes…
                         </div>
-                        <Button variant="outline" onClick={loadCandidates} disabled={loadingCandidates}>
-                          {loadingCandidates ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load"}
-                        </Button>
-                      </div>
-                      <div className="border rounded-md max-h-56 overflow-auto divide-y">
-                        {filteredCandidates.length === 0 ? (
-                          <p className="text-xs text-muted-foreground p-3 text-center">
-                            {candidates.length === 0 ? "Click Load to fetch candidates" : "No matches"}
-                          </p>
-                        ) : filteredCandidates.slice(0, 50).map((c) => (
-                          <button
-                            key={c.id}
-                            onClick={() => selectCandidate(c)}
-                            className="w-full text-left px-3 py-2 hover:bg-muted/50 transition"
+                      )}
+
+                      {bulkRows.length > 0 && (
+                        <>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-muted-foreground">
+                              {bulkRows.length} file{bulkRows.length > 1 ? "s" : ""} ·{" "}
+                              {bulkRows.filter((r) => r.status === "ready").length} ready ·{" "}
+                              {bulkRows.filter((r) => r.status === "sent").length} sent ·{" "}
+                              {bulkRows.filter((r) => r.status === "failed").length} failed
+                            </span>
+                            <Button variant="ghost" size="sm" onClick={clearBulk} disabled={bulkSending}>
+                              Clear
+                            </Button>
+                          </div>
+                          <div className="border rounded-md max-h-56 overflow-auto divide-y">
+                            {bulkRows.map((r) => (
+                              <div key={r.id} className="px-3 py-2 text-xs space-y-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-medium truncate flex-1">{r.fileName}</span>
+                                  <Badge
+                                    variant={
+                                      r.status === "sent" ? "default"
+                                        : r.status === "failed" ? "destructive"
+                                        : r.status === "ready" ? "secondary"
+                                        : "outline"
+                                    }
+                                    className="text-[10px]"
+                                  >
+                                    {r.status}
+                                  </Badge>
+                                  <button
+                                    onClick={() => removeBulkRow(r.id)}
+                                    disabled={bulkSending}
+                                    className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-1">
+                                  <Input
+                                    value={r.name}
+                                    onChange={(e) => updateBulkRow(r.id, { name: e.target.value })}
+                                    placeholder="Name"
+                                    className="h-7 text-xs"
+                                    disabled={bulkSending || r.status === "sent"}
+                                  />
+                                  <Input
+                                    value={r.email}
+                                    onChange={(e) => updateBulkRow(r.id, {
+                                      email: e.target.value,
+                                      status: e.target.value.includes("@") && r.status === "failed" ? "ready" : r.status,
+                                    })}
+                                    placeholder="email@example.com"
+                                    className="h-7 text-xs"
+                                    disabled={bulkSending || r.status === "sent"}
+                                  />
+                                </div>
+                                {r.error && <p className="text-[10px] text-destructive">{r.error}</p>}
+                              </div>
+                            ))}
+                          </div>
+                          <Button
+                            className="w-full"
+                            onClick={sendBulk}
+                            disabled={bulkSending || bulkParsing || bulkRows.filter((r) => r.email && r.status !== "sent").length === 0}
                           >
-                            <p className="font-medium text-sm truncate">{c.full_name || "Unnamed"}</p>
-                            <p className="text-xs text-muted-foreground truncate">{c.email} {c.preferred_role ? `· ${c.preferred_role}` : ""}</p>
-                          </button>
-                        ))}
-                      </div>
+                            {bulkSending ? (
+                              <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Sending bulk emails…</>
+                            ) : (
+                              <><Send className="h-4 w-4 mr-2" />Send to {bulkRows.filter((r) => r.email && r.status !== "sent").length} recipient(s)</>
+                            )}
+                          </Button>
+                          <p className="text-[10px] text-muted-foreground">
+                            Tip: configure subject &amp; sections in the <strong>Email Preview</strong> tab before sending. Each email is personalized with the candidate's name.
+                          </p>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
