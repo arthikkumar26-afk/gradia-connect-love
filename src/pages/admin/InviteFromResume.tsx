@@ -362,6 +362,12 @@ const buildEmailHtml = (opts: {
   ${termsBlock}
 
   <p style="font-size:15px;margin-top:24px;">We will keep you updated shortly.</p>
+
+  <div style="text-align:center;margin:28px 0 20px;">
+    <a href="https://gradiaa.com/candidate/signup" style="display:inline-block;background:#1e3a8a;color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:16px;font-weight:600;font-family:Arial,sans-serif;">🚀 Get Started</a>
+    <p style="font-size:12px;color:#6b7280;margin-top:8px;">Create your free candidate account to track applications &amp; opportunities.</p>
+  </div>
+
   <p style="font-size:15px;margin-top:16px;">Best regards,<br/><strong>${adminName}</strong><br/>${companyName}<br/>${contactInfo}</p>
 </div>`;
 };
