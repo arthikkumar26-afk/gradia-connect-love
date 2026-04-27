@@ -81,6 +81,7 @@ import { AllCandidatesContent } from "@/components/employer/AllCandidatesContent
 
 import WalletTab from "@/components/candidate/WalletTab";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
+import { BranchProjectionContent } from "@/components/employer/BranchProjectionContent";
 import { EmployerNotifications } from "@/components/employer/EmployerNotifications";
 
 const EmployerDashboard = () => {
@@ -386,6 +387,7 @@ const EmployerDashboard = () => {
     { id: "approvals", label: "Approvals", icon: CheckSquare, path: "/employer/approvals" },
     { id: "all-candidates", label: "Candidates", icon: ClipboardList, path: "/employer/candidates" },
     { id: "campaigns", label: "Campaigns", icon: Megaphone, path: "/employer/campaigns" },
+    { id: "branch-projection", label: "Branch Projection", icon: GitBranch, path: "/employer/branch-projection" },
     
     { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
@@ -787,6 +789,7 @@ const EmployerDashboard = () => {
             {activeMenu === "approvals" && <ConfirmationContent />}
             {activeMenu === "all-candidates" && <AllCandidatesContent />}
             {activeMenu === "campaigns" && <EmployerCampaignContent />}
+            {activeMenu === "branch-projection" && <BranchProjectionContent />}
             
             {activeMenu === "wallet" && user?.id && <WalletTab userId={user.id} />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
