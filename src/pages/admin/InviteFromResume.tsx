@@ -359,6 +359,9 @@ const InviteFromResume = () => {
           if (d.candidateName) setCandidateName(d.candidateName);
           if (d.candidateEmail) setCandidateEmail(d.candidateEmail);
           if (d.jobRoles) setJobRoles(d.jobRoles);
+          if (d.jobSalaries) setJobSalaries(d.jobSalaries);
+          if (d.cvOpenings) setCvOpenings(d.cvOpenings);
+          if (d.applyUrl) setApplyUrl(d.applyUrl);
           if (d.subject) setSubject(d.subject);
           if (d.adminName) setAdminName(d.adminName);
           if (d.companyName) setCompanyName(d.companyName);
