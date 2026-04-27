@@ -451,6 +451,9 @@ const InviteFromResume = () => {
       buildEmailHtml({
         candidateName: candidateName || "Candidate",
         jobRoles,
+        jobSalaries,
+        cvOpenings,
+        applyUrl,
         adminName,
         companyName,
         contactInfo,
@@ -458,14 +461,14 @@ const InviteFromResume = () => {
         showPayment,
         showTerms,
       }),
-    [candidateName, jobRoles, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms]
+    [candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms]
   );
 
   const finalHtml = editedHtml ?? generatedHtml;
 
   const handleSaveDraft = () => {
     const payload = {
-      candidateName, candidateEmail, jobRoles, subject,
+      candidateName, candidateEmail, jobRoles, jobSalaries, cvOpenings, applyUrl, subject,
       adminName, companyName, contactInfo, editedHtml,
       showSubscription, showPayment, showTerms,
     };
