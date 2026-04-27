@@ -274,7 +274,7 @@ const buildEmailHtml = (opts: {
   <h3 style="color:#1e3a8a;margin-top:24px;">⚖️ Comparison Overview</h3>
   <table style="width:100%;border-collapse:collapse;font-size:13px;">
     <tr style="background:#f3f4f6;">
-      <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#dc2626;">Without GRADIA</th>
+      <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#047857;">With GRADIA</th>
       <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;color:#dc2626;">Without GRADIA</th>
     </tr>
     <tr>
