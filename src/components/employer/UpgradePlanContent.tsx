@@ -462,8 +462,8 @@ export const UpgradePlanContent = () => {
                     : plan.cta === "free"
                     ? "Get Started Free"
                     : isUpgrade
-                    ? `Upgrade – Pay ₹${(plan.points * 5).toLocaleString("en-IN")}`
-                    : `Switch – Pay ₹${(plan.points * 5).toLocaleString("en-IN")}`}
+                    ? `Upgrade – Pay ₹${(plan.points * 5 + addonRupees).toLocaleString("en-IN")}${addonRupees ? ` (+${addonPoints} pts add-ons)` : ''}`
+                    : `Switch – Pay ₹${(plan.points * 5 + addonRupees).toLocaleString("en-IN")}${addonRupees ? ` (+${addonPoints} pts add-ons)` : ''}`}
                 </Button>
 
                 {/* Coupon Input for paid plans */}
