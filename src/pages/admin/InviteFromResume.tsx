@@ -618,10 +618,9 @@ const InviteFromResume = () => {
         companyName,
         contactInfo,
         showSubscription,
-        showPayment,
         showTerms,
       }),
-    [candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showPayment, showTerms]
+    [candidateName, jobRoles, jobSalaries, cvOpenings, applyUrl, adminName, companyName, contactInfo, showSubscription, showTerms]
   );
 
   const finalHtml = editedHtml ?? generatedHtml;
