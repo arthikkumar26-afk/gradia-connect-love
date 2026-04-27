@@ -97,7 +97,17 @@ const buildApplyUrl = (baseUrl: string, title: string) => {
   base = base.split("#")[0].split("?")[0];
   // If user pointed at /jobs, redirect to /jobs-results which supports ?q= filter
   base = base.replace(/\/jobs\/?$/i, "/jobs-results");
-  const cleanTitle = (title || "").trim();
+  // Normalize the title so the search returns matches even when the
+  // displayed label includes board/location qualifiers like
+  // "Principal – State Board (Hyderabad)".
+  let cleanTitle = (title || "").trim();
+  if (!cleanTitle) return base;
+  // Remove anything in (), [], {}
+  cleanTitle = cleanTitle.replace(/[\(\[\{][^\)\]\}]*[\)\]\}]/g, " ");
+  // Split on dashes (en/em/hyphen) and keep only the core role (first chunk)
+  cleanTitle = cleanTitle.split(/\s+[–—-]\s+/)[0];
+  // Collapse whitespace
+  cleanTitle = cleanTitle.replace(/\s+/g, " ").trim();
   if (!cleanTitle) return base;
   return `${base}?q=${encodeURIComponent(cleanTitle)}`;
 };
