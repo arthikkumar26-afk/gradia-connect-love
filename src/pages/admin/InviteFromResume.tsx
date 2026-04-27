@@ -460,7 +460,6 @@ const InviteFromResume = () => {
           if (d.contactInfo) setContactInfo(d.contactInfo);
           if (typeof d.editedHtml === "string") setEditedHtml(d.editedHtml);
           if (typeof d.showSubscription === "boolean") setShowSubscription(d.showSubscription);
-          if (typeof d.showPayment === "boolean") setShowPayment(d.showPayment);
           if (typeof d.showTerms === "boolean") setShowTerms(d.showTerms);
         }
       } catch { /* ignore */ }
