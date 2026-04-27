@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,10 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { CheckCircle2, Bot, User, X, Plus, GripVertical, Pencil, Sparkles, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { CheckCircle2, Bot, User, X, Plus, GripVertical, Pencil, Sparkles, Loader2, Library, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { PipelineStage } from "@/data/interviewPipelineConfig";
+import { getAllPipelineStagesCatalog, type PipelineStage, type CatalogStage } from "@/data/interviewPipelineConfig";
+
 
 interface EditablePipelineStagesProps {
   stages: PipelineStage[];
@@ -28,6 +31,23 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
   const [showAiPrompt, setShowAiPrompt] = useState(false);
   const [automationConfig, setAutomationConfig] = useState<any>(null);
   const [disabledOptionalStages, setDisabledOptionalStages] = useState<Set<number>>(new Set());
+  const [showStagePicker, setShowStagePicker] = useState(false);
+
+  const stageCatalog = useMemo<CatalogStage[]>(() => getAllPipelineStagesCatalog(), []);
+  const existingNames = useMemo(
+    () => new Set(stages.map((s) => s.name.trim().toLowerCase())),
+    [stages]
+  );
+
+  const applyCatalogStage = (cs: CatalogStage) => {
+    setNewStageName(cs.name);
+    setNewStageDesc(cs.description);
+    setNewStageType(cs.isAutomated ? "ai" : "manual");
+    setAutomationConfig(null);
+    setShowStagePicker(false);
+    toast.success(`Loaded "${cs.name}" — review and save.`);
+  };
+
 
   const handleToggleOptionalStage = (index: number) => {
     const newDisabled = new Set(disabledOptionalStages);
@@ -160,9 +180,70 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
             Interview Pipeline Stages ({stages.length})
           </h4>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={openAddDialog} className="gap-1 h-7 text-xs">
-          <Plus className="h-3 w-3" /> Add Stage
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Popover open={showStagePicker} onOpenChange={setShowStagePicker}>
+            <PopoverTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="gap-1 h-7 text-xs">
+                <Library className="h-3 w-3" /> Browse Existing
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[420px] p-0">
+              <Command>
+                <CommandInput placeholder="Search existing stages by name..." />
+                <CommandList className="max-h-[320px]">
+                  <CommandEmpty>No matching stages found.</CommandEmpty>
+                  <CommandGroup heading={`From other pipelines (${stageCatalog.length})`}>
+                    {stageCatalog.map((cs) => {
+                      const used = existingNames.has(cs.name.trim().toLowerCase());
+                      return (
+                        <CommandItem
+                          key={cs.name}
+                          value={`${cs.name} ${cs.description}`}
+                          onSelect={() => {
+                            if (used) {
+                              toast.info(`"${cs.name}" is already in this pipeline.`);
+                              return;
+                            }
+                            const newStage: PipelineStage = {
+                              order: stages.length + 1,
+                              name: cs.name,
+                              description: cs.description,
+                              isAutomated: cs.isAutomated,
+                              ...(cs.isOptional ? { isOptional: true } : {}),
+                            };
+                            onStagesChange([...stages, newStage]);
+                            setShowStagePicker(false);
+                            toast.success(`Added "${cs.name}" stage.`);
+                          }}
+                          className="items-start gap-2"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium truncate">{cs.name}</span>
+                              <Badge variant={cs.isAutomated ? "default" : "outline"} className="text-[9px] h-4 px-1 gap-0.5">
+                                {cs.isAutomated ? <Bot className="h-2.5 w-2.5" /> : <User className="h-2.5 w-2.5" />}
+                                {cs.isAutomated ? "AI" : "Manual"}
+                              </Badge>
+                              {used && <Check className="h-3 w-3 text-green-600 ml-auto" />}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground truncate">{cs.description}</p>
+                            <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
+                              Used in: {cs.sources.slice(0, 2).join(", ")}{cs.sources.length > 2 ? ` +${cs.sources.length - 2} more` : ""}
+                            </p>
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+          <Button type="button" variant="outline" size="sm" onClick={openAddDialog} className="gap-1 h-7 text-xs">
+            <Plus className="h-3 w-3" /> Add Stage
+          </Button>
+        </div>
+
       </div>
 
       <div className="space-y-2">
@@ -216,7 +297,62 @@ const EditablePipelineStages = ({ stages, onStagesChange }: EditablePipelineStag
             <DialogTitle>{editingIndex !== null ? "Edit Stage" : "Add Custom Stage"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            {/* Pick from existing stages catalog */}
+            <div className="rounded-lg border bg-muted/40 p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <Library className="h-4 w-4 text-primary" />
+                  <span>Choose from existing stages</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground">{stageCatalog.length} available</span>
+              </div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" size="sm" className="w-full justify-start gap-1.5 h-8 text-xs font-normal">
+                    <Library className="h-3 w-3" />
+                    Browse & pick a stage to auto-fill fields below…
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[440px] p-0">
+                  <Command>
+                    <CommandInput placeholder="Search stages..." />
+                    <CommandList className="max-h-[300px]">
+                      <CommandEmpty>No matching stages.</CommandEmpty>
+                      <CommandGroup heading="Existing pipeline stages">
+                        {stageCatalog.map((cs) => (
+                          <CommandItem
+                            key={cs.name}
+                            value={`${cs.name} ${cs.description}`}
+                            onSelect={() => applyCatalogStage(cs)}
+                            className="items-start gap-2"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-sm font-medium truncate">{cs.name}</span>
+                                <Badge variant={cs.isAutomated ? "default" : "outline"} className="text-[9px] h-4 px-1 gap-0.5">
+                                  {cs.isAutomated ? <Bot className="h-2.5 w-2.5" /> : <User className="h-2.5 w-2.5" />}
+                                  {cs.isAutomated ? "AI" : "Manual"}
+                                </Badge>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground truncate">{cs.description}</p>
+                              <p className="text-[10px] text-muted-foreground/70 truncate mt-0.5">
+                                Used in: {cs.sources.slice(0, 2).join(", ")}{cs.sources.length > 2 ? ` +${cs.sources.length - 2} more` : ""}
+                              </p>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <p className="text-[10px] text-muted-foreground">
+                Picking a stage fills name, description and type — you can still tweak before saving.
+              </p>
+            </div>
+
             {/* AI Prompt Section */}
+
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
               <button
                 type="button"
