@@ -418,6 +418,40 @@ const InviteFromResume = () => {
   const [bulkParsing, setBulkParsing] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
 
+  // Invite status tracking
+  type InviteRecord = {
+    id: string;
+    candidate_name: string | null;
+    recipient_email: string;
+    subject: string | null;
+    status: "pending" | "sent" | "failed" | "accepted";
+    error_message: string | null;
+    sent_at: string | null;
+    accepted_at: string | null;
+    created_at: string;
+  };
+  const [invites, setInvites] = useState<InviteRecord[]>([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
+  const [inviteStatusFilter, setInviteStatusFilter] = useState<"all" | "pending" | "sent" | "accepted" | "failed">("all");
+  const [inviteSearch, setInviteSearch] = useState("");
+
+  const loadInvites = async () => {
+    setInvitesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("resume_invites")
+        .select("id,candidate_name,recipient_email,subject,status,error_message,sent_at,accepted_at,created_at")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      setInvites((data || []) as InviteRecord[]);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to load invite status");
+    } finally {
+      setInvitesLoading(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
