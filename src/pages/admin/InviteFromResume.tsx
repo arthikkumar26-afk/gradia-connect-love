@@ -1135,6 +1135,161 @@ const InviteFromResume = () => {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Invite Status Dashboard */}
+              <TabsContent value="status" className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Activity className="h-5 w-5 text-primary" />
+                          Invite Status
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Track every invitation: pending, sent, accepted (signed up), or failed.
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={loadInvites} disabled={invitesLoading}>
+                        {invitesLoading ? (
+                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Refreshing</>
+                        ) : (
+                          <><RefreshCw className="h-4 w-4 mr-2" />Refresh</>
+                        )}
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {/* Summary Stats */}
+                    {(() => {
+                      const total = invites.length;
+                      const pending = invites.filter((i) => i.status === "pending").length;
+                      const sent = invites.filter((i) => i.status === "sent").length;
+                      const accepted = invites.filter((i) => i.status === "accepted").length;
+                      const failed = invites.filter((i) => i.status === "failed").length;
+                      const cards: Array<{ key: typeof inviteStatusFilter; label: string; value: number; icon: any; color: string }> = [
+                        { key: "all", label: "Total", value: total, icon: Mail, color: "text-foreground" },
+                        { key: "pending", label: "Pending", value: pending, icon: Clock, color: "text-amber-600" },
+                        { key: "sent", label: "Sent", value: sent, icon: CheckCircle2, color: "text-blue-600" },
+                        { key: "accepted", label: "Accepted", value: accepted, icon: UserPlus, color: "text-emerald-600" },
+                        { key: "failed", label: "Failed", value: failed, icon: XCircle, color: "text-destructive" },
+                      ];
+                      return (
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                          {cards.map((c) => {
+                            const Icon = c.icon;
+                            const active = inviteStatusFilter === c.key;
+                            return (
+                              <button
+                                key={c.key}
+                                type="button"
+                                onClick={() => setInviteStatusFilter(c.key)}
+                                className={`text-left p-3 rounded-lg border transition-all ${
+                                  active ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-primary/40"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                    {c.label}
+                                  </span>
+                                  <Icon className={`h-4 w-4 ${c.color}`} />
+                                </div>
+                                <p className={`text-2xl font-bold mt-1 ${c.color}`}>{c.value}</p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Search */}
+                    <div className="relative">
+                      <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by name or email…"
+                        value={inviteSearch}
+                        onChange={(e) => setInviteSearch(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+
+                    {/* List */}
+                    {invitesLoading ? (
+                      <div className="flex items-center justify-center py-10">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (() => {
+                      const q = inviteSearch.trim().toLowerCase();
+                      const filtered = invites.filter((i) => {
+                        if (inviteStatusFilter !== "all" && i.status !== inviteStatusFilter) return false;
+                        if (!q) return true;
+                        return (
+                          i.recipient_email.toLowerCase().includes(q) ||
+                          (i.candidate_name || "").toLowerCase().includes(q)
+                        );
+                      });
+                      if (!filtered.length) {
+                        return (
+                          <div className="text-center py-10 text-sm text-muted-foreground border rounded-lg">
+                            No invites found for the current filter.
+                          </div>
+                        );
+                      }
+                      const statusBadge = (s: InviteRecord["status"]) => {
+                        switch (s) {
+                          case "accepted":
+                            return <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">Accepted</Badge>;
+                          case "sent":
+                            return <Badge className="bg-blue-600 hover:bg-blue-600 text-white">Sent</Badge>;
+                          case "pending":
+                            return <Badge className="bg-amber-500 hover:bg-amber-500 text-white">Pending</Badge>;
+                          case "failed":
+                            return <Badge variant="destructive">Failed</Badge>;
+                        }
+                      };
+                      const fmt = (d: string | null) => d ? new Date(d).toLocaleString() : "—";
+                      return (
+                        <div className="border rounded-lg overflow-hidden">
+                          <div className="max-h-[480px] overflow-auto">
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted/50 sticky top-0">
+                                <tr className="text-left">
+                                  <th className="px-3 py-2 font-medium">Candidate</th>
+                                  <th className="px-3 py-2 font-medium">Email</th>
+                                  <th className="px-3 py-2 font-medium">Status</th>
+                                  <th className="px-3 py-2 font-medium">Sent</th>
+                                  <th className="px-3 py-2 font-medium">Accepted</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filtered.map((i) => (
+                                  <tr key={i.id} className="border-t hover:bg-muted/30">
+                                    <td className="px-3 py-2">
+                                      <div className="font-medium">{i.candidate_name || "—"}</div>
+                                      {i.error_message && (
+                                        <div className="text-[11px] text-destructive truncate max-w-[200px]" title={i.error_message}>
+                                          {i.error_message}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-2 text-muted-foreground">{i.recipient_email}</td>
+                                    <td className="px-3 py-2">{statusBadge(i.status)}</td>
+                                    <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{fmt(i.sent_at || i.created_at)}</td>
+                                    <td className="px-3 py-2 text-xs text-muted-foreground whitespace-nowrap">{fmt(i.accepted_at)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="px-3 py-2 border-t bg-muted/30 text-[11px] text-muted-foreground">
+                            Showing {filtered.length} of {invites.length} invite(s)
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              </TabsContent>
             </Tabs>
           </div>
         </main>
