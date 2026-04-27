@@ -150,12 +150,18 @@ const buildEmailHtml = (opts: {
 
   const cvOpeningsRows = cvOpenings
     .filter((o) => o.title && o.title.trim())
+    .slice(0, 4)
     .map((o) => renderJobRow("", o.title, o.salary, applyUrl))
     .join("");
 
-  const roleList = Array.from({ length: 5 }, (_, i) =>
+  const roleList = Array.from({ length: 4 }, (_, i) =>
     renderJobRow(String.fromCharCode(65 + i), jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
   ).join("");
+
+  const moreButton = `
+    <div style="text-align:center;margin-top:12px;">
+      <a href="https://gradiaa.com/jobs" style="background:#1e3a8a;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:10px 20px;border-radius:6px;display:inline-block;">More Jobs →</a>
+    </div>`;
 
   const planTiers: {
     name: string;
@@ -284,6 +290,7 @@ const buildEmailHtml = (opts: {
     </thead>
     <tbody>${cvOpeningsRows}</tbody>
   </table>
+  ${moreButton}
 
   <h3 style="color:#1e3a8a;margin-top:24px;font-weight:600;">Suitable Jobs according to your qualifications &amp; Experience:</h3>
   <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
@@ -296,6 +303,7 @@ const buildEmailHtml = (opts: {
     </thead>
     <tbody>${roleList}</tbody>
   </table>
+  ${moreButton}
 
   <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
   
