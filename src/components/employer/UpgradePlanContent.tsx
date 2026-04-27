@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Crown, Zap, Star, Rocket, Building2, Phone, Sparkles, Brain, BarChart3, Share2, Wallet, Plus, Minus } from "lucide-react";
+import { Check, Crown, Zap, Star, Rocket, Building2, Phone, Sparkles, Brain, BarChart3, Share2, Wallet, Plus, Minus, CreditCard, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -362,6 +362,128 @@ export const UpgradePlanContent = () => {
     }
   };
 
+  // Buy ONLY the selected add-ons (no plan change). Triggers Razorpay,
+  // verifies server-side, sends a branded PDF invoice via send-payment-receipt
+  // (handled inside verify-razorpay-payment), then refreshes the dashboard.
+  const handleBuyAddons = async () => {
+    if (!user?.id) return;
+    if (selectedAddonList.length === 0 || addonRupees <= 0) {
+      toast({ title: "No add-ons selected", description: "Tap + on a service to add it.", variant: "destructive" });
+      return;
+    }
+    if (!scriptLoaded || !(window as any).Razorpay) {
+      toast({ title: "Payment unavailable", description: "Razorpay is still loading. Please try again in a moment.", variant: "destructive" });
+      return;
+    }
+
+    const itemName = `Add-on Services × ${selectedAddonList.length} (${addonPoints} pts)`;
+    const itemDescription = selectedAddonList.map((s) => `${s.name} (${s.points} pts)`).join(", ");
+
+    setLoading("addons");
+    try {
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
+        body: {
+          amount: addonRupees,
+          currency: "INR",
+          plan_id: "addons",
+          plan_name: itemName,
+          // No employer_id → verify-razorpay-payment uses the "non-employer" flow:
+          // just verifies signature and emails the invoice, no subscription row.
+          receipt: `addons_${user.id.slice(0, 8)}_${Date.now()}`,
+          addon_points: addonPoints,
+          addon_services: selectedAddonList.map((s) => ({ id: s.id, name: s.name, points: s.points })),
+        },
+      });
+
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderError?.message || "Failed to create payment order");
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "Gradia",
+        description: itemName,
+        order_id: orderData.order_id,
+        prefill: {
+          name: profile?.full_name || "",
+          email: user.email || "",
+          contact: profile?.mobile || "",
+        },
+        theme: { color: "#6366f1" },
+        modal: { ondismiss: () => setLoading(null) },
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                amount: addonRupees,
+                item_name: itemName,
+                item_description: itemDescription,
+                item_type: "subscription",
+                user_role: "employer",
+              },
+            });
+
+            if (verifyError) throw verifyError;
+            if (!verifyData?.success) throw new Error(verifyData?.error || "Payment could not be verified");
+
+            // Optional: ledger entry for traceability
+            const { data: wallet } = await supabase
+              .from("wallets")
+              .select("*")
+              .eq("user_id", user.id)
+              .maybeSingle();
+            if (wallet) {
+              await supabase.from("wallet_transactions").insert({
+                wallet_id: wallet.id,
+                transaction_type: "debit",
+                category: "subscription",
+                points: 0,
+                description: `Add-on services purchase: ${itemDescription} (Razorpay ₹${addonRupees})`,
+              });
+            }
+
+            toast({
+              title: "Payment Successful!",
+              description: `${selectedAddonList.length} add-on${selectedAddonList.length > 1 ? "s" : ""} activated. Invoice sent to your email.`,
+            });
+            // Reset selection and route back to dashboard
+            setSelectedAddons({});
+            navigate("/employer/dashboard");
+          } catch (err: any) {
+            console.error("Add-on payment verification error:", err);
+            toast({
+              title: "Verification Failed",
+              description: err?.message || "Payment received but verification failed. Please contact support.",
+              variant: "destructive",
+            });
+          } finally {
+            setLoading(null);
+          }
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", (resp: any) => {
+        console.error("Razorpay add-on payment failed:", resp.error);
+        toast({
+          title: "Payment Failed",
+          description: resp.error?.description || "Please try again.",
+          variant: "destructive",
+        });
+        setLoading(null);
+      });
+      rzp.open();
+    } catch (error: any) {
+      console.error("Add-on purchase error:", error);
+      toast({ title: "Error", description: error.message || "Failed to start payment", variant: "destructive" });
+      setLoading(null);
+    }
+  };
   const planOrder = ["starter", "growth", "professional", "enterprise"];
   const currentIndex = currentPlan ? planOrder.indexOf(currentPlan) : -1;
 
@@ -568,8 +690,27 @@ export const UpgradePlanContent = () => {
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              The add-on total will be added to the plan price when you click <span className="font-semibold">Pay</span> on any paid plan above.
+              Click <span className="font-semibold">Buy Add-ons</span> to purchase only these services, or <span className="font-semibold">Pay</span> on any paid plan above to bundle them with your plan.
             </p>
+
+            {/* Buy add-ons standalone via Razorpay */}
+            <div className="mt-3 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between bg-background border border-border rounded-md p-3">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5 text-primary" />
+                A branded GST invoice will be emailed to <span className="font-semibold text-foreground">{user?.email || "your registered email"}</span> after payment.
+              </div>
+              <Button
+                onClick={handleBuyAddons}
+                disabled={loading === "addons" || !scriptLoaded || addonRupees <= 0}
+                size="sm"
+                className="shrink-0"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                {loading === "addons"
+                  ? "Processing…"
+                  : `Buy Add-ons – Pay ₹${addonRupees.toLocaleString("en-IN")}`}
+              </Button>
+            </div>
           </div>
         )}
       </Card>
