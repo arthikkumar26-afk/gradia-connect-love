@@ -235,19 +235,15 @@ const buildEmailHtml = (opts: {
   };
 
   const subscriptionBlock = showSubscription ? `
-    <h3 style="color:#1e3a8a;margin-top:24px;">📋 Subscription Plans</h3>
-    <table role="presentation" style="width:100%;border-collapse:separate;border-spacing:8px 0;margin-top:12px;table-layout:fixed;">
-      <tr>
-        ${planTiers.map((tier) => `
-          <td valign="top" style="width:25%;background:${tier.bg};border:1px solid ${tier.highlight ? "#f59e0b" : "#e5e7eb"};border-top:4px solid ${tier.headerColor};border-radius:6px;padding:14px;vertical-align:top;">
-            <div style="font-size:15px;font-weight:700;color:${tier.headerColor};margin-bottom:10px;text-align:center;letter-spacing:0.3px;">
-              ${tier.name}${tier.highlight ? ' <span style="background:#fbbf24;color:#7c2d12;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">POPULAR</span>' : ""}
-            </div>
-            ${tier.features.map(renderFeature).join("")}
-          </td>
-        `).join("")}
-      </tr>
-    </table>` : "";
+    <h3 style="color:#1e3a8a;margin-top:24px;margin-bottom:12px;">📋 Subscription Plans</h3>
+    ${planTiers.map((tier) => `
+      <div style="background:${tier.bg};border:1px solid ${tier.highlight ? "#f59e0b" : "#e5e7eb"};border-left:4px solid ${tier.headerColor};border-radius:6px;padding:14px 16px;margin-bottom:10px;">
+        <div style="font-size:15px;font-weight:700;color:${tier.headerColor};margin-bottom:10px;letter-spacing:0.3px;">
+          ${tier.name}${tier.highlight ? ' <span style="background:#fbbf24;color:#7c2d12;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">POPULAR</span>' : ""}
+        </div>
+        ${tier.features.map(renderFeature).join("")}
+      </div>
+    `).join("")}` : "";
 
 
   const paymentBlock = showPayment ? `
