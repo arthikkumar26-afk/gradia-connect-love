@@ -8,49 +8,44 @@ type TreeNode = {
   children?: TreeNode[];
 };
 
-const tree: TreeNode = {
-  label: "Organization",
-  icon: Building2,
-  color: "bg-primary text-primary-foreground border-primary",
-  children: [
-    {
-      label: "Branches",
-      icon: Building2,
-      color: "bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-300",
-      children: [
-        { label: "Branch A", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
-        { label: "Branch B", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
-        { label: "Branch C", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
-      ],
-    },
-    {
-      label: "HR's",
-      icon: Users,
-      color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
-      children: [
-        { label: "HR Lead", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20" },
-        { label: "HR Executive", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20" },
-      ],
-    },
-    {
-      label: "Management",
-      icon: UserCog,
-      color: "bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-300",
-      children: [
-        {
-          label: "Organize",
-          icon: Briefcase,
-          color: "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-300",
-        },
-        {
-          label: "Individual",
-          icon: User,
-          color: "bg-rose-500/10 text-rose-700 border-rose-500/30 dark:text-rose-300",
-        },
-      ],
-    },
-  ],
-};
+const rootChildren: TreeNode[] = [
+  {
+    label: "Branches",
+    icon: Building2,
+    color: "bg-blue-500/10 text-blue-700 border-blue-500/30 dark:text-blue-300",
+    children: [
+      { label: "Branch A", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
+      { label: "Branch B", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
+      { label: "Branch C", icon: Building2, color: "bg-blue-500/5 text-foreground border-blue-500/20" },
+    ],
+  },
+  {
+    label: "HR's",
+    icon: Users,
+    color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
+    children: [
+      { label: "HR Lead", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20" },
+      { label: "HR Executive", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20" },
+    ],
+  },
+  {
+    label: "Management",
+    icon: UserCog,
+    color: "bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-300",
+    children: [
+      {
+        label: "Organize",
+        icon: Briefcase,
+        color: "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-300",
+      },
+      {
+        label: "Individual",
+        icon: User,
+        color: "bg-rose-500/10 text-rose-700 border-rose-500/30 dark:text-rose-300",
+      },
+    ],
+  },
+];
 
 const NodeBox = ({ node }: { node: TreeNode }) => {
   const Icon = node.icon;
