@@ -1048,7 +1048,7 @@ const InviteFromResume = () => {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Sections enabled</span>
                         <span className="font-medium text-xs">
-                          {[showSubscription && "Subscription", showPayment && "Payment", showTerms && "Terms"].filter(Boolean).join(", ") || "Core only"}
+                          {[showSubscription && "Subscription", showTerms && "Terms"].filter(Boolean).join(", ") || "Core only"}
                         </span>
                       </div>
                     </div>
