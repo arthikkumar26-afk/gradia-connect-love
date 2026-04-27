@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Building2, Users, UserCog, Briefcase, User } from "lucide-react";
+import { Building2, Users, UserCog, Briefcase, User, Map, Globe2, Compass } from "lucide-react";
 
 type TreeNode = {
   label: string;
@@ -37,6 +37,34 @@ const rootChildren: TreeNode[] = [
         label: "Organize",
         icon: Briefcase,
         color: "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-300",
+        children: [
+          {
+            label: "States",
+            icon: Map,
+            color: "bg-amber-500/5 text-foreground border-amber-500/20",
+            children: [
+              {
+                label: "Regions",
+                icon: Globe2,
+                color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                children: [
+                  {
+                    label: "Zones",
+                    icon: Compass,
+                    color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                    children: [
+                      {
+                        label: "Branches",
+                        icon: Building2,
+                        color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       {
         label: "Individual",
