@@ -249,12 +249,14 @@ const buildEmailHtml = (opts: {
 
   const termsBlock = showTerms ? `
     <h3 style="color:#1e3a8a;margin-top:24px;">📜 Terms &amp; Conditions</h3>
-    <ul style="font-size:13px;line-height:1.6;color:#4b5563;">
-      <li>Resume must be accurate</li>
-      <li>Opportunities depend on employer</li>
-      <li>Profile may be shared with recruiters</li>
-      <li>Communication via email/phone</li>
-    </ul>` : "";
+    <ul style="font-size:13px;line-height:1.7;color:#4b5563;margin:0 0 0 18px;padding:0;">
+      <li>Submission of your resume/CV does not guarantee job placement or interview selection.</li>
+      <li>Interview scheduling is subject to employer requirements and availability.</li>
+      <li>The information provided in your resume/CV must be accurate and truthful.</li>
+      <li>We may share your profile with potential employers for relevant job opportunities.</li>
+      <li>Communication regarding opportunities will be sent via email or phone.</li>
+    </ul>
+    <p style="font-size:13px;line-height:1.6;color:#4b5563;margin-top:10px;">We will keep you updated shortly. If you have any questions, please feel free to contact us.</p>` : "";
 
   return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#111827;background:#ffffff;">
   <h2 style="color:#1e3a8a;margin:0 0 16px;">Dear ${candidateName},</h2>
