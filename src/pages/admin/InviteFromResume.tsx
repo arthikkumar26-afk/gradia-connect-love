@@ -263,17 +263,28 @@ const buildEmailHtml = (opts: {
   <p style="font-size:15px;line-height:1.6;">If you have any questions or need further assistance, please feel free to reach out to us.</p>
 
   <h3 style="color:#1e3a8a;margin-top:24px;">Based on your CV, suitable openings:</h3>
-  <ul style="font-size:14px;line-height:1.7;">
-    <li>Principal – State Board (Hyderabad)</li>
-    <li>Principal – State Board (Nizamabad)</li>
-    <li>Principal – CBSE Board</li>
-    <li>SME (Subject Matter Expert)</li>
-    <li>Resource Person</li>
-    <li>HOD / Senior Teacher</li>
-  </ul>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+    <thead>
+      <tr style="background:#f3f4f6;">
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Vacancy</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Salary</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Action</th>
+      </tr>
+    </thead>
+    <tbody>${cvOpeningsRows}</tbody>
+  </table>
 
-  <h3 style="color:#1e3a8a;margin-top:24px;">Suitable Jobs according to your qualifications:</h3>
-  <ul style="font-size:14px;line-height:1.7;list-style:none;padding-left:0;">${roleList}</ul>
+  <h3 style="color:#1e3a8a;margin-top:24px;">Suitable Jobs according to your qualifications &amp; Experience:</h3>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;margin-top:8px;">
+    <thead>
+      <tr style="background:#f3f4f6;">
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Vacancy</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:left;">Salary</th>
+        <th style="border:1px solid #e5e7eb;padding:8px;text-align:center;">Action</th>
+      </tr>
+    </thead>
+    <tbody>${roleList}</tbody>
+  </table>
 
   <p style="font-size:14px;margin-top:16px;"><strong>Please confirm your preference:</strong></p>
   <p style="font-size:14px;">☐ With Interview &nbsp;&nbsp; ☐ Without Interview</p>
