@@ -235,50 +235,44 @@ const buildEmailHtml = (opts: {
   };
 
   const subscriptionBlock = showSubscription ? `
-    <h3 style="color:#1e3a8a;margin-top:24px;">📋 Subscription Plans</h3>
-    <table role="presentation" style="width:100%;border-collapse:separate;border-spacing:8px 0;margin-top:12px;table-layout:fixed;">
-      <tr>
-        ${planTiers.map((tier) => `
-          <td valign="top" style="width:25%;background:${tier.bg};border:1px solid ${tier.highlight ? "#f59e0b" : "#e5e7eb"};border-top:4px solid ${tier.headerColor};border-radius:6px;padding:14px;vertical-align:top;">
-            <div style="font-size:15px;font-weight:700;color:${tier.headerColor};margin-bottom:10px;text-align:center;letter-spacing:0.3px;">
-              ${tier.name}${tier.highlight ? ' <span style="background:#fbbf24;color:#7c2d12;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">POPULAR</span>' : ""}
-            </div>
-            ${tier.features.map(renderFeature).join("")}
-          </td>
-        `).join("")}
-      </tr>
-    </table>` : "";
+    <h3 style="color:#1e3a8a;margin:24px 0 12px;font-size:18px;">📋 Subscription Plans</h3>
+    ${planTiers.map((tier) => `
+      <div style="background:${tier.bg};border:1px solid ${tier.highlight ? "#f59e0b" : "#e5e7eb"};border-top:4px solid ${tier.headerColor};border-radius:6px;padding:14px 16px;margin-bottom:10px;">
+        <div style="font-size:15px;font-weight:700;color:${tier.headerColor};margin-bottom:10px;letter-spacing:0.3px;">
+          ${tier.name}${tier.highlight ? ' <span style="background:#fbbf24;color:#7c2d12;font-size:9px;padding:2px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">POPULAR</span>' : ""}
+        </div>
+        ${tier.features.map(renderFeature).join("")}
+      </div>
+    `).join("")}` : "";
 
 
   const paymentBlock = showPayment ? `
-    <h3 style="color:#1e3a8a;margin-top:24px;">💳 Payment Methods</h3>
-    <ul style="font-size:14px;line-height:1.7;">
-      <li>UPI (GPay, PhonePe, Paytm, BHIM)</li>
-      <li>Credit / Debit Cards</li>
-      <li>Net Banking</li>
-      <li>Wallets</li>
-      <li>Bank Transfer</li>
-    </ul>
-    <div style="background:#fff7ed;border-left:4px solid #f97316;padding:12px;margin-top:12px;font-size:13px;">
-      <strong>Important Notes:</strong>
-      <ul style="margin:6px 0 0 18px;padding:0;line-height:1.7;">
-        <li>All payments are processed through secure payment gateways.</li>
-        <li>Please ensure you receive a payment confirmation/receipt after successful transaction.</li>
-        <li>Subscription will be activated only after payment verification.</li>
-        <li>Fees once paid are non-refundable unless stated otherwise in our policy.</li>
-      </ul>
-      <p style="margin:10px 0 0;font-size:13px;">If you need assistance with payment or have any questions, feel free to contact us.</p>
+    <h3 style="color:#1e3a8a;margin:24px 0 12px;font-size:18px;">💳 Payment Methods</h3>
+    <div style="font-size:14px;line-height:1.7;color:#111827;">
+      <div style="margin-bottom:4px;">• UPI (GPay, PhonePe, Paytm, BHIM)</div>
+      <div style="margin-bottom:4px;">• Credit / Debit Cards</div>
+      <div style="margin-bottom:4px;">• Net Banking</div>
+      <div style="margin-bottom:4px;">• Wallets</div>
+      <div style="margin-bottom:4px;">• Bank Transfer</div>
+    </div>
+    <div style="background:#fff7ed;border-left:4px solid #f97316;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.7;color:#111827;">
+      <div style="font-weight:700;margin-bottom:6px;">Important Notes:</div>
+      <div style="margin-bottom:4px;">• All payments are processed through secure payment gateways.</div>
+      <div style="margin-bottom:4px;">• Please ensure you receive a payment confirmation/receipt after successful transaction.</div>
+      <div style="margin-bottom:4px;">• Subscription will be activated only after payment verification.</div>
+      <div style="margin-bottom:4px;">• Fees once paid are non-refundable unless stated otherwise in our policy.</div>
+      <div style="margin-top:10px;">If you need assistance with payment or have any questions, feel free to contact us.</div>
     </div>` : "";
 
   const termsBlock = showTerms ? `
-    <h3 style="color:#1e3a8a;margin-top:24px;">📜 Terms &amp; Conditions</h3>
-    <ul style="font-size:13px;line-height:1.7;color:#4b5563;margin:0 0 0 18px;padding:0;">
-      <li>Submission of your resume/CV does not guarantee job placement or interview selection.</li>
-      <li>Interview scheduling is subject to employer requirements and availability.</li>
-      <li>The information provided in your resume/CV must be accurate and truthful.</li>
-      <li>We may share your profile with potential employers for relevant job opportunities.</li>
-      <li>Communication regarding opportunities will be sent via email or phone.</li>
-    </ul>
+    <h3 style="color:#1e3a8a;margin:24px 0 12px;font-size:18px;">📜 Terms &amp; Conditions</h3>
+    <div style="font-size:13px;line-height:1.7;color:#4b5563;">
+      <div style="margin-bottom:4px;">• Submission of your resume/CV does not guarantee job placement or interview selection.</div>
+      <div style="margin-bottom:4px;">• Interview scheduling is subject to employer requirements and availability.</div>
+      <div style="margin-bottom:4px;">• The information provided in your resume/CV must be accurate and truthful.</div>
+      <div style="margin-bottom:4px;">• We may share your profile with potential employers for relevant job opportunities.</div>
+      <div style="margin-bottom:4px;">• Communication regarding opportunities will be sent via email or phone.</div>
+    </div>
     <p style="font-size:13px;line-height:1.6;color:#4b5563;margin-top:10px;">We will keep you updated shortly. If you have any questions, please feel free to contact us.</p>` : "";
 
   return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;margin:0 auto;padding:24px;color:#111827;background:#ffffff;">
