@@ -108,8 +108,10 @@ export const BranchProjectionContent = () => {
       </div>
 
       <Card className="p-6 md:p-10 overflow-x-auto">
-        <div className="min-w-fit mx-auto flex justify-center">
-          <TreeBranch node={tree} isRoot />
+        <div className="min-w-fit mx-auto flex items-start justify-center gap-6 md:gap-10">
+          {rootChildren.map((node, idx) => (
+            <TreeBranch key={idx} node={node} isRoot />
+          ))}
         </div>
       </Card>
 
