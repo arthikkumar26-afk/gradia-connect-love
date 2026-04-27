@@ -485,6 +485,14 @@ const InviteFromResume = () => {
     })();
   }, [navigate]);
 
+  // Auto-load invite history when Status tab is opened
+  useEffect(() => {
+    if (activeTab === "status" && authorized) {
+      loadInvites();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, authorized]);
+
   const handleBulkFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
