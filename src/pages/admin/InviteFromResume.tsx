@@ -7,7 +7,7 @@ import {
   ClipboardList, UserCog, MessageSquare, Ticket, Bell, BarChart3,
   FileText, Settings, ShieldCheck, Upload, Mail, Send, Loader2, FileUp,
   Sparkles, MapPin, Wand2, Search, Save, Database, Eye, FileEdit,
-  Activity, RefreshCw, Clock, CheckCircle2, XCircle, UserPlus,
+  Activity, RefreshCw, Clock, CheckCircle2, XCircle, UserPlus, LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -360,6 +360,11 @@ const InviteFromResume = () => {
   const location = useLocation();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/admin/login");
+  };
+
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [parsing, setParsing] = useState(false);
@@ -680,7 +685,7 @@ const InviteFromResume = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-muted/30">
         <Sidebar>
-          <SidebarContent>
+          <SidebarContent className="flex flex-col h-full">
             <div className="p-4 border-b">
               <Link to="/admin/dashboard" className="flex items-center gap-2">
                 <ShieldCheck className="h-6 w-6 text-primary" />
@@ -704,6 +709,16 @@ const InviteFromResume = () => {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+            <div className="mt-auto p-4 border-t">
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            </div>
           </SidebarContent>
         </Sidebar>
 
