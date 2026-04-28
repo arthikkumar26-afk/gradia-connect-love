@@ -535,10 +535,14 @@ const InviteFromResume = () => {
           error: email ? undefined : "No email found in resume",
         } : r));
       } catch (err: any) {
+        const msg = err?.message || "Parse failed";
+        const isRateLimit = /429|rate.?limit|non-2xx/i.test(msg);
         setBulkRows((prev) => prev.map((r) => r.id === rowId ? {
           ...r,
-          status: "failed",
-          error: err.message || "Parse failed",
+          status: "pending",
+          error: isRateLimit
+            ? "Auto-parse unavailable right now (AI is busy). Please enter name & email manually below."
+            : `${msg}. Please enter name & email manually below.`,
         } : r));
       }
     }
@@ -880,14 +884,14 @@ const InviteFromResume = () => {
                                     value={r.email}
                                     onChange={(e) => updateBulkRow(r.id, {
                                       email: e.target.value,
-                                      status: e.target.value.includes("@") && r.status === "failed" ? "ready" : r.status,
+                                      status: e.target.value.includes("@") && (r.status === "failed" || r.status === "pending") ? "ready" : r.status,
                                     })}
                                     placeholder="email@example.com"
                                     className="h-7 text-xs"
                                     disabled={bulkSending || r.status === "sent"}
                                   />
                                 </div>
-                                {r.error && <p className="text-[10px] text-destructive">{r.error}</p>}
+                                {r.error && <p className={`text-[10px] ${r.status === "failed" ? "text-destructive" : "text-amber-600"}`}>{r.error}</p>}
                               </div>
                             ))}
                           </div>
