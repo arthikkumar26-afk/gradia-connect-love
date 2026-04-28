@@ -884,14 +884,14 @@ const InviteFromResume = () => {
                                     value={r.email}
                                     onChange={(e) => updateBulkRow(r.id, {
                                       email: e.target.value,
-                                      status: e.target.value.includes("@") && r.status === "failed" ? "ready" : r.status,
+                                      status: e.target.value.includes("@") && (r.status === "failed" || r.status === "pending") ? "ready" : r.status,
                                     })}
                                     placeholder="email@example.com"
                                     className="h-7 text-xs"
                                     disabled={bulkSending || r.status === "sent"}
                                   />
                                 </div>
-                                {r.error && <p className="text-[10px] text-destructive">{r.error}</p>}
+                                {r.error && <p className={`text-[10px] ${r.status === "failed" ? "text-destructive" : "text-amber-600"}`}>{r.error}</p>}
                               </div>
                             ))}
                           </div>
