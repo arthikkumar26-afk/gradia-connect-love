@@ -1145,9 +1145,12 @@ const InviteFromResume = () => {
                               </div>
                             );
                           }
+                          const mergedRoles = (r.suggestedRoles && r.suggestedRoles.length)
+                            ? jobRoles.map((jr, i) => r.suggestedRoles![i] || jr)
+                            : jobRoles;
                           const personalizedHtml = buildEmailHtml({
                             candidateName: r.name || r.fileName?.replace(/\.[^.]+$/, "") || "Candidate",
-                            jobRoles,
+                            jobRoles: mergedRoles,
                             jobSalaries,
                             cvOpenings,
                             applyUrl,
