@@ -59,6 +59,18 @@ export default function SampleCandidateDemo() {
   const [mailOpen, setMailOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const RESUME_URL = "/sample-resume-aarav-sharma.pdf";
+
+  const downloadResume = () => {
+    const a = document.createElement("a");
+    a.href = RESUME_URL;
+    a.download = "Aarav-Sharma-Resume.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast.success("Resume downloaded");
+  };
 
   const [mailSubject, setMailSubject] = useState(`Next steps for your application — ${SAMPLE.jobTitle}`);
   const [mailBody, setMailBody] = useState(
@@ -176,8 +188,8 @@ export default function SampleCandidateDemo() {
           <Button variant="outline" size="sm" onClick={() => setFeedbackOpen(true)}>
             <MessageSquare className="h-4 w-4 mr-1.5" /> Add Feedback
           </Button>
-          <Button variant="outline" size="sm" onClick={() => toast.success("Resume downloaded (demo)")}>
-            <Download className="h-4 w-4 mr-1.5" /> Resume
+          <Button variant="outline" size="sm" onClick={() => setResumeOpen(true)}>
+            <FileText className="h-4 w-4 mr-1.5" /> View Resume
           </Button>
           <Button variant="outline" size="sm" onClick={() => toast.success("Video intro opened (demo)")}>
             <Video className="h-4 w-4 mr-1.5" /> Video Intro
@@ -351,6 +363,29 @@ export default function SampleCandidateDemo() {
             <Button variant="outline" onClick={() => setFeedbackOpen(false)}>Cancel</Button>
             <Button onClick={submitFeedback}>Save Feedback</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Resume viewer dialog */}
+      <Dialog open={resumeOpen} onOpenChange={setResumeOpen}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
+            <DialogTitle className="text-base">Resume — {SAMPLE.name}</DialogTitle>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => window.open(RESUME_URL, "_blank")}>
+                <ExternalLink className="h-4 w-4 mr-1.5" /> Open in New Tab
+              </Button>
+              <Button size="sm" onClick={downloadResume}>
+                <Download className="h-4 w-4 mr-1.5" /> Download
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 bg-muted/30 overflow-hidden">
+            <iframe
+              src={`${RESUME_URL}#view=FitH`}
+              title="Sample Resume"
+              className="w-full h-full border-0"
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </Card>
