@@ -415,6 +415,7 @@ const InviteFromResume = () => {
   const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
   const [bulkParsing, setBulkParsing] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
+  const [expandedReviewIds, setExpandedReviewIds] = useState<Set<string>>(new Set());
 
   // Invite status tracking
   type InviteRecord = {
@@ -1080,26 +1081,84 @@ const InviteFromResume = () => {
                     </div>
 
                     {bulkRows.length > 0 && (
-                      <div className="border rounded-md max-h-64 overflow-auto divide-y">
-                        {bulkRows.map((r) => (
-                          <div key={r.id} className="px-3 py-2 text-xs flex items-center justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium truncate">{r.name || r.fileName}</p>
-                              <p className="text-muted-foreground truncate">{r.email || "no email"}</p>
+                      <div className="border rounded-md max-h-[480px] overflow-auto divide-y">
+                        {bulkRows.map((r) => {
+                          const isOpen = expandedReviewIds.has(r.id);
+                          const personalizedHtml = r.email
+                            ? buildEmailHtml({
+                                candidateName: r.name || "Candidate",
+                                jobRoles,
+                                jobSalaries,
+                                cvOpenings,
+                                applyUrl,
+                                adminName,
+                                companyName,
+                                contactInfo,
+                                showSubscription,
+                                showTerms,
+                              })
+                            : "";
+                          return (
+                            <div key={r.id} className="text-xs">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedReviewIds((prev) => {
+                                    const next = new Set(prev);
+                                    next.has(r.id) ? next.delete(r.id) : next.add(r.id);
+                                    return next;
+                                  })
+                                }
+                                className="w-full px-3 py-2 flex items-center justify-between gap-2 hover:bg-muted/50 text-left"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium truncate">{r.name || r.fileName}</p>
+                                  <p className="text-muted-foreground truncate">{r.email || "no email"}</p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <Badge
+                                    variant={
+                                      r.status === "sent" ? "default"
+                                        : r.status === "failed" ? "destructive"
+                                        : r.status === "ready" ? "secondary"
+                                        : "outline"
+                                    }
+                                    className="text-[10px]"
+                                  >
+                                    {r.status}
+                                  </Badge>
+                                  <span className="text-muted-foreground text-[10px]">
+                                    {isOpen ? "Hide" : "Preview"}
+                                  </span>
+                                </div>
+                              </button>
+                              {isOpen && (
+                                <div className="px-3 pb-3 pt-1 bg-muted/30 space-y-2">
+                                  <div className="flex flex-col gap-1 text-[11px]">
+                                    <div><span className="text-muted-foreground">To: </span><span className="font-medium">{r.email || "—"}</span></div>
+                                    <div><span className="text-muted-foreground">Subject: </span><span className="font-medium">{subject}</span></div>
+                                    <div><span className="text-muted-foreground">From: </span><span className="font-medium">{companyName} &lt;noreply@gradia.co.in&gt;</span></div>
+                                    {r.error && (
+                                      <div className="text-destructive">Error: {r.error}</div>
+                                    )}
+                                  </div>
+                                  {personalizedHtml ? (
+                                    <div className="border rounded bg-background max-h-72 overflow-auto">
+                                      <iframe
+                                        title={`preview-${r.id}`}
+                                        srcDoc={personalizedHtml}
+                                        className="w-full h-72 border-0"
+                                        sandbox=""
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="text-muted-foreground italic">No email available — missing recipient address.</div>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                            <Badge
-                              variant={
-                                r.status === "sent" ? "default"
-                                  : r.status === "failed" ? "destructive"
-                                  : r.status === "ready" ? "secondary"
-                                  : "outline"
-                              }
-                              className="text-[10px]"
-                            >
-                              {r.status}
-                            </Badge>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
 
