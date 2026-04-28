@@ -638,6 +638,51 @@ export type Database = {
         }
         Relationships: []
       }
+      education_salary_bands: {
+        Row: {
+          created_at: string
+          display_order: number
+          group_code: string
+          group_name: string
+          id: string
+          is_active: boolean
+          qualifications: string | null
+          role_title: string
+          salary_max: number
+          salary_min: number
+          segment: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          group_code: string
+          group_name: string
+          id?: string
+          is_active?: boolean
+          qualifications?: string | null
+          role_title: string
+          salary_max: number
+          salary_min: number
+          segment: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          group_code?: string
+          group_name?: string
+          id?: string
+          is_active?: boolean
+          qualifications?: string | null
+          role_title?: string
+          salary_max?: number
+          salary_min?: number
+          segment?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       educational_qualifications: {
         Row: {
           board_university: string | null
