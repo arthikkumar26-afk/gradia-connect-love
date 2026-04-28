@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
+import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
 
 interface JobRow {
   id: string;
@@ -282,11 +283,13 @@ const HRDashboard = () => {
         );
       case "candidates":
         return (
-          <Card>
-            <CardHeader><CardTitle className="text-base">Applicants</CardTitle></CardHeader>
+          <div className="space-y-4">
+            <SampleCandidateDemo />
+            <Card>
+            <CardHeader><CardTitle className="text-base">Real Applicants</CardTitle></CardHeader>
             <CardContent>
               {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
-                : candidates.length === 0 ? <p className="text-sm text-muted-foreground">No candidates yet.</p>
+                : candidates.length === 0 ? <p className="text-sm text-muted-foreground">No real candidates yet — the sample above shows how all options work.</p>
                 : (
                   <div className="space-y-2">
                     {candidates.map(c => (
@@ -308,9 +311,10 @@ const HRDashboard = () => {
                 )}
             </CardContent>
           </Card>
+          </div>
         );
       case "pipeline":
-        return <Card><CardContent className="p-6 text-sm text-muted-foreground">Use the Candidates tab to open a candidate and progress them through interview rounds.</CardContent></Card>;
+        return <SampleCandidateDemo />;
       case "interviews":
         return <Card><CardContent className="p-6 text-sm text-muted-foreground">Interview scheduling and feedback can be performed from each candidate's profile.</CardContent></Card>;
       default:
