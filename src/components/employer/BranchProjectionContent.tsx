@@ -81,40 +81,47 @@ const rootChildren: TreeNode[] = [
     label: "HR's",
     icon: Users,
     color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
+    info: { description: "All HR sub-accounts linked to your company. They manage candidates, interviews, and job postings.", headcount: 2, owner: "HR Department" },
     children: [
-      { label: "HR Lead", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20" },
-      { label: "HR Executive", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20" },
+      { label: "HR Lead", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20", info: { description: "Senior HR responsible for hiring strategy and team oversight.", headcount: 1, owner: "Sneha Patil", contact: "+91 98200 11122" } },
+      { label: "HR Executive", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20", info: { description: "Day-to-day candidate sourcing, screening, and interview coordination.", headcount: 1, owner: "Arjun Mehta", contact: "+91 98765 22334" } },
     ],
   },
   {
     label: "Management",
     icon: UserCog,
     color: "bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-300",
+    info: { description: "Top-level management hierarchy across organize and individual reporting lines.", owner: "Leadership Team" },
     children: [
       {
         label: "Organize",
         icon: Briefcase,
         color: "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-300",
+        info: { description: "Organizational hierarchy across geographies — States → Regions → Zones → Branches." },
         children: [
           {
             label: "States",
             icon: Map,
             color: "bg-amber-500/5 text-foreground border-amber-500/20",
+            info: { description: "Top-level geographical units in your organization." },
             children: [
               {
                 label: "Regions",
                 icon: Globe2,
                 color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                info: { description: "Sub-divisions within each state, grouping multiple zones." },
                 children: [
                   {
                     label: "Zones",
                     icon: Compass,
                     color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                    info: { description: "Operational zones grouping nearby branches." },
                     children: [
                       {
                         label: "Branches",
                         icon: Building2,
                         color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                        info: { description: "Individual branch offices under each zone." },
                       },
                     ],
                   },
@@ -128,27 +135,36 @@ const rootChildren: TreeNode[] = [
         label: "Individual",
         icon: User,
         color: "bg-rose-500/10 text-rose-700 border-rose-500/30 dark:text-rose-300",
+        info: { description: "Direct individual reporting line — managers and ICs reporting straight to leadership." },
       },
     ],
   },
 ];
 
 type SelectedBranch = { name: string; details: BranchDetails } | null;
+type SelectedInfo = { name: string; icon: React.ElementType; info: NodeInfo } | null;
 
 const NodeBox = ({
   node,
   onBranchClick,
+  onInfoClick,
 }: {
   node: TreeNode;
   onBranchClick?: (name: string, details: BranchDetails) => void;
+  onInfoClick?: (name: string, icon: React.ElementType, info: NodeInfo) => void;
 }) => {
   const Icon = node.icon;
-  const isClickable = !!node.branchDetails;
+  const isBranch = !!node.branchDetails;
+  const hasInfo = !!node.info;
+  const isClickable = isBranch || hasInfo;
   return (
     <button
       type="button"
       disabled={!isClickable}
-      onClick={() => isClickable && onBranchClick?.(node.label, node.branchDetails!)}
+      onClick={() => {
+        if (isBranch) onBranchClick?.(node.label, node.branchDetails!);
+        else if (hasInfo) onInfoClick?.(node.label, node.icon, node.info!);
+      }}
       className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 shadow-sm ${node.color} font-medium text-sm whitespace-nowrap transition ${
         isClickable ? "cursor-pointer hover:scale-[1.03] hover:shadow-md" : "cursor-default"
       }`}
