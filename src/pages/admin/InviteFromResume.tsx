@@ -1086,33 +1086,14 @@ const InviteFromResume = () => {
                     </div>
 
                     {bulkRows.length > 0 && (
-                      <div className="border rounded-md max-h-[480px] overflow-auto divide-y">
-                        {bulkRows.map((r) => {
-                          const isOpen = expandedReviewIds.has(r.id);
-                          const personalizedHtml = buildEmailHtml({
-                            candidateName: r.name || r.fileName?.replace(/\.[^.]+$/, "") || "Candidate",
-                            jobRoles,
-                            jobSalaries,
-                            cvOpenings,
-                            applyUrl,
-                            adminName,
-                            companyName,
-                            contactInfo,
-                            showSubscription,
-                            showTerms,
-                          });
-                          return (
-                            <div key={r.id} className="text-xs">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setExpandedReviewIds((prev) => {
-                                    const next = new Set(prev);
-                                    next.has(r.id) ? next.delete(r.id) : next.add(r.id);
-                                    return next;
-                                  })
-                                }
-                                className="w-full px-3 py-2 flex items-center justify-between gap-2 hover:bg-muted/50 text-left"
+                      <div className="space-y-3">
+                        <div className="border rounded-md max-h-60 overflow-auto divide-y">
+                          {bulkRows.map((r) => {
+                            const isSelected = selectedPreviewId === r.id;
+                            return (
+                              <div
+                                key={r.id}
+                                className={`text-xs px-3 py-2 flex items-center justify-between gap-2 ${isSelected ? "bg-primary/10" : "hover:bg-muted/50"}`}
                               >
                                 <div className="min-w-0 flex-1">
                                   <p className="font-medium truncate">{r.name || r.fileName}</p>
@@ -1130,37 +1111,74 @@ const InviteFromResume = () => {
                                   >
                                     {r.status}
                                   </Badge>
-                                  <span className="text-muted-foreground text-[10px]">
-                                    {isOpen ? "Hide" : "Preview"}
-                                  </span>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={isSelected ? "default" : "outline"}
+                                    className="h-7 text-[11px]"
+                                    onClick={() => setSelectedPreviewId(isSelected ? null : r.id)}
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    {isSelected ? "Hide" : "Preview"}
+                                  </Button>
                                 </div>
-                              </button>
-                              {isOpen && (
-                                <div className="px-3 pb-3 pt-1 bg-muted/30 space-y-2">
-                                  <div className="flex flex-col gap-1 text-[11px]">
-                                    <div><span className="text-muted-foreground">To: </span><span className="font-medium">{r.email || "—"}</span></div>
-                                    <div><span className="text-muted-foreground">Subject: </span><span className="font-medium">{subject}</span></div>
-                                    <div><span className="text-muted-foreground">From: </span><span className="font-medium">{companyName} &lt;noreply@gradia.co.in&gt;</span></div>
-                                    {r.error && (
-                                      <div className="text-destructive">Error: {r.error}</div>
-                                    )}
-                                  </div>
-                                  {!r.email && (
-                                    <div className="text-[11px] text-amber-600">⚠ No email detected — preview shown but cannot send to this resume until an email is added.</div>
-                                  )}
-                                  <div className="border rounded bg-background max-h-72 overflow-auto">
-                                    <iframe
-                                      title={`preview-${r.id}`}
-                                      srcDoc={personalizedHtml}
-                                      className="w-full h-72 border-0"
-                                      sandbox=""
-                                    />
-                                  </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {(() => {
+                          const r = bulkRows.find((x) => x.id === selectedPreviewId);
+                          if (!r) {
+                            return (
+                              <div className="border rounded-md p-4 text-center text-xs text-muted-foreground bg-muted/30">
+                                Select a resume above and click <strong>Preview</strong> to see its personalized email.
+                              </div>
+                            );
+                          }
+                          const personalizedHtml = buildEmailHtml({
+                            candidateName: r.name || r.fileName?.replace(/\.[^.]+$/, "") || "Candidate",
+                            jobRoles,
+                            jobSalaries,
+                            cvOpenings,
+                            applyUrl,
+                            adminName,
+                            companyName,
+                            contactInfo,
+                            showSubscription,
+                            showTerms,
+                          });
+                          return (
+                            <div className="border rounded-md bg-muted/20 p-3 space-y-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="min-w-0">
+                                  <p className="text-xs font-semibold truncate">{r.name || r.fileName}</p>
+                                  <p className="text-[11px] text-muted-foreground truncate">{r.email || "no email"}</p>
                                 </div>
+                                <Badge variant="outline" className="text-[10px] shrink-0">Email Preview</Badge>
+                              </div>
+                              <div className="flex flex-col gap-1 text-[11px]">
+                                <div><span className="text-muted-foreground">To: </span><span className="font-medium">{r.email || "—"}</span></div>
+                                <div><span className="text-muted-foreground">Subject: </span><span className="font-medium">{subject}</span></div>
+                                <div><span className="text-muted-foreground">From: </span><span className="font-medium">{companyName} &lt;noreply@gradia.co.in&gt;</span></div>
+                                {r.error && (
+                                  <div className="text-destructive">Error: {r.error}</div>
+                                )}
+                              </div>
+                              {!r.email && (
+                                <div className="text-[11px] text-amber-600">⚠ No email detected — preview shown but cannot send to this resume until an email is added.</div>
                               )}
+                              <div className="border rounded bg-background max-h-96 overflow-auto">
+                                <iframe
+                                  title={`preview-${r.id}`}
+                                  srcDoc={personalizedHtml}
+                                  className="w-full h-96 border-0"
+                                  sandbox=""
+                                />
+                              </div>
                             </div>
                           );
-                        })}
+                        })()}
                       </div>
                     )}
 
