@@ -365,6 +365,29 @@ export default function SampleCandidateDemo() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Resume viewer dialog */}
+      <Dialog open={resumeOpen} onOpenChange={setResumeOpen}>
+        <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-4 py-3 border-b flex-row items-center justify-between space-y-0">
+            <DialogTitle className="text-base">Resume — {SAMPLE.name}</DialogTitle>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => window.open(RESUME_URL, "_blank")}>
+                <ExternalLink className="h-4 w-4 mr-1.5" /> Open in New Tab
+              </Button>
+              <Button size="sm" onClick={downloadResume}>
+                <Download className="h-4 w-4 mr-1.5" /> Download
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 bg-muted/30 overflow-hidden">
+            <iframe
+              src={`${RESUME_URL}#view=FitH`}
+              title="Sample Resume"
+              className="w-full h-full border-0"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
