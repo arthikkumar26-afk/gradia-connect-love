@@ -572,9 +572,12 @@ const InviteFromResume = () => {
     for (const row of recipients) {
       updateBulkRow(row.id, { status: "sending" });
       try {
+        const mergedRoles = (row.suggestedRoles && row.suggestedRoles.length)
+          ? jobRoles.map((r, i) => row.suggestedRoles![i] || r)
+          : jobRoles;
         const personalizedHtml = buildEmailHtml({
           candidateName: row.name || "Candidate",
-          jobRoles,
+          jobRoles: mergedRoles,
           jobSalaries,
           cvOpenings,
           applyUrl,
