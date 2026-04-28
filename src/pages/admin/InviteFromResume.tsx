@@ -157,9 +157,10 @@ const buildEmailHtml = (opts: {
     .map((o) => renderJobRow("", o.title, o.salary, applyUrl))
     .join("");
 
-  const roleCount = Math.min(3, Math.max(jobRoles.length, jobSalaries.length, 1));
-  const roleList = Array.from({ length: roleCount }, (_, i) =>
-    renderJobRow("", jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
+  const filledRoles = jobRoles.map((r) => (r || "").trim()).filter(Boolean).slice(0, 3);
+  const rolesForRender = filledRoles.length ? filledRoles : ["Suitable Role 1", "Suitable Role 2", "Suitable Role 3"];
+  const roleList = rolesForRender.map((title, i) =>
+    renderJobRow("", title, jobSalaries[i] || "", applyUrl)
   ).join("");
 
   const moreButton = `
@@ -411,6 +412,8 @@ const InviteFromResume = () => {
     email: string;
     status: "pending" | "parsing" | "ready" | "sending" | "sent" | "failed";
     error?: string;
+    parsed?: ParsedResume | null;
+    suggestedRoles?: string[];
   };
   const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
   const [bulkParsing, setBulkParsing] = useState(false);
@@ -521,10 +524,13 @@ const InviteFromResume = () => {
         if (data?.error) throw new Error(data.error);
         const name = data?.full_name || "";
         const email = data?.email || "";
+        const suggestedRoles = buildSuggestedRoles(data as ParsedResume);
         setBulkRows((prev) => prev.map((r) => r.id === rowId ? {
           ...r,
           name,
           email,
+          parsed: data as ParsedResume,
+          suggestedRoles,
           status: email ? "ready" : "failed",
           error: email ? undefined : "No email found in resume",
         } : r));
@@ -567,9 +573,12 @@ const InviteFromResume = () => {
     for (const row of recipients) {
       updateBulkRow(row.id, { status: "sending" });
       try {
+        const mergedRoles = (row.suggestedRoles && row.suggestedRoles.length)
+          ? jobRoles.map((r, i) => row.suggestedRoles![i] || r)
+          : jobRoles;
         const personalizedHtml = buildEmailHtml({
           candidateName: row.name || "Candidate",
-          jobRoles,
+          jobRoles: mergedRoles,
           jobSalaries,
           cvOpenings,
           applyUrl,
@@ -1137,9 +1146,12 @@ const InviteFromResume = () => {
                               </div>
                             );
                           }
+                          const mergedRoles = (r.suggestedRoles && r.suggestedRoles.length)
+                            ? jobRoles.map((jr, i) => r.suggestedRoles![i] || jr)
+                            : jobRoles;
                           const personalizedHtml = buildEmailHtml({
                             candidateName: r.name || r.fileName?.replace(/\.[^.]+$/, "") || "Candidate",
-                            jobRoles,
+                            jobRoles: mergedRoles,
                             jobSalaries,
                             cvOpenings,
                             applyUrl,
