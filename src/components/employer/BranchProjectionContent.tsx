@@ -635,12 +635,12 @@ export const BranchProjectionContent = () => {
         </DialogContent>
       </Dialog>
 
-      {/* View HR Members Dialog */}
+      {/* View Panel Dialog — list of HRs, click to open work status */}
       <Dialog open={viewOpen} onOpenChange={setViewOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>HR Members</DialogTitle>
-            <DialogDescription>All HR sub-accounts linked to your company.</DialogDescription>
+            <DialogTitle>HR Panel — Work Status</DialogTitle>
+            <DialogDescription>Click any HR member to see their work status, pending tasks, and full details.</DialogDescription>
           </DialogHeader>
           <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {hrLoading ? (
@@ -649,13 +649,28 @@ export const BranchProjectionContent = () => {
               <p className="text-sm text-muted-foreground">No HR accounts yet.</p>
             ) : (
               hrAccounts.map((a) => (
-                <Card key={a.id} className="p-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-sm">{a.profile?.full_name}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{a.profile?.email}</p>
-                  </div>
-                  <Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge>
-                </Card>
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => openMemberPanel(a)}
+                  className="w-full text-left"
+                >
+                  <Card className="p-3 flex items-center justify-between hover:border-primary/50 hover:shadow-sm transition">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center flex-shrink-0">
+                        <Users className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{a.profile?.full_name || "—"}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 truncate"><Mail className="h-3 w-3" />{a.profile?.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge>
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </Card>
+                </button>
               ))
             )}
           </div>
@@ -664,6 +679,117 @@ export const BranchProjectionContent = () => {
               <UserPlus className="h-4 w-4 mr-1" /> Add HR Member
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Member detail panel — work status, pending, details */}
+      <Dialog open={!!panelMember} onOpenChange={(open) => { if (!open) { setPanelMember(null); setMemberStats(null); } }}>
+        <DialogContent className="max-w-2xl">
+          {panelMember && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-emerald-600" />
+                  {panelMember.profile?.full_name || "HR Member"}
+                </DialogTitle>
+                <DialogDescription className="flex items-center gap-1">
+                  <Mail className="h-3 w-3" /> {panelMember.profile?.email}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+                {/* Status row */}
+                <div className="flex items-center gap-2">
+                  <Badge variant={panelMember.is_active ? "default" : "secondary"}>
+                    {panelMember.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">
+                    Linked since {new Date(panelMember.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+
+                {/* Work stats */}
+                <div>
+                  <p className="text-sm font-semibold mb-2">Work Status</p>
+                  {statsLoading || !memberStats ? (
+                    <p className="text-xs text-muted-foreground">Loading work data…</p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-3">
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Briefcase className="h-3 w-3" /> Jobs Managed</p>
+                        <p className="text-xl font-semibold mt-1">{memberStats.jobsPosted}</p>
+                      </Card>
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Eye className="h-3 w-3" /> Interviews</p>
+                        <p className="text-xl font-semibold mt-1">{memberStats.interviewsScheduled}</p>
+                      </Card>
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" /> Candidates</p>
+                        <p className="text-xl font-semibold mt-1">{memberStats.activeCandidates}</p>
+                      </Card>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pending works */}
+                <div>
+                  <p className="text-sm font-semibold mb-2">Pending Works</p>
+                  {statsLoading || !memberStats ? (
+                    <p className="text-xs text-muted-foreground">Loading…</p>
+                  ) : memberStats.pending.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">No pending tasks 🎉</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {memberStats.pending.map((t) => (
+                        <Card key={t.id} className="p-2.5 flex items-center justify-between">
+                          <p className="text-sm">{t.title}</p>
+                          <Badge variant="outline" className="text-[10px]">{t.due}</Badge>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* All details */}
+                <div>
+                  <p className="text-sm font-semibold mb-2">Account Details</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Card className="p-3">
+                      <p className="text-xs text-muted-foreground">Full Name</p>
+                      <p className="text-sm font-medium mt-1">{panelMember.profile?.full_name || "—"}</p>
+                    </Card>
+                    <Card className="p-3">
+                      <p className="text-xs text-muted-foreground">Role</p>
+                      <p className="text-sm font-medium mt-1">HR (Sub-account)</p>
+                    </Card>
+                    <Card className="p-3 col-span-2">
+                      <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> Email</p>
+                      <p className="text-sm font-medium mt-1">{panelMember.profile?.email}</p>
+                    </Card>
+                    <Card className="p-3">
+                      <p className="text-xs text-muted-foreground">Account Status</p>
+                      <p className="text-sm font-medium mt-1">{panelMember.is_active ? "Active" : "Inactive"}</p>
+                    </Card>
+                    <Card className="p-3">
+                      <p className="text-xs text-muted-foreground">Login URL</p>
+                      <p className="text-sm font-medium mt-1">/hr/login</p>
+                    </Card>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                {panelMember.is_active && (
+                  <Button variant="destructive" onClick={() => { handleDeactivate(panelMember.hr_user_id); setPanelMember(null); }}>
+                    <Trash2 className="h-4 w-4 mr-1" /> Deactivate
+                  </Button>
+                )}
+                <Button onClick={() => setPanelMember(null)}>Close</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
         </DialogContent>
       </Dialog>
 
