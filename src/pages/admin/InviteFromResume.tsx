@@ -1084,20 +1084,18 @@ const InviteFromResume = () => {
                       <div className="border rounded-md max-h-[480px] overflow-auto divide-y">
                         {bulkRows.map((r) => {
                           const isOpen = expandedReviewIds.has(r.id);
-                          const personalizedHtml = r.email
-                            ? buildEmailHtml({
-                                candidateName: r.name || "Candidate",
-                                jobRoles,
-                                jobSalaries,
-                                cvOpenings,
-                                applyUrl,
-                                adminName,
-                                companyName,
-                                contactInfo,
-                                showSubscription,
-                                showTerms,
-                              })
-                            : "";
+                          const personalizedHtml = buildEmailHtml({
+                            candidateName: r.name || r.fileName?.replace(/\.[^.]+$/, "") || "Candidate",
+                            jobRoles,
+                            jobSalaries,
+                            cvOpenings,
+                            applyUrl,
+                            adminName,
+                            companyName,
+                            contactInfo,
+                            showSubscription,
+                            showTerms,
+                          });
                           return (
                             <div key={r.id} className="text-xs">
                               <button
