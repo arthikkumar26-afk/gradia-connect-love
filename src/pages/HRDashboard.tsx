@@ -343,27 +343,23 @@ const HRDashboard = () => {
         <aside
           className={cn(
             "fixed lg:sticky top-14 lg:top-0 left-0 h-[calc(100vh-3.5rem)] lg:h-screen bg-card border-r border-border transition-all duration-300 z-40 overflow-hidden",
-            sidebarOpen ? "w-64" : "w-0 lg:w-20"
+            sidebarOpen ? "w-64" : "w-0 lg:w-64"
           )}
         >
           <div className="flex flex-col h-full w-64">
             {/* Logo */}
             <div className="hidden lg:flex items-center gap-2 p-4 border-b border-border">
               <img src={gradiaLogo} alt="Gradia" className="h-7 w-auto flex-shrink-0" />
-              {sidebarOpen && (
-                <Badge variant="secondary" className="gap-1 text-xs">
-                  <Users className="h-3 w-3" /> HR Portal
-                </Badge>
-              )}
+              <Badge variant="secondary" className="gap-1 text-xs">
+                <Users className="h-3 w-3" /> HR Portal
+              </Badge>
             </div>
 
             {/* User Info */}
-            {sidebarOpen && (
-              <div className="p-4 border-b border-border">
-                <p className="text-sm font-medium truncate">{profile?.full_name || "HR User"}</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-              </div>
-            )}
+            <div className="p-4 border-b border-border">
+              <p className="text-sm font-medium truncate">{profile?.full_name || "HR User"}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+            </div>
 
             {/* Navigation */}
             <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
@@ -383,10 +379,10 @@ const HRDashboard = () => {
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "hover:bg-muted text-muted-foreground hover:text-foreground"
                     )}
-                    title={!sidebarOpen ? item.label : undefined}
+                    title={item.label}
                   >
                     <Icon className="h-5 w-5 flex-shrink-0" />
-                    {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
+                    <span className="text-sm font-medium">{item.label}</span>
                   </button>
                 );
               })}
@@ -400,7 +396,7 @@ const HRDashboard = () => {
                 onClick={handleLogout}
               >
                 <LogOut className="h-5 w-5" />
-                {sidebarOpen && <span>Logout</span>}
+                <span>Logout</span>
               </Button>
             </div>
           </div>
