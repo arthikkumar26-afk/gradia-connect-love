@@ -79,6 +79,7 @@ import { Badge } from "@/components/ui/badge";
 import { UpgradePlanContent } from "@/components/employer/UpgradePlanContent";
 import { EmployerSettingsContent } from "@/components/employer/EmployerSettingsContent";
 import { AllCandidatesContent } from "@/components/employer/AllCandidatesContent";
+import { SuggestedCandidatesContent } from "@/components/employer/SuggestedCandidatesContent";
 
 import WalletTab from "@/components/candidate/WalletTab";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
