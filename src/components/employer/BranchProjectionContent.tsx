@@ -31,12 +31,20 @@ type BranchDetails = {
   contact: string;
 };
 
+type NodeInfo = {
+  description: string;
+  headcount?: number;
+  owner?: string;
+  contact?: string;
+};
+
 type TreeNode = {
   label: string;
   icon: React.ElementType;
   color: string;
   children?: TreeNode[];
   branchDetails?: BranchDetails;
+  info?: NodeInfo;
 };
 
 const branchA: BranchDetails = {
@@ -73,40 +81,47 @@ const rootChildren: TreeNode[] = [
     label: "HR's",
     icon: Users,
     color: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30 dark:text-emerald-300",
+    info: { description: "All HR sub-accounts linked to your company. They manage candidates, interviews, and job postings.", headcount: 2, owner: "HR Department" },
     children: [
-      { label: "HR Lead", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20" },
-      { label: "HR Executive", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20" },
+      { label: "HR Lead", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20", info: { description: "Senior HR responsible for hiring strategy and team oversight.", headcount: 1, owner: "Sneha Patil", contact: "+91 98200 11122" } },
+      { label: "HR Executive", icon: Users, color: "bg-emerald-500/5 text-foreground border-emerald-500/20", info: { description: "Day-to-day candidate sourcing, screening, and interview coordination.", headcount: 1, owner: "Arjun Mehta", contact: "+91 98765 22334" } },
     ],
   },
   {
     label: "Management",
     icon: UserCog,
     color: "bg-purple-500/10 text-purple-700 border-purple-500/30 dark:text-purple-300",
+    info: { description: "Top-level management hierarchy across organize and individual reporting lines.", owner: "Leadership Team" },
     children: [
       {
         label: "Organize",
         icon: Briefcase,
         color: "bg-amber-500/10 text-amber-700 border-amber-500/30 dark:text-amber-300",
+        info: { description: "Organizational hierarchy across geographies — States → Regions → Zones → Branches." },
         children: [
           {
             label: "States",
             icon: Map,
             color: "bg-amber-500/5 text-foreground border-amber-500/20",
+            info: { description: "Top-level geographical units in your organization." },
             children: [
               {
                 label: "Regions",
                 icon: Globe2,
                 color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                info: { description: "Sub-divisions within each state, grouping multiple zones." },
                 children: [
                   {
                     label: "Zones",
                     icon: Compass,
                     color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                    info: { description: "Operational zones grouping nearby branches." },
                     children: [
                       {
                         label: "Branches",
                         icon: Building2,
                         color: "bg-amber-500/5 text-foreground border-amber-500/20",
+                        info: { description: "Individual branch offices under each zone." },
                       },
                     ],
                   },
@@ -120,27 +135,36 @@ const rootChildren: TreeNode[] = [
         label: "Individual",
         icon: User,
         color: "bg-rose-500/10 text-rose-700 border-rose-500/30 dark:text-rose-300",
+        info: { description: "Direct individual reporting line — managers and ICs reporting straight to leadership." },
       },
     ],
   },
 ];
 
 type SelectedBranch = { name: string; details: BranchDetails } | null;
+type SelectedInfo = { name: string; icon: React.ElementType; info: NodeInfo } | null;
 
 const NodeBox = ({
   node,
   onBranchClick,
+  onInfoClick,
 }: {
   node: TreeNode;
   onBranchClick?: (name: string, details: BranchDetails) => void;
+  onInfoClick?: (name: string, icon: React.ElementType, info: NodeInfo) => void;
 }) => {
   const Icon = node.icon;
-  const isClickable = !!node.branchDetails;
+  const isBranch = !!node.branchDetails;
+  const hasInfo = !!node.info;
+  const isClickable = isBranch || hasInfo;
   return (
     <button
       type="button"
       disabled={!isClickable}
-      onClick={() => isClickable && onBranchClick?.(node.label, node.branchDetails!)}
+      onClick={() => {
+        if (isBranch) onBranchClick?.(node.label, node.branchDetails!);
+        else if (hasInfo) onInfoClick?.(node.label, node.icon, node.info!);
+      }}
       className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border-2 shadow-sm ${node.color} font-medium text-sm whitespace-nowrap transition ${
         isClickable ? "cursor-pointer hover:scale-[1.03] hover:shadow-md" : "cursor-default"
       }`}
@@ -154,16 +178,18 @@ const NodeBox = ({
 const TreeBranch = ({
   node,
   onBranchClick,
+  onInfoClick,
 }: {
   node: TreeNode;
   isRoot?: boolean;
   onBranchClick?: (name: string, details: BranchDetails) => void;
+  onInfoClick?: (name: string, icon: React.ElementType, info: NodeInfo) => void;
 }) => {
   const hasChildren = node.children && node.children.length > 0;
 
   return (
     <div className="flex flex-col items-center">
-      <NodeBox node={node} onBranchClick={onBranchClick} />
+      <NodeBox node={node} onBranchClick={onBranchClick} onInfoClick={onInfoClick} />
 
       {hasChildren && (
         <>
@@ -183,7 +209,7 @@ const TreeBranch = ({
             {node.children!.map((child, idx) => (
               <div key={idx} className="flex flex-col items-center">
                 <div className="w-px h-6 bg-border" />
-                <TreeBranch node={child} onBranchClick={onBranchClick} />
+                <TreeBranch node={child} onBranchClick={onBranchClick} onInfoClick={onInfoClick} />
               </div>
             ))}
           </div>
@@ -195,9 +221,13 @@ const TreeBranch = ({
 
 export const BranchProjectionContent = () => {
   const [selected, setSelected] = useState<SelectedBranch>(null);
+  const [info, setInfo] = useState<SelectedInfo>(null);
 
   const handleBranchClick = (name: string, details: BranchDetails) => {
     setSelected({ name, details });
+  };
+  const handleInfoClick = (name: string, icon: React.ElementType, info: NodeInfo) => {
+    setInfo({ name, icon, info });
   };
 
   return (
@@ -205,14 +235,14 @@ export const BranchProjectionContent = () => {
       <div>
         <h3 className="text-lg font-semibold text-foreground">Branch Projection</h3>
         <p className="text-sm text-muted-foreground">
-          Visualize your organization structure across branches, HR teams, and management hierarchy. Click a branch for details.
+          Visualize your organization structure across branches, HR teams, and management hierarchy. Click any node for details.
         </p>
       </div>
 
       <Card className="p-6 md:p-10 overflow-x-auto">
         <div className="min-w-fit mx-auto flex items-start justify-center gap-6 md:gap-10">
           {rootChildren.map((node, idx) => (
-            <TreeBranch key={idx} node={node} isRoot onBranchClick={handleBranchClick} />
+            <TreeBranch key={idx} node={node} isRoot onBranchClick={handleBranchClick} onInfoClick={handleInfoClick} />
           ))}
         </div>
       </Card>
@@ -300,6 +330,56 @@ export const BranchProjectionContent = () => {
                     <Button variant="outline" className="justify-start gap-2">
                       <Pencil className="h-4 w-4" /> Edit Branch Details
                     </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={!!info} onOpenChange={(open) => !open && setInfo(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          {info && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <info.icon className="h-5 w-5 text-foreground" />
+                  {info.name}
+                </SheetTitle>
+                <SheetDescription>{info.info.description}</SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-6 space-y-3">
+                {(info.info.headcount !== undefined || info.info.owner || info.info.contact) && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {info.info.headcount !== undefined && (
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" /> Members</p>
+                        <p className="text-sm font-medium mt-1">{info.info.headcount}</p>
+                      </Card>
+                    )}
+                    {info.info.owner && (
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><UserCog className="h-3 w-3" /> Owner</p>
+                        <p className="text-sm font-medium mt-1">{info.info.owner}</p>
+                      </Card>
+                    )}
+                    {info.info.contact && (
+                      <Card className="p-3 col-span-2">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Contact</p>
+                        <p className="text-sm font-medium mt-1">{info.info.contact}</p>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-sm font-semibold mb-2">Quick Actions</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Button variant="outline" className="justify-start gap-2"><Eye className="h-4 w-4" /> View Members</Button>
+                    <Button variant="outline" className="justify-start gap-2"><UserPlus className="h-4 w-4" /> Add Member</Button>
+                    <Button variant="outline" className="justify-start gap-2"><Pencil className="h-4 w-4" /> Edit Details</Button>
                   </div>
                 </div>
               </div>
