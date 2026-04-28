@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText } from "lucide-react";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
+import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
 
 interface JobRow {
   id: string;
@@ -38,6 +39,17 @@ const HRDashboard = () => {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showWizard, setShowWizard] = useState(false);
+  const [activeTab, setActiveTab] = useState("jobs");
+
+  const reloadJobs = async (employerId: string) => {
+    const { data: jobsData } = await supabase
+      .from("jobs")
+      .select("id, job_title, location, status, created_at")
+      .eq("employer_id", employerId)
+      .order("created_at", { ascending: false });
+    setJobs((jobsData as JobRow[]) ?? []);
+  };
 
   // Auth guard
   useEffect(() => {
@@ -175,9 +187,10 @@ const HRDashboard = () => {
           <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">In Pipeline</p><p className="text-2xl font-bold">{loading ? "…" : candidates.filter(c => c.status !== "rejected" && c.status !== "hired").length}</p></CardContent></Card>
         </div>
 
-        <Tabs defaultValue="jobs">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="jobs"><Briefcase className="h-4 w-4 mr-1" /> Jobs</TabsTrigger>
+            <TabsTrigger value="post"><Plus className="h-4 w-4 mr-1" /> Post Job</TabsTrigger>
             <TabsTrigger value="candidates"><Users className="h-4 w-4 mr-1" /> Candidates</TabsTrigger>
             <TabsTrigger value="pipeline"><GitBranch className="h-4 w-4 mr-1" /> Pipeline</TabsTrigger>
             <TabsTrigger value="interviews"><Calendar className="h-4 w-4 mr-1" /> Interviews</TabsTrigger>
@@ -185,7 +198,12 @@ const HRDashboard = () => {
 
           <TabsContent value="jobs">
             <Card>
-              <CardHeader><CardTitle className="text-base">Jobs Posted by {parentEmployerName}</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Jobs Posted by {parentEmployerName}</CardTitle>
+                <Button size="sm" onClick={() => setActiveTab("post")}>
+                  <Plus className="h-4 w-4 mr-1" /> Post New Job
+                </Button>
+              </CardHeader>
               <CardContent>
                 {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
                   : jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs yet.</p>
@@ -204,6 +222,22 @@ const HRDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="post">
+            {parentEmployerId ? (
+              <HRJobPostingWizard
+                parentEmployerId={parentEmployerId}
+                parentEmployerName={parentEmployerName}
+                onPosted={async () => {
+                  if (parentEmployerId) await reloadJobs(parentEmployerId);
+                  setActiveTab("jobs");
+                }}
+                onCancel={() => setActiveTab("jobs")}
+              />
+            ) : (
+              <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
+            )}
           </TabsContent>
 
           <TabsContent value="candidates">
