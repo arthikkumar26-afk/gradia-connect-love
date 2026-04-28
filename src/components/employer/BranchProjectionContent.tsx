@@ -337,6 +337,56 @@ export const BranchProjectionContent = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      <Sheet open={!!info} onOpenChange={(open) => !open && setInfo(null)}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          {info && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <info.icon className="h-5 w-5 text-foreground" />
+                  {info.name}
+                </SheetTitle>
+                <SheetDescription>{info.info.description}</SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-6 space-y-3">
+                {(info.info.headcount !== undefined || info.info.owner || info.info.contact) && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {info.info.headcount !== undefined && (
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" /> Members</p>
+                        <p className="text-sm font-medium mt-1">{info.info.headcount}</p>
+                      </Card>
+                    )}
+                    {info.info.owner && (
+                      <Card className="p-3">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><UserCog className="h-3 w-3" /> Owner</p>
+                        <p className="text-sm font-medium mt-1">{info.info.owner}</p>
+                      </Card>
+                    )}
+                    {info.info.contact && (
+                      <Card className="p-3 col-span-2">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> Contact</p>
+                        <p className="text-sm font-medium mt-1">{info.info.contact}</p>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-sm font-semibold mb-2">Quick Actions</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    <Button variant="outline" className="justify-start gap-2"><Eye className="h-4 w-4" /> View Members</Button>
+                    <Button variant="outline" className="justify-start gap-2"><UserPlus className="h-4 w-4" /> Add Member</Button>
+                    <Button variant="outline" className="justify-start gap-2"><Pencil className="h-4 w-4" /> Edit Details</Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
