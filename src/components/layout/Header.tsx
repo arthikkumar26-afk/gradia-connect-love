@@ -300,6 +300,7 @@ const Header = () => {
                         userRole === 'admin' ? '/admin/dashboard' : 
                         userRole === 'owner' ? '/owner/dashboard' : 
                         userRole === 'employer' ? '/employer/dashboard' : 
+                        userRole === 'hr' ? '/hr/dashboard' :
                         userRole === 'freelancer' ? '/freelancer/dashboard' :
                         '/candidate/dashboard'
                       } className="flex items-center gap-3 py-2">
