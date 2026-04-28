@@ -31,12 +31,20 @@ type BranchDetails = {
   contact: string;
 };
 
+type NodeInfo = {
+  description: string;
+  headcount?: number;
+  owner?: string;
+  contact?: string;
+};
+
 type TreeNode = {
   label: string;
   icon: React.ElementType;
   color: string;
   children?: TreeNode[];
   branchDetails?: BranchDetails;
+  info?: NodeInfo;
 };
 
 const branchA: BranchDetails = {
