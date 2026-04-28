@@ -376,24 +376,52 @@ export const SuggestedCandidatesContent = () => {
                   ))}
                 </div>
 
-                <Card className="p-4 space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${openCandidate.email}`} className="hover:underline">{openCandidate.email}</a>
-                  </div>
-                  {openCandidate.mobile && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${openCandidate.mobile}`} className="hover:underline">{openCandidate.mobile}</a>
-                    </div>
-                  )}
-                  {openCandidate.location && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      {openCandidate.location}
-                    </div>
-                  )}
-                </Card>
+                {(() => {
+                  const isUnlocked = unlockedProfiles.has(openCandidate.id);
+                  return (
+                    <Card className={`p-4 space-y-2 text-sm relative ${!isUnlocked ? "bg-muted/30" : ""}`}>
+                      {isUnlocked ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <a href={`mailto:${openCandidate.email}`} className="hover:underline">{openCandidate.email}</a>
+                          </div>
+                          {openCandidate.mobile && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              <a href={`tel:${openCandidate.mobile}`} className="hover:underline">{openCandidate.mobile}</a>
+                            </div>
+                          )}
+                          {openCandidate.location && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                              {openCandidate.location}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-4 gap-3 text-center">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Lock className="h-4 w-4" />
+                            <span className="text-sm font-medium">Contact details are hidden</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground max-w-sm">
+                            Unlock email, phone & full profile access for this candidate.
+                          </p>
+                          <Button
+                            size="sm"
+                            disabled={unlocking}
+                            onClick={() => unlockContact(openCandidate)}
+                            className="gap-1.5"
+                          >
+                            <Coins className="h-3.5 w-3.5" />
+                            {unlocking ? "Deducting…" : `Unlock for ${PROFILE_UNLOCK_COST} pts`}
+                          </Button>
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })()}
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <Card className="p-3">
@@ -422,23 +450,32 @@ export const SuggestedCandidatesContent = () => {
                   </Card>
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    className="flex-1"
-                    onClick={() => window.open(`mailto:${openCandidate.email}`)}
-                  >
-                    <Mail className="h-4 w-4 mr-2" /> Email
-                  </Button>
-                  {openCandidate.mobile && (
+                {unlockedProfiles.has(openCandidate.id) ? (
+                  <div className="flex gap-2 pt-2 flex-wrap">
+                    <Button
+                      className="flex-1 min-w-[140px]"
+                      onClick={() => navigate(`/employer/candidate/${openCandidate.id}`)}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" /> Open Full Profile
+                    </Button>
                     <Button
                       variant="outline"
-                      className="flex-1"
-                      onClick={() => window.open(`tel:${openCandidate.mobile}`)}
+                      className="flex-1 min-w-[120px]"
+                      onClick={() => window.open(`mailto:${openCandidate.email}`)}
                     >
-                      <Phone className="h-4 w-4 mr-2" /> Call
+                      <Mail className="h-4 w-4 mr-2" /> Email
                     </Button>
-                  )}
-                </div>
+                    {openCandidate.mobile && (
+                      <Button
+                        variant="outline"
+                        className="flex-1 min-w-[120px]"
+                        onClick={() => window.open(`tel:${openCandidate.mobile}`)}
+                      >
+                        <Phone className="h-4 w-4 mr-2" /> Call
+                      </Button>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </>
           )}
