@@ -523,10 +523,13 @@ const InviteFromResume = () => {
         if (data?.error) throw new Error(data.error);
         const name = data?.full_name || "";
         const email = data?.email || "";
+        const suggestedRoles = buildSuggestedRoles(data as ParsedResume);
         setBulkRows((prev) => prev.map((r) => r.id === rowId ? {
           ...r,
           name,
           email,
+          parsed: data as ParsedResume,
+          suggestedRoles,
           status: email ? "ready" : "failed",
           error: email ? undefined : "No email found in resume",
         } : r));
