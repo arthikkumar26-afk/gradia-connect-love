@@ -790,8 +790,7 @@ export const BranchProjectionContent = () => {
           )}
         </DialogContent>
       </Dialog>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Created credentials confirmation */}
       <Dialog open={!!createdInfo} onOpenChange={(open) => !open && setCreatedInfo(null)}>
