@@ -799,6 +799,7 @@ const EmployerDashboard = () => {
             
             {activeMenu === "wallet" && user?.id && <WalletTab userId={user.id} />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
+            {activeMenu === "hr-management" && <HRManagementContent />}
             {activeMenu === "settings" && <EmployerSettingsContent />}
             
           </div>
