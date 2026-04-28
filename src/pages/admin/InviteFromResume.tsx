@@ -1140,18 +1140,17 @@ const InviteFromResume = () => {
                                       <div className="text-destructive">Error: {r.error}</div>
                                     )}
                                   </div>
-                                  {personalizedHtml ? (
-                                    <div className="border rounded bg-background max-h-72 overflow-auto">
-                                      <iframe
-                                        title={`preview-${r.id}`}
-                                        srcDoc={personalizedHtml}
-                                        className="w-full h-72 border-0"
-                                        sandbox=""
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="text-muted-foreground italic">No email available — missing recipient address.</div>
+                                  {!r.email && (
+                                    <div className="text-[11px] text-amber-600">⚠ No email detected — preview shown but cannot send to this resume until an email is added.</div>
                                   )}
+                                  <div className="border rounded bg-background max-h-72 overflow-auto">
+                                    <iframe
+                                      title={`preview-${r.id}`}
+                                      srcDoc={personalizedHtml}
+                                      className="w-full h-72 border-0"
+                                      sandbox=""
+                                    />
+                                  </div>
                                 </div>
                               )}
                             </div>
