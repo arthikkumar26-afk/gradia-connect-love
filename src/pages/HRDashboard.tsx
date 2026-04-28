@@ -187,9 +187,10 @@ const HRDashboard = () => {
           <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">In Pipeline</p><p className="text-2xl font-bold">{loading ? "…" : candidates.filter(c => c.status !== "rejected" && c.status !== "hired").length}</p></CardContent></Card>
         </div>
 
-        <Tabs defaultValue="jobs">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="jobs"><Briefcase className="h-4 w-4 mr-1" /> Jobs</TabsTrigger>
+            <TabsTrigger value="post"><Plus className="h-4 w-4 mr-1" /> Post Job</TabsTrigger>
             <TabsTrigger value="candidates"><Users className="h-4 w-4 mr-1" /> Candidates</TabsTrigger>
             <TabsTrigger value="pipeline"><GitBranch className="h-4 w-4 mr-1" /> Pipeline</TabsTrigger>
             <TabsTrigger value="interviews"><Calendar className="h-4 w-4 mr-1" /> Interviews</TabsTrigger>
@@ -197,7 +198,12 @@ const HRDashboard = () => {
 
           <TabsContent value="jobs">
             <Card>
-              <CardHeader><CardTitle className="text-base">Jobs Posted by {parentEmployerName}</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Jobs Posted by {parentEmployerName}</CardTitle>
+                <Button size="sm" onClick={() => setActiveTab("post")}>
+                  <Plus className="h-4 w-4 mr-1" /> Post New Job
+                </Button>
+              </CardHeader>
               <CardContent>
                 {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
                   : jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs yet.</p>
@@ -216,6 +222,22 @@ const HRDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="post">
+            {parentEmployerId ? (
+              <HRJobPostingWizard
+                parentEmployerId={parentEmployerId}
+                parentEmployerName={parentEmployerName}
+                onPosted={async () => {
+                  if (parentEmployerId) await reloadJobs(parentEmployerId);
+                  setActiveTab("jobs");
+                }}
+                onCancel={() => setActiveTab("jobs")}
+              />
+            ) : (
+              <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
+            )}
           </TabsContent>
 
           <TabsContent value="candidates">
