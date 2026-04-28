@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -74,6 +75,7 @@ const scoreCandidate = (c: CandidateRow, job: JobItem): ScoredCandidate => {
 
 export const SuggestedCandidatesContent = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
@@ -195,14 +197,18 @@ export const SuggestedCandidatesContent = () => {
             </TableHeader>
             <TableBody>
               {matched.map((c) => (
-                <TableRow key={c.id}>
+                <TableRow
+                  key={c.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/employer/candidate/${c.id}`)}
+                >
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={c.profile_picture || undefined} />
                         <AvatarFallback>{c.full_name?.[0] || "C"}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-sm">{c.full_name}</span>
+                      <span className="font-medium text-sm hover:text-primary hover:underline">{c.full_name}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">
@@ -224,13 +230,13 @@ export const SuggestedCandidatesContent = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex gap-1">
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7"
-                        onClick={() => window.open(`mailto:${c.email}`)}
+                        onClick={(e) => { e.stopPropagation(); window.open(`mailto:${c.email}`); }}
                         title={c.email}
                       >
                         <Mail className="h-3.5 w-3.5" />
@@ -240,7 +246,7 @@ export const SuggestedCandidatesContent = () => {
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
-                          onClick={() => window.open(`tel:${c.mobile}`)}
+                          onClick={(e) => { e.stopPropagation(); window.open(`tel:${c.mobile}`); }}
                           title={c.mobile}
                         >
                           <Phone className="h-3.5 w-3.5" />
