@@ -218,15 +218,49 @@ const HRDashboard = () => {
                 : jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs yet.</p>
                 : (
                 <div className="space-y-2">
-                  {jobs.map(j => (
-                    <div key={j.id} className="border border-border rounded-md p-3 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{j.job_title}</p>
-                        <p className="text-xs text-muted-foreground">{j.location || "—"} · {new Date(j.created_at).toLocaleDateString()}</p>
+                  {jobs.map(j => {
+                    const applyUrl = `${window.location.origin}/job/${j.id}/apply`;
+                    const copyLink = async () => {
+                      try {
+                        await navigator.clipboard.writeText(applyUrl);
+                        toast.success("Apply link copied — share it with candidates");
+                      } catch {
+                        toast.error("Couldn't copy. Open the link manually.");
+                      }
+                    };
+                    const shareLink = async () => {
+                      const shareData = {
+                        title: j.job_title,
+                        text: `Apply for ${j.job_title} at ${parentEmployerName}`,
+                        url: applyUrl,
+                      };
+                      if ((navigator as any).share) {
+                        try { await (navigator as any).share(shareData); } catch {}
+                      } else {
+                        copyLink();
+                      }
+                    };
+                    return (
+                      <div key={j.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex-1 min-w-[180px]">
+                          <p className="font-medium text-sm">{j.job_title}</p>
+                          <p className="text-xs text-muted-foreground">{j.location || "—"} · {new Date(j.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{j.status || "draft"}</Badge>
+                          <Button size="sm" variant="outline" onClick={copyLink} title="Copy apply link">
+                            <Copy className="h-3.5 w-3.5 mr-1" /> Copy Link
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={shareLink} title="Share apply link">
+                            <Share2 className="h-3.5 w-3.5 mr-1" /> Share
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => window.open(applyUrl, "_blank")} title="Open public apply page">
+                            <FileText className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <Badge variant="outline">{j.status || "draft"}</Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
