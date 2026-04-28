@@ -200,7 +200,7 @@ export const SuggestedCandidatesContent = () => {
                 <TableRow
                   key={c.id}
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => navigate(`/employer/candidate/${c.id}`)}
+                  onClick={() => setOpenCandidate(c)}
                 >
                   <TableCell>
                     <div className="flex items-center gap-2">
