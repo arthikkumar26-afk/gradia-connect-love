@@ -178,16 +178,18 @@ const NodeBox = ({
 const TreeBranch = ({
   node,
   onBranchClick,
+  onInfoClick,
 }: {
   node: TreeNode;
   isRoot?: boolean;
   onBranchClick?: (name: string, details: BranchDetails) => void;
+  onInfoClick?: (name: string, icon: React.ElementType, info: NodeInfo) => void;
 }) => {
   const hasChildren = node.children && node.children.length > 0;
 
   return (
     <div className="flex flex-col items-center">
-      <NodeBox node={node} onBranchClick={onBranchClick} />
+      <NodeBox node={node} onBranchClick={onBranchClick} onInfoClick={onInfoClick} />
 
       {hasChildren && (
         <>
@@ -207,7 +209,7 @@ const TreeBranch = ({
             {node.children!.map((child, idx) => (
               <div key={idx} className="flex flex-col items-center">
                 <div className="w-px h-6 bg-border" />
-                <TreeBranch node={child} onBranchClick={onBranchClick} />
+                <TreeBranch node={child} onBranchClick={onBranchClick} onInfoClick={onInfoClick} />
               </div>
             ))}
           </div>
