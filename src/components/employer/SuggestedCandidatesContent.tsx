@@ -75,6 +75,7 @@ const scoreCandidate = (c: CandidateRow, job: JobItem): ScoredCandidate => {
 
 export const SuggestedCandidatesContent = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
