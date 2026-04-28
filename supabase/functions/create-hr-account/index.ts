@@ -103,7 +103,51 @@ Deno.serve(async (req) => {
       is_active: true,
     }, { onConflict: "hr_user_id" });
 
-    return new Response(JSON.stringify({ ok: true, hr_user_id: hrId }), {
+    // Send credentials email via Resend
+    let emailSent = false;
+    let emailError: string | null = null;
+    try {
+      const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+      if (RESEND_API_KEY) {
+        const companyName = profile.company_name || profile.full_name || "your employer";
+        const loginUrl = "https://gradiaa.com/hr/login";
+        const html = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #111;">Welcome to Gradia HR Portal</h2>
+            <p>Hi ${full_name},</p>
+            <p><strong>${companyName}</strong> has created an HR account for you on Gradia. You can now manage jobs, candidates, and interviews on their behalf.</p>
+            <div style="background:#f4f4f5; border-radius:8px; padding:16px; margin:20px 0;">
+              <p style="margin:0 0 8px;"><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
+              <p style="margin:0 0 8px;"><strong>Email:</strong> ${email}</p>
+              <p style="margin:0;"><strong>Temporary Password:</strong> <code>${password}</code></p>
+            </div>
+            <p style="color:#666; font-size:13px;">For security, please change your password after your first login.</p>
+            <p style="color:#999; font-size:12px; margin-top:30px;">— The Gradia Team</p>
+          </div>
+        `;
+        const resp = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "Gradia <noreply@gradiaa.com>",
+            to: [email],
+            subject: `Your HR account for ${companyName} on Gradia`,
+            html,
+          }),
+        });
+        if (resp.ok) emailSent = true;
+        else emailError = `Resend ${resp.status}: ${await resp.text()}`;
+      } else {
+        emailError = "RESEND_API_KEY not configured";
+      }
+    } catch (e: any) {
+      emailError = e?.message ?? String(e);
+    }
+
+    return new Response(JSON.stringify({ ok: true, hr_user_id: hrId, email_sent: emailSent, email_error: emailError }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e: any) {
