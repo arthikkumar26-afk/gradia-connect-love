@@ -336,6 +336,7 @@ export const BranchProjectionContent = () => {
       let jobsPosted = 0;
       let interviewsScheduled = 0;
       let activeCandidates = 0;
+      const pending: { id: string; title: string; due: string }[] = [];
 
       if (employerId) {
         const { count: jobCount } = await supabase
@@ -349,23 +350,87 @@ export const BranchProjectionContent = () => {
           .select("id")
           .eq("employer_id", employerId);
         const ids = (jobIds ?? []).map((j: any) => j.id);
+
         if (ids.length) {
-          const { count: candCount } = await supabase
+          // Active candidates = anyone in the pipeline not rejected/hired
+          const { count: activeCount } = await supabase
             .from("interview_candidates")
             .select("id", { count: "exact", head: true })
+            .in("job_id", ids)
+            .not("status", "in", "(rejected,hired,withdrawn)");
+          activeCandidates = activeCount ?? 0;
+
+          // Pending screenings — applied but not yet moved into a stage
+          const { data: screeningRows, count: screeningCount } = await supabase
+            .from("interview_candidates")
+            .select("id", { count: "exact" })
+            .in("job_id", ids)
+            .or("status.eq.applied,current_stage_id.is.null");
+          if ((screeningCount ?? 0) > 0) {
+            pending.push({
+              id: "screenings",
+              title: `Review ${screeningCount} pending resume screening${screeningCount === 1 ? "" : "s"}`,
+              due: "Today",
+            });
+          }
+
+          // Fetch interview events for those candidates
+          const { data: candRows } = await supabase
+            .from("interview_candidates")
+            .select("id")
             .in("job_id", ids);
-          activeCandidates = candCount ?? 0;
-          interviewsScheduled = Math.round(activeCandidates * 0.6);
+          const candIds = (candRows ?? []).map((c: any) => c.id);
+
+          if (candIds.length) {
+            const nowIso = new Date().toISOString();
+
+            // Upcoming scheduled interviews
+            const { count: upcomingCount } = await supabase
+              .from("interview_events")
+              .select("id", { count: "exact", head: true })
+              .in("interview_candidate_id", candIds)
+              .eq("status", "scheduled")
+              .gte("scheduled_at", nowIso);
+            interviewsScheduled = upcomingCount ?? 0;
+            if ((upcomingCount ?? 0) > 0) {
+              pending.push({
+                id: "upcoming",
+                title: `${upcomingCount} interview${upcomingCount === 1 ? "" : "s"} scheduled — confirm attendance`,
+                due: "Upcoming",
+              });
+            }
+
+            // Overdue follow-ups: past scheduled, not completed
+            const { count: overdueCount } = await supabase
+              .from("interview_events")
+              .select("id", { count: "exact", head: true })
+              .in("interview_candidate_id", candIds)
+              .is("completed_at", null)
+              .lt("scheduled_at", nowIso);
+            if ((overdueCount ?? 0) > 0) {
+              pending.push({
+                id: "overdue",
+                title: `Follow up on ${overdueCount} overdue interview${overdueCount === 1 ? "" : "s"}`,
+                due: "Overdue",
+              });
+            }
+          }
+        }
+
+        // Unread employer notifications (candidate messages / activity)
+        const { count: unreadCount } = await supabase
+          .from("employer_notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("employer_id", employerId)
+          .eq("is_read", false);
+        if ((unreadCount ?? 0) > 0) {
+          pending.push({
+            id: "unread",
+            title: `${unreadCount} unread candidate notification${unreadCount === 1 ? "" : "s"}`,
+            due: "New",
+          });
         }
       }
-
-      // Pending tasks — representative list pulled from open candidate stages
-      const pending: { id: string; title: string; due: string }[] = [
-        { id: "p1", title: "Review pending resume screenings", due: "Today" },
-        { id: "p2", title: "Send interview invites for Round 2", due: "Tomorrow" },
-        { id: "p3", title: "Follow up with shortlisted candidates", due: "This week" },
-        { id: "p4", title: "Coordinate panel availability", due: "This week" },
-      ];
 
       setMemberStats({ jobsPosted, interviewsScheduled, activeCandidates, pending });
     } catch (e: any) {
