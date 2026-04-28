@@ -304,28 +304,41 @@ export const SuggestedCandidatesContent = () => {
                     </div>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={(e) => { e.stopPropagation(); window.open(`mailto:${c.email}`); }}
-                        title={c.email}
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                      </Button>
-                      {c.mobile && (
+                    {unlockedProfiles.has(c.id) ? (
+                      <div className="flex gap-1">
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
-                          onClick={(e) => { e.stopPropagation(); window.open(`tel:${c.mobile}`); }}
-                          title={c.mobile}
+                          onClick={(e) => { e.stopPropagation(); window.open(`mailto:${c.email}`); }}
+                          title={c.email}
                         >
-                          <Phone className="h-3.5 w-3.5" />
+                          <Mail className="h-3.5 w-3.5" />
                         </Button>
-                      )}
-                    </div>
+                        {c.mobile && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={(e) => { e.stopPropagation(); window.open(`tel:${c.mobile}`); }}
+                            title={c.mobile}
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] gap-1"
+                        disabled={unlocking}
+                        onClick={(e) => { e.stopPropagation(); unlockContact(c); }}
+                      >
+                        <Lock className="h-3 w-3" />
+                        {PROFILE_UNLOCK_COST} pts
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
