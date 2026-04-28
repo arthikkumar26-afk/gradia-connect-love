@@ -54,7 +54,11 @@ export const HRManagementContent = () => {
       toast.error(data?.error || error?.message || "Failed to create HR account");
       return;
     }
-    toast.success(`HR account created for ${form.email}`);
+    if (data?.email_sent) {
+      toast.success(`HR account created — credentials emailed to ${form.email}`);
+    } else {
+      toast.success(`HR account created for ${form.email}${data?.email_error ? ` (email failed: ${data.email_error})` : ""}`);
+    }
     setForm({ full_name: "", email: "", password: "" });
     setOpen(false);
     load();
