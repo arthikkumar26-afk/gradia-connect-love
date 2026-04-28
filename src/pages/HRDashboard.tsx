@@ -39,6 +39,17 @@ const HRDashboard = () => {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showWizard, setShowWizard] = useState(false);
+  const [activeTab, setActiveTab] = useState("jobs");
+
+  const reloadJobs = async (employerId: string) => {
+    const { data: jobsData } = await supabase
+      .from("jobs")
+      .select("id, job_title, location, status, created_at")
+      .eq("employer_id", employerId)
+      .order("created_at", { ascending: false });
+    setJobs((jobsData as JobRow[]) ?? []);
+  };
 
   // Auth guard
   useEffect(() => {
