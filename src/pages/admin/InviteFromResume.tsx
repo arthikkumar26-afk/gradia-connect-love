@@ -503,6 +503,11 @@ const InviteFromResume = () => {
       status: "parsing",
     }));
     setBulkRows((prev) => [...prev, ...initial]);
+    setExpandedReviewIds((prev) => {
+      const next = new Set(prev);
+      initial.forEach((r) => next.add(r.id));
+      return next;
+    });
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
