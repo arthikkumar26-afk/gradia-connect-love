@@ -236,6 +236,13 @@ const TreeBranch = ({
 export const BranchProjectionContent = () => {
   const [selected, setSelected] = useState<SelectedBranch>(null);
   const [info, setInfo] = useState<SelectedInfo>(null);
+  const [hrAccounts, setHrAccounts] = useState<any[]>([]);
+  const [hrLoading, setHrLoading] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ full_name: "", email: "", password: "", phone: "", designation: "" });
+  const [createdInfo, setCreatedInfo] = useState<{ email: string; password: string } | null>(null);
 
   const handleBranchClick = (name: string, details: BranchDetails) => {
     setSelected({ name, details });
@@ -243,6 +250,72 @@ export const BranchProjectionContent = () => {
   const handleInfoClick = (name: string, icon: React.ElementType, info: NodeInfo) => {
     setInfo({ name, icon, info });
   };
+
+  const isHrNode = !!info && /HR/i.test(info.name);
+
+  const loadHr = async () => {
+    setHrLoading(true);
+    const { data, error } = await supabase.functions.invoke("create-hr-account", { body: { action: "list" } });
+    if (error) toast.error(error.message);
+    else setHrAccounts(data?.hr_accounts ?? []);
+    setHrLoading(false);
+  };
+
+  useEffect(() => {
+    if (isHrNode) loadHr();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHrNode]);
+
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let p = "";
+    for (let i = 0; i < 12; i++) p += chars[Math.floor(Math.random() * chars.length)];
+    setForm((f) => ({ ...f, password: p }));
+  };
+
+  const handleCreateHr = async () => {
+    if (!form.full_name || !form.email || !form.password) {
+      toast.error("Name, email and password are required");
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    setCreating(true);
+    const { data, error } = await supabase.functions.invoke("create-hr-account", {
+      body: {
+        action: "create",
+        full_name: form.full_name,
+        email: form.email,
+        password: form.password,
+        phone: form.phone,
+        designation: form.designation,
+      },
+    });
+    setCreating(false);
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "Failed to create HR account");
+      return;
+    }
+    if (data?.email_sent) toast.success(`HR account created — credentials emailed to ${form.email}`);
+    else toast.success(`HR account created for ${form.email}`);
+    setCreatedInfo({ email: form.email, password: form.password });
+    setForm({ full_name: "", email: "", password: "", phone: "", designation: "" });
+    setAddOpen(false);
+    loadHr();
+  };
+
+  const handleDeactivate = async (hr_user_id: string) => {
+    if (!confirm("Deactivate this HR account? They will lose access immediately.")) return;
+    const { error } = await supabase.functions.invoke("create-hr-account", {
+      body: { action: "deactivate", hr_user_id },
+    });
+    if (error) toast.error(error.message);
+    else { toast.success("HR account deactivated"); loadHr(); }
+  };
+
+  const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
 
   return (
     <div className="space-y-4">
@@ -273,7 +346,7 @@ export const BranchProjectionContent = () => {
           <Users className="h-5 w-5 text-emerald-600" />
           <div>
             <p className="text-xs text-muted-foreground">HR's</p>
-            <p className="font-semibold">2</p>
+            <p className="font-semibold">{hrAccounts.length || 2}</p>
           </div>
         </Card>
         <Card className="p-4 flex items-center gap-3">
@@ -353,7 +426,7 @@ export const BranchProjectionContent = () => {
       </Sheet>
 
       <Sheet open={!!info} onOpenChange={(open) => !open && setInfo(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-md">
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
           {info && (
             <>
               <SheetHeader>
@@ -370,7 +443,7 @@ export const BranchProjectionContent = () => {
                     {info.info.headcount !== undefined && (
                       <Card className="p-3">
                         <p className="text-xs text-muted-foreground flex items-center gap-1"><Users className="h-3 w-3" /> Members</p>
-                        <p className="text-sm font-medium mt-1">{info.info.headcount}</p>
+                        <p className="text-sm font-medium mt-1">{isHrNode ? hrAccounts.length : info.info.headcount}</p>
                       </Card>
                     )}
                     {info.info.owner && (
@@ -391,16 +464,187 @@ export const BranchProjectionContent = () => {
                 <div>
                   <p className="text-sm font-semibold mb-2">Quick Actions</p>
                   <div className="grid grid-cols-1 gap-2">
-                    <Button variant="outline" className="justify-start gap-2"><Eye className="h-4 w-4" /> View Members</Button>
-                    <Button variant="outline" className="justify-start gap-2"><UserPlus className="h-4 w-4" /> Add Member</Button>
-                    <Button variant="outline" className="justify-start gap-2"><Pencil className="h-4 w-4" /> Edit Details</Button>
+                    <Button
+                      variant="outline"
+                      className="justify-start gap-2"
+                      onClick={() => {
+                        if (isHrNode) setViewOpen(true);
+                        else toast.info("Member directory coming soon");
+                      }}
+                    >
+                      <Eye className="h-4 w-4" /> View Members
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="justify-start gap-2"
+                      onClick={() => {
+                        if (isHrNode) setAddOpen(true);
+                        else toast.info("Add member is only available on HR nodes");
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4" /> Add Member
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="justify-start gap-2"
+                      onClick={() => toast.info("Editing details is coming soon")}
+                    >
+                      <Pencil className="h-4 w-4" /> Edit Details
+                    </Button>
                   </div>
                 </div>
+
+                {isHrNode && (
+                  <div className="pt-2">
+                    <p className="text-sm font-semibold mb-2">Existing HR Accounts</p>
+                    {hrLoading ? (
+                      <p className="text-xs text-muted-foreground">Loading…</p>
+                    ) : hrAccounts.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No HR accounts yet. Click "Add Member" to create one.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {hrAccounts.map((a) => (
+                          <Card key={a.id} className="p-2 flex items-center justify-between">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{a.profile?.full_name || "—"}</p>
+                              <p className="text-xs text-muted-foreground truncate flex items-center gap-1"><Mail className="h-3 w-3" /> {a.profile?.email}</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Badge variant={a.is_active ? "default" : "secondary"} className="text-[10px]">
+                                {a.is_active ? "Active" : "Inactive"}
+                              </Badge>
+                              {a.is_active && (
+                                <Button size="sm" variant="ghost" onClick={() => handleDeactivate(a.hr_user_id)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              )}
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Add HR Member Dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add HR Member</DialogTitle>
+            <DialogDescription>
+              Create an HR sub-account linked to your company. They can sign in at <code>/hr/login</code> using the email and password below. Credentials will be emailed automatically.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Full Name *</Label>
+                <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="Jane Doe" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Designation</Label>
+                <Input value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} placeholder="HR Executive" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Email *</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="hr.jane@company.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Phone</Label>
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+91 98000 00000" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Initial Password *</Label>
+              <div className="flex gap-2">
+                <Input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Min 8 characters" />
+                <Button type="button" variant="outline" onClick={generatePassword}>Generate</Button>
+              </div>
+              <p className="text-xs text-muted-foreground">The HR user will use this to sign in at <code>/hr/login</code>.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreateHr} disabled={creating}>
+              {creating ? "Creating…" : "Create HR Account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View HR Members Dialog */}
+      <Dialog open={viewOpen} onOpenChange={setViewOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>HR Members</DialogTitle>
+            <DialogDescription>All HR sub-accounts linked to your company.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {hrLoading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : hrAccounts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No HR accounts yet.</p>
+            ) : (
+              hrAccounts.map((a) => (
+                <Card key={a.id} className="p-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-sm">{a.profile?.full_name}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" />{a.profile?.email}</p>
+                  </div>
+                  <Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge>
+                </Card>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => { setViewOpen(false); setAddOpen(true); }}>
+              <UserPlus className="h-4 w-4 mr-1" /> Add HR Member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Created credentials confirmation */}
+      <Dialog open={!!createdInfo} onOpenChange={(open) => !open && setCreatedInfo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>HR Account Created</DialogTitle>
+            <DialogDescription>
+              Credentials have been emailed. Save these now — the password will not be shown again.
+            </DialogDescription>
+          </DialogHeader>
+          {createdInfo && (
+            <div className="space-y-2">
+              <Card className="p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Email</p>
+                  <p className="text-sm font-medium">{createdInfo.email}</p>
+                </div>
+                <Button size="sm" variant="ghost" onClick={() => copy(createdInfo.email)}><Copy className="h-4 w-4" /></Button>
+              </Card>
+              <Card className="p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">Password</p>
+                  <p className="text-sm font-mono">{createdInfo.password}</p>
+                </div>
+                <Button size="sm" variant="ghost" onClick={() => copy(createdInfo.password)}><Copy className="h-4 w-4" /></Button>
+              </Card>
+              <Card className="p-3">
+                <p className="text-xs text-muted-foreground">Login URL</p>
+                <p className="text-sm font-medium">/hr/login</p>
+              </Card>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setCreatedInfo(null)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
