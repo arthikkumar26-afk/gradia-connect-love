@@ -415,6 +415,7 @@ const InviteFromResume = () => {
   const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
   const [bulkParsing, setBulkParsing] = useState(false);
   const [bulkSending, setBulkSending] = useState(false);
+  const [expandedReviewIds, setExpandedReviewIds] = useState<Set<string>>(new Set());
 
   // Invite status tracking
   type InviteRecord = {
