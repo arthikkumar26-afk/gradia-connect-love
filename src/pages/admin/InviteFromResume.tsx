@@ -411,6 +411,8 @@ const InviteFromResume = () => {
     email: string;
     status: "pending" | "parsing" | "ready" | "sending" | "sent" | "failed";
     error?: string;
+    parsed?: ParsedResume | null;
+    suggestedRoles?: string[];
   };
   const [bulkRows, setBulkRows] = useState<BulkRow[]>([]);
   const [bulkParsing, setBulkParsing] = useState(false);
