@@ -535,10 +535,14 @@ const InviteFromResume = () => {
           error: email ? undefined : "No email found in resume",
         } : r));
       } catch (err: any) {
+        const msg = err?.message || "Parse failed";
+        const isRateLimit = /429|rate.?limit|non-2xx/i.test(msg);
         setBulkRows((prev) => prev.map((r) => r.id === rowId ? {
           ...r,
-          status: "failed",
-          error: err.message || "Parse failed",
+          status: "needs_input",
+          error: isRateLimit
+            ? "Auto-parse unavailable (AI busy). Enter name & email manually."
+            : `${msg}. Enter name & email manually.`,
         } : r));
       }
     }
