@@ -244,6 +244,17 @@ const Header = () => {
                         </div>
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/hr/login" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-900">
+                          <Users className="h-4 w-4 text-pink-600 dark:text-pink-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-foreground">HR Login</div>
+                          <div className="text-xs text-muted-foreground">Manage candidates & interviews</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
                     {/* Freelancer & EduTech logins temporarily hidden */}
 
                     <DropdownMenuSeparator />
