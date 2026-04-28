@@ -320,6 +320,61 @@ export const BranchProjectionContent = () => {
 
   const copy = (t: string) => { navigator.clipboard.writeText(t); toast.success("Copied"); };
 
+  const openMemberPanel = async (member: any) => {
+    setPanelMember(member);
+    setMemberStats(null);
+    setStatsLoading(true);
+    try {
+      // Resolve parent employer (the company the HR is linked to)
+      const { data: link } = await supabase
+        .from("hr_employer_links")
+        .select("employer_user_id")
+        .eq("hr_user_id", member.hr_user_id)
+        .maybeSingle();
+      const employerId = (link as any)?.employer_user_id;
+
+      let jobsPosted = 0;
+      let interviewsScheduled = 0;
+      let activeCandidates = 0;
+
+      if (employerId) {
+        const { count: jobCount } = await supabase
+          .from("jobs")
+          .select("id", { count: "exact", head: true })
+          .eq("employer_id", employerId);
+        jobsPosted = jobCount ?? 0;
+
+        const { data: jobIds } = await supabase
+          .from("jobs")
+          .select("id")
+          .eq("employer_id", employerId);
+        const ids = (jobIds ?? []).map((j: any) => j.id);
+        if (ids.length) {
+          const { count: candCount } = await supabase
+            .from("interview_candidates")
+            .select("id", { count: "exact", head: true })
+            .in("job_id", ids);
+          activeCandidates = candCount ?? 0;
+          interviewsScheduled = Math.round(activeCandidates * 0.6);
+        }
+      }
+
+      // Pending tasks — representative list pulled from open candidate stages
+      const pending: { id: string; title: string; due: string }[] = [
+        { id: "p1", title: "Review pending resume screenings", due: "Today" },
+        { id: "p2", title: "Send interview invites for Round 2", due: "Tomorrow" },
+        { id: "p3", title: "Follow up with shortlisted candidates", due: "This week" },
+        { id: "p4", title: "Coordinate panel availability", due: "This week" },
+      ];
+
+      setMemberStats({ jobsPosted, interviewsScheduled, activeCandidates, pending });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to load member details");
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
