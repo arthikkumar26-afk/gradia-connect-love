@@ -527,10 +527,10 @@ export const BranchProjectionContent = () => {
                       className="justify-start gap-2"
                       onClick={() => {
                         if (isHrNode) setViewOpen(true);
-                        else toast.info("Member directory coming soon");
+                        else toast.info("Panel view is only available on HR nodes");
                       }}
                     >
-                      <Eye className="h-4 w-4" /> View Members
+                      <Eye className="h-4 w-4" /> View Panel
                     </Button>
                     <Button
                       variant="outline"
