@@ -79,11 +79,80 @@ const scoreCandidate = (c: CandidateRow, job: JobItem): ScoredCandidate => {
 
 export const SuggestedCandidatesContent = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCandidate, setOpenCandidate] = useState<ScoredCandidate | null>(null);
+  const [unlockedProfiles, setUnlockedProfiles] = useState<Set<string>>(new Set());
+  const [unlocking, setUnlocking] = useState(false);
+
+  // Preload prior profile unlocks
+  useEffect(() => {
+    (async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("wallet_transactions")
+        .select("description")
+        .eq("category", "candidate_profile_unlock");
+      if (data) {
+        const ids = new Set<string>();
+        data.forEach((r: any) => {
+          const m = String(r.description || "").match(/\[cid:([0-9a-f-]+)\]/i);
+          if (m) ids.add(m[1]);
+        });
+        setUnlockedProfiles(ids);
+      }
+    })();
+  }, [user?.id]);
+
+  const unlockContact = async (c: ScoredCandidate) => {
+    if (!user?.id) {
+      toast.error("Please sign in");
+      return;
+    }
+    if (unlockedProfiles.has(c.id)) return;
+    setUnlocking(true);
+    try {
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!wallet) {
+        toast.error("Wallet not found. Please load points first.");
+        return;
+      }
+      const balance = wallet.points_balance ?? 0;
+      if (balance < PROFILE_UNLOCK_COST) {
+        toast.error(`Insufficient points. Need ${PROFILE_UNLOCK_COST} pts, have ${balance} pts.`);
+        return;
+      }
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: balance - PROFILE_UNLOCK_COST })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "candidate_profile_unlock",
+        amount: 0,
+        points: PROFILE_UNLOCK_COST,
+        description: `Profile unlocked for ${c.full_name} [cid:${c.id}]`,
+      });
+
+      setUnlockedProfiles((prev) => new Set(prev).add(c.id));
+      toast.success(`${PROFILE_UNLOCK_COST} pts deducted. Contact details unlocked.`);
+    } catch (err: any) {
+      console.error("Profile unlock error:", err);
+      toast.error(err.message || "Failed to deduct points");
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
