@@ -16,6 +16,7 @@ interface JobItem {
   location: string | null;
   skills: string[] | null;
   experience_required: string | null;
+  status?: string | null;
   preferred_role?: string | null;
 }
 
@@ -86,15 +87,13 @@ export const SuggestedCandidatesContent = () => {
       const [jobsRes, candRes] = await Promise.all([
         supabase
           .from("jobs")
-          .select("id, job_title, department, location, skills, experience_required")
+          .select("id, job_title, department, location, skills, experience_required, status")
           .eq("employer_id", user.id)
-          .eq("status", "active")
           .order("created_at", { ascending: false }),
         supabase
           .from("profiles")
           .select("id, full_name, email, mobile, location, preferred_role, experience_level, primary_subject, profile_picture, expected_salary")
           .eq("role", "candidate")
-          .eq("status", "active")
           .limit(500),
       ]);
 
@@ -114,11 +113,12 @@ export const SuggestedCandidatesContent = () => {
 
   const matched: ScoredCandidate[] = useMemo(() => {
     if (!selectedJob) return [];
-    return candidates
+    const scored = candidates
       .map((c) => scoreCandidate(c, selectedJob))
-      .filter((c) => c.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 50);
+      .sort((a, b) => b.score - a.score);
+    const withScore = scored.filter((c) => c.score > 0);
+    // Fallback: if no scored matches, still surface top candidates so the panel isn't empty
+    return (withScore.length > 0 ? withScore : scored).slice(0, 50);
   }, [candidates, selectedJob]);
 
   return (
@@ -143,6 +143,7 @@ export const SuggestedCandidatesContent = () => {
                 <SelectItem key={j.id} value={j.id}>
                   {j.job_title}
                   {j.department ? ` · ${j.department}` : ""}
+                  {j.status ? ` (${j.status})` : ""}
                 </SelectItem>
               ))}
             </SelectContent>
