@@ -197,14 +197,18 @@ export const SuggestedCandidatesContent = () => {
             </TableHeader>
             <TableBody>
               {matched.map((c) => (
-                <TableRow key={c.id}>
+                <TableRow
+                  key={c.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/employer/candidate/${c.id}`)}
+                >
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={c.profile_picture || undefined} />
                         <AvatarFallback>{c.full_name?.[0] || "C"}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-sm">{c.full_name}</span>
+                      <span className="font-medium text-sm hover:text-primary hover:underline">{c.full_name}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">
