@@ -40,7 +40,8 @@ const HRDashboard = () => {
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState("jobs");
+  const [activeTab, setActiveTab] = useState("overview");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const reloadJobs = async (employerId: string) => {
     const { data: jobsData } = await supabase
