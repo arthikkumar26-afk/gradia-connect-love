@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText } from "lucide-react";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
+import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
 
 interface JobRow {
   id: string;
