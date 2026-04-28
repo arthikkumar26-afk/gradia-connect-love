@@ -260,6 +260,104 @@ export const SuggestedCandidatesContent = () => {
           </Table>
         )}
       </Card>
+
+      <Dialog open={!!openCandidate} onOpenChange={(o) => !o && setOpenCandidate(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {openCandidate && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={openCandidate.profile_picture || undefined} />
+                    <AvatarFallback>{openCandidate.full_name?.[0] || "C"}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="text-lg font-semibold">{openCandidate.full_name}</div>
+                    <div className="text-xs text-muted-foreground font-normal">
+                      {openCandidate.preferred_role || openCandidate.primary_subject || "Candidate"}
+                    </div>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-primary/10 text-primary border-primary/20">
+                    {Math.min(100, openCandidate.score)}% match
+                  </Badge>
+                  {openCandidate.reasons.map((r) => (
+                    <Badge key={r} variant="outline" className="text-[11px]">{r}</Badge>
+                  ))}
+                </div>
+
+                <Card className="p-4 space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <a href={`mailto:${openCandidate.email}`} className="hover:underline">{openCandidate.email}</a>
+                  </div>
+                  {openCandidate.mobile && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <a href={`tel:${openCandidate.mobile}`} className="hover:underline">{openCandidate.mobile}</a>
+                    </div>
+                  )}
+                  {openCandidate.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      {openCandidate.location}
+                    </div>
+                  )}
+                </Card>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Briefcase className="h-3 w-3" /> Preferred Role
+                    </div>
+                    <div className="font-medium mt-1">{openCandidate.preferred_role || "—"}</div>
+                  </Card>
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <GraduationCap className="h-3 w-3" /> Primary Subject
+                    </div>
+                    <div className="font-medium mt-1">{openCandidate.primary_subject || "—"}</div>
+                  </Card>
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground">Experience</div>
+                    <div className="font-medium mt-1">{openCandidate.experience_level || "—"}</div>
+                  </Card>
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <IndianRupee className="h-3 w-3" /> Expected Salary
+                    </div>
+                    <div className="font-medium mt-1">
+                      {openCandidate.expected_salary ? `₹${openCandidate.expected_salary.toLocaleString()}` : "—"}
+                    </div>
+                  </Card>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    className="flex-1"
+                    onClick={() => window.open(`mailto:${openCandidate.email}`)}
+                  >
+                    <Mail className="h-4 w-4 mr-2" /> Email
+                  </Button>
+                  {openCandidate.mobile && (
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => window.open(`tel:${openCandidate.mobile}`)}
+                    >
+                      <Phone className="h-4 w-4 mr-2" /> Call
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
