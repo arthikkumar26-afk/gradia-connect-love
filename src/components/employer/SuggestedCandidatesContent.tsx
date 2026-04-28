@@ -86,15 +86,13 @@ export const SuggestedCandidatesContent = () => {
       const [jobsRes, candRes] = await Promise.all([
         supabase
           .from("jobs")
-          .select("id, job_title, department, location, skills, experience_required")
+          .select("id, job_title, department, location, skills, experience_required, status")
           .eq("employer_id", user.id)
-          .eq("status", "active")
           .order("created_at", { ascending: false }),
         supabase
           .from("profiles")
           .select("id, full_name, email, mobile, location, preferred_role, experience_level, primary_subject, profile_picture, expected_salary")
           .eq("role", "candidate")
-          .eq("status", "active")
           .limit(500),
       ]);
 
