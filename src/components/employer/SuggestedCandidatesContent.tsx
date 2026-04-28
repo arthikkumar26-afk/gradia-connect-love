@@ -75,11 +75,11 @@ const scoreCandidate = (c: CandidateRow, job: JobItem): ScoredCandidate => {
 
 export const SuggestedCandidatesContent = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [openCandidate, setOpenCandidate] = useState<ScoredCandidate | null>(null);
 
   useEffect(() => {
     const load = async () => {
