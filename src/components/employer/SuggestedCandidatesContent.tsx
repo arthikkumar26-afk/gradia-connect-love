@@ -143,6 +143,7 @@ export const SuggestedCandidatesContent = () => {
                 <SelectItem key={j.id} value={j.id}>
                   {j.job_title}
                   {j.department ? ` · ${j.department}` : ""}
+                  {j.status ? ` (${j.status})` : ""}
                 </SelectItem>
               ))}
             </SelectContent>
