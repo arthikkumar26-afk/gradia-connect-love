@@ -44,6 +44,9 @@ const Login = () => {
       case "owner":
         navigate("/owner/dashboard", { replace: true });
         break;
+      case "hr":
+        navigate("/hr/dashboard", { replace: true });
+        break;
       default:
         navigate("/", { replace: true });
     }
