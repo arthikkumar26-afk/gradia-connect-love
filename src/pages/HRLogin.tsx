@@ -20,7 +20,7 @@ const HRLogin = () => {
 
   useEffect(() => {
     if (isAuthenticated && profile) {
-      if (profile.role === "hr") {
+      if ((profile.role as string) === "hr") {
         navigate("/hr/dashboard");
       } else {
         toast({
