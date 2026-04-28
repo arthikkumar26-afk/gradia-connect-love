@@ -1100,8 +1100,12 @@ const InviteFromResume = () => {
                     </div>
 
                     {bulkRows.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="border rounded-md max-h-60 overflow-auto divide-y">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        {/* LEFT: Resume list */}
+                        <div className="border rounded-md max-h-[32rem] overflow-auto divide-y">
+                          <div className="px-3 py-2 bg-muted/50 text-[11px] font-semibold sticky top-0 border-b">
+                            Resumes ({bulkRows.length})
+                          </div>
                           {bulkRows.map((r) => {
                             const isSelected = selectedPreviewId === r.id;
                             return (
@@ -1141,61 +1145,64 @@ const InviteFromResume = () => {
                           })}
                         </div>
 
-                        {(() => {
-                          const r = bulkRows.find((x) => x.id === selectedPreviewId);
-                          if (!r) {
+                        {/* RIGHT: Preview */}
+                        <div className="lg:sticky lg:top-2 self-start">
+                          {(() => {
+                            const r = bulkRows.find((x) => x.id === selectedPreviewId);
+                            if (!r) {
+                              return (
+                                <div className="border rounded-md p-6 text-center text-xs text-muted-foreground bg-muted/30 h-full min-h-[20rem] flex items-center justify-center">
+                                  Select a resume on the left and click <strong className="mx-1">Preview</strong> to see its personalized email here.
+                                </div>
+                              );
+                            }
+                            const mergedRoles = (r.suggestedRoles && r.suggestedRoles.length)
+                              ? jobRoles.map((jr, i) => r.suggestedRoles![i] || jr)
+                              : jobRoles;
+                            const personalizedHtml = buildEmailHtml({
+                              candidateName: r.name || r.fileName?.replace(/\.[^.]+$/, "") || "Candidate",
+                              jobRoles: mergedRoles,
+                              jobSalaries,
+                              cvOpenings,
+                              applyUrl,
+                              adminName,
+                              companyName,
+                              contactInfo,
+                              showSubscription,
+                              showTerms,
+                            });
                             return (
-                              <div className="border rounded-md p-4 text-center text-xs text-muted-foreground bg-muted/30">
-                                Select a resume above and click <strong>Preview</strong> to see its personalized email.
+                              <div className="border rounded-md bg-muted/20 p-3 space-y-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-semibold truncate">{r.name || r.fileName}</p>
+                                    <p className="text-[11px] text-muted-foreground truncate">{r.email || "no email"}</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-[10px] shrink-0">Email Preview</Badge>
+                                </div>
+                                <div className="flex flex-col gap-1 text-[11px]">
+                                  <div><span className="text-muted-foreground">To: </span><span className="font-medium">{r.email || "—"}</span></div>
+                                  <div><span className="text-muted-foreground">Subject: </span><span className="font-medium">{subject}</span></div>
+                                  <div><span className="text-muted-foreground">From: </span><span className="font-medium">{companyName} &lt;noreply@gradia.co.in&gt;</span></div>
+                                  {r.error && (
+                                    <div className="text-destructive">Error: {r.error}</div>
+                                  )}
+                                </div>
+                                {!r.email && (
+                                  <div className="text-[11px] text-amber-600">⚠ No email detected — preview shown but cannot send to this resume until an email is added.</div>
+                                )}
+                                <div className="border rounded bg-background overflow-auto">
+                                  <iframe
+                                    title={`preview-${r.id}`}
+                                    srcDoc={personalizedHtml}
+                                    className="w-full h-[28rem] border-0"
+                                    sandbox=""
+                                  />
+                                </div>
                               </div>
                             );
-                          }
-                          const mergedRoles = (r.suggestedRoles && r.suggestedRoles.length)
-                            ? jobRoles.map((jr, i) => r.suggestedRoles![i] || jr)
-                            : jobRoles;
-                          const personalizedHtml = buildEmailHtml({
-                            candidateName: r.name || r.fileName?.replace(/\.[^.]+$/, "") || "Candidate",
-                            jobRoles: mergedRoles,
-                            jobSalaries,
-                            cvOpenings,
-                            applyUrl,
-                            adminName,
-                            companyName,
-                            contactInfo,
-                            showSubscription,
-                            showTerms,
-                          });
-                          return (
-                            <div className="border rounded-md bg-muted/20 p-3 space-y-2">
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="min-w-0">
-                                  <p className="text-xs font-semibold truncate">{r.name || r.fileName}</p>
-                                  <p className="text-[11px] text-muted-foreground truncate">{r.email || "no email"}</p>
-                                </div>
-                                <Badge variant="outline" className="text-[10px] shrink-0">Email Preview</Badge>
-                              </div>
-                              <div className="flex flex-col gap-1 text-[11px]">
-                                <div><span className="text-muted-foreground">To: </span><span className="font-medium">{r.email || "—"}</span></div>
-                                <div><span className="text-muted-foreground">Subject: </span><span className="font-medium">{subject}</span></div>
-                                <div><span className="text-muted-foreground">From: </span><span className="font-medium">{companyName} &lt;noreply@gradia.co.in&gt;</span></div>
-                                {r.error && (
-                                  <div className="text-destructive">Error: {r.error}</div>
-                                )}
-                              </div>
-                              {!r.email && (
-                                <div className="text-[11px] text-amber-600">⚠ No email detected — preview shown but cannot send to this resume until an email is added.</div>
-                              )}
-                              <div className="border rounded bg-background max-h-96 overflow-auto">
-                                <iframe
-                                  title={`preview-${r.id}`}
-                                  srcDoc={personalizedHtml}
-                                  className="w-full h-96 border-0"
-                                  sandbox=""
-                                />
-                              </div>
-                            </div>
-                          );
-                        })()}
+                          })()}
+                        </div>
                       </div>
                     )}
 
