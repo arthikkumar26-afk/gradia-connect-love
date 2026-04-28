@@ -539,10 +539,10 @@ const InviteFromResume = () => {
         const isRateLimit = /429|rate.?limit|non-2xx/i.test(msg);
         setBulkRows((prev) => prev.map((r) => r.id === rowId ? {
           ...r,
-          status: "needs_input",
+          status: "pending",
           error: isRateLimit
-            ? "Auto-parse unavailable (AI busy). Enter name & email manually."
-            : `${msg}. Enter name & email manually.`,
+            ? "Auto-parse unavailable right now (AI is busy). Please enter name & email manually below."
+            : `${msg}. Please enter name & email manually below.`,
         } : r));
       }
     }
