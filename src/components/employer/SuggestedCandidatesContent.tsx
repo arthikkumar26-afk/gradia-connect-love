@@ -230,13 +230,13 @@ export const SuggestedCandidatesContent = () => {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <div className="flex gap-1">
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7"
-                        onClick={() => window.open(`mailto:${c.email}`)}
+                        onClick={(e) => { e.stopPropagation(); window.open(`mailto:${c.email}`); }}
                         title={c.email}
                       >
                         <Mail className="h-3.5 w-3.5" />
@@ -246,7 +246,7 @@ export const SuggestedCandidatesContent = () => {
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
-                          onClick={() => window.open(`tel:${c.mobile}`)}
+                          onClick={(e) => { e.stopPropagation(); window.open(`tel:${c.mobile}`); }}
                           title={c.mobile}
                         >
                           <Phone className="h-3.5 w-3.5" />
