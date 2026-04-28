@@ -503,6 +503,11 @@ const InviteFromResume = () => {
       status: "parsing",
     }));
     setBulkRows((prev) => [...prev, ...initial]);
+    setExpandedReviewIds((prev) => {
+      const next = new Set(prev);
+      initial.forEach((r) => next.add(r.id));
+      return next;
+    });
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -1084,20 +1089,18 @@ const InviteFromResume = () => {
                       <div className="border rounded-md max-h-[480px] overflow-auto divide-y">
                         {bulkRows.map((r) => {
                           const isOpen = expandedReviewIds.has(r.id);
-                          const personalizedHtml = r.email
-                            ? buildEmailHtml({
-                                candidateName: r.name || "Candidate",
-                                jobRoles,
-                                jobSalaries,
-                                cvOpenings,
-                                applyUrl,
-                                adminName,
-                                companyName,
-                                contactInfo,
-                                showSubscription,
-                                showTerms,
-                              })
-                            : "";
+                          const personalizedHtml = buildEmailHtml({
+                            candidateName: r.name || r.fileName?.replace(/\.[^.]+$/, "") || "Candidate",
+                            jobRoles,
+                            jobSalaries,
+                            cvOpenings,
+                            applyUrl,
+                            adminName,
+                            companyName,
+                            contactInfo,
+                            showSubscription,
+                            showTerms,
+                          });
                           return (
                             <div key={r.id} className="text-xs">
                               <button
@@ -1142,18 +1145,17 @@ const InviteFromResume = () => {
                                       <div className="text-destructive">Error: {r.error}</div>
                                     )}
                                   </div>
-                                  {personalizedHtml ? (
-                                    <div className="border rounded bg-background max-h-72 overflow-auto">
-                                      <iframe
-                                        title={`preview-${r.id}`}
-                                        srcDoc={personalizedHtml}
-                                        className="w-full h-72 border-0"
-                                        sandbox=""
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="text-muted-foreground italic">No email available — missing recipient address.</div>
+                                  {!r.email && (
+                                    <div className="text-[11px] text-amber-600">⚠ No email detected — preview shown but cannot send to this resume until an email is added.</div>
                                   )}
+                                  <div className="border rounded bg-background max-h-72 overflow-auto">
+                                    <iframe
+                                      title={`preview-${r.id}`}
+                                      srcDoc={personalizedHtml}
+                                      className="w-full h-72 border-0"
+                                      sandbox=""
+                                    />
+                                  </div>
                                 </div>
                               )}
                             </div>
