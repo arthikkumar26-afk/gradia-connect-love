@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -8,7 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, Briefcase, MapPin, Mail, Phone, Users, GraduationCap, IndianRupee } from "lucide-react";
+import { Sparkles, Briefcase, MapPin, Mail, Phone, Users, GraduationCap, IndianRupee, Lock, Coins, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
+
+const PROFILE_UNLOCK_COST = 200;
 
 interface JobItem {
   id: string;
