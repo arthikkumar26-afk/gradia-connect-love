@@ -221,9 +221,13 @@ const TreeBranch = ({
 
 export const BranchProjectionContent = () => {
   const [selected, setSelected] = useState<SelectedBranch>(null);
+  const [info, setInfo] = useState<SelectedInfo>(null);
 
   const handleBranchClick = (name: string, details: BranchDetails) => {
     setSelected({ name, details });
+  };
+  const handleInfoClick = (name: string, icon: React.ElementType, info: NodeInfo) => {
+    setInfo({ name, icon, info });
   };
 
   return (
@@ -231,14 +235,14 @@ export const BranchProjectionContent = () => {
       <div>
         <h3 className="text-lg font-semibold text-foreground">Branch Projection</h3>
         <p className="text-sm text-muted-foreground">
-          Visualize your organization structure across branches, HR teams, and management hierarchy. Click a branch for details.
+          Visualize your organization structure across branches, HR teams, and management hierarchy. Click any node for details.
         </p>
       </div>
 
       <Card className="p-6 md:p-10 overflow-x-auto">
         <div className="min-w-fit mx-auto flex items-start justify-center gap-6 md:gap-10">
           {rootChildren.map((node, idx) => (
-            <TreeBranch key={idx} node={node} isRoot onBranchClick={handleBranchClick} />
+            <TreeBranch key={idx} node={node} isRoot onBranchClick={handleBranchClick} onInfoClick={handleInfoClick} />
           ))}
         </div>
       </Card>
