@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
@@ -8,7 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, Briefcase, MapPin, Mail, Phone, Users, GraduationCap, IndianRupee } from "lucide-react";
+import { Sparkles, Briefcase, MapPin, Mail, Phone, Users, GraduationCap, IndianRupee, Lock, Coins, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
+
+const PROFILE_UNLOCK_COST = 200;
 
 interface JobItem {
   id: string;
@@ -75,11 +79,80 @@ const scoreCandidate = (c: CandidateRow, job: JobItem): ScoredCandidate => {
 
 export const SuggestedCandidatesContent = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCandidate, setOpenCandidate] = useState<ScoredCandidate | null>(null);
+  const [unlockedProfiles, setUnlockedProfiles] = useState<Set<string>>(new Set());
+  const [unlocking, setUnlocking] = useState(false);
+
+  // Preload prior profile unlocks
+  useEffect(() => {
+    (async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("wallet_transactions")
+        .select("description")
+        .eq("category", "candidate_profile_unlock");
+      if (data) {
+        const ids = new Set<string>();
+        data.forEach((r: any) => {
+          const m = String(r.description || "").match(/\[cid:([0-9a-f-]+)\]/i);
+          if (m) ids.add(m[1]);
+        });
+        setUnlockedProfiles(ids);
+      }
+    })();
+  }, [user?.id]);
+
+  const unlockContact = async (c: ScoredCandidate) => {
+    if (!user?.id) {
+      toast.error("Please sign in");
+      return;
+    }
+    if (unlockedProfiles.has(c.id)) return;
+    setUnlocking(true);
+    try {
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!wallet) {
+        toast.error("Wallet not found. Please load points first.");
+        return;
+      }
+      const balance = wallet.points_balance ?? 0;
+      if (balance < PROFILE_UNLOCK_COST) {
+        toast.error(`Insufficient points. Need ${PROFILE_UNLOCK_COST} pts, have ${balance} pts.`);
+        return;
+      }
+      const { error: updErr } = await supabase
+        .from("wallets")
+        .update({ points_balance: balance - PROFILE_UNLOCK_COST })
+        .eq("id", wallet.id);
+      if (updErr) throw updErr;
+
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wallet.id,
+        transaction_type: "debit",
+        category: "candidate_profile_unlock",
+        amount: 0,
+        points: PROFILE_UNLOCK_COST,
+        description: `Profile unlocked for ${c.full_name} [cid:${c.id}]`,
+      });
+
+      setUnlockedProfiles((prev) => new Set(prev).add(c.id));
+      toast.success(`${PROFILE_UNLOCK_COST} pts deducted. Contact details unlocked.`);
+    } catch (err: any) {
+      console.error("Profile unlock error:", err);
+      toast.error(err.message || "Failed to deduct points");
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -231,28 +304,41 @@ export const SuggestedCandidatesContent = () => {
                     </div>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={(e) => { e.stopPropagation(); window.open(`mailto:${c.email}`); }}
-                        title={c.email}
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                      </Button>
-                      {c.mobile && (
+                    {unlockedProfiles.has(c.id) ? (
+                      <div className="flex gap-1">
                         <Button
                           size="icon"
                           variant="ghost"
                           className="h-7 w-7"
-                          onClick={(e) => { e.stopPropagation(); window.open(`tel:${c.mobile}`); }}
-                          title={c.mobile}
+                          onClick={(e) => { e.stopPropagation(); window.open(`mailto:${c.email}`); }}
+                          title={c.email}
                         >
-                          <Phone className="h-3.5 w-3.5" />
+                          <Mail className="h-3.5 w-3.5" />
                         </Button>
-                      )}
-                    </div>
+                        {c.mobile && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={(e) => { e.stopPropagation(); window.open(`tel:${c.mobile}`); }}
+                            title={c.mobile}
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[11px] gap-1"
+                        disabled={unlocking}
+                        onClick={(e) => { e.stopPropagation(); unlockContact(c); }}
+                      >
+                        <Lock className="h-3 w-3" />
+                        {PROFILE_UNLOCK_COST} pts
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -290,24 +376,52 @@ export const SuggestedCandidatesContent = () => {
                   ))}
                 </div>
 
-                <Card className="p-4 space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <a href={`mailto:${openCandidate.email}`} className="hover:underline">{openCandidate.email}</a>
-                  </div>
-                  {openCandidate.mobile && (
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${openCandidate.mobile}`} className="hover:underline">{openCandidate.mobile}</a>
-                    </div>
-                  )}
-                  {openCandidate.location && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      {openCandidate.location}
-                    </div>
-                  )}
-                </Card>
+                {(() => {
+                  const isUnlocked = unlockedProfiles.has(openCandidate.id);
+                  return (
+                    <Card className={`p-4 space-y-2 text-sm relative ${!isUnlocked ? "bg-muted/30" : ""}`}>
+                      {isUnlocked ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <a href={`mailto:${openCandidate.email}`} className="hover:underline">{openCandidate.email}</a>
+                          </div>
+                          {openCandidate.mobile && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              <a href={`tel:${openCandidate.mobile}`} className="hover:underline">{openCandidate.mobile}</a>
+                            </div>
+                          )}
+                          {openCandidate.location && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                              {openCandidate.location}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center py-4 gap-3 text-center">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Lock className="h-4 w-4" />
+                            <span className="text-sm font-medium">Contact details are hidden</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground max-w-sm">
+                            Unlock email, phone & full profile access for this candidate.
+                          </p>
+                          <Button
+                            size="sm"
+                            disabled={unlocking}
+                            onClick={() => unlockContact(openCandidate)}
+                            className="gap-1.5"
+                          >
+                            <Coins className="h-3.5 w-3.5" />
+                            {unlocking ? "Deducting…" : `Unlock for ${PROFILE_UNLOCK_COST} pts`}
+                          </Button>
+                        </div>
+                      )}
+                    </Card>
+                  );
+                })()}
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <Card className="p-3">
@@ -336,23 +450,32 @@ export const SuggestedCandidatesContent = () => {
                   </Card>
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    className="flex-1"
-                    onClick={() => window.open(`mailto:${openCandidate.email}`)}
-                  >
-                    <Mail className="h-4 w-4 mr-2" /> Email
-                  </Button>
-                  {openCandidate.mobile && (
+                {unlockedProfiles.has(openCandidate.id) ? (
+                  <div className="flex gap-2 pt-2 flex-wrap">
+                    <Button
+                      className="flex-1 min-w-[140px]"
+                      onClick={() => navigate(`/employer/candidate/${openCandidate.id}`)}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" /> Open Full Profile
+                    </Button>
                     <Button
                       variant="outline"
-                      className="flex-1"
-                      onClick={() => window.open(`tel:${openCandidate.mobile}`)}
+                      className="flex-1 min-w-[120px]"
+                      onClick={() => window.open(`mailto:${openCandidate.email}`)}
                     >
-                      <Phone className="h-4 w-4 mr-2" /> Call
+                      <Mail className="h-4 w-4 mr-2" /> Email
                     </Button>
-                  )}
-                </div>
+                    {openCandidate.mobile && (
+                      <Button
+                        variant="outline"
+                        className="flex-1 min-w-[120px]"
+                        onClick={() => window.open(`tel:${openCandidate.mobile}`)}
+                      >
+                        <Phone className="h-4 w-4 mr-2" /> Call
+                      </Button>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </>
           )}
