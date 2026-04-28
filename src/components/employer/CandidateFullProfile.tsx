@@ -135,8 +135,8 @@ export const CandidateFullProfile = () => {
     try {
       setLoading(true);
       
-      // Fetch interview candidate with profile and job details
-      const { data: interviewCandidate, error: icError } = await supabase
+      // Try lookup by interview_candidates.id first, then fall back to profiles.id (suggested candidates)
+      let { data: interviewCandidate } = await supabase
         .from('interview_candidates')
         .select(`
           *,
@@ -144,10 +144,60 @@ export const CandidateFullProfile = () => {
           job:jobs!interview_candidates_job_id_fkey(*)
         `)
         .eq('id', candidateId)
-        .single();
+        .maybeSingle();
 
-      if (icError) throw icError;
-      if (!interviewCandidate) throw new Error('Candidate not found');
+      if (!interviewCandidate) {
+        const { data: byCandidate } = await supabase
+          .from('interview_candidates')
+          .select(`
+            *,
+            candidate:profiles!interview_candidates_candidate_id_fkey(*),
+            job:jobs!interview_candidates_job_id_fkey(*)
+          `)
+          .eq('candidate_id', candidateId)
+          .order('applied_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        interviewCandidate = byCandidate;
+      }
+
+      // Final fallback: candidate has no application yet — build a profile-only view
+      if (!interviewCandidate) {
+        const { data: profileOnly, error: profErr } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', candidateId)
+          .maybeSingle();
+        if (profErr) throw profErr;
+        if (!profileOnly) throw new Error('Candidate not found');
+
+        setCandidate({
+          id: profileOnly.id,
+          interviewCandidateId: '',
+          name: profileOnly.full_name || 'Unknown',
+          email: profileOnly.email || '',
+          phone: profileOnly.mobile || undefined,
+          location: profileOnly.location || undefined,
+          experience: profileOnly.experience_level || undefined,
+          education: undefined,
+          resumeUrl: profileOnly.resume_url || undefined,
+          profilePicture: profileOnly.profile_picture || undefined,
+          preferredRole: profileOnly.preferred_role || undefined,
+          aiScore: undefined,
+          aiAnalysis: null,
+          skills: [],
+          status: 'suggested',
+          appliedAt: profileOnly.created_at || new Date().toISOString(),
+          jobId: '',
+          jobTitle: 'Not yet applied',
+          department: undefined,
+          interviewType: 'standard',
+          currentStageId: undefined,
+        });
+        setStages([]);
+        setLoading(false);
+        return;
+      }
 
       const profile = interviewCandidate.candidate;
       const job = interviewCandidate.job;
