@@ -157,9 +157,10 @@ const buildEmailHtml = (opts: {
     .map((o) => renderJobRow("", o.title, o.salary, applyUrl))
     .join("");
 
-  const roleCount = Math.min(3, Math.max(jobRoles.length, jobSalaries.length, 1));
-  const roleList = Array.from({ length: roleCount }, (_, i) =>
-    renderJobRow("", jobRoles[i] || `Suitable Role ${i + 1}`, jobSalaries[i] || "", applyUrl)
+  const filledRoles = jobRoles.map((r) => (r || "").trim()).filter(Boolean).slice(0, 3);
+  const rolesForRender = filledRoles.length ? filledRoles : ["Suitable Role 1", "Suitable Role 2", "Suitable Role 3"];
+  const roleList = rolesForRender.map((title, i) =>
+    renderJobRow("", title, jobSalaries[i] || "", applyUrl)
   ).join("");
 
   const moreButton = `
