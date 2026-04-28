@@ -1155,6 +1155,39 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_employer_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          employer_user_id: string
+          hr_user_id: string
+          id: string
+          is_active: boolean
+          permissions: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          employer_user_id: string
+          hr_user_id: string
+          id?: string
+          is_active?: boolean
+          permissions?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          employer_user_id?: string
+          hr_user_id?: string
+          id?: string
+          is_active?: boolean
+          permissions?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hr_negotiations: {
         Row: {
           additional_requirements: string | null
@@ -4156,6 +4189,7 @@ export type Database = {
           profile_picture: string
         }[]
       }
+      get_hr_parent_employer: { Args: { _hr_user_id: string }; Returns: string }
       get_session_by_live_token: {
         Args: { p_token: string }
         Returns: {
@@ -4198,6 +4232,7 @@ export type Database = {
         | "freelancer"
         | "individual"
         | "edutech"
+        | "hr"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4334,6 +4369,7 @@ export const Constants = {
         "freelancer",
         "individual",
         "edutech",
+        "hr",
       ],
     },
   },
