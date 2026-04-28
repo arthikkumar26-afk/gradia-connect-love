@@ -37,6 +37,7 @@ import {
   BookOpen,
   Crown,
   Wallet,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -78,6 +79,7 @@ import { Badge } from "@/components/ui/badge";
 import { UpgradePlanContent } from "@/components/employer/UpgradePlanContent";
 import { EmployerSettingsContent } from "@/components/employer/EmployerSettingsContent";
 import { AllCandidatesContent } from "@/components/employer/AllCandidatesContent";
+import { SuggestedCandidatesContent } from "@/components/employer/SuggestedCandidatesContent";
 
 import WalletTab from "@/components/candidate/WalletTab";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
@@ -379,6 +381,7 @@ const EmployerDashboard = () => {
     { id: "smm", label: "SMM", icon: Megaphone, path: "/employer/smm" },
     { id: "my-vacancies", label: "My Vacancies", icon: Briefcase, path: "/employer/my-vacancies" },
     { id: "talent-pool", label: "Candidate Data", icon: Users, path: "/employer/talent-pool" },
+    { id: "suggested-candidates", label: "Suggested Candidates", icon: Sparkles, path: "/employer/suggested-candidates" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
     { id: "email-templates", label: "Email Templates", icon: Mail, path: "/employer/email-templates" },
     { id: "feedback-matrix", label: "Feedback Matrix", icon: Grid3X3, path: "/employer/feedback-matrix" },
@@ -759,6 +762,7 @@ const EmployerDashboard = () => {
             {activeMenu === "qpm" && <QPMContent key="qpm-refresh" />}
             {activeMenu === "test-papers" && <TestPapersContent />}
             {activeMenu === "talent-pool" && <TalentPoolContent />}
+            {activeMenu === "suggested-candidates" && <SuggestedCandidatesContent />}
             {activeMenu === "placements" && <PlacementsContent />}
             {activeMenu === "teams" && <TeamsContent />}
             {activeMenu === "interview-pipeline" && (
