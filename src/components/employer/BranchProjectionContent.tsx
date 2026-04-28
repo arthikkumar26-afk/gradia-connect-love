@@ -243,6 +243,9 @@ export const BranchProjectionContent = () => {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", password: "", phone: "", designation: "" });
   const [createdInfo, setCreatedInfo] = useState<{ email: string; password: string } | null>(null);
+  const [panelMember, setPanelMember] = useState<any>(null);
+  const [memberStats, setMemberStats] = useState<{ jobsPosted: number; interviewsScheduled: number; activeCandidates: number; pending: { id: string; title: string; due: string }[] } | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const handleBranchClick = (name: string, details: BranchDetails) => {
     setSelected({ name, details });
