@@ -85,6 +85,7 @@ import WalletTab from "@/components/candidate/WalletTab";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
 import { BranchProjectionContent } from "@/components/employer/BranchProjectionContent";
 import { EmployerNotifications } from "@/components/employer/EmployerNotifications";
+import HRManagementContent from "@/components/employer/HRManagementContent";
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
@@ -393,6 +394,7 @@ const EmployerDashboard = () => {
     { id: "branch-projection", label: "Branch Projection", icon: GitBranch, path: "/employer/branch-projection" },
     
     { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
+    { id: "hr-management", label: "HR Accounts", icon: UserPlus, path: "/employer/hr-management" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
     
   ];
