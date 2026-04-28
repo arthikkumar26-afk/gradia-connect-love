@@ -16,6 +16,7 @@ interface JobItem {
   location: string | null;
   skills: string[] | null;
   experience_required: string | null;
+  status?: string | null;
   preferred_role?: string | null;
 }
 
@@ -112,11 +113,12 @@ export const SuggestedCandidatesContent = () => {
 
   const matched: ScoredCandidate[] = useMemo(() => {
     if (!selectedJob) return [];
-    return candidates
+    const scored = candidates
       .map((c) => scoreCandidate(c, selectedJob))
-      .filter((c) => c.score > 0)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 50);
+      .sort((a, b) => b.score - a.score);
+    const withScore = scored.filter((c) => c.score > 0);
+    // Fallback: if no scored matches, still surface top candidates so the panel isn't empty
+    return (withScore.length > 0 ? withScore : scored).slice(0, 50);
   }, [candidates, selectedJob]);
 
   return (
