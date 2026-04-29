@@ -1893,7 +1893,7 @@ const CandidateSignup = () => {
                 <h3 className="text-lg font-bold text-foreground">{pkg.name}</h3>
                 <p className="text-xs text-muted-foreground mb-3">{pkg.tagline}</p>
                 <div className="text-3xl font-bold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
-                <p className="text-xs text-muted-foreground mt-1">{pkg.points.toLocaleString('en-IN')} pts • /month</p>
+                <p className="text-xs text-muted-foreground mt-1">/month</p>
               </div>
               <ul className="space-y-2 mb-4 flex-1">
                 {pkg.features.slice(0, 5).map((f) => (
