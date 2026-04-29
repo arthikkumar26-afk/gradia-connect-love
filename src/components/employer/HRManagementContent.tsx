@@ -203,10 +203,16 @@ export const HRManagementContent = () => {
                       <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> {a.profile?.email || "—"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge>
+                    <Button size="sm" variant="ghost" title="Reset password" onClick={() => { setPwdTarget(a); setNewPassword(""); setSendPwdEmail(true); }}>
+                      <KeyRound className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" title="Change email" onClick={() => { setEmailTarget(a); setNewEmail(a.profile?.email || ""); }}>
+                      <AtSign className="h-4 w-4" />
+                    </Button>
                     {a.is_active && (
-                      <Button size="sm" variant="ghost" onClick={() => handleDeactivate(a.hr_user_id)}>
+                      <Button size="sm" variant="ghost" title="Deactivate" onClick={() => handleDeactivate(a.hr_user_id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     )}
