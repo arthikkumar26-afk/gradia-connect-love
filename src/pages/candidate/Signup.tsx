@@ -1828,7 +1828,7 @@ const CandidateSignup = () => {
             }
             toast({
               title: `🎉 ${plan.name} Plan Activated!`,
-              description: `Welcome to Gradia. Your ${plan.points} points are ready.`,
+              description: `Welcome to Gradia. Your ${plan.name} plan is now active.`,
             });
             await refreshProfile();
             navigate('/candidate/dashboard', { replace: true });
