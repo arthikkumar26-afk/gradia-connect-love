@@ -104,7 +104,7 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
               <tr>
                 <th className="p-2 text-left w-10">#</th>
                 {columns.map(c => (
-                  <th key={c.key} className="p-2 text-left font-medium whitespace-nowrap">{c.label}</th>
+                  <th key={c.key} className="p-2 text-left font-medium whitespace-nowrap min-w-[180px]">{c.label}</th>
                 ))}
                 <th className="p-2 w-10"></th>
               </tr>
@@ -113,14 +113,26 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
               {rows.length === 0 ? (
                 <tr><td colSpan={columns.length + 2} className="p-6 text-center text-muted-foreground">No rows yet. Click "Add Row" to start.</td></tr>
               ) : rows.map((row, idx) => (
-                <tr key={idx} className="border-t">
-                  <td className="p-1 text-muted-foreground text-center">{idx + 1}</td>
+                <tr key={idx} className="border-t align-top">
+                  <td className="p-1 text-muted-foreground text-center pt-2">{idx + 1}</td>
                   {columns.map(c => (
-                    <td key={c.key} className="p-1">
-                      <Input
-                        className="h-8 text-xs"
+                    <td key={c.key} className="p-1 min-w-[180px]">
+                      <textarea
+                        className="w-full min-h-[36px] text-xs rounded-md border border-input bg-background px-2 py-1.5 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y whitespace-pre-wrap break-words"
+                        rows={1}
                         value={row[c.key] ?? ""}
-                        onChange={e => updateCell(idx, c.key, e.target.value)}
+                        onChange={e => {
+                          updateCell(idx, c.key, e.target.value);
+                          const t = e.target as HTMLTextAreaElement;
+                          t.style.height = "auto";
+                          t.style.height = t.scrollHeight + "px";
+                        }}
+                        ref={(el) => {
+                          if (el) {
+                            el.style.height = "auto";
+                            el.style.height = el.scrollHeight + "px";
+                          }
+                        }}
                       />
                     </td>
                   ))}
