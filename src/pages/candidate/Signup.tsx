@@ -1867,11 +1867,19 @@ const CandidateSignup = () => {
   );
 
   // ---------- Plan / payment step ----------
-  const planIdToSlug = (name: string) => name.toLowerCase(); // 'starter' | 'basic' | 'pro' | 'premium'
+  // Position-based pricing: candidate first picks an education position which
+  // resolves their Band + Salary Range row from the official PACKs table, then
+  // chooses one of the three plan tiers (A / B / C) from that row.
+  const selectedPositionObj = EDUCATION_POSITIONS.find(p => p.title === selectedPosition) || null;
+  const selectedPlanLetter: EducationPlanKey = selectedPlanIdx === 0 ? 'A' : selectedPlanIdx === 1 ? 'B' : 'C';
+  const activePlanPrice = selectedPositionObj ? selectedPositionObj.prices[selectedPlanLetter] : 0;
+  const activePlanName = `${EDUCATION_PLAN_DETAILS[selectedPlanLetter].name}`;
 
   const handlePayPlan = async () => {
-    const plan = POINT_PACKAGES[selectedPlanIdx];
-    if (!plan) return;
+    if (!selectedPositionObj) {
+      toast({ title: 'Select a position first', description: 'Please choose your target position to see pricing.', variant: 'destructive' });
+      return;
+    }
     if (!razorpayLoaded) {
       toast({ title: 'Payment gateway loading…', description: 'Please try again in a moment.' });
       return;
@@ -1885,14 +1893,17 @@ const CandidateSignup = () => {
         return;
       }
       const user = sessionData.session.user;
-      const planSlug = planIdToSlug(plan.name);
+      // Backwards-compatible plan slug for the existing edge function:
+      // 'starter' / 'basic' / 'pro' for A / B / C respectively.
+      const planSlug = selectedPlanLetter === 'A' ? 'starter' : selectedPlanLetter === 'B' ? 'basic' : 'pro';
+      const planLabel = `${activePlanName} (${selectedPositionObj.band})`;
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          amount: plan.price,
+          amount: activePlanPrice,
           currency: 'INR',
           plan_id: planSlug,
-          plan_name: `${plan.name} Plan`,
+          plan_name: planLabel,
           receipt: `cand_${planSlug}_${Date.now()}`,
         },
       });
@@ -1903,7 +1914,7 @@ const CandidateSignup = () => {
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Gradia',
-        description: `${plan.name} Plan — Candidate Subscription`,
+        description: `${planLabel} — ${selectedPositionObj.title}`,
         order_id: orderData.order_id,
         prefill: { name: fullName, email: user.email || email, contact: mobile },
         theme: { color: '#6366f1' },
@@ -1915,15 +1926,17 @@ const CandidateSignup = () => {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 plan: planSlug,
-                amount: plan.price,
+                amount: activePlanPrice,
+                position: selectedPositionObj.title,
+                band: selectedPositionObj.band,
               },
             });
             if (error || !data?.activated) {
               throw new Error(error?.message || data?.message || 'Subscription activation failed');
             }
             toast({
-              title: `🎉 ${plan.name} Plan Activated!`,
-              description: `Welcome to Gradia. Your ${plan.name} plan is now active.`,
+              title: `🎉 ${activePlanName} Activated!`,
+              description: `Welcome to Gradia. Your ${activePlanName} for ${selectedPositionObj.title} is now active.`,
             });
             await refreshProfile();
             navigate('/candidate/dashboard', { replace: true });
