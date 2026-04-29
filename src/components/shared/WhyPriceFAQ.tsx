@@ -206,7 +206,7 @@ export const WhyPriceFAQ = ({ compact = false, className = "" }: WhyPriceFAQProp
         </div>
         <div>
           <h3 className={`font-bold text-foreground ${compact ? "text-base" : "text-xl md:text-2xl"}`}>
-            Common candidate questions — Honest answers
+            Why this price? — Honest answers
           </h3>
           <p className={`text-muted-foreground ${compact ? "text-xs" : "text-sm"} mt-1`}>
             Pricing, guarantees, consultancy comparison and more — exactly the way we explain it on a call.
