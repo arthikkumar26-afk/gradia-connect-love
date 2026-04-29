@@ -1971,85 +1971,154 @@ const CandidateSignup = () => {
     }
   };
 
-  const renderPlanStep = () => (
-    <div className="w-full max-w-6xl">
-      <ProgressIndicator />
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-foreground mb-2">Choose Your Plan</h2>
-        <p className="text-muted-foreground">
-          Pick a plan to activate your dashboard. Secure payment via Razorpay.
-        </p>
-      </div>
+  const renderPlanStep = () => {
+    const planLetters: EducationPlanKey[] = ['A', 'B', 'C'];
+    return (
+      <div className="w-full max-w-6xl">
+        <ProgressIndicator />
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-foreground mb-2">Choose Your Position & Plan</h2>
+          <p className="text-muted-foreground text-sm">
+            Select your target education position — pricing is set by your band & salary range.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        {POINT_PACKAGES.map((pkg, idx) => {
-          const isSelected = selectedPlanIdx === idx;
-          return (
-            <Card
-              key={pkg.name}
-              onClick={() => setSelectedPlanIdx(idx)}
-              className={`p-5 relative flex flex-col cursor-pointer transition-all ${
-                isSelected ? 'ring-2 ring-primary shadow-xl scale-[1.02]' : 'hover:shadow-md'
-              } ${pkg.popular ? 'border-primary' : ''}`}
-            >
-              {pkg.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gap-1">
-                  <Star className="h-3 w-3" /> Most Popular
-                </Badge>
-              )}
-              <div className="text-center mb-4">
-                <h3 className="text-lg font-bold text-foreground">{pkg.name}</h3>
-                <p className="text-xs text-muted-foreground mb-3">{pkg.tagline}</p>
-                <div className="text-3xl font-bold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
-                <p className="text-xs text-muted-foreground mt-1">/month</p>
-              </div>
-              <ul className="space-y-2 mb-4 flex-1">
-                {pkg.features.slice(0, 5).map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className={`text-center text-xs font-medium ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
-                {isSelected ? '✓ Selected' : 'Click to select'}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+        {/* ── Position selector ───────────────────────────────────────── */}
+        <Card className="p-5 max-w-3xl mx-auto mb-6">
+          <Label className="text-sm font-semibold mb-2 block">Target Position</Label>
+          <Select value={selectedPosition} onValueChange={setSelectedPosition}>
+            <SelectTrigger className="h-11">
+              <SelectValue placeholder="Select the position you're applying for…" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[320px]">
+              {(['Group-I', 'Group-II', 'Group-III', 'Group-IV'] as const).map(grp => {
+                const items = EDUCATION_POSITIONS.filter(p => p.group === grp);
+                if (!items.length) return null;
+                const sample = items[0];
+                return (
+                  <div key={grp}>
+                    <div className="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {grp} · {sample.band} · {sample.segment}
+                    </div>
+                    {items.map(p => (
+                      <SelectItem key={p.title} value={p.title}>
+                        {p.title}
+                      </SelectItem>
+                    ))}
+                  </div>
+                );
+              })}
+            </SelectContent>
+          </Select>
 
-      <Card className="p-5 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Selected plan</p>
-            <p className="text-lg font-bold text-foreground">{POINT_PACKAGES[selectedPlanIdx].name}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Amount due</p>
-            <p className="text-2xl font-bold text-primary">
-              ₹{POINT_PACKAGES[selectedPlanIdx].price.toLocaleString('en-IN')}
+          {selectedPositionObj && (
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div className="p-2 rounded-md bg-muted/40">
+                <p className="text-muted-foreground">Band</p>
+                <p className="font-semibold text-foreground">{selectedPositionObj.band}</p>
+              </div>
+              <div className="p-2 rounded-md bg-muted/40">
+                <p className="text-muted-foreground">Segment</p>
+                <p className="font-semibold text-foreground">{selectedPositionObj.segment}</p>
+              </div>
+              <div className="p-2 rounded-md bg-muted/40">
+                <p className="text-muted-foreground">Salary Range</p>
+                <p className="font-semibold text-foreground">{selectedPositionObj.salaryRange}</p>
+              </div>
+              <div className="p-2 rounded-md bg-muted/40">
+                <p className="text-muted-foreground">Annual Package</p>
+                <p className="font-semibold text-foreground">{selectedPositionObj.annualPackage}</p>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* ── Plan A / B / C cards (gated until position picked) ──────── */}
+        {!selectedPositionObj ? (
+          <Card className="p-8 max-w-3xl mx-auto text-center">
+            <p className="text-sm text-muted-foreground">
+              👆 Select a position above to see your subscription plans.
             </p>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
-          </Button>
-          <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
-            {paying ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
-            ) : (
-              <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{POINT_PACKAGES[selectedPlanIdx].price.toLocaleString('en-IN')}</>
-            )}
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground text-center mt-3">
-          Payment is required to activate your account. Powered by Razorpay (secure).
-        </p>
-      </Card>
-    </div>
-  );
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+              {planLetters.map((letter, idx) => {
+                const detail = EDUCATION_PLAN_DETAILS[letter];
+                const price = selectedPositionObj.prices[letter];
+                const isSelected = selectedPlanIdx === idx;
+                return (
+                  <Card
+                    key={letter}
+                    onClick={() => setSelectedPlanIdx(idx)}
+                    className={`p-5 relative flex flex-col cursor-pointer transition-all ${
+                      isSelected ? 'ring-2 ring-primary shadow-xl scale-[1.02]' : 'hover:shadow-md'
+                    } ${detail.popular ? 'border-primary' : ''}`}
+                  >
+                    {detail.popular && (
+                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gap-1">
+                        <Star className="h-3 w-3" /> Most Popular
+                      </Badge>
+                    )}
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-bold text-foreground">{detail.name}</h3>
+                      <p className="text-xs text-muted-foreground mb-3">{detail.tagline}</p>
+                      <div className="text-3xl font-bold text-primary">₹{price.toLocaleString('en-IN')}</div>
+                      <p className="text-xs text-muted-foreground mt-1">one-time processing</p>
+                    </div>
+                    <ul className="space-y-2 mb-4 flex-1">
+                      {detail.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className={`text-center text-xs font-medium ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {isSelected ? '✓ Selected' : 'Click to select'}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <Card className="p-5 max-w-2xl mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Selected</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {activePlanName} · {selectedPositionObj.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{selectedPositionObj.band} · {selectedPositionObj.salaryRange}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Amount due</p>
+                  <p className="text-2xl font-bold text-primary">
+                    ₹{activePlanPrice.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
+                  {paying ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+                  ) : (
+                    <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{activePlanPrice.toLocaleString('en-IN')}</>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                Payment is required to activate your account. Powered by Razorpay (secure).
+              </p>
+            </Card>
+          </>
+        )}
+      </div>
+    );
+  };
 
 
   return (
