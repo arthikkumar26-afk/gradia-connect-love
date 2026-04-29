@@ -23,6 +23,7 @@ export const HRManagementContent = () => {
   const [creating, setCreating] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", password: "" });
+  const [profileHr, setProfileHr] = useState<HRAccount | null>(null);
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
 
