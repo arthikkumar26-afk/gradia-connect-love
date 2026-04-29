@@ -154,7 +154,11 @@ export const HRManagementContent = () => {
             ) : (
             <div className="space-y-2">
               {hrAccounts.map(a => (
-                <div key={a.id} className="border border-border rounded-md p-3 flex items-center justify-between">
+                <div
+                  key={a.id}
+                  onClick={() => setProfileHr(a)}
+                  className="border border-border rounded-md p-3 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition"
+                >
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-full bg-pink-100 dark:bg-pink-900 flex items-center justify-center">
                       <Users className="h-4 w-4 text-pink-600 dark:text-pink-300" />
@@ -164,13 +168,14 @@ export const HRManagementContent = () => {
                       <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> {a.profile?.email || "—"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge>
                     {a.is_active && (
                       <Button size="sm" variant="ghost" onClick={() => handleDeactivate(a.hr_user_id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     )}
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
               ))}
