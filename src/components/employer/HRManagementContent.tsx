@@ -228,6 +228,53 @@ export const HRManagementContent = () => {
       <HRActivitySection />
 
       <HRProfileDialog hr={profileHr} onClose={() => setProfileHr(null)} />
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!pwdTarget} onOpenChange={(o) => !o && setPwdTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" /> Reset HR Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-xs text-muted-foreground">
+              Resetting password for <span className="font-medium">{pwdTarget?.profile?.email}</span>
+            </p>
+            <div className="space-y-1.5">
+              <Label>New Password</Label>
+              <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={sendPwdEmail} onChange={(e) => setSendPwdEmail(e.target.checked)} />
+              Email new credentials to HR
+            </label>
+            <Button className="w-full" disabled={submitting} onClick={handleResetPassword}>
+              {submitting ? "Resetting…" : "Reset Password"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Email Dialog */}
+      <Dialog open={!!emailTarget} onOpenChange={(o) => !o && setEmailTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><AtSign className="h-4 w-4" /> Change HR Email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-xs text-muted-foreground">
+              Current: <span className="font-medium">{emailTarget?.profile?.email}</span>
+            </p>
+            <div className="space-y-1.5">
+              <Label>New Email</Label>
+              <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="hr.new@company.com" />
+              <p className="text-xs text-muted-foreground">The HR will use this new email to sign in immediately.</p>
+            </div>
+            <Button className="w-full" disabled={submitting} onClick={handleResetEmail}>
+              {submitting ? "Updating…" : "Update Email"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
