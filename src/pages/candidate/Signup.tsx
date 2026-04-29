@@ -2117,6 +2117,11 @@ const CandidateSignup = () => {
             </Card>
           </>
         )}
+
+        {/* Why this price? — reassurance FAQ */}
+        <div className="mt-6">
+          <WhyPriceFAQ compact />
+        </div>
       </div>
     );
   };
