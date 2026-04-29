@@ -382,35 +382,51 @@ Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be
 
     console.log("Sending to AI for analysis...");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "user",
-            content: messageContent,
-          },
-        ],
-      }),
-    });
+    // Retry with exponential backoff + jitter when AI gateway rate-limits us (429).
+    // The free Lovable AI tier is shared across users, so transient 429s are common.
+    const MAX_AI_RETRIES = 4;
+    let response: Response | null = null;
+    let lastErrorText = "";
+    for (let attempt = 0; attempt <= MAX_AI_RETRIES; attempt++) {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "user",
+              content: messageContent,
+            },
+          ],
+        }),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      
-      if (response.status === 429) {
+      if (response.status !== 429) break;
+
+      lastErrorText = await response.clone().text();
+      if (attempt === MAX_AI_RETRIES) break;
+
+      const backoff = Math.min(8000, 800 * Math.pow(2, attempt)) + Math.floor(Math.random() * 500);
+      console.warn(`AI gateway 429, retrying in ${backoff}ms (attempt ${attempt + 1}/${MAX_AI_RETRIES})`);
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+
+    if (!response!.ok) {
+      const errorText = lastErrorText || (await response!.text());
+      console.error("AI gateway error:", response!.status, errorText);
+
+      if (response!.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          JSON.stringify({ error: "Our AI service is busy right now. Please wait a minute and try again." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (response!.status === 402) {
         return new Response(
           JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -419,7 +435,7 @@ Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be
       throw new Error("Failed to analyze resume with AI");
     }
 
-    const data = await response.json();
+    const data = await response!.json();
     console.log("AI response received");
     
     const content = data.choices?.[0]?.message?.content;
