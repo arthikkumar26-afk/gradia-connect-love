@@ -57,7 +57,6 @@ This systematically increases your chances instead of random attempts.`,
 ❌ No real feedback or improvement
 ❌ Focus is only on quick placement
 
-✔ Gradia charges a transparent one-time cost
 ✔ Detailed interview report after each round
 ✔ Skilory-powered skill improvement
 ✔ Long-term support till you're ready
