@@ -108,6 +108,7 @@ const JobApply = lazyWithRetry(() => import("./pages/JobApply"));
 const Interview = lazyWithRetry(() => import("./pages/Interview"));
 const BookSlot = lazyWithRetry(() => import("./pages/BookSlot"));
 const CandidateProfilePage = lazyWithRetry(() => import("./pages/employer/CandidateProfile"));
+const EmployerHRActivity = lazyWithRetry(() => import("./pages/employer/HRActivity"));
 const FreelancerDashboard = lazyWithRetry(() => import("./pages/freelancer/Dashboard"));
 const PublicPortfolio = lazyWithRetry(() => import("./pages/freelancer/PublicPortfolio"));
 
@@ -249,6 +250,7 @@ const MainRoutes = () => (
         <Route path="/employer/plans" element={<Plans />} />
         <Route path="/employer/onboarding" element={<Onboarding />} />
         <Route path="/employer/dashboard" element={<EmployerDashboard />} />
+        <Route path="/employer/hr-activity" element={<EmployerHRActivity />} />
         <Route path="/hr/login" element={<HRLogin />} />
         <Route path="/hr/dashboard" element={<HRDashboard />} />
         <Route path="/employer/candidate/:candidateId" element={<CandidateProfilePage />} />

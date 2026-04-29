@@ -5,12 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2 } from "lucide-react";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
 import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
+import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
 interface JobRow {
   id: string;
@@ -142,6 +143,7 @@ const HRDashboard = () => {
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "post", label: "Post Job", icon: Plus },
     { id: "candidates", label: "Candidates", icon: Users },
+    { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
     { id: "pipeline", label: "Pipeline", icon: GitBranch },
     { id: "interviews", label: "Interviews", icon: Calendar },
   ];
@@ -312,6 +314,16 @@ const HRDashboard = () => {
             </CardContent>
           </Card>
           </div>
+        );
+      case "candidate-info":
+        return parentEmployerId && user ? (
+          <HRCandidateInfoSheet
+            hrUserId={user.id}
+            employerUserId={parentEmployerId}
+            employerName={parentEmployerName}
+          />
+        ) : (
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
         );
       case "pipeline":
         return <SampleCandidateDemo />;
