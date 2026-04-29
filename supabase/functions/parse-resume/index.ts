@@ -426,7 +426,7 @@ Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (response!.status === 402) {
         return new Response(
           JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -435,7 +435,7 @@ Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be
       throw new Error("Failed to analyze resume with AI");
     }
 
-    const data = await response.json();
+    const data = await response!.json();
     console.log("AI response received");
     
     const content = data.choices?.[0]?.message?.content;
