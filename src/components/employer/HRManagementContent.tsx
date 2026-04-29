@@ -185,7 +185,109 @@ export const HRManagementContent = () => {
       </Card>
 
       <HRActivitySection />
+
+      <HRProfileDialog hr={profileHr} onClose={() => setProfileHr(null)} />
     </div>
+  );
+};
+
+// ============================================================
+// HR Profile Dialog — shows single HR's profile + their work
+// ============================================================
+const HRProfileDialog = ({ hr, onClose }: { hr: HRAccount | null; onClose: () => void }) => {
+  const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS);
+  const [sheet, setSheet] = useState<{ rows: Record<string, string>[]; updated_at: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!hr) { setSheet(null); return; }
+    (async () => {
+      setLoading(true);
+      const { data: u } = await supabase.auth.getUser();
+      if (!u?.user) { setLoading(false); return; }
+      const { data: colData } = await supabase
+        .from("employer_hr_sheet_columns")
+        .select("columns")
+        .eq("employer_user_id", u.user.id)
+        .maybeSingle();
+      if (colData?.columns && Array.isArray(colData.columns)) {
+        setColumns(colData.columns as unknown as ColumnDef[]);
+      }
+      const { data: sheetData } = await supabase
+        .from("hr_candidate_sheets")
+        .select("rows, updated_at")
+        .eq("employer_user_id", u.user.id)
+        .eq("hr_user_id", hr.hr_user_id)
+        .maybeSingle();
+      setSheet(sheetData ? { rows: Array.isArray((sheetData as any).rows) ? (sheetData as any).rows : [], updated_at: (sheetData as any).updated_at } : { rows: [], updated_at: "" });
+      setLoading(false);
+    })();
+  }, [hr?.hr_user_id]);
+
+  return (
+    <Dialog open={!!hr} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" /> {hr?.profile?.full_name || "HR Profile"}
+          </DialogTitle>
+        </DialogHeader>
+
+        {hr && (
+          <div className="space-y-4 pt-2">
+            {/* Profile card */}
+            <Card>
+              <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Email:</span> <span className="font-medium">{hr.profile?.email || "—"}</span></div>
+                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><span className="text-muted-foreground">Joined:</span> <span className="font-medium">{new Date(hr.created_at).toLocaleDateString()}</span></div>
+                <div className="flex items-center gap-2"><span className="text-muted-foreground">Status:</span> <Badge variant={hr.is_active ? "default" : "secondary"}>{hr.is_active ? "Active" : "Inactive"}</Badge></div>
+                <div className="flex items-center gap-2"><span className="text-muted-foreground">Candidate Rows:</span> <span className="font-medium">{sheet?.rows.length ?? 0}</span></div>
+              </CardContent>
+            </Card>
+
+            {/* Work / sheet */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileSpreadsheet className="h-4 w-4" /> Candidate Info Sheet
+                  {sheet?.updated_at && <span className="text-xs text-muted-foreground font-normal">(updated {new Date(sheet.updated_at).toLocaleString()})</span>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">Loading…</p>
+                ) : !sheet || sheet.rows.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-6 text-center">This HR hasn't added any candidate rows yet.</p>
+                ) : (
+                  <div className="overflow-auto border rounded-md">
+                    <table className="w-full text-xs">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="p-2 text-left w-10">#</th>
+                          {columns.map(c => (
+                            <th key={c.key} className="p-2 text-left font-medium whitespace-nowrap">{c.label}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sheet.rows.map((row, idx) => (
+                          <tr key={idx} className="border-t">
+                            <td className="p-2 text-muted-foreground text-center">{idx + 1}</td>
+                            {columns.map(c => (
+                              <td key={c.key} className="p-2 align-top">{row[c.key] || <span className="text-muted-foreground/50">—</span>}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 
