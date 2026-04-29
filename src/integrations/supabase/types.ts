@@ -770,6 +770,30 @@ export type Database = {
         }
         Relationships: []
       }
+      employer_hr_sheet_columns: {
+        Row: {
+          columns: Json
+          created_at: string
+          employer_user_id: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          columns?: Json
+          created_at?: string
+          employer_user_id: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          columns?: Json
+          created_at?: string
+          employer_user_id?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       employer_notifications: {
         Row: {
           booking_type: string | null
@@ -1152,6 +1176,33 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      hr_candidate_sheets: {
+        Row: {
+          created_at: string
+          employer_user_id: string
+          hr_user_id: string
+          id: string
+          rows: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employer_user_id: string
+          hr_user_id: string
+          id?: string
+          rows?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employer_user_id?: string
+          hr_user_id?: string
+          id?: string
+          rows?: Json
+          updated_at?: string
         }
         Relationships: []
       }
