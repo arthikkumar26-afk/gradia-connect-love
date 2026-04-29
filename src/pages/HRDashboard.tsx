@@ -43,6 +43,7 @@ const HRDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [jobStatusFilter, setJobStatusFilter] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const reloadJobs = async (employerId: string) => {
@@ -207,21 +208,44 @@ const HRDashboard = () => {
             </Card>
           </div>
         );
-      case "jobs":
+      case "jobs": {
+        const statusOptions = ["all", "active", "approved", "open", "draft", "closed", "rejected", "pending"];
+        const filtered = jobs.filter(j => {
+          if (jobStatusFilter === "all") return true;
+          const s = (j.status || "draft").toLowerCase();
+          if (jobStatusFilter === "active") return s === "active" || s === "approved" || s === "open";
+          return s === jobStatusFilter;
+        });
+        const counts: Record<string, number> = { all: jobs.length };
+        jobs.forEach(j => {
+          const s = (j.status || "draft").toLowerCase();
+          counts[s] = (counts[s] || 0) + 1;
+          if (s === "active" || s === "approved" || s === "open") counts.active = (counts.active || 0) + 1;
+        });
         return (
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
               <CardTitle className="text-base">Jobs Posted by {parentEmployerName}</CardTitle>
-              <Button size="sm" onClick={() => setActiveTab("post")}>
-                <Plus className="h-4 w-4 mr-1" /> Post New Job
-              </Button>
+              <div className="flex flex-wrap items-center gap-1">
+                {statusOptions.map(opt => (
+                  <Button
+                    key={opt}
+                    size="sm"
+                    variant={jobStatusFilter === opt ? "default" : "outline"}
+                    className="h-7 text-xs capitalize"
+                    onClick={() => setJobStatusFilter(opt)}
+                  >
+                    {opt} {counts[opt] ? <span className="ml-1 opacity-70">({counts[opt]})</span> : null}
+                  </Button>
+                ))}
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
-                : jobs.length === 0 ? <p className="text-sm text-muted-foreground">No jobs yet.</p>
+                : filtered.length === 0 ? <p className="text-sm text-muted-foreground">No jobs match this filter.</p>
                 : (
                 <div className="space-y-2">
-                  {jobs.map(j => {
+                  {filtered.map(j => {
                     const applyUrl = `${window.location.origin}/job/${j.id}/apply`;
                     const copyLink = async () => {
                       try {
@@ -269,6 +293,7 @@ const HRDashboard = () => {
             </CardContent>
           </Card>
         );
+      }
       case "post":
         return parentEmployerId ? (
           <HRJobPostingWizard
