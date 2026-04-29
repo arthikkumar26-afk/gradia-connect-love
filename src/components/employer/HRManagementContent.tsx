@@ -604,9 +604,16 @@ const HRActivitySection = () => {
   useEffect(() => { load(); }, []);
 
   const addColumn = () => setColumns(c => [...c, { key: `col_${c.length + 1}_${Date.now()}`, label: "New Column" }]);
+  const addResumeColumn = () => {
+    if (columns.some(isResumeColumn)) {
+      toast.info("A Resume column already exists.");
+      return;
+    }
+    setColumns(c => [...c, { key: "resume", label: "Resume", type: "resume" }]);
+  };
   const removeColumn = (idx: number) => setColumns(c => c.filter((_, i) => i !== idx));
   const updateColumn = (idx: number, label: string) =>
-    setColumns(c => c.map((col, i) => i === idx ? { ...col, label, key: slugify(label) } : col));
+    setColumns(c => c.map((col, i) => i === idx ? { ...col, label, key: isResumeColumn(col) ? col.key : slugify(label) } : col));
 
   const saveColumns = async () => {
     if (!userId) return;
