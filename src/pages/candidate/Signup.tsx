@@ -1871,7 +1871,6 @@ const CandidateSignup = () => {
         <p className="text-muted-foreground">
           Pick a plan to activate your dashboard. Secure payment via Razorpay.
         </p>
-        <Badge variant="secondary" className="mt-3">₹5,000 = 1,000 Points</Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
