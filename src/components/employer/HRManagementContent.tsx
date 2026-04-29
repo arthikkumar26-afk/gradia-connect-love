@@ -150,7 +150,7 @@ export const HRManagementContent = () => {
                   </p>
                 )}
               </div>
-            )
+            ) : (
             <div className="space-y-2">
               {hrAccounts.map(a => (
                 <div key={a.id} className="border border-border rounded-md p-3 flex items-center justify-between">
