@@ -66,6 +66,10 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
       setUploadingCell(null);
     }
   };
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
       const [{ data: colData }, { data: sheetData }] = await Promise.all([
         supabase.from("employer_hr_sheet_columns").select("columns").eq("employer_user_id", employerUserId).maybeSingle(),
         supabase.from("hr_candidate_sheets").select("rows, updated_at").eq("hr_user_id", hrUserId).eq("employer_user_id", employerUserId).maybeSingle(),
