@@ -43,6 +43,7 @@ const HRDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [jobStatusFilter, setJobStatusFilter] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const reloadJobs = async (employerId: string) => {
