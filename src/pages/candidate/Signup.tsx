@@ -1828,7 +1828,7 @@ const CandidateSignup = () => {
             }
             toast({
               title: `🎉 ${plan.name} Plan Activated!`,
-              description: `Welcome to Gradia. Your ${plan.points} points are ready.`,
+              description: `Welcome to Gradia. Your ${plan.name} plan is now active.`,
             });
             await refreshProfile();
             navigate('/candidate/dashboard', { replace: true });
@@ -1871,7 +1871,6 @@ const CandidateSignup = () => {
         <p className="text-muted-foreground">
           Pick a plan to activate your dashboard. Secure payment via Razorpay.
         </p>
-        <Badge variant="secondary" className="mt-3">₹5,000 = 1,000 Points</Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
@@ -1894,7 +1893,7 @@ const CandidateSignup = () => {
                 <h3 className="text-lg font-bold text-foreground">{pkg.name}</h3>
                 <p className="text-xs text-muted-foreground mb-3">{pkg.tagline}</p>
                 <div className="text-3xl font-bold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
-                <p className="text-xs text-muted-foreground mt-1">{pkg.points.toLocaleString('en-IN')} pts • /month</p>
+                <p className="text-xs text-muted-foreground mt-1">/month</p>
               </div>
               <ul className="space-y-2 mb-4 flex-1">
                 {pkg.features.slice(0, 5).map((f) => (
