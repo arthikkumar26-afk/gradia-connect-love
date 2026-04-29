@@ -226,6 +226,48 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
                         </td>
                       );
                     }
+                    if (isMatchColumn(c)) {
+                      // Resolve the resume value for this row to gate display
+                      const resumeKey = columns.find(isResumeColumn)?.key;
+                      const resumeVal = resumeKey ? (row[resumeKey] ?? "") : "";
+                      const hasResume = !!resumeVal && /^https?:\/\//i.test(resumeVal);
+                      const num = parseInt(value, 10);
+                      const valid = !isNaN(num) && num >= 0 && num <= 100;
+                      const tone =
+                        !valid ? "bg-muted text-muted-foreground" :
+                        num >= 75 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
+                        num >= 50 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
+                                    "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
+                      return (
+                        <td key={c.key} className="p-1 min-w-[140px]">
+                          {!hasResume ? (
+                            <div className="text-[11px] text-muted-foreground italic px-2 py-1.5 border border-dashed rounded-md text-center">
+                              Upload resume first
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={value}
+                                placeholder="0-100"
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  if (v === "") return updateCell(idx, c.key, "");
+                                  const n = Math.max(0, Math.min(100, parseInt(v, 10) || 0));
+                                  updateCell(idx, c.key, String(n));
+                                }}
+                                className="w-16 h-8 text-xs rounded-md border border-input bg-background px-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              />
+                              {valid && (
+                                <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${tone}`}>{num}%</span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      );
+                    }
                     return (
                       <td key={c.key} className="p-1 min-w-[180px]">
                         <textarea
