@@ -294,6 +294,7 @@ const CandidateSignup = () => {
 
   // Plan / payment step state
   const [selectedPlanIdx, setSelectedPlanIdx] = useState<number>(2); // default Pro
+  const [selectedPosition, setSelectedPosition] = useState<string>('');
   const [paying, setPaying] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
