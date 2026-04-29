@@ -8,6 +8,7 @@ import OurValues from "@/components/about/OurValues";
 import WhyChooseGradia from "@/components/about/WhyChooseGradia";
 import OurJourney from "@/components/about/OurJourney";
 import AboutCTA from "@/components/about/AboutCTA";
+import WhyPriceFAQ from "@/components/shared/WhyPriceFAQ";
 
 const About = () => {
   return (
@@ -22,6 +23,11 @@ const About = () => {
       <WhyChooseGradia />
       <OurJourney />
       <AboutCTA />
+      <section className="py-12 md:py-16 bg-muted/30">
+        <div className="container mx-auto px-4 max-w-4xl">
+          <WhyPriceFAQ />
+        </div>
+      </section>
     </div>
   );
 };
