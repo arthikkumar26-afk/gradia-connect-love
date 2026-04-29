@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Save, Trash2, Users, FileSpreadsheet } from "lucide-react";
+import { Plus, Save, Trash2, Users, FileSpreadsheet, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 interface ColumnDef { key: string; label: string; type?: string }
@@ -24,9 +24,15 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: "phone", label: "Phone" },
   { key: "skills", label: "Skills" },
   { key: "experience", label: "Experience" },
+  { key: "resume", label: "Resume", type: "resume" },
   { key: "status", label: "Status" },
   { key: "notes", label: "Notes" },
 ];
+
+const isResumeColumn = (c: ColumnDef) =>
+  c.type === "resume" ||
+  c.key.toLowerCase() === "resume" ||
+  /resume|cv/i.test(c.label);
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || `col_${Date.now()}`;
