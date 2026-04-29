@@ -129,6 +129,100 @@ const POINT_PACKAGES = [
   },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────
+// EDUCATION POSITION → BAND → PACK PRICING
+// Mirrors the official PACKs (Processing Charges) table provided by ops.
+// Each position is mapped to its band + salary-range row, which yields the
+// three subscription PLAN amounts (A / B / C) the candidate can pick.
+// ─────────────────────────────────────────────────────────────────────────
+type EducationPlanKey = 'A' | 'B' | 'C';
+interface EducationPosition {
+  title: string;
+  band: 'Band 1' | 'Band 2' | 'Band 3' | 'Band 4';
+  group: 'Group-I' | 'Group-II' | 'Group-III' | 'Group-IV';
+  segment: string;
+  salaryRange: string;
+  annualPackage: string;
+  prices: Record<EducationPlanKey, number>;
+}
+
+const EDUCATION_POSITIONS: EducationPosition[] = [
+  // Group-I / Band 1 — Admin & Academics
+  { title: 'Principal — State Board', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹50,000–80,000 pm', annualPackage: '₹3,00,000–5,00,000', prices: { A: 30000, B: 40000, C: 40000 } },
+  { title: 'Principal — CBSE Board', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹90,000–1,50,000 pm', annualPackage: '₹8,00,000–10,00,000', prices: { A: 30000, B: 40000, C: 50000 } },
+  { title: 'Cluster Principal', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹90,000–2,50,000 pm', annualPackage: '₹10,00,000–12,00,000', prices: { A: 30000, B: 40000, C: 50000 } },
+  { title: 'Academic Head', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹1,00,000–1,50,000 pm', annualPackage: '₹8,00,000–10,00,000', prices: { A: 30000, B: 40000, C: 50000 } },
+  { title: 'SME (Subject Matter Expert)', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹50,000–1,00,000 pm', annualPackage: '₹5,00,000–8,00,000', prices: { A: 30000, B: 40000, C: 40000 } },
+  { title: 'Resource Person', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹50,000–90,000 pm', annualPackage: '₹5,00,000–8,00,000', prices: { A: 30000, B: 40000, C: 40000 } },
+
+  // Group-II / Band 2 — High School Segment
+  { title: 'Vice-Principal / Dean', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹40,000–60,000 pm', annualPackage: '₹4,00,000–5,00,000', prices: { A: 25000, B: 30000, C: 40000 } },
+  { title: 'Telugu Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Hindi Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'English Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Math Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–50,000 pm', annualPackage: '₹4,00,000–5,00,000', prices: { A: 25000, B: 30000, C: 40000 } },
+  { title: 'Physics Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–50,000 pm', annualPackage: '₹4,00,000–5,00,000', prices: { A: 25000, B: 30000, C: 40000 } },
+  { title: 'Chemistry Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–50,000 pm', annualPackage: '₹4,00,000–5,00,000', prices: { A: 25000, B: 30000, C: 40000 } },
+  { title: 'Biology Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Social Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Computer Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹25,000–30,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'P.E.T (Physical Education Teacher)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹20,000–30,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Softskill Trainer', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹25,000–30,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Calligraphy Trainer', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+
+  // Group-III / Band 3 — Primary Segment
+  { title: 'Vice-Principal (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹20,000–35,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Mother Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Telugu Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Hindi Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'English Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Math Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Science Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Social Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Computer Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'P.E.T (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Art & Craft Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹10,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+
+  // Group-IV / Band 4 — Pre-Primary Segment
+  { title: 'Vice-Principal (Pre-Primary)', band: 'Band 4', group: 'Group-IV', segment: 'Pre-Primary', salaryRange: '₹20,000–30,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Mother Teacher (Pre-Primary)', band: 'Band 4', group: 'Group-IV', segment: 'Pre-Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Asso. Teacher (Pre-Primary)', band: 'Band 4', group: 'Group-IV', segment: 'Pre-Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+];
+
+const EDUCATION_PLAN_DETAILS: Record<EducationPlanKey, { name: string; tagline: string; features: string[]; popular?: boolean }> = {
+  A: {
+    name: 'Plan A',
+    tagline: 'Essential — apply & screen',
+    features: [
+      'Apply to unlimited education jobs',
+      'Resume export + AI ATS score',
+      'CV-Screening + Written Test rounds',
+      'Email support',
+    ],
+  },
+  B: {
+    name: 'Plan B',
+    tagline: 'Most chosen — interview ready',
+    popular: true,
+    features: [
+      'Everything in Plan A',
+      'Demo + Viva / Segment Awareness round',
+      'Core Team / Academic & Admin round',
+      'Detailed AI feedback report',
+    ],
+  },
+  C: {
+    name: 'Plan C',
+    tagline: 'Premium — full pipeline rehearsal',
+    features: [
+      'Everything in Plan B',
+      'Panel + Management rounds (Band 1)',
+      'HR-Round + On-Boarding rehearsal',
+      'Priority support & featured profile',
+    ],
+  },
+};
+
 // Tier × deliverables matrix (mirrors invite email)
 const TIER_MATRIX: { label: string; rows: { round: string; starter: string; basic: string; pro: string; premium: string }[] } = {
   label: 'What you unlock at every round',
