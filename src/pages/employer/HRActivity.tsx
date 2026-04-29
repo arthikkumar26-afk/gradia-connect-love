@@ -25,6 +25,7 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: "skills", label: "Skills" },
   { key: "experience", label: "Experience" },
   { key: "resume", label: "Resume", type: "resume" },
+  { key: "profile_match", label: "Profile Matching %", type: "match" },
   { key: "status", label: "Status" },
   { key: "notes", label: "Notes" },
 ];
@@ -33,6 +34,11 @@ const isResumeColumn = (c: ColumnDef) =>
   c.type === "resume" ||
   c.key.toLowerCase() === "resume" ||
   /resume|cv/i.test(c.label);
+
+const isMatchColumn = (c: ColumnDef) =>
+  c.type === "match" ||
+  /match|matching/i.test(c.label) ||
+  c.key.toLowerCase().includes("match");
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || `col_${Date.now()}`;
@@ -63,6 +69,15 @@ export default function HRActivity() {
         loaded = [...loaded, { key: "resume", label: "Resume", type: "resume" }];
       } else {
         loaded = loaded.map(c => isResumeColumn(c) ? { ...c, type: "resume" } : c);
+      }
+      const hasMatch = loaded.some(isMatchColumn);
+      if (!hasMatch) {
+        const resumeIdx = loaded.findIndex(isResumeColumn);
+        const matchCol: ColumnDef = { key: "profile_match", label: "Profile Matching %", type: "match" };
+        if (resumeIdx >= 0) loaded = [...loaded.slice(0, resumeIdx + 1), matchCol, ...loaded.slice(resumeIdx + 1)];
+        else loaded = [...loaded, matchCol];
+      } else {
+        loaded = loaded.map(c => isMatchColumn(c) ? { ...c, type: "match" } : c);
       }
       setColumns(loaded);
     } else {
@@ -221,6 +236,19 @@ export default function HRActivity() {
                           <td key={c.key} className="p-2 align-top">
                             {(() => {
                               const v = row[c.key];
+                              if (isMatchColumn(c)) {
+                                const resumeKey = columns.find(isResumeColumn)?.key;
+                                const resumeVal = resumeKey ? (row[resumeKey] ?? "") : "";
+                                const hasResume = !!resumeVal && /^https?:\/\//i.test(resumeVal);
+                                if (!hasResume) return <span className="text-muted-foreground/50 text-[11px] italic">No resume</span>;
+                                const num = parseInt(v ?? "", 10);
+                                if (isNaN(num)) return <span className="text-muted-foreground/50">—</span>;
+                                const tone =
+                                  num >= 75 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
+                                  num >= 50 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
+                                              "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
+                                return <span className={`text-xs font-semibold px-2 py-0.5 rounded ${tone}`}>{num}%</span>;
+                              }
                               if (!v) return <span className="text-muted-foreground/50">—</span>;
                               if (isResumeColumn(c) && /^https?:\/\//i.test(v)) {
                                 return (
