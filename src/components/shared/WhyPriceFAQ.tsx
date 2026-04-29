@@ -43,7 +43,7 @@ It's not about price — it's about how fast and effectively you can get placed 
 
 ✔ Structured interview process
 ✔ Clear feedback after every attempt
-✔ Continuous improvement with Skilory
+✔ Continuous improvement with Skilory.in
 ✔ Multiple opportunities based on your profile
 
 This systematically increases your chances instead of random attempts.`,
