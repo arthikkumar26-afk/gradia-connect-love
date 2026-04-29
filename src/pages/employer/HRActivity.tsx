@@ -211,7 +211,26 @@ export default function HRActivity() {
                         <tr key={idx} className="border-t">
                           <td className="p-2 text-muted-foreground text-center">{idx + 1}</td>
                           {columns.map(c => (
-                            <td key={c.key} className="p-2 align-top">{row[c.key] || <span className="text-muted-foreground/50">—</span>}</td>
+                          <td key={c.key} className="p-2 align-top">
+                            {(() => {
+                              const v = row[c.key];
+                              if (!v) return <span className="text-muted-foreground/50">—</span>;
+                              if (isResumeColumn(c) && /^https?:\/\//i.test(v)) {
+                                return (
+                                  <a
+                                    href={v}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-primary hover:underline"
+                                  >
+                                    <FileText className="h-3.5 w-3.5" />
+                                    View Resume
+                                  </a>
+                                );
+                              }
+                              return v;
+                            })()}
+                          </td>
                           ))}
                         </tr>
                       ))}
