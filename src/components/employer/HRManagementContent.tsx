@@ -103,6 +103,40 @@ export const HRManagementContent = () => {
     else { toast.success("HR account deactivated"); load(); }
   };
 
+  const [pwdTarget, setPwdTarget] = useState<HRAccount | null>(null);
+  const [emailTarget, setEmailTarget] = useState<HRAccount | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [sendPwdEmail, setSendPwdEmail] = useState(true);
+  const [newEmail, setNewEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleResetPassword = async () => {
+    if (!pwdTarget) return;
+    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    setSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("create-hr-account", {
+      body: { action: "reset_password", hr_user_id: pwdTarget.hr_user_id, new_password: newPassword, send_email: sendPwdEmail },
+    });
+    setSubmitting(false);
+    if (error || data?.error) { toast.error(data?.error || error?.message || "Failed to reset password"); return; }
+    toast.success(sendPwdEmail && data?.email_sent ? "Password reset and emailed to HR" : "Password reset successfully");
+    setPwdTarget(null); setNewPassword(""); setSendPwdEmail(true);
+  };
+
+  const handleResetEmail = async () => {
+    if (!emailTarget) return;
+    if (!newEmail.includes("@")) { toast.error("Enter a valid email"); return; }
+    setSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("create-hr-account", {
+      body: { action: "reset_email", hr_user_id: emailTarget.hr_user_id, new_email: newEmail },
+    });
+    setSubmitting(false);
+    if (error || data?.error) { toast.error(data?.error || error?.message || "Failed to update email"); return; }
+    toast.success("HR email updated");
+    setEmailTarget(null); setNewEmail("");
+    load();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
