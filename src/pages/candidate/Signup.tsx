@@ -387,7 +387,7 @@ const CandidateSignup = () => {
   const [suggestedJobs, setSuggestedJobs] = useState<SuggestedJob[]>([]);
 
   // Plan / payment step state
-  const [selectedPlanIdx, setSelectedPlanIdx] = useState<number>(2); // default Pro
+  const [selectedPlanIdx, setSelectedPlanIdx] = useState<number>(1); // default Plan B (popular)
   const [selectedPosition, setSelectedPosition] = useState<string>('');
   const [paying, setPaying] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
