@@ -75,7 +75,14 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
         supabase.from("hr_candidate_sheets").select("rows, updated_at").eq("hr_user_id", hrUserId).eq("employer_user_id", employerUserId).maybeSingle(),
       ]);
       if (colData?.columns && Array.isArray(colData.columns)) {
-        setColumns(colData.columns as unknown as ColumnDef[]);
+        let loaded = colData.columns as unknown as ColumnDef[];
+        const hasResume = loaded.some(isResumeColumn);
+        if (!hasResume) {
+          loaded = [...loaded, { key: "resume", label: "Resume", type: "resume" }];
+        } else {
+          loaded = loaded.map(c => isResumeColumn(c) ? { ...c, type: "resume" } : c);
+        }
+        setColumns(loaded);
       }
       if (sheetData?.rows && Array.isArray(sheetData.rows)) {
         setRows(sheetData.rows as unknown as Record<string, string>[]);
