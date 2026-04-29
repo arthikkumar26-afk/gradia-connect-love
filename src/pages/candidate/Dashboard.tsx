@@ -85,6 +85,7 @@ import AILearningRecommendations from "@/components/candidate/AILearningRecommen
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import SubscriptionTab from "@/components/candidate/SubscriptionTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
+import EducationPositionPlans from "@/components/shared/EducationPositionPlans";
 import { useActionPayment } from "@/hooks/useActionPayment";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 import { CANDIDATE_PLANS, FEATURE_LABELS, type CandidateFeature } from "@/config/candidatePlans";
