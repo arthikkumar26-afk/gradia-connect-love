@@ -571,7 +571,19 @@ const HRActivitySection = () => {
       .maybeSingle();
 
     if (colData?.columns && Array.isArray(colData.columns)) {
-      setColumns(colData.columns as unknown as ColumnDef[]);
+      let loaded = colData.columns as unknown as ColumnDef[];
+      // Auto-migrate: ensure resume column exists & is typed for upload
+      const hasResume = loaded.some(isResumeColumn);
+      if (!hasResume) {
+        const insertAt = Math.max(0, loaded.findIndex(c => c.key === "status"));
+        const resumeCol: ColumnDef = { key: "resume", label: "Resume", type: "resume" };
+        loaded = insertAt >= 0
+          ? [...loaded.slice(0, insertAt), resumeCol, ...loaded.slice(insertAt)]
+          : [...loaded, resumeCol];
+      } else {
+        loaded = loaded.map(c => isResumeColumn(c) ? { ...c, type: "resume" } : c);
+      }
+      setColumns(loaded);
     } else {
       await supabase.from("employer_hr_sheet_columns").insert({
         employer_user_id: u.user.id,
