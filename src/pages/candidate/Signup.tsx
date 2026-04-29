@@ -633,6 +633,8 @@ const CandidateSignup = () => {
     }
     setResumeFile(f);
     setResumeParsed(null);
+    // Auto-trigger AI scan immediately after upload
+    setTimeout(() => { handleResumeScan(f); }, 0);
   };
 
   const fetchSuggestedJobs = async (skills: string[], preferredRole: string, location: string) => {
@@ -711,8 +713,9 @@ const CandidateSignup = () => {
     setSuggestedJobs(matches.slice(0, 6));
   };
 
-  const handleResumeScan = async () => {
-    if (!resumeFile) {
+  const handleResumeScan = async (fileOverride?: File) => {
+    const fileToScan = fileOverride || resumeFile;
+    if (!fileToScan) {
       toast({ title: 'Please upload a resume first', variant: 'destructive' });
       return;
     }
@@ -723,16 +726,16 @@ const CandidateSignup = () => {
       const userId = session.user.id;
 
       // 1. Upload resume to storage
-      const ext = resumeFile.name.split('.').pop();
+      const ext = fileToScan.name.split('.').pop();
       const filePath = `${userId}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('resumes').upload(filePath, resumeFile, { upsert: true });
+      const { error: upErr } = await supabase.storage.from('resumes').upload(filePath, fileToScan, { upsert: true });
       if (upErr) console.warn('Resume upload error:', upErr);
       const { data: urlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
       const resumeUrl = urlData?.publicUrl || null;
 
       // 2. AI parse via edge function
       const formData = new FormData();
-      formData.append('file', resumeFile);
+      formData.append('file', fileToScan);
       const parseResp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
         {
@@ -1721,14 +1724,10 @@ const CandidateSignup = () => {
                 <Button type="button" variant="outline" size="sm" onClick={() => resumeInputRef.current?.click()} disabled={resumeParsing}>
                   Change
                 </Button>
-                {!resumeParsed && (
-                  <Button type="button" size="sm" onClick={handleResumeScan} disabled={resumeParsing}>
-                    {resumeParsing ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning...</>
-                    ) : (
-                      <><Wand2 className="h-4 w-4 mr-2" /> Scan with AI</>
-                    )}
-                  </Button>
+                {resumeParsing && (
+                  <div className="inline-flex items-center text-sm text-accent">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning with AI...
+                  </div>
                 )}
               </div>
             </div>
@@ -1763,10 +1762,7 @@ const CandidateSignup = () => {
         )}
 
         <div className="flex gap-4">
-          <Button variant="ghost" onClick={() => setCurrentStep('benefits')} className="flex-1" disabled={resumeParsing}>
-            Skip for now
-          </Button>
-          <Button onClick={() => setCurrentStep('benefits')} className="flex-1" disabled={resumeParsing || (!!resumeFile && !resumeParsed)}>
+          <Button onClick={() => setCurrentStep('benefits')} className="w-full" disabled={resumeParsing || (!!resumeFile && !resumeParsed)}>
             Continue
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
