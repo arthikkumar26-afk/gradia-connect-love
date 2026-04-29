@@ -633,6 +633,8 @@ const CandidateSignup = () => {
     }
     setResumeFile(f);
     setResumeParsed(null);
+    // Auto-trigger AI scan immediately after upload
+    setTimeout(() => { handleResumeScan(f); }, 0);
   };
 
   const fetchSuggestedJobs = async (skills: string[], preferredRole: string, location: string) => {
