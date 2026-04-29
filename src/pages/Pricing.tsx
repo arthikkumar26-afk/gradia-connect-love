@@ -353,6 +353,13 @@ const PricingPage = () => {
         </Tabs>
       </section>
 
+      {/* Why this price FAQ */}
+      <section className="pb-16 container mx-auto px-4">
+        <div className="max-w-4xl mx-auto">
+          <WhyPriceFAQ />
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-16 bg-muted/50 text-center">
         <div className="container mx-auto px-4">
