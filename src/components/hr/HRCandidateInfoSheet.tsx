@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Plus, Save, Trash2, FileSpreadsheet } from "lucide-react";
+import { Plus, Save, Trash2, FileSpreadsheet, Upload, FileText, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface ColumnDef { key: string; label: string; type?: string }
@@ -19,9 +19,16 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: "phone", label: "Phone" },
   { key: "skills", label: "Skills" },
   { key: "experience", label: "Experience" },
+  { key: "resume", label: "Resume", type: "resume" },
   { key: "status", label: "Status" },
   { key: "notes", label: "Notes" },
 ];
+
+// Treat any column with key "resume" or label containing "resume"/"cv" as a resume upload field
+const isResumeColumn = (c: ColumnDef) =>
+  c.type === "resume" ||
+  c.key.toLowerCase() === "resume" ||
+  /resume|cv/i.test(c.label);
 
 export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employerName }: Props) {
   const [columns, setColumns] = useState<ColumnDef[]>(DEFAULT_COLUMNS);
