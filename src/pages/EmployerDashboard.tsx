@@ -395,6 +395,7 @@ const EmployerDashboard = () => {
     
     { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
     { id: "hr-management", label: "HR Accounts", icon: UserPlus, path: "/employer/hr-management" },
+    { id: "hr-activity", label: "HR", icon: Users, path: "/employer/hr-activity" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
     
   ];
