@@ -128,3 +128,6 @@ verify_jwt = false
 
 [functions.send-payment-receipt]
 verify_jwt = false
+
+[functions.score-resume-match]
+verify_jwt = false

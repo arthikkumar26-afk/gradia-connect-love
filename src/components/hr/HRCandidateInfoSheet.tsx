@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +43,46 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [uploadingCell, setUploadingCell] = useState<string | null>(null);
+  const [scoringCell, setScoringCell] = useState<string | null>(null);
+
+  // Refs to read latest values inside async callbacks
+  const columnsRef = useRef<ColumnDef[]>(columns);
+  const rowsRef = useRef<Record<string, string>[]>(rows);
+  useEffect(() => { columnsRef.current = columns; }, [columns]);
+  useEffect(() => { rowsRef.current = rows; }, [rows]);
+
+  const runMatchScoring = async (idx: number, resumeUrl: string) => {
+    // Find the match column key from current columns
+    const matchKey = (columnsRef.current || []).find(isMatchColumn)?.key;
+    if (!matchKey) return;
+    const cellId = `${idx}-${matchKey}`;
+    setScoringCell(cellId);
+    // Mark as "scoring..." with sentinel value
+    updateCell(idx, matchKey, "...");
+    try {
+      const row = rowsRef.current?.[idx] || {};
+      const { data, error } = await supabase.functions.invoke("score-resume-match", {
+        body: {
+          resumeUrl,
+          jobContext: `Employer: ${employerName}`,
+          candidateRow: row,
+        },
+      });
+      if (error || data?.error) {
+        toast.error("Auto-score failed: " + (data?.error || error?.message || "unknown"));
+        updateCell(idx, matchKey, "");
+        return;
+      }
+      const score = Math.max(0, Math.min(100, parseInt(String(data?.score ?? 0), 10) || 0));
+      updateCell(idx, matchKey, String(score));
+      toast.success(`Profile match: ${score}%`);
+    } catch (e: any) {
+      updateCell(idx, matchKey, "");
+      toast.error("Auto-score failed: " + (e?.message || "unknown"));
+    } finally {
+      setScoringCell(null);
+    }
+  };
 
   const handleResumeUpload = async (idx: number, key: string, file: File) => {
     if (!file) return;
@@ -65,7 +105,9 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(path);
       updateCell(idx, key, urlData.publicUrl);
-      toast.success("Resume uploaded");
+      toast.success("Resume uploaded — analyzing match…");
+      // Kick off auto-scoring (non-blocking from UI standpoint)
+      runMatchScoring(idx, urlData.publicUrl);
     } catch (e: any) {
       toast.error("Upload failed: " + (e?.message || "unknown"));
     } finally {
@@ -238,11 +280,16 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
                         num >= 75 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
                         num >= 50 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" :
                                     "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300";
+                      const isScoring = value === "..." || scoringCell === `${idx}-${c.key}`;
                       return (
-                        <td key={c.key} className="p-1 min-w-[140px]">
+                        <td key={c.key} className="p-1 min-w-[160px]">
                           {!hasResume ? (
                             <div className="text-[11px] text-muted-foreground italic px-2 py-1.5 border border-dashed rounded-md text-center">
                               Upload resume first
+                            </div>
+                          ) : isScoring ? (
+                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground px-2 py-1.5 border rounded-md bg-muted/30">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Analyzing…
                             </div>
                           ) : (
                             <div className="flex items-center gap-1">
@@ -251,7 +298,7 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
                                 min={0}
                                 max={100}
                                 value={value}
-                                placeholder="0-100"
+                                placeholder="Auto"
                                 onChange={(e) => {
                                   const v = e.target.value;
                                   if (v === "") return updateCell(idx, c.key, "");
@@ -263,6 +310,15 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
                               {valid && (
                                 <span className={`text-[11px] font-medium px-1.5 py-0.5 rounded ${tone}`}>{num}%</span>
                               )}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                title="Re-analyze with AI"
+                                onClick={() => runMatchScoring(idx, resumeVal)}
+                              >
+                                <Loader2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           )}
                         </td>
