@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +44,12 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [uploadingCell, setUploadingCell] = useState<string | null>(null);
   const [scoringCell, setScoringCell] = useState<string | null>(null);
+
+  // Refs to read latest values inside async callbacks
+  const columnsRef = useRef<ColumnDef[]>(columns);
+  const rowsRef = useRef<Record<string, string>[]>(rows);
+  useEffect(() => { columnsRef.current = columns; }, [columns]);
+  useEffect(() => { rowsRef.current = rows; }, [rows]);
 
   const runMatchScoring = async (idx: number, resumeUrl: string) => {
     // Find the match column key from current columns
