@@ -766,7 +766,7 @@ const InviteFromResume = () => {
             <Button variant="outline" size="sm" onClick={handleSaveDraft}><Save className="h-4 w-4 mr-2" />Save Draft</Button>
           </header>
 
-          <div className="p-6 max-w-6xl mx-auto">
+          <div className="p-6 max-w-[1600px] mx-auto">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid grid-cols-4 w-full max-w-2xl mx-auto mb-6">
                 <TabsTrigger value="resume"><FileText className="h-4 w-4 mr-2" />Resume Info</TabsTrigger>
@@ -1070,7 +1070,7 @@ const InviteFromResume = () => {
 
               {/* TAB 3: SEND */}
               <TabsContent value="send" className="space-y-6">
-                <Card className="shadow-sm max-w-2xl mx-auto">
+                <Card className="shadow-sm w-full mx-auto">
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2"><Send className="h-4 w-4 text-primary" />Review &amp; Send</CardTitle>
                   </CardHeader>
