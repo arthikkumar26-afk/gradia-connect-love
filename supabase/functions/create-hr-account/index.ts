@@ -62,6 +62,109 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Verify HR is owned by this employer (helper)
+    const verifyOwnership = async (hr_user_id: string) => {
+      const { data: link } = await admin
+        .from("hr_employer_links")
+        .select("id")
+        .eq("hr_user_id", hr_user_id)
+        .eq("employer_user_id", employerId)
+        .maybeSingle();
+      return !!link;
+    };
+
+    if (action === "reset_password") {
+      const { hr_user_id, new_password, send_email } = body;
+      if (!hr_user_id || !new_password) {
+        return new Response(JSON.stringify({ error: "hr_user_id and new_password required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (String(new_password).length < 8) {
+        return new Response(JSON.stringify({ error: "Password must be at least 8 characters" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!(await verifyOwnership(hr_user_id))) {
+        return new Response(JSON.stringify({ error: "Not authorized for this HR account" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: updErr } = await admin.auth.admin.updateUserById(hr_user_id, { password: new_password });
+      if (updErr) {
+        return new Response(JSON.stringify({ error: updErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Optionally email new credentials
+      let emailSent = false; let emailError: string | null = null;
+      if (send_email) {
+        try {
+          const { data: hrProf } = await admin.from("profiles").select("email, full_name").eq("id", hr_user_id).maybeSingle();
+          const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+          if (RESEND_API_KEY && hrProf?.email) {
+            const companyName = profile.company_name || profile.full_name || "your employer";
+            const loginUrl = "https://gradiaa.com/hr/login";
+            const html = `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #111;">Your Gradia HR password was reset</h2>
+                <p>Hi ${hrProf.full_name || ""},</p>
+                <p><strong>${companyName}</strong> has reset your HR account password.</p>
+                <div style="background:#f4f4f5; border-radius:8px; padding:16px; margin:20px 0;">
+                  <p style="margin:0 0 8px;"><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
+                  <p style="margin:0 0 8px;"><strong>Email:</strong> ${hrProf.email}</p>
+                  <p style="margin:0;"><strong>New Password:</strong> <code>${new_password}</code></p>
+                </div>
+                <p style="color:#666; font-size:13px;">For security, please change your password after signing in.</p>
+              </div>
+            `;
+            const resp = await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
+              body: JSON.stringify({
+                from: "Gradia Hiring <noreply@gradia.co.in>",
+                to: [hrProf.email],
+                subject: `Your HR account password was reset`,
+                html,
+              }),
+            });
+            if (resp.ok) emailSent = true; else emailError = `Resend ${resp.status}: ${await resp.text()}`;
+          }
+        } catch (e: any) { emailError = e?.message ?? String(e); }
+      }
+      return new Response(JSON.stringify({ ok: true, email_sent: emailSent, email_error: emailError }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "reset_email") {
+      const { hr_user_id, new_email } = body;
+      if (!hr_user_id || !new_email || !String(new_email).includes("@")) {
+        return new Response(JSON.stringify({ error: "hr_user_id and valid new_email required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!(await verifyOwnership(hr_user_id))) {
+        return new Response(JSON.stringify({ error: "Not authorized for this HR account" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: updErr } = await admin.auth.admin.updateUserById(hr_user_id, {
+        email: new_email,
+        email_confirm: true,
+      });
+      if (updErr) {
+        return new Response(JSON.stringify({ error: updErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await admin.from("profiles").update({ email: new_email }).eq("id", hr_user_id);
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Default: create
     if (!email || !password || !full_name) {
       return new Response(JSON.stringify({ error: "email, password, full_name required" }), {

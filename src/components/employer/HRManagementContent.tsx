@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, Users, Trash2, Mail, FileSpreadsheet, Plus, Save, Calendar, ChevronRight, LayoutDashboard, Briefcase, GitBranch, Building2, FileText } from "lucide-react";
+import { UserPlus, Users, Trash2, Mail, FileSpreadsheet, Plus, Save, Calendar, ChevronRight, LayoutDashboard, Briefcase, GitBranch, Building2, FileText, KeyRound, AtSign } from "lucide-react";
 import { toast } from "sonner";
 
 interface HRAccount {
@@ -103,6 +103,40 @@ export const HRManagementContent = () => {
     else { toast.success("HR account deactivated"); load(); }
   };
 
+  const [pwdTarget, setPwdTarget] = useState<HRAccount | null>(null);
+  const [emailTarget, setEmailTarget] = useState<HRAccount | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [sendPwdEmail, setSendPwdEmail] = useState(true);
+  const [newEmail, setNewEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleResetPassword = async () => {
+    if (!pwdTarget) return;
+    if (newPassword.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    setSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("create-hr-account", {
+      body: { action: "reset_password", hr_user_id: pwdTarget.hr_user_id, new_password: newPassword, send_email: sendPwdEmail },
+    });
+    setSubmitting(false);
+    if (error || data?.error) { toast.error(data?.error || error?.message || "Failed to reset password"); return; }
+    toast.success(sendPwdEmail && data?.email_sent ? "Password reset and emailed to HR" : "Password reset successfully");
+    setPwdTarget(null); setNewPassword(""); setSendPwdEmail(true);
+  };
+
+  const handleResetEmail = async () => {
+    if (!emailTarget) return;
+    if (!newEmail.includes("@")) { toast.error("Enter a valid email"); return; }
+    setSubmitting(true);
+    const { data, error } = await supabase.functions.invoke("create-hr-account", {
+      body: { action: "reset_email", hr_user_id: emailTarget.hr_user_id, new_email: newEmail },
+    });
+    setSubmitting(false);
+    if (error || data?.error) { toast.error(data?.error || error?.message || "Failed to update email"); return; }
+    toast.success("HR email updated");
+    setEmailTarget(null); setNewEmail("");
+    load();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-4">
@@ -169,10 +203,16 @@ export const HRManagementContent = () => {
                       <p className="text-xs text-muted-foreground flex items-center gap-1"><Mail className="h-3 w-3" /> {a.profile?.email || "—"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                     <Badge variant={a.is_active ? "default" : "secondary"}>{a.is_active ? "Active" : "Inactive"}</Badge>
+                    <Button size="sm" variant="ghost" title="Reset password" onClick={() => { setPwdTarget(a); setNewPassword(""); setSendPwdEmail(true); }}>
+                      <KeyRound className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" title="Change email" onClick={() => { setEmailTarget(a); setNewEmail(a.profile?.email || ""); }}>
+                      <AtSign className="h-4 w-4" />
+                    </Button>
                     {a.is_active && (
-                      <Button size="sm" variant="ghost" onClick={() => handleDeactivate(a.hr_user_id)}>
+                      <Button size="sm" variant="ghost" title="Deactivate" onClick={() => handleDeactivate(a.hr_user_id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     )}
@@ -188,6 +228,53 @@ export const HRManagementContent = () => {
       <HRActivitySection />
 
       <HRProfileDialog hr={profileHr} onClose={() => setProfileHr(null)} />
+
+      {/* Reset Password Dialog */}
+      <Dialog open={!!pwdTarget} onOpenChange={(o) => !o && setPwdTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-4 w-4" /> Reset HR Password</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-xs text-muted-foreground">
+              Resetting password for <span className="font-medium">{pwdTarget?.profile?.email}</span>
+            </p>
+            <div className="space-y-1.5">
+              <Label>New Password</Label>
+              <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" />
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={sendPwdEmail} onChange={(e) => setSendPwdEmail(e.target.checked)} />
+              Email new credentials to HR
+            </label>
+            <Button className="w-full" disabled={submitting} onClick={handleResetPassword}>
+              {submitting ? "Resetting…" : "Reset Password"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Email Dialog */}
+      <Dialog open={!!emailTarget} onOpenChange={(o) => !o && setEmailTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><AtSign className="h-4 w-4" /> Change HR Email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <p className="text-xs text-muted-foreground">
+              Current: <span className="font-medium">{emailTarget?.profile?.email}</span>
+            </p>
+            <div className="space-y-1.5">
+              <Label>New Email</Label>
+              <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="hr.new@company.com" />
+              <p className="text-xs text-muted-foreground">The HR will use this new email to sign in immediately.</p>
+            </div>
+            <Button className="w-full" disabled={submitting} onClick={handleResetEmail}>
+              {submitting ? "Updating…" : "Update Email"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
