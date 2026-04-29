@@ -85,6 +85,7 @@ import AILearningRecommendations from "@/components/candidate/AILearningRecommen
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import SubscriptionTab from "@/components/candidate/SubscriptionTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
+import EducationPositionPlans from "@/components/shared/EducationPositionPlans";
 import { useActionPayment } from "@/hooks/useActionPayment";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 import { CANDIDATE_PLANS, FEATURE_LABELS, type CandidateFeature } from "@/config/candidatePlans";
@@ -4718,168 +4719,25 @@ const CandidateDashboard = () => {
                     <Crown className="h-5 w-5" />
                     <span className="font-semibold">Upgrade Your Experience</span>
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground">Choose a Plan</h2>
-                  <p className="text-muted-foreground">Unlock premium features to boost your career</p>
+                  <h2 className="text-2xl font-bold text-foreground">Choose Your Position & Plan</h2>
+                  <p className="text-muted-foreground text-sm">
+                    Select your target education position — pricing is set by your band & salary range.
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                  {/* Free Plan */}
-                  <Card className="relative overflow-hidden border-border flex flex-col">
-                    <CardHeader className="text-center pb-2 pt-8">
-                      <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Zap className="h-6 w-6 text-primary" />
-                      </div>
-                      <CardTitle className="text-lg">Basic</CardTitle>
-                      <p className="text-xs text-muted-foreground">Kickstart your job hunt</p>
-                      <div className="mt-3">
-                        <span className="text-2xl font-bold text-foreground">₹5,000</span>
-                        <span className="text-muted-foreground text-xs">/month</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 flex-1 flex flex-col">
-                      <ul className="space-y-2 flex-1">
-                        {[
-                          "Unlimited job search & apply",
-                          "Full candidate profile builder",
-                          "1× Resume PDF export / month",
-                          "AI ATS score & basic resume report",
-                          "3× AI mock tests / month",
-                          "Application tracker & email alerts",
-                          "Personalised job recommendations",
-                        ].map((f, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs">
-                            <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                            <span className="text-muted-foreground">{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {isActiveSub && candidateSubscription?.plan === "basic" ? (
-                        <Button className="w-full" variant="outline" disabled>Current Plan</Button>
-                      ) : (
-                        <Button className="w-full" variant="outline" disabled={upgradingPlan === "basic"} onClick={() => handleCandidateUpgrade("basic", 5000)}>
-                          {upgradingPlan === "basic" ? "Processing..." : "Subscribe – ₹5,000/mo"}
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Pro Plan */}
-                  <Card className="relative overflow-hidden border-primary shadow-md ring-2 ring-primary/20 flex flex-col">
-                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">
-                      POPULAR
-                    </div>
-                    <CardHeader className="text-center pb-2 pt-8">
-                      <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Star className="h-6 w-6 text-primary" />
-                      </div>
-                      <CardTitle className="text-lg">Pro</CardTitle>
-                      <p className="text-xs text-muted-foreground">Accelerate your job search</p>
-                       <div className="mt-3">
-                         <span className="text-2xl font-bold text-foreground">₹15,000</span>
-                         <span className="text-muted-foreground text-xs">/month</span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 flex-1 flex flex-col">
-                      <ul className="space-y-2 flex-1">
-                        {[
-                          "Everything in Basic",
-                          "Advanced AI Resume Analysis & Scoring",
-                          "All premium resume templates + unlimited PDF exports",
-                          "Priority job matching & recommendations",
-                          "10× AI mock interviews / month (Tech + HR)",
-                          "AI Job Apply — 10 auto-applies / month",
-                          "AI cover letter generation",
-                          "Profile visibility boost (Featured tag)",
-                          "Interview preparation library access",
-                        ].map((f, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs">
-                            <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                            <span className="text-muted-foreground">{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {isActiveSub && candidateSubscription?.plan === "pro" ? (
-                        <Button className="w-full" variant="outline" disabled>
-                          Current Plan
-                        </Button>
-                      ) : (
-                         <Button className="w-full" disabled={upgradingPlan === "pro"} onClick={() => handleCandidateUpgrade("pro", 15000)}>
-                           {upgradingPlan === "pro" ? "Processing..." : "Subscribe – ₹15,000/mo"}
-                        </Button>
-                      )}
-                      {!(isActiveSub && candidateSubscription?.plan === "pro") && (
-                        <CouponInput
-                          originalAmount={15000}
-                          userRole="candidate"
-                          onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "pro" })}
-                          onCouponRemoved={() => setCandidateCoupon(null)}
-                        />
-                      )}
-                      {candidateCoupon?.plan === "pro" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹15,000</p>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Premium Plan */}
-                  <Card className="relative overflow-hidden border-border flex flex-col">
-                    <Badge variant="secondary" className="absolute top-2 right-2 text-xs">Best Value</Badge>
-                    <CardHeader className="text-center pb-2 pt-8">
-                      <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Rocket className="h-6 w-6 text-primary" />
-                      </div>
-                      <CardTitle className="text-lg">Premium</CardTitle>
-                      <p className="text-xs text-muted-foreground">Full career support</p>
-                       <div className="mt-3">
-                         <span className="text-2xl font-bold text-foreground">₹30,000</span>
-                         <span className="text-muted-foreground text-xs">/month</span>
-                       </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 flex-1 flex flex-col">
-                      <ul className="space-y-2 flex-1">
-                        {[
-                          "Everything in Pro",
-                          "Unlimited AI mock tests & interviews",
-                          "Full AI Mock Interview Pipeline (Coding + Demo + HR + Final)",
-                          "Unlimited AI Job Apply (auto-apply 24×7)",
-                          "Dedicated 1-on-1 career coaching (2 sessions / month)",
-                          "AI-personalised 30-day career roadmap",
-                          "Custom AI cover letter for every job",
-                          "Direct recruiter messaging & verified badge",
-                          "Featured profile boost (3×) at top of search",
-                          "Advanced analytics & application insights",
-                          "Priority support (4h response)",
-                        ].map((f, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs">
-                            <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                            <span className="text-muted-foreground">{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {isActiveSub && candidateSubscription?.plan === "premium" ? (
-                        <Button className="w-full" variant="outline" disabled>Current Plan</Button>
-                      ) : (
-                         <Button className="w-full" variant="outline" disabled={upgradingPlan === "premium"} onClick={() => handleCandidateUpgrade("premium", 30000)}>
-                           {upgradingPlan === "premium" ? "Processing..." : "Subscribe – ₹30,000/mo"}
-                        </Button>
-                      )}
-                      {/* Coupon for Premium */}
-                      {!(isActiveSub && candidateSubscription?.plan === "premium") && (
-                        <CouponInput
-                          originalAmount={30000}
-                          userRole="candidate"
-                          onCouponApplied={(discount, finalAmount, couponId, couponCode) => setCandidateCoupon({ discount, finalAmount, couponId, couponCode, plan: "premium" })}
-                          onCouponRemoved={() => setCandidateCoupon(null)}
-                        />
-                      )}
-                      {candidateCoupon?.plan === "premium" && (
-                        <p className="text-xs text-center text-muted-foreground">Pay ₹{candidateCoupon.finalAmount} instead of ₹30,000</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
+                <EducationPositionPlans
+                  prefill={{
+                    name: profile?.full_name || "",
+                    email: profile?.email || "",
+                    mobile: (profile as any)?.mobile || "",
+                  }}
+                  onActivated={async () => {
+                    try { await refreshProfile?.(); } catch {}
+                  }}
+                />
               </div>
             )}
+
 
             {/* Settings - Account Settings */}
             {activeMenu === "settings" && (
