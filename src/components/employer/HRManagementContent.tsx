@@ -539,9 +539,13 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: "phone", label: "Phone" },
   { key: "skills", label: "Skills" },
   { key: "experience", label: "Experience" },
+  { key: "resume", label: "Resume", type: "resume" },
   { key: "status", label: "Status" },
   { key: "notes", label: "Notes" },
 ];
+
+const isResumeColumn = (c: ColumnDef) =>
+  c.type === "resume" || c.key.toLowerCase() === "resume" || /resume|cv/i.test(c.label);
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || `col_${Date.now()}`;
@@ -567,7 +571,19 @@ const HRActivitySection = () => {
       .maybeSingle();
 
     if (colData?.columns && Array.isArray(colData.columns)) {
-      setColumns(colData.columns as unknown as ColumnDef[]);
+      let loaded = colData.columns as unknown as ColumnDef[];
+      // Auto-migrate: ensure resume column exists & is typed for upload
+      const hasResume = loaded.some(isResumeColumn);
+      if (!hasResume) {
+        const insertAt = Math.max(0, loaded.findIndex(c => c.key === "status"));
+        const resumeCol: ColumnDef = { key: "resume", label: "Resume", type: "resume" };
+        loaded = insertAt >= 0
+          ? [...loaded.slice(0, insertAt), resumeCol, ...loaded.slice(insertAt)]
+          : [...loaded, resumeCol];
+      } else {
+        loaded = loaded.map(c => isResumeColumn(c) ? { ...c, type: "resume" } : c);
+      }
+      setColumns(loaded);
     } else {
       await supabase.from("employer_hr_sheet_columns").insert({
         employer_user_id: u.user.id,
@@ -600,9 +616,16 @@ const HRActivitySection = () => {
   useEffect(() => { load(); }, []);
 
   const addColumn = () => setColumns(c => [...c, { key: `col_${c.length + 1}_${Date.now()}`, label: "New Column" }]);
+  const addResumeColumn = () => {
+    if (columns.some(isResumeColumn)) {
+      toast.info("A Resume column already exists.");
+      return;
+    }
+    setColumns(c => [...c, { key: "resume", label: "Resume", type: "resume" }]);
+  };
   const removeColumn = (idx: number) => setColumns(c => c.filter((_, i) => i !== idx));
   const updateColumn = (idx: number, label: string) =>
-    setColumns(c => c.map((col, i) => i === idx ? { ...col, label, key: slugify(label) } : col));
+    setColumns(c => c.map((col, i) => i === idx ? { ...col, label, key: isResumeColumn(col) ? col.key : slugify(label) } : col));
 
   const saveColumns = async () => {
     if (!userId) return;
@@ -637,8 +660,9 @@ const HRActivitySection = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-sm">Sheet Columns (visible to all your HRs)</CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant="outline" onClick={addColumn}><Plus className="h-3.5 w-3.5 mr-1" />Add Column</Button>
+            <Button size="sm" variant="outline" onClick={addResumeColumn}><Plus className="h-3.5 w-3.5 mr-1" />Add Resume Upload</Button>
             <Button size="sm" onClick={saveColumns} disabled={savingCols}>
               <Save className="h-3.5 w-3.5 mr-1" />{savingCols ? "Saving…" : "Save Columns"}
             </Button>
