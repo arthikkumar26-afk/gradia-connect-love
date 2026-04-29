@@ -43,6 +43,40 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [uploadingCell, setUploadingCell] = useState<string | null>(null);
+  const [scoringCell, setScoringCell] = useState<string | null>(null);
+
+  const runMatchScoring = async (idx: number, resumeUrl: string) => {
+    // Find the match column key from current columns
+    const matchKey = (columnsRef.current || []).find(isMatchColumn)?.key;
+    if (!matchKey) return;
+    const cellId = `${idx}-${matchKey}`;
+    setScoringCell(cellId);
+    // Mark as "scoring..." with sentinel value
+    updateCell(idx, matchKey, "...");
+    try {
+      const row = rowsRef.current?.[idx] || {};
+      const { data, error } = await supabase.functions.invoke("score-resume-match", {
+        body: {
+          resumeUrl,
+          jobContext: `Employer: ${employerName}`,
+          candidateRow: row,
+        },
+      });
+      if (error || data?.error) {
+        toast.error("Auto-score failed: " + (data?.error || error?.message || "unknown"));
+        updateCell(idx, matchKey, "");
+        return;
+      }
+      const score = Math.max(0, Math.min(100, parseInt(String(data?.score ?? 0), 10) || 0));
+      updateCell(idx, matchKey, String(score));
+      toast.success(`Profile match: ${score}%`);
+    } catch (e: any) {
+      updateCell(idx, matchKey, "");
+      toast.error("Auto-score failed: " + (e?.message || "unknown"));
+    } finally {
+      setScoringCell(null);
+    }
+  };
 
   const handleResumeUpload = async (idx: number, key: string, file: File) => {
     if (!file) return;
@@ -65,7 +99,9 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
       if (upErr) throw upErr;
       const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(path);
       updateCell(idx, key, urlData.publicUrl);
-      toast.success("Resume uploaded");
+      toast.success("Resume uploaded — analyzing match…");
+      // Kick off auto-scoring (non-blocking from UI standpoint)
+      runMatchScoring(idx, urlData.publicUrl);
     } catch (e: any) {
       toast.error("Upload failed: " + (e?.message || "unknown"));
     } finally {
