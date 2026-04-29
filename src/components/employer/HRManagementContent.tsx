@@ -24,13 +24,41 @@ export const HRManagementContent = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", password: "" });
 
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>("");
+
   const load = async () => {
     setLoading(true);
+    // Capture current user for diagnostics
+    const { data: u } = await supabase.auth.getUser();
+    setCurrentUserEmail(u?.user?.email || "");
+
+    // Try edge function first (returns full info)
     const { data, error } = await supabase.functions.invoke("create-hr-account", {
       body: { action: "list" },
     });
-    if (error) toast.error(error.message);
-    else setHrAccounts(data?.hr_accounts ?? []);
+
+    if (!error && data?.hr_accounts) {
+      setHrAccounts(data.hr_accounts);
+      setLoading(false);
+      return;
+    }
+
+    // Fallback: direct RLS query (works for any employer/admin/owner)
+    if (u?.user?.id) {
+      const { data: links } = await supabase
+        .from("hr_employer_links")
+        .select("id, hr_user_id, is_active, created_at")
+        .eq("employer_user_id", u.user.id)
+        .order("created_at", { ascending: false });
+      const ids = (links ?? []).map((l: any) => l.hr_user_id);
+      const { data: profs } = ids.length
+        ? await supabase.from("profiles").select("id, full_name, email").in("id", ids)
+        : { data: [] as any[] };
+      const map = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
+      setHrAccounts((links ?? []).map((l: any) => ({ ...l, profile: map[l.hr_user_id] || null })));
+    } else if (error) {
+      toast.error(error.message);
+    }
     setLoading(false);
   };
 
@@ -112,8 +140,17 @@ export const HRManagementContent = () => {
         <CardHeader><CardTitle className="text-base">Your HR Accounts</CardTitle></CardHeader>
         <CardContent>
           {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
-           : hrAccounts.length === 0 ? <p className="text-sm text-muted-foreground">No HR accounts yet. Click "Add HR Account" to create one.</p>
-           : (
+           : hrAccounts.length === 0 ? (
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>No HR accounts linked to this employer login.</p>
+                {currentUserEmail && (
+                  <p className="text-xs">
+                    Currently signed in as <span className="font-medium">{currentUserEmail}</span>.
+                    HR accounts only show under the employer that created them. If you created the HR from a different employer login, sign in with that account.
+                  </p>
+                )}
+              </div>
+            ) : (
             <div className="space-y-2">
               {hrAccounts.map(a => (
                 <div key={a.id} className="border border-border rounded-md p-3 flex items-center justify-between">
