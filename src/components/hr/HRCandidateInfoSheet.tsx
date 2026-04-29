@@ -152,27 +152,79 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
               ) : rows.map((row, idx) => (
                 <tr key={idx} className="border-t align-top">
                   <td className="p-1 text-muted-foreground text-center pt-2">{idx + 1}</td>
-                  {columns.map(c => (
-                    <td key={c.key} className="p-1 min-w-[180px]">
-                      <textarea
-                        className="w-full min-h-[36px] text-xs rounded-md border border-input bg-background px-2 py-1.5 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y whitespace-pre-wrap break-words"
-                        rows={1}
-                        value={row[c.key] ?? ""}
-                        onChange={e => {
-                          updateCell(idx, c.key, e.target.value);
-                          const t = e.target as HTMLTextAreaElement;
-                          t.style.height = "auto";
-                          t.style.height = t.scrollHeight + "px";
-                        }}
-                        ref={(el) => {
-                          if (el) {
-                            el.style.height = "auto";
-                            el.style.height = el.scrollHeight + "px";
-                          }
-                        }}
-                      />
-                    </td>
-                  ))}
+                  {columns.map(c => {
+                    const cellId = `${idx}-${c.key}`;
+                    const value = row[c.key] ?? "";
+                    if (isResumeColumn(c)) {
+                      const hasFile = !!value && /^https?:\/\//i.test(value);
+                      return (
+                        <td key={c.key} className="p-1 min-w-[180px]">
+                          {hasFile ? (
+                            <div className="flex items-center gap-1">
+                              <a
+                                href={value}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 inline-flex items-center gap-1 text-xs text-primary hover:underline px-2 py-1.5 border rounded-md bg-background truncate"
+                              >
+                                <FileText className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">View Resume</span>
+                              </a>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
+                                onClick={() => updateCell(idx, c.key, "")}
+                                title="Remove resume"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <label className="flex items-center justify-center gap-1 text-xs cursor-pointer px-2 py-1.5 border border-dashed rounded-md hover:bg-muted/50 transition">
+                              {uploadingCell === cellId ? (
+                                <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Uploading…</>
+                              ) : (
+                                <><Upload className="h-3.5 w-3.5" /> Upload PDF/DOC</>
+                              )}
+                              <input
+                                type="file"
+                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                className="hidden"
+                                disabled={uploadingCell === cellId}
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) handleResumeUpload(idx, c.key, f);
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          )}
+                        </td>
+                      );
+                    }
+                    return (
+                      <td key={c.key} className="p-1 min-w-[180px]">
+                        <textarea
+                          className="w-full min-h-[36px] text-xs rounded-md border border-input bg-background px-2 py-1.5 ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y whitespace-pre-wrap break-words"
+                          rows={1}
+                          value={value}
+                          onChange={e => {
+                            updateCell(idx, c.key, e.target.value);
+                            const t = e.target as HTMLTextAreaElement;
+                            t.style.height = "auto";
+                            t.style.height = t.scrollHeight + "px";
+                          }}
+                          ref={(el) => {
+                            if (el) {
+                              el.style.height = "auto";
+                              el.style.height = el.scrollHeight + "px";
+                            }
+                          }}
+                        />
+                      </td>
+                    );
+                  })}
                   <td className="p-1">
                     <Button size="icon" variant="ghost" onClick={() => removeRow(idx)} className="h-7 w-7">
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
