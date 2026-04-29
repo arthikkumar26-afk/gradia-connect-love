@@ -726,16 +726,16 @@ const CandidateSignup = () => {
       const userId = session.user.id;
 
       // 1. Upload resume to storage
-      const ext = resumeFile.name.split('.').pop();
+      const ext = fileToScan.name.split('.').pop();
       const filePath = `${userId}/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('resumes').upload(filePath, resumeFile, { upsert: true });
+      const { error: upErr } = await supabase.storage.from('resumes').upload(filePath, fileToScan, { upsert: true });
       if (upErr) console.warn('Resume upload error:', upErr);
       const { data: urlData } = supabase.storage.from('resumes').getPublicUrl(filePath);
       const resumeUrl = urlData?.publicUrl || null;
 
       // 2. AI parse via edge function
       const formData = new FormData();
-      formData.append('file', resumeFile);
+      formData.append('file', fileToScan);
       const parseResp = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-resume`,
         {
