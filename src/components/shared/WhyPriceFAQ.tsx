@@ -33,8 +33,7 @@ const faqs = [
 👉 You get personalized courses to improve your weak areas
 👉 Then we prepare you again and support you for re-interviews
 
-Most consultancies take one month's salary after placement. Gradia is a transparent one-time investment, and we support you till you get results. If a small investment helps you land a ₹3–5 LPA job, that's a very high return on your career.
-
+Most consultancies take one month's salary after placement. Gradia is a transparent one-time investment, and we support you till you get results.
 It's not about price — it's about how fast and effectively you can get placed with the right guidance.`,
   },
   {
