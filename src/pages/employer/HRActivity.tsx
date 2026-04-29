@@ -25,6 +25,7 @@ const DEFAULT_COLUMNS: ColumnDef[] = [
   { key: "skills", label: "Skills" },
   { key: "experience", label: "Experience" },
   { key: "resume", label: "Resume", type: "resume" },
+  { key: "profile_match", label: "Profile Matching %", type: "match" },
   { key: "status", label: "Status" },
   { key: "notes", label: "Notes" },
 ];
@@ -33,6 +34,11 @@ const isResumeColumn = (c: ColumnDef) =>
   c.type === "resume" ||
   c.key.toLowerCase() === "resume" ||
   /resume|cv/i.test(c.label);
+
+const isMatchColumn = (c: ColumnDef) =>
+  c.type === "match" ||
+  /match|matching/i.test(c.label) ||
+  c.key.toLowerCase().includes("match");
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || `col_${Date.now()}`;
