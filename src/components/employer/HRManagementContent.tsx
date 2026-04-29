@@ -648,8 +648,9 @@ const HRActivitySection = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
           <CardTitle className="text-sm">Sheet Columns (visible to all your HRs)</CardTitle>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button size="sm" variant="outline" onClick={addColumn}><Plus className="h-3.5 w-3.5 mr-1" />Add Column</Button>
+            <Button size="sm" variant="outline" onClick={addResumeColumn}><Plus className="h-3.5 w-3.5 mr-1" />Add Resume Upload</Button>
             <Button size="sm" onClick={saveColumns} disabled={savingCols}>
               <Save className="h-3.5 w-3.5 mr-1" />{savingCols ? "Saving…" : "Save Columns"}
             </Button>
