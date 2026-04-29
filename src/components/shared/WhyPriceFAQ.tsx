@@ -92,9 +92,7 @@ Reducing the price means compromising quality, and we don't do that because your
     a: `If we took payment after placement, it would become like a consultancy — and they charge much higher (one month's salary).
 
 Gradia works differently:
-👉 We invest in your evaluation, reports and training from Day 1
-👉 That's why it's a one-time upfront investment
-👉 Overall, it's still much more affordable than the traditional model.`,
+👉 We invest in your evaluation, reports and training from Day 1`,
   },
   {
     icon: CheckCircle2,
