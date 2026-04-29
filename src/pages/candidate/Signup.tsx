@@ -713,8 +713,9 @@ const CandidateSignup = () => {
     setSuggestedJobs(matches.slice(0, 6));
   };
 
-  const handleResumeScan = async () => {
-    if (!resumeFile) {
+  const handleResumeScan = async (fileOverride?: File) => {
+    const fileToScan = fileOverride || resumeFile;
+    if (!fileToScan) {
       toast({ title: 'Please upload a resume first', variant: 'destructive' });
       return;
     }
