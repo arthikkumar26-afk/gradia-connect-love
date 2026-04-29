@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "Gradia <noreply@gradiaa.com>",
+            from: "Gradia Hiring <noreply@gradia.co.in>",
             to: [email],
             subject: `Your HR account for ${companyName} on Gradia`,
             html,
