@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserPlus, Users, Trash2, Mail, FileSpreadsheet, Plus, Save, Calendar, ChevronRight, LayoutDashboard, Briefcase, GitBranch, Building2, FileText } from "lucide-react";
+import { UserPlus, Users, Trash2, Mail, FileSpreadsheet, Plus, Save, Calendar, ChevronRight, LayoutDashboard, Briefcase, GitBranch, Building2, FileText, KeyRound, AtSign } from "lucide-react";
 import { toast } from "sonner";
 
 interface HRAccount {
