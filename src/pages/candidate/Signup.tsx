@@ -129,6 +129,100 @@ const POINT_PACKAGES = [
   },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────
+// EDUCATION POSITION → BAND → PACK PRICING
+// Mirrors the official PACKs (Processing Charges) table provided by ops.
+// Each position is mapped to its band + salary-range row, which yields the
+// three subscription PLAN amounts (A / B / C) the candidate can pick.
+// ─────────────────────────────────────────────────────────────────────────
+type EducationPlanKey = 'A' | 'B' | 'C';
+interface EducationPosition {
+  title: string;
+  band: 'Band 1' | 'Band 2' | 'Band 3' | 'Band 4';
+  group: 'Group-I' | 'Group-II' | 'Group-III' | 'Group-IV';
+  segment: string;
+  salaryRange: string;
+  annualPackage: string;
+  prices: Record<EducationPlanKey, number>;
+}
+
+const EDUCATION_POSITIONS: EducationPosition[] = [
+  // Group-I / Band 1 — Admin & Academics
+  { title: 'Principal — State Board', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹50,000–80,000 pm', annualPackage: '₹3,00,000–5,00,000', prices: { A: 30000, B: 40000, C: 40000 } },
+  { title: 'Principal — CBSE Board', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹90,000–1,50,000 pm', annualPackage: '₹8,00,000–10,00,000', prices: { A: 30000, B: 40000, C: 50000 } },
+  { title: 'Cluster Principal', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹90,000–2,50,000 pm', annualPackage: '₹10,00,000–12,00,000', prices: { A: 30000, B: 40000, C: 50000 } },
+  { title: 'Academic Head', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹1,00,000–1,50,000 pm', annualPackage: '₹8,00,000–10,00,000', prices: { A: 30000, B: 40000, C: 50000 } },
+  { title: 'SME (Subject Matter Expert)', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹50,000–1,00,000 pm', annualPackage: '₹5,00,000–8,00,000', prices: { A: 30000, B: 40000, C: 40000 } },
+  { title: 'Resource Person', band: 'Band 1', group: 'Group-I', segment: 'Admin & Academics', salaryRange: '₹50,000–90,000 pm', annualPackage: '₹5,00,000–8,00,000', prices: { A: 30000, B: 40000, C: 40000 } },
+
+  // Group-II / Band 2 — High School Segment
+  { title: 'Vice-Principal / Dean', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹40,000–60,000 pm', annualPackage: '₹4,00,000–5,00,000', prices: { A: 25000, B: 30000, C: 40000 } },
+  { title: 'Telugu Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Hindi Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'English Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Math Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–50,000 pm', annualPackage: '₹4,00,000–5,00,000', prices: { A: 25000, B: 30000, C: 40000 } },
+  { title: 'Physics Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–50,000 pm', annualPackage: '₹4,00,000–5,00,000', prices: { A: 25000, B: 30000, C: 40000 } },
+  { title: 'Chemistry Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–50,000 pm', annualPackage: '₹4,00,000–5,00,000', prices: { A: 25000, B: 30000, C: 40000 } },
+  { title: 'Biology Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Social Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Computer Teacher (High School)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹25,000–30,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'P.E.T (Physical Education Teacher)', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹20,000–30,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Softskill Trainer', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹25,000–30,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+  { title: 'Calligraphy Trainer', band: 'Band 2', group: 'Group-II', segment: 'High School', salaryRange: '₹30,000–40,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 20000, B: 25000, C: 30000 } },
+
+  // Group-III / Band 3 — Primary Segment
+  { title: 'Vice-Principal (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹20,000–35,000 pm', annualPackage: '₹3,00,000–4,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Mother Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Telugu Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Hindi Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'English Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Math Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Science Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Social Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Computer Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'P.E.T (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Art & Craft Teacher (Primary)', band: 'Band 3', group: 'Group-III', segment: 'Primary', salaryRange: '₹10,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+
+  // Group-IV / Band 4 — Pre-Primary Segment
+  { title: 'Vice-Principal (Pre-Primary)', band: 'Band 4', group: 'Group-IV', segment: 'Pre-Primary', salaryRange: '₹20,000–30,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Mother Teacher (Pre-Primary)', band: 'Band 4', group: 'Group-IV', segment: 'Pre-Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+  { title: 'Asso. Teacher (Pre-Primary)', band: 'Band 4', group: 'Group-IV', segment: 'Pre-Primary', salaryRange: '₹15,000–20,000 pm', annualPackage: '₹2,00,000–3,00,000', prices: { A: 15000, B: 20000, C: 25000 } },
+];
+
+const EDUCATION_PLAN_DETAILS: Record<EducationPlanKey, { name: string; tagline: string; features: string[]; popular?: boolean }> = {
+  A: {
+    name: 'Plan A',
+    tagline: 'Essential — apply & screen',
+    features: [
+      'Apply to unlimited education jobs',
+      'Resume export + AI ATS score',
+      'CV-Screening + Written Test rounds',
+      'Email support',
+    ],
+  },
+  B: {
+    name: 'Plan B',
+    tagline: 'Most chosen — interview ready',
+    popular: true,
+    features: [
+      'Everything in Plan A',
+      'Demo + Viva / Segment Awareness round',
+      'Core Team / Academic & Admin round',
+      'Detailed AI feedback report',
+    ],
+  },
+  C: {
+    name: 'Plan C',
+    tagline: 'Premium — full pipeline rehearsal',
+    features: [
+      'Everything in Plan B',
+      'Panel + Management rounds (Band 1)',
+      'HR-Round + On-Boarding rehearsal',
+      'Priority support & featured profile',
+    ],
+  },
+};
+
 // Tier × deliverables matrix (mirrors invite email)
 const TIER_MATRIX: { label: string; rows: { round: string; starter: string; basic: string; pro: string; premium: string }[] } = {
   label: 'What you unlock at every round',
@@ -293,7 +387,8 @@ const CandidateSignup = () => {
   const [suggestedJobs, setSuggestedJobs] = useState<SuggestedJob[]>([]);
 
   // Plan / payment step state
-  const [selectedPlanIdx, setSelectedPlanIdx] = useState<number>(2); // default Pro
+  const [selectedPlanIdx, setSelectedPlanIdx] = useState<number>(1); // default Plan B (popular)
+  const [selectedPosition, setSelectedPosition] = useState<string>('');
   const [paying, setPaying] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
@@ -1772,11 +1867,19 @@ const CandidateSignup = () => {
   );
 
   // ---------- Plan / payment step ----------
-  const planIdToSlug = (name: string) => name.toLowerCase(); // 'starter' | 'basic' | 'pro' | 'premium'
+  // Position-based pricing: candidate first picks an education position which
+  // resolves their Band + Salary Range row from the official PACKs table, then
+  // chooses one of the three plan tiers (A / B / C) from that row.
+  const selectedPositionObj = EDUCATION_POSITIONS.find(p => p.title === selectedPosition) || null;
+  const selectedPlanLetter: EducationPlanKey = selectedPlanIdx === 0 ? 'A' : selectedPlanIdx === 1 ? 'B' : 'C';
+  const activePlanPrice = selectedPositionObj ? selectedPositionObj.prices[selectedPlanLetter] : 0;
+  const activePlanName = `${EDUCATION_PLAN_DETAILS[selectedPlanLetter].name}`;
 
   const handlePayPlan = async () => {
-    const plan = POINT_PACKAGES[selectedPlanIdx];
-    if (!plan) return;
+    if (!selectedPositionObj) {
+      toast({ title: 'Select a position first', description: 'Please choose your target position to see pricing.', variant: 'destructive' });
+      return;
+    }
     if (!razorpayLoaded) {
       toast({ title: 'Payment gateway loading…', description: 'Please try again in a moment.' });
       return;
@@ -1790,14 +1893,17 @@ const CandidateSignup = () => {
         return;
       }
       const user = sessionData.session.user;
-      const planSlug = planIdToSlug(plan.name);
+      // Backwards-compatible plan slug for the existing edge function:
+      // 'starter' / 'basic' / 'pro' for A / B / C respectively.
+      const planSlug = selectedPlanLetter === 'A' ? 'starter' : selectedPlanLetter === 'B' ? 'basic' : 'pro';
+      const planLabel = `${activePlanName} (${selectedPositionObj.band})`;
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          amount: plan.price,
+          amount: activePlanPrice,
           currency: 'INR',
           plan_id: planSlug,
-          plan_name: `${plan.name} Plan`,
+          plan_name: planLabel,
           receipt: `cand_${planSlug}_${Date.now()}`,
         },
       });
@@ -1808,7 +1914,7 @@ const CandidateSignup = () => {
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Gradia',
-        description: `${plan.name} Plan — Candidate Subscription`,
+        description: `${planLabel} — ${selectedPositionObj.title}`,
         order_id: orderData.order_id,
         prefill: { name: fullName, email: user.email || email, contact: mobile },
         theme: { color: '#6366f1' },
@@ -1820,15 +1926,17 @@ const CandidateSignup = () => {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 plan: planSlug,
-                amount: plan.price,
+                amount: activePlanPrice,
+                position: selectedPositionObj.title,
+                band: selectedPositionObj.band,
               },
             });
             if (error || !data?.activated) {
               throw new Error(error?.message || data?.message || 'Subscription activation failed');
             }
             toast({
-              title: `🎉 ${plan.name} Plan Activated!`,
-              description: `Welcome to Gradia. Your ${plan.name} plan is now active.`,
+              title: `🎉 ${activePlanName} Activated!`,
+              description: `Welcome to Gradia. Your ${activePlanName} for ${selectedPositionObj.title} is now active.`,
             });
             await refreshProfile();
             navigate('/candidate/dashboard', { replace: true });
@@ -1863,85 +1971,154 @@ const CandidateSignup = () => {
     }
   };
 
-  const renderPlanStep = () => (
-    <div className="w-full max-w-6xl">
-      <ProgressIndicator />
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-foreground mb-2">Choose Your Plan</h2>
-        <p className="text-muted-foreground">
-          Pick a plan to activate your dashboard. Secure payment via Razorpay.
-        </p>
-      </div>
+  const renderPlanStep = () => {
+    const planLetters: EducationPlanKey[] = ['A', 'B', 'C'];
+    return (
+      <div className="w-full max-w-6xl">
+        <ProgressIndicator />
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-foreground mb-2">Choose Your Position & Plan</h2>
+          <p className="text-muted-foreground text-sm">
+            Select your target education position — pricing is set by your band & salary range.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-        {POINT_PACKAGES.map((pkg, idx) => {
-          const isSelected = selectedPlanIdx === idx;
-          return (
-            <Card
-              key={pkg.name}
-              onClick={() => setSelectedPlanIdx(idx)}
-              className={`p-5 relative flex flex-col cursor-pointer transition-all ${
-                isSelected ? 'ring-2 ring-primary shadow-xl scale-[1.02]' : 'hover:shadow-md'
-              } ${pkg.popular ? 'border-primary' : ''}`}
-            >
-              {pkg.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gap-1">
-                  <Star className="h-3 w-3" /> Most Popular
-                </Badge>
-              )}
-              <div className="text-center mb-4">
-                <h3 className="text-lg font-bold text-foreground">{pkg.name}</h3>
-                <p className="text-xs text-muted-foreground mb-3">{pkg.tagline}</p>
-                <div className="text-3xl font-bold text-primary">₹{pkg.price.toLocaleString('en-IN')}</div>
-                <p className="text-xs text-muted-foreground mt-1">/month</p>
-              </div>
-              <ul className="space-y-2 mb-4 flex-1">
-                {pkg.features.slice(0, 5).map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className={`text-center text-xs font-medium ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
-                {isSelected ? '✓ Selected' : 'Click to select'}
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+        {/* ── Position selector ───────────────────────────────────────── */}
+        <Card className="p-5 max-w-3xl mx-auto mb-6">
+          <Label className="text-sm font-semibold mb-2 block">Target Position</Label>
+          <Select value={selectedPosition} onValueChange={setSelectedPosition}>
+            <SelectTrigger className="h-11">
+              <SelectValue placeholder="Select the position you're applying for…" />
+            </SelectTrigger>
+            <SelectContent className="max-h-[320px]">
+              {(['Group-I', 'Group-II', 'Group-III', 'Group-IV'] as const).map(grp => {
+                const items = EDUCATION_POSITIONS.filter(p => p.group === grp);
+                if (!items.length) return null;
+                const sample = items[0];
+                return (
+                  <div key={grp}>
+                    <div className="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {grp} · {sample.band} · {sample.segment}
+                    </div>
+                    {items.map(p => (
+                      <SelectItem key={p.title} value={p.title}>
+                        {p.title}
+                      </SelectItem>
+                    ))}
+                  </div>
+                );
+              })}
+            </SelectContent>
+          </Select>
 
-      <Card className="p-5 max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Selected plan</p>
-            <p className="text-lg font-bold text-foreground">{POINT_PACKAGES[selectedPlanIdx].name}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Amount due</p>
-            <p className="text-2xl font-bold text-primary">
-              ₹{POINT_PACKAGES[selectedPlanIdx].price.toLocaleString('en-IN')}
+          {selectedPositionObj && (
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div className="p-2 rounded-md bg-muted/40">
+                <p className="text-muted-foreground">Band</p>
+                <p className="font-semibold text-foreground">{selectedPositionObj.band}</p>
+              </div>
+              <div className="p-2 rounded-md bg-muted/40">
+                <p className="text-muted-foreground">Segment</p>
+                <p className="font-semibold text-foreground">{selectedPositionObj.segment}</p>
+              </div>
+              <div className="p-2 rounded-md bg-muted/40">
+                <p className="text-muted-foreground">Salary Range</p>
+                <p className="font-semibold text-foreground">{selectedPositionObj.salaryRange}</p>
+              </div>
+              <div className="p-2 rounded-md bg-muted/40">
+                <p className="text-muted-foreground">Annual Package</p>
+                <p className="font-semibold text-foreground">{selectedPositionObj.annualPackage}</p>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* ── Plan A / B / C cards (gated until position picked) ──────── */}
+        {!selectedPositionObj ? (
+          <Card className="p-8 max-w-3xl mx-auto text-center">
+            <p className="text-sm text-muted-foreground">
+              👆 Select a position above to see your subscription plans.
             </p>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back
-          </Button>
-          <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
-            {paying ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
-            ) : (
-              <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{POINT_PACKAGES[selectedPlanIdx].price.toLocaleString('en-IN')}</>
-            )}
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground text-center mt-3">
-          Payment is required to activate your account. Powered by Razorpay (secure).
-        </p>
-      </Card>
-    </div>
-  );
+          </Card>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+              {planLetters.map((letter, idx) => {
+                const detail = EDUCATION_PLAN_DETAILS[letter];
+                const price = selectedPositionObj.prices[letter];
+                const isSelected = selectedPlanIdx === idx;
+                return (
+                  <Card
+                    key={letter}
+                    onClick={() => setSelectedPlanIdx(idx)}
+                    className={`p-5 relative flex flex-col cursor-pointer transition-all ${
+                      isSelected ? 'ring-2 ring-primary shadow-xl scale-[1.02]' : 'hover:shadow-md'
+                    } ${detail.popular ? 'border-primary' : ''}`}
+                  >
+                    {detail.popular && (
+                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gap-1">
+                        <Star className="h-3 w-3" /> Most Popular
+                      </Badge>
+                    )}
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-bold text-foreground">{detail.name}</h3>
+                      <p className="text-xs text-muted-foreground mb-3">{detail.tagline}</p>
+                      <div className="text-3xl font-bold text-primary">₹{price.toLocaleString('en-IN')}</div>
+                      <p className="text-xs text-muted-foreground mt-1">one-time processing</p>
+                    </div>
+                    <ul className="space-y-2 mb-4 flex-1">
+                      {detail.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className={`text-center text-xs font-medium ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {isSelected ? '✓ Selected' : 'Click to select'}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <Card className="p-5 max-w-2xl mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Selected</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {activePlanName} · {selectedPositionObj.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{selectedPositionObj.band} · {selectedPositionObj.salaryRange}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Amount due</p>
+                  <p className="text-2xl font-bold text-primary">
+                    ₹{activePlanPrice.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
+                  {paying ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+                  ) : (
+                    <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{activePlanPrice.toLocaleString('en-IN')}</>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                Payment is required to activate your account. Powered by Razorpay (secure).
+              </p>
+            </Card>
+          </>
+        )}
+      </div>
+    );
+  };
 
 
   return (
