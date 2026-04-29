@@ -36,10 +36,36 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [uploadingCell, setUploadingCell] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+  const handleResumeUpload = async (idx: number, key: string, file: File) => {
+    if (!file) return;
+    const lower = file.name.toLowerCase();
+    const allowed = [".pdf", ".doc", ".docx"];
+    if (!allowed.some(ext => lower.endsWith(ext))) {
+      toast.error("Please upload a PDF or Word document (.pdf, .doc, .docx).");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File too large (max 10 MB).");
+      return;
+    }
+    const cellId = `${idx}-${key}`;
+    setUploadingCell(cellId);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${hrUserId}/hr-sheet/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("resumes").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(path);
+      updateCell(idx, key, urlData.publicUrl);
+      toast.success("Resume uploaded");
+    } catch (e: any) {
+      toast.error("Upload failed: " + (e?.message || "unknown"));
+    } finally {
+      setUploadingCell(null);
+    }
+  };
       const [{ data: colData }, { data: sheetData }] = await Promise.all([
         supabase.from("employer_hr_sheet_columns").select("columns").eq("employer_user_id", employerUserId).maybeSingle(),
         supabase.from("hr_candidate_sheets").select("rows, updated_at").eq("hr_user_id", hrUserId).eq("employer_user_id", employerUserId).maybeSingle(),
