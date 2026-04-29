@@ -88,6 +88,16 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
         } else {
           loaded = loaded.map(c => isResumeColumn(c) ? { ...c, type: "resume" } : c);
         }
+        const hasMatch = loaded.some(isMatchColumn);
+        if (!hasMatch) {
+          // insert match column right after resume
+          const resumeIdx = loaded.findIndex(isResumeColumn);
+          const matchCol: ColumnDef = { key: "profile_match", label: "Profile Matching %", type: "match" };
+          if (resumeIdx >= 0) loaded = [...loaded.slice(0, resumeIdx + 1), matchCol, ...loaded.slice(resumeIdx + 1)];
+          else loaded = [...loaded, matchCol];
+        } else {
+          loaded = loaded.map(c => isMatchColumn(c) ? { ...c, type: "match" } : c);
+        }
         setColumns(loaded);
       }
       if (sheetData?.rows && Array.isArray(sheetData.rows)) {
