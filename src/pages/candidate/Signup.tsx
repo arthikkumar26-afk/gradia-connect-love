@@ -19,6 +19,7 @@ import { Loader2 } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 import { Badge } from "@/components/ui/badge";
 import { CouponInput } from "@/components/shared/CouponInput";
+import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
 // Shared resend-confirmation helpers + hook so the candidate signup uses
 // the exact same cooldown / rate-limit semantics as the candidate login,
 // employer signup, and freelancer login flows.
@@ -2116,6 +2117,11 @@ const CandidateSignup = () => {
             </Card>
           </>
         )}
+
+        {/* Why this price? — reassurance FAQ */}
+        <div className="mt-6">
+          <WhyPriceFAQ compact />
+        </div>
       </div>
     );
   };

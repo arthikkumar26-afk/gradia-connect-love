@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, Star, Zap, Crown, Rocket, Building2, User, Award, GraduationCap, Handshake } from "lucide-react";
+import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
 
 const PricingPage = () => {
   const candidatePlans = [
@@ -350,6 +351,13 @@ const PricingPage = () => {
           <TabsContent value="employers">{renderPlans(employerPlans)}</TabsContent>
           <TabsContent value="sponsors">{renderPlans(sponsorPlans)}</TabsContent>
         </Tabs>
+      </section>
+
+      {/* Why this price FAQ */}
+      <section className="pb-16 container mx-auto px-4">
+        <div className="max-w-4xl mx-auto">
+          <WhyPriceFAQ />
+        </div>
       </section>
 
       {/* CTA */}
