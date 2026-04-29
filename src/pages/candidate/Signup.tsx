@@ -1724,14 +1724,10 @@ const CandidateSignup = () => {
                 <Button type="button" variant="outline" size="sm" onClick={() => resumeInputRef.current?.click()} disabled={resumeParsing}>
                   Change
                 </Button>
-                {!resumeParsed && (
-                  <Button type="button" size="sm" onClick={handleResumeScan} disabled={resumeParsing}>
-                    {resumeParsing ? (
-                      <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning...</>
-                    ) : (
-                      <><Wand2 className="h-4 w-4 mr-2" /> Scan with AI</>
-                    )}
-                  </Button>
+                {resumeParsing && (
+                  <div className="inline-flex items-center text-sm text-accent">
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning with AI...
+                  </div>
                 )}
               </div>
             </div>
@@ -1766,10 +1762,7 @@ const CandidateSignup = () => {
         )}
 
         <div className="flex gap-4">
-          <Button variant="ghost" onClick={() => setCurrentStep('benefits')} className="flex-1" disabled={resumeParsing}>
-            Skip for now
-          </Button>
-          <Button onClick={() => setCurrentStep('benefits')} className="flex-1" disabled={resumeParsing || (!!resumeFile && !resumeParsed)}>
+          <Button onClick={() => setCurrentStep('benefits')} className="w-full" disabled={resumeParsing || (!!resumeFile && !resumeParsed)}>
             Continue
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
