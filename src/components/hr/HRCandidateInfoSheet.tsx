@@ -38,10 +38,10 @@ export default function HRCandidateInfoSheet({ hrUserId, employerUserId, employe
         supabase.from("hr_candidate_sheets").select("rows, updated_at").eq("hr_user_id", hrUserId).eq("employer_user_id", employerUserId).maybeSingle(),
       ]);
       if (colData?.columns && Array.isArray(colData.columns)) {
-        setColumns(colData.columns as ColumnDef[]);
+        setColumns(colData.columns as unknown as ColumnDef[]);
       }
       if (sheetData?.rows && Array.isArray(sheetData.rows)) {
-        setRows(sheetData.rows as Record<string, string>[]);
+        setRows(sheetData.rows as unknown as Record<string, string>[]);
         setLastSavedAt(sheetData.updated_at);
       }
       setLoading(false);

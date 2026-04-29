@@ -51,7 +51,7 @@ export default function HRActivity() {
       .maybeSingle();
 
     if (colData?.columns && Array.isArray(colData.columns)) {
-      setColumns(colData.columns as ColumnDef[]);
+      setColumns(colData.columns as unknown as ColumnDef[]);
     } else {
       // initialize with defaults
       await supabase.from("employer_hr_sheet_columns").insert({
