@@ -347,7 +347,49 @@ const PricingPage = () => {
             ))}
           </TabsList>
 
-          <TabsContent value="candidates">{renderPlans(candidatePlans)}</TabsContent>
+          <TabsContent value="candidates">
+            <div className="max-w-2xl mx-auto">
+              <Card className="relative border-primary shadow-lg">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge className="bg-primary text-primary-foreground gap-1 px-3 py-1">
+                    <Star className="h-3 w-3" /> One-Time Registration
+                  </Badge>
+                </div>
+                <CardHeader className="text-center pb-2 pt-8">
+                  <CardTitle className="text-2xl">Candidate Registration</CardTitle>
+                  <div className="mt-4">
+                    <span className="text-5xl font-bold text-foreground">₹5,000</span>
+                    <span className="text-muted-foreground text-sm ml-2">one-time</span>
+                  </div>
+                  <CardDescription className="text-sm text-muted-foreground mt-2">
+                    Pay once at signup to activate your candidate dashboard
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col">
+                  <ul className="space-y-3 mb-6">
+                    {[
+                      "Full access to your candidate dashboard",
+                      "Browse all jobs across India",
+                      "Build & manage your professional profile",
+                      "Apply to jobs and track applications",
+                      "Unlock premium features anytime from the dashboard",
+                    ].map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full" size="lg" asChild>
+                    <Link to="/candidate/signup">Sign Up & Pay ₹5,000</Link>
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center mt-3">
+                    Secure payment via Razorpay. Dashboard unlocks instantly after payment.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
           <TabsContent value="employers">{renderPlans(employerPlans)}</TabsContent>
           <TabsContent value="sponsors">{renderPlans(sponsorPlans)}</TabsContent>
         </Tabs>
