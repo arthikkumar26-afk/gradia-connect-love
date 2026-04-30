@@ -316,13 +316,13 @@ const PricingPage = () => {
       <section className="py-16 md:py-24 bg-gradient-hero text-white text-center">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl md:text-5xl font-bold mb-4">
-            Simple, Points-Based Pricing
+            Simple, Transparent Pricing
           </h1>
           <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-4">
-            All plans use wallet points. Load points via payment gateway and use them for any service.
+            Candidates pay a one-time ₹5,000 registration fee. Employers & sponsors use wallet points.
           </p>
           <Badge variant="secondary" className="text-sm px-4 py-1.5">
-            ₹5,000 = 1,000 Points
+            ₹5,000 Registration • Instant Dashboard Access
           </Badge>
         </div>
       </section>
