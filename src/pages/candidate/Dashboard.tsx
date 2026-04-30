@@ -85,6 +85,9 @@ import AILearningRecommendations from "@/components/candidate/AILearningRecommen
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import SubscriptionTab from "@/components/candidate/SubscriptionTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
+import { LockedFeatureOverlay } from "@/components/candidate/LockedFeatureOverlay";
+import FeatureUnlocksPanel from "@/components/candidate/FeatureUnlocksPanel";
+import { useFeatureUnlocks } from "@/hooks/useFeatureUnlocks";
 import EducationPositionPlans from "@/components/shared/EducationPositionPlans";
 import { useActionPayment } from "@/hooks/useActionPayment";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
