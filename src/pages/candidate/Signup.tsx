@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, Sparkles, Calendar, FileText, Award, Briefcase, GraduationCap, CheckCircle, Check, Upload, Wand2, Wallet, Star, CreditCard } from "lucide-react";
+import { ArrowLeft, ArrowRight, Users, Target, BarChart, Shield, Sparkles, Calendar, FileText, Award, Briefcase, GraduationCap, CheckCircle, Check, Upload, Wand2, Wallet, Star, CreditCard, Plus, Minus } from "lucide-react";
+import { FEATURE_UNLOCKS, type UnlockFeature } from "@/config/featureUnlocks";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -392,6 +393,7 @@ const CandidateSignup = () => {
   const [selectedPosition, setSelectedPosition] = useState<string>('');
   const [paying, setPaying] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState<UnlockFeature[]>([]);
 
   useEffect(() => {
     if ((window as any).Razorpay) { setRazorpayLoaded(true); return; }
@@ -1870,6 +1872,10 @@ const CandidateSignup = () => {
   // ---------- Registration fee step ----------
   // Flat ₹5,000 one-time registration fee for all candidates.
   const REGISTRATION_FEE = 5000;
+  const addonsTotal = selectedAddons.reduce((s, id) => s + FEATURE_UNLOCKS[id].price, 0);
+  const grandTotal = REGISTRATION_FEE + addonsTotal;
+  const toggleAddon = (id: UnlockFeature) =>
+    setSelectedAddons((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const handlePayPlan = async () => {
     if (!razorpayLoaded) {
@@ -1886,11 +1892,14 @@ const CandidateSignup = () => {
       }
       const user = sessionData.session.user;
       const planSlug = 'registration';
-      const planLabel = 'Candidate Registration Fee';
+      const addonLabels = selectedAddons.map((id) => FEATURE_UNLOCKS[id].shortLabel);
+      const planLabel = addonLabels.length
+        ? `Candidate Registration + ${addonLabels.join(', ')}`
+        : 'Candidate Registration Fee';
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          amount: REGISTRATION_FEE,
+          amount: grandTotal,
           currency: 'INR',
           plan_id: planSlug,
           plan_name: planLabel,
@@ -1916,9 +1925,10 @@ const CandidateSignup = () => {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 plan: planSlug,
-                amount: REGISTRATION_FEE,
+                amount: grandTotal,
                 position: 'Registration',
                 band: 'Registration',
+                addons: selectedAddons,
               },
             });
             if (error || !data?.activated) {
@@ -2002,16 +2012,97 @@ const CandidateSignup = () => {
           </ul>
         </Card>
 
-        <Card className="p-5 max-w-xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Registration Fee</p>
-              <p className="text-lg font-bold text-foreground">Candidate Account</p>
+        {/* Optional Add-ons */}
+        <Card className="p-5 max-w-xl mx-auto mb-6">
+          <div className="mb-4">
+            <h4 className="text-base font-bold text-foreground">Boost Your Account with Add-ons</h4>
+            <p className="text-xs text-muted-foreground">
+              Optional services — tap <span className="font-semibold">+</span> to add, total updates instantly.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {(Object.values(FEATURE_UNLOCKS)).map((f) => {
+              const active = selectedAddons.includes(f.id);
+              return (
+                <button
+                  type="button"
+                  key={f.id}
+                  onClick={() => toggleAddon(f.id)}
+                  className={`text-left border rounded-lg p-3 transition-all hover:shadow-sm ${
+                    active ? 'border-primary bg-primary/5' : 'border-border bg-card'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-foreground leading-tight">{f.label}</p>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                          ₹{f.price.toLocaleString('en-IN')}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-snug mt-1">{f.tagline}</p>
+                      {active && (
+                        <p className="text-[11px] text-primary font-medium mt-1">
+                          Added — ₹{f.price.toLocaleString('en-IN')}
+                        </p>
+                      )}
+                    </div>
+                    <div
+                      className={`shrink-0 h-7 w-7 rounded-md flex items-center justify-center border ${
+                        active
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-background text-foreground border-border'
+                      }`}
+                    >
+                      {active ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {selectedAddons.length > 0 && (
+            <div className="mt-4 pt-4 border-t space-y-1">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
+                Selected Add-ons ({selectedAddons.length})
+              </p>
+              {selectedAddons.map((id) => {
+                const f = FEATURE_UNLOCKS[id];
+                return (
+                  <div key={id} className="flex items-center justify-between text-sm">
+                    <span className="text-foreground">{f.label}</span>
+                    <span className="text-muted-foreground">₹{f.price.toLocaleString('en-IN')}</span>
+                  </div>
+                );
+              })}
+              <div className="flex items-center justify-between text-sm pt-2 mt-2 border-t">
+                <span className="font-semibold text-foreground">Add-on Total</span>
+                <span className="font-bold text-primary">₹{addonsTotal.toLocaleString('en-IN')}</span>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Amount due</p>
+          )}
+        </Card>
+
+        <Card className="p-5 max-w-xl mx-auto">
+          <div className="space-y-1.5 mb-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Registration Fee</span>
+              <span className="text-foreground">₹{REGISTRATION_FEE.toLocaleString('en-IN')}</span>
+            </div>
+            {selectedAddons.length > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Add-ons ({selectedAddons.length})</span>
+                <span className="text-foreground">₹{addonsTotal.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-2 mt-2 border-t">
+              <div>
+                <p className="text-sm text-muted-foreground">Amount due</p>
+                <p className="text-lg font-bold text-foreground">Candidate Account</p>
+              </div>
               <p className="text-2xl font-bold text-primary">
-                ₹{REGISTRATION_FEE.toLocaleString('en-IN')}
+                ₹{grandTotal.toLocaleString('en-IN')}
               </p>
             </div>
           </div>
@@ -2023,7 +2114,7 @@ const CandidateSignup = () => {
               {paying ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
               ) : (
-                <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{REGISTRATION_FEE.toLocaleString('en-IN')}</>
+                <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{grandTotal.toLocaleString('en-IN')}</>
               )}
             </Button>
           </div>
