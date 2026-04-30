@@ -4698,7 +4698,17 @@ const CandidateDashboard = () => {
             )}
 
             {activeMenu === "resume" && (
-              <ResumeBuilderTab />
+              featureUnlocks.isUnlocked("resume") ? (
+                <ResumeBuilderTab />
+              ) : (
+                <LockedFeatureOverlay
+                  feature="resume"
+                  onUnlocked={featureUnlocks.refresh}
+                  onOpenAllPlans={() => setActiveMenu("upgrade")}
+                >
+                  <ResumeBuilderTab />
+                </LockedFeatureOverlay>
+              )
             )}
 
 
