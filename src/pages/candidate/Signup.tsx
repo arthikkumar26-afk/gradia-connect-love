@@ -1872,10 +1872,6 @@ const CandidateSignup = () => {
   const REGISTRATION_FEE = 5000;
 
   const handlePayPlan = async () => {
-    if (!selectedPositionObj) {
-      toast({ title: 'Select a position first', description: 'Please choose your target position to see pricing.', variant: 'destructive' });
-      return;
-    }
     if (!razorpayLoaded) {
       toast({ title: 'Payment gateway loading…', description: 'Please try again in a moment.' });
       return;
@@ -1889,18 +1885,16 @@ const CandidateSignup = () => {
         return;
       }
       const user = sessionData.session.user;
-      // Backwards-compatible plan slug for the existing edge function:
-      // 'starter' / 'basic' / 'pro' for A / B / C respectively.
-      const planSlug = selectedPlanLetter === 'A' ? 'starter' : selectedPlanLetter === 'B' ? 'basic' : 'pro';
-      const planLabel = `${activePlanName} (${selectedPositionObj.band})`;
+      const planSlug = 'registration';
+      const planLabel = 'Candidate Registration Fee';
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          amount: activePlanPrice,
+          amount: REGISTRATION_FEE,
           currency: 'INR',
           plan_id: planSlug,
           plan_name: planLabel,
-          receipt: `cand_${planSlug}_${Date.now()}`,
+          receipt: `cand_reg_${Date.now()}`,
         },
       });
       if (orderError || !orderData?.order_id) throw new Error(orderError?.message || 'Failed to create order');
@@ -1910,7 +1904,7 @@ const CandidateSignup = () => {
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Gradia',
-        description: `${planLabel} — ${selectedPositionObj.title}`,
+        description: planLabel,
         order_id: orderData.order_id,
         prefill: { name: fullName, email: user.email || email, contact: mobile },
         theme: { color: '#6366f1' },
@@ -1922,24 +1916,24 @@ const CandidateSignup = () => {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 plan: planSlug,
-                amount: activePlanPrice,
-                position: selectedPositionObj.title,
-                band: selectedPositionObj.band,
+                amount: REGISTRATION_FEE,
+                position: 'Registration',
+                band: 'Registration',
               },
             });
             if (error || !data?.activated) {
-              throw new Error(error?.message || data?.message || 'Subscription activation failed');
+              console.warn('[registration] activation flag not set:', error?.message || data?.message);
             }
             toast({
-              title: `🎉 ${activePlanName} Activated!`,
-              description: `Welcome to Gradia. Your ${activePlanName} for ${selectedPositionObj.title} is now active.`,
+              title: '🎉 Registration Successful!',
+              description: 'Welcome to Gradia. Your candidate account is now active.',
             });
             await refreshProfile();
             navigate('/candidate/dashboard', { replace: true });
           } catch (err: any) {
             toast({
               title: 'Payment captured, activation pending',
-              description: err?.message || 'Please contact support if your plan does not activate.',
+              description: err?.message || 'Please contact support if your account does not activate.',
               variant: 'destructive',
             });
           } finally {
@@ -1961,162 +1955,82 @@ const CandidateSignup = () => {
       });
       rzp.open();
     } catch (err: any) {
-      console.error('Plan payment error:', err);
+      console.error('Registration payment error:', err);
       toast({ title: 'Could not start payment', description: err?.message || 'Please try again.', variant: 'destructive' });
       setPaying(false);
     }
   };
 
   const renderPlanStep = () => {
-    const planLetters: EducationPlanKey[] = ['A', 'B', 'C'];
     return (
-      <div className="w-full max-w-6xl">
+      <div className="w-full max-w-2xl">
         <ProgressIndicator />
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-foreground mb-2">Choose Your Position & Plan</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Registration Fee</h2>
           <p className="text-muted-foreground text-sm">
-            Select your target education position — pricing is set by your band & salary range.
+            Pay the one-time registration fee to activate your candidate account.
           </p>
         </div>
 
-        {/* ── Position selector ───────────────────────────────────────── */}
-        <Card className="p-5 max-w-3xl mx-auto mb-6">
-          <Label className="text-sm font-semibold mb-2 block">Target Position</Label>
-          <Select value={selectedPosition} onValueChange={setSelectedPosition}>
-            <SelectTrigger className="h-11">
-              <SelectValue placeholder="Select the position you're applying for…" />
-            </SelectTrigger>
-            <SelectContent className="max-h-[320px]">
-              {(['Group-I', 'Group-II', 'Group-III', 'Group-IV'] as const).map(grp => {
-                const items = EDUCATION_POSITIONS.filter(p => p.group === grp);
-                if (!items.length) return null;
-                const sample = items[0];
-                return (
-                  <div key={grp}>
-                    <div className="px-2 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      {grp} · {sample.band} · {sample.segment}
-                    </div>
-                    {items.map(p => (
-                      <SelectItem key={p.title} value={p.title}>
-                        {p.title}
-                      </SelectItem>
-                    ))}
-                  </div>
-                );
-              })}
-            </SelectContent>
-          </Select>
-
-          {selectedPositionObj && (
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <div className="p-2 rounded-md bg-muted/40">
-                <p className="text-muted-foreground">Band</p>
-                <p className="font-semibold text-foreground">{selectedPositionObj.band}</p>
-              </div>
-              <div className="p-2 rounded-md bg-muted/40">
-                <p className="text-muted-foreground">Segment</p>
-                <p className="font-semibold text-foreground">{selectedPositionObj.segment}</p>
-              </div>
-              <div className="p-2 rounded-md bg-muted/40">
-                <p className="text-muted-foreground">Salary Range</p>
-                <p className="font-semibold text-foreground">{selectedPositionObj.salaryRange}</p>
-              </div>
-              <div className="p-2 rounded-md bg-muted/40">
-                <p className="text-muted-foreground">Annual Package</p>
-                <p className="font-semibold text-foreground">{selectedPositionObj.annualPackage}</p>
-              </div>
+        <Card className="p-8 max-w-xl mx-auto mb-6 text-center border-2 border-primary/30 shadow-xl">
+          <Badge className="mb-4 gap-1 mx-auto w-fit">
+            <Star className="h-3 w-3" /> One-Time Registration
+          </Badge>
+          <h3 className="text-xl font-bold text-foreground mb-2">Candidate Registration</h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            Unlock your Gradia candidate dashboard and start applying to jobs, taking mock interviews, and building your career.
+          </p>
+          <div className="mb-6">
+            <div className="text-5xl font-bold text-primary">
+              ₹{REGISTRATION_FEE.toLocaleString('en-IN')}
             </div>
-          )}
+            <p className="text-xs text-muted-foreground mt-1">one-time payment</p>
+          </div>
+          <ul className="space-y-2 mb-2 text-left max-w-sm mx-auto">
+            {[
+              'Full access to candidate dashboard',
+              'Apply to unlimited jobs',
+              'AI resume scan & ATS score',
+              'Mock interviews & feedback',
+              'Application tracking & email alerts',
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
         </Card>
 
-        {/* ── Plan A / B / C cards (gated until position picked) ──────── */}
-        {!selectedPositionObj ? (
-          <Card className="p-8 max-w-3xl mx-auto text-center">
-            <p className="text-sm text-muted-foreground">
-              👆 Select a position above to see your subscription plans.
-            </p>
-          </Card>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-              {planLetters.map((letter, idx) => {
-                const detail = EDUCATION_PLAN_DETAILS[letter];
-                const price = selectedPositionObj.prices[letter];
-                const isSelected = selectedPlanIdx === idx;
-                return (
-                  <Card
-                    key={letter}
-                    onClick={() => setSelectedPlanIdx(idx)}
-                    className={`p-5 relative flex flex-col cursor-pointer transition-all ${
-                      isSelected ? 'ring-2 ring-primary shadow-xl scale-[1.02]' : 'hover:shadow-md'
-                    } ${detail.popular ? 'border-primary' : ''}`}
-                  >
-                    {detail.popular && (
-                      <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gap-1">
-                        <Star className="h-3 w-3" /> Most Popular
-                      </Badge>
-                    )}
-                    <div className="text-center mb-4">
-                      <h3 className="text-lg font-bold text-foreground">{detail.name}</h3>
-                      <p className="text-xs text-muted-foreground mb-3">{detail.tagline}</p>
-                      <div className="text-3xl font-bold text-primary">₹{price.toLocaleString('en-IN')}</div>
-                      <p className="text-xs text-muted-foreground mt-1">one-time processing</p>
-                    </div>
-                    <ul className="space-y-2 mb-4 flex-1">
-                      {detail.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                          <Check className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <div className={`text-center text-xs font-medium ${isSelected ? 'text-primary' : 'text-muted-foreground'}`}>
-                      {isSelected ? '✓ Selected' : 'Click to select'}
-                    </div>
-                  </Card>
-                );
-              })}
+        <Card className="p-5 max-w-xl mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm text-muted-foreground">Registration Fee</p>
+              <p className="text-lg font-bold text-foreground">Candidate Account</p>
             </div>
-
-            <Card className="p-5 max-w-2xl mx-auto">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Selected</p>
-                  <p className="text-lg font-bold text-foreground">
-                    {activePlanName} · {selectedPositionObj.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{selectedPositionObj.band} · {selectedPositionObj.salaryRange}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Amount due</p>
-                  <p className="text-2xl font-bold text-primary">
-                    ₹{activePlanPrice.toLocaleString('en-IN')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                </Button>
-                <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
-                  {paying ? (
-                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
-                  ) : (
-                    <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{activePlanPrice.toLocaleString('en-IN')}</>
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground text-center mt-3">
-                Payment is required to activate your account. Powered by Razorpay (secure).
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Amount due</p>
+              <p className="text-2xl font-bold text-primary">
+                ₹{REGISTRATION_FEE.toLocaleString('en-IN')}
               </p>
-            </Card>
-          </>
-        )}
-
-        {/* Why this price? — reassurance FAQ */}
-        <div className="mt-6">
-          <WhyPriceFAQ compact />
-        </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back
+            </Button>
+            <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
+              {paying ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+              ) : (
+                <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{REGISTRATION_FEE.toLocaleString('en-IN')}</>
+              )}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground text-center mt-3">
+            Payment is required to activate your account. Powered by Razorpay (secure).
+          </p>
+        </Card>
       </div>
     );
   };
