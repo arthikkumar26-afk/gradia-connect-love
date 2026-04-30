@@ -3941,7 +3941,22 @@ const CandidateDashboard = () => {
             )}
 
             {/* Upskill Yourself - Standalone Section */}
-            {activeMenu === "upskill" && (() => {
+            {activeMenu === "upskill" && !featureUnlocks.isUnlocked("upskill") && (
+              <LockedFeatureOverlay
+                feature="upskill"
+                onUnlocked={featureUnlocks.refresh}
+                onOpenAllPlans={() => setActiveMenu("upgrade")}
+              >
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Upskill Yourself</h2>
+                    <p className="text-sm text-muted-foreground">Personalised learning paths, courses & certifications (sample preview).</p>
+                  </div>
+                  <Card className="p-6"><p className="text-sm text-muted-foreground">Recommended courses, weak-area drilldowns and certification tracks unlock once you purchase Upskill access.</p></Card>
+                </div>
+              </LockedFeatureOverlay>
+            )}
+            {activeMenu === "upskill" && featureUnlocks.isUnlocked("upskill") && (() => {
               // Aggregate weak areas with supporting evidence (source + detail)
               type DrilldownDetail = {
                 label: string; // e.g. "Resume section" or "Question 3 (Technical Round)"
