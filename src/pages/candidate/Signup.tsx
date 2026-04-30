@@ -2075,12 +2075,22 @@ const CandidateSignup = () => {
                       {s.group}
                     </div>
                   )}
-                  <div className={`grid grid-cols-[1fr_repeat(3,minmax(0,90px))] gap-2 items-center px-2 py-1.5 rounded-md ${
+                  <div className={`grid grid-cols-[1fr_repeat(3,minmax(0,90px))] gap-2 items-start px-2 py-1.5 rounded-md ${
                     selectedTier !== undefined ? 'bg-primary/5' : 'hover:bg-muted/50'
                   }`}>
-                    <span className={`text-sm ${s.group ? 'pl-3' : 'font-medium'} text-foreground`}>
-                      {s.label}
-                    </span>
+                    <div className="min-w-0">
+                      <span className={`text-sm block ${s.group ? 'pl-3' : 'font-medium'} text-foreground`}>
+                        {s.label}
+                      </span>
+                      <ul className={`${s.group ? 'pl-3' : ''} mt-1 space-y-0.5`}>
+                        {s.perks.map((p) => (
+                          <li key={p} className="flex items-start gap-1 text-[11px] text-muted-foreground leading-snug">
+                            <Check className="h-3 w-3 text-primary mt-[2px] shrink-0" />
+                            <span>{p}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                     {([0, 1, 2] as const).map((tier) => {
                       const active = selectedTier === tier;
                       return (
