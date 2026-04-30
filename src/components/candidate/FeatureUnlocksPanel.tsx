@@ -193,7 +193,7 @@ export const FeatureUnlocksPanel = () => {
 
       {/* Individual features */}
       <div>
-        <h3 className="text-lg font-semibold mb-3">🔓 Individual Features</h3>
+        <h3 className="text-lg font-semibold mb-3">🔓 What kind of service you required</h3>
         <div className="flex flex-col gap-3 max-w-2xl">
           {Object.values(FEATURE_UNLOCKS).map((f) => {
             const unlocked = isUnlocked(f.id);
