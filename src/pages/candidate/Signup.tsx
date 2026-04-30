@@ -1875,9 +1875,41 @@ const CandidateSignup = () => {
   // Flat ₹5,000 one-time registration fee for all candidates.
   const REGISTRATION_FEE = 5000;
   const addonsTotal = selectedAddons.reduce((s, id) => s + FEATURE_UNLOCKS[id].price, 0);
-  const grandTotal = REGISTRATION_FEE + addonsTotal;
+
+  // Detailed service add-ons (from pricing reference sheet)
+  const SERVICE_ADDONS: { id: string; label: string; group?: string; tiers: [number, number, number] }[] = [
+    { id: 'cv_screening', label: 'CV Screening', tiers: [3000, 4000, 5000] },
+    { id: 'cv_resume_builder', label: 'CV / Resume Builder', tiers: [5000, 6000, 7000] },
+    { id: 'suitable_jobs', label: 'Suitable Jobs', tiers: [3000, 4000, 5000] },
+    { id: 'ai_jobs_apply', label: 'AI - JOBs Apply', tiers: [5000, 6000, 7000] },
+    { id: 'interview_guidance', label: 'Interview Guidance & Techniques', tiers: [3000, 4000, 5000] },
+    { id: 'mock_interviews', label: 'Mock Interviews', tiers: [3000, 4000, 4000] },
+    { id: 'pipeline_cv_discussion', label: 'CV Discussions', group: 'Interview Pipeline', tiers: [1000, 1500, 2000] },
+    { id: 'pipeline_written_test', label: 'Written Test', group: 'Interview Pipeline', tiers: [2000, 2000, 2500] },
+    { id: 'pipeline_stage_1', label: 'Stage-1', group: 'Interview Pipeline', tiers: [2000, 2000, 2500] },
+    { id: 'pipeline_stage_2', label: 'Stage-2', group: 'Interview Pipeline', tiers: [1500, 2000, 2000] },
+    { id: 'pipeline_stage_3', label: 'Stage-3', group: 'Interview Pipeline', tiers: [1500, 2000, 2500] },
+    { id: 'pipeline_stage_4', label: 'Stage-4', group: 'Interview Pipeline', tiers: [2000, 2500, 3000] },
+    { id: 'consolidated_feedback', label: 'Consolidated Feedback', tiers: [5000, 6000, 7000] },
+  ];
+  const TIER_LABELS = ['Basic', 'Standard', 'Premium'] as const;
+
+  const servicesTotal = Object.entries(selectedServiceTiers).reduce((sum, [id, tier]) => {
+    const item = SERVICE_ADDONS.find((s) => s.id === id);
+    return item ? sum + item.tiers[tier] : sum;
+  }, 0);
+
+  const grandTotal = REGISTRATION_FEE + addonsTotal + servicesTotal;
   const toggleAddon = (id: UnlockFeature) =>
     setSelectedAddons((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const toggleServiceTier = (id: string, tier: 0 | 1 | 2) =>
+    setSelectedServiceTiers((prev) => {
+      const next = { ...prev };
+      if (next[id] === tier) delete next[id];
+      else next[id] = tier;
+      return next;
+    });
 
   const handlePayPlan = async () => {
     if (!razorpayLoaded) {
