@@ -3713,8 +3713,23 @@ const CandidateDashboard = () => {
               </div>
             )}
 
-            {/* Suitable Jobs View */}
-            {activeMenu === "jobs" && (
+            {/* Suitable Jobs View — locked overlay shown if not unlocked */}
+            {activeMenu === "jobs" && !featureUnlocks.isUnlocked("jobs") && (
+              <LockedFeatureOverlay
+                feature="jobs"
+                onUnlocked={featureUnlocks.refresh}
+                onOpenAllPlans={() => setActiveMenu("upgrade")}
+              >
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Suitable Jobs</h2>
+                    <p className="text-sm text-muted-foreground">AI-matched jobs based on your profile (sample preview)</p>
+                  </div>
+                  <Card className="p-6"><p className="text-sm text-muted-foreground">Sample matched job listings will appear here once unlocked.</p></Card>
+                </div>
+              </LockedFeatureOverlay>
+            )}
+            {activeMenu === "jobs" && featureUnlocks.isUnlocked("jobs") && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
