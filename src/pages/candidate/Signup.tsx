@@ -1867,14 +1867,9 @@ const CandidateSignup = () => {
     </div>
   );
 
-  // ---------- Plan / payment step ----------
-  // Position-based pricing: candidate first picks an education position which
-  // resolves their Band + Salary Range row from the official PACKs table, then
-  // chooses one of the three plan tiers (A / B / C) from that row.
-  const selectedPositionObj = EDUCATION_POSITIONS.find(p => p.title === selectedPosition) || null;
-  const selectedPlanLetter: EducationPlanKey = selectedPlanIdx === 0 ? 'A' : selectedPlanIdx === 1 ? 'B' : 'C';
-  const activePlanPrice = selectedPositionObj ? selectedPositionObj.prices[selectedPlanLetter] : 0;
-  const activePlanName = `${EDUCATION_PLAN_DETAILS[selectedPlanLetter].name}`;
+  // ---------- Registration fee step ----------
+  // Flat ₹5,000 one-time registration fee for all candidates.
+  const REGISTRATION_FEE = 5000;
 
   const handlePayPlan = async () => {
     if (!selectedPositionObj) {
