@@ -393,6 +393,7 @@ const CandidateSignup = () => {
   const [selectedPosition, setSelectedPosition] = useState<string>('');
   const [paying, setPaying] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState<UnlockFeature[]>([]);
 
   useEffect(() => {
     if ((window as any).Razorpay) { setRazorpayLoaded(true); return; }
