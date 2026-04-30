@@ -194,7 +194,7 @@ export const FeatureUnlocksPanel = () => {
       {/* Individual features */}
       <div>
         <h3 className="text-lg font-semibold mb-3">🔓 Individual Features</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col gap-3 max-w-2xl">
           {Object.values(FEATURE_UNLOCKS).map((f) => {
             const unlocked = isUnlocked(f.id);
             return (
