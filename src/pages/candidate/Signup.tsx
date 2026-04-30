@@ -1872,6 +1872,10 @@ const CandidateSignup = () => {
   // ---------- Registration fee step ----------
   // Flat ₹5,000 one-time registration fee for all candidates.
   const REGISTRATION_FEE = 5000;
+  const addonsTotal = selectedAddons.reduce((s, id) => s + FEATURE_UNLOCKS[id].price, 0);
+  const grandTotal = REGISTRATION_FEE + addonsTotal;
+  const toggleAddon = (id: UnlockFeature) =>
+    setSelectedAddons((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const handlePayPlan = async () => {
     if (!razorpayLoaded) {
