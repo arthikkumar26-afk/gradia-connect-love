@@ -3882,17 +3882,42 @@ const CandidateDashboard = () => {
 
             {/* AI Job Apply */}
             {activeMenu === "aijobapply" && (
-              <AIJobApplyTab
-                profile={profile}
-                resumeAnalysis={resumeAnalysis}
-                onNavigateToResume={() => setActiveMenu("resume")}
-                onNavigateToUpgrade={() => setActiveMenu("upgrade")}
-              />
+              featureUnlocks.isUnlocked("aijobapply") ? (
+                <AIJobApplyTab
+                  profile={profile}
+                  resumeAnalysis={resumeAnalysis}
+                  onNavigateToResume={() => setActiveMenu("resume")}
+                  onNavigateToUpgrade={() => setActiveMenu("upgrade")}
+                />
+              ) : (
+                <LockedFeatureOverlay
+                  feature="aijobapply"
+                  onUnlocked={featureUnlocks.refresh}
+                  onOpenAllPlans={() => setActiveMenu("upgrade")}
+                >
+                  <AIJobApplyTab
+                    profile={profile}
+                    resumeAnalysis={resumeAnalysis}
+                    onNavigateToResume={() => setActiveMenu("resume")}
+                    onNavigateToUpgrade={() => setActiveMenu("upgrade")}
+                  />
+                </LockedFeatureOverlay>
+              )
             )}
 
             {/* Attend Mock Test - Standalone Section */}
             {activeMenu === "mocktest" && (
-              <MockInterviewTab />
+              featureUnlocks.isUnlocked("mocktest") ? (
+                <MockInterviewTab />
+              ) : (
+                <LockedFeatureOverlay
+                  feature="mocktest"
+                  onUnlocked={featureUnlocks.refresh}
+                  onOpenAllPlans={() => setActiveMenu("upgrade")}
+                >
+                  <MockInterviewTab />
+                </LockedFeatureOverlay>
+              )
             )}
 
             {/* Graphic Design Challenge */}
