@@ -85,6 +85,9 @@ import AILearningRecommendations from "@/components/candidate/AILearningRecommen
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import SubscriptionTab from "@/components/candidate/SubscriptionTab";
 import PaymentStatusPanel from "@/components/candidate/PaymentStatusPanel";
+import { LockedFeatureOverlay } from "@/components/candidate/LockedFeatureOverlay";
+import FeatureUnlocksPanel from "@/components/candidate/FeatureUnlocksPanel";
+import { useFeatureUnlocks } from "@/hooks/useFeatureUnlocks";
 import EducationPositionPlans from "@/components/shared/EducationPositionPlans";
 import { useActionPayment } from "@/hooks/useActionPayment";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
@@ -266,6 +269,7 @@ const CandidateDashboard = () => {
   const [searchParams] = useSearchParams();
   const [activeMenu, setActiveMenu] = useState(() => searchParams.get("tab") || "dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const featureUnlocks = useFeatureUnlocks();
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
@@ -3694,13 +3698,38 @@ const CandidateDashboard = () => {
                   <p className="text-sm text-muted-foreground">Track your interview progress</p>
                 </div>
                 {profile?.id && (
-                  <InterviewPipelineTab candidateId={profile.id} />
+                  featureUnlocks.isUnlocked("pipeline") ? (
+                    <InterviewPipelineTab candidateId={profile.id} />
+                  ) : (
+                    <LockedFeatureOverlay
+                      feature="pipeline"
+                      onUnlocked={featureUnlocks.refresh}
+                      onOpenAllPlans={() => setActiveMenu("upgrade")}
+                    >
+                      <InterviewPipelineTab candidateId={profile.id} />
+                    </LockedFeatureOverlay>
+                  )
                 )}
               </div>
             )}
 
-            {/* Suitable Jobs View */}
-            {activeMenu === "jobs" && (
+            {/* Suitable Jobs View — locked overlay shown if not unlocked */}
+            {activeMenu === "jobs" && !featureUnlocks.isUnlocked("jobs") && (
+              <LockedFeatureOverlay
+                feature="jobs"
+                onUnlocked={featureUnlocks.refresh}
+                onOpenAllPlans={() => setActiveMenu("upgrade")}
+              >
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Suitable Jobs</h2>
+                    <p className="text-sm text-muted-foreground">AI-matched jobs based on your profile (sample preview)</p>
+                  </div>
+                  <Card className="p-6"><p className="text-sm text-muted-foreground">Sample matched job listings will appear here once unlocked.</p></Card>
+                </div>
+              </LockedFeatureOverlay>
+            )}
+            {activeMenu === "jobs" && featureUnlocks.isUnlocked("jobs") && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -3868,17 +3897,42 @@ const CandidateDashboard = () => {
 
             {/* AI Job Apply */}
             {activeMenu === "aijobapply" && (
-              <AIJobApplyTab
-                profile={profile}
-                resumeAnalysis={resumeAnalysis}
-                onNavigateToResume={() => setActiveMenu("resume")}
-                onNavigateToUpgrade={() => setActiveMenu("upgrade")}
-              />
+              featureUnlocks.isUnlocked("aijobapply") ? (
+                <AIJobApplyTab
+                  profile={profile}
+                  resumeAnalysis={resumeAnalysis}
+                  onNavigateToResume={() => setActiveMenu("resume")}
+                  onNavigateToUpgrade={() => setActiveMenu("upgrade")}
+                />
+              ) : (
+                <LockedFeatureOverlay
+                  feature="aijobapply"
+                  onUnlocked={featureUnlocks.refresh}
+                  onOpenAllPlans={() => setActiveMenu("upgrade")}
+                >
+                  <AIJobApplyTab
+                    profile={profile}
+                    resumeAnalysis={resumeAnalysis}
+                    onNavigateToResume={() => setActiveMenu("resume")}
+                    onNavigateToUpgrade={() => setActiveMenu("upgrade")}
+                  />
+                </LockedFeatureOverlay>
+              )
             )}
 
             {/* Attend Mock Test - Standalone Section */}
             {activeMenu === "mocktest" && (
-              <MockInterviewTab />
+              featureUnlocks.isUnlocked("mocktest") ? (
+                <MockInterviewTab />
+              ) : (
+                <LockedFeatureOverlay
+                  feature="mocktest"
+                  onUnlocked={featureUnlocks.refresh}
+                  onOpenAllPlans={() => setActiveMenu("upgrade")}
+                >
+                  <MockInterviewTab />
+                </LockedFeatureOverlay>
+              )
             )}
 
             {/* Graphic Design Challenge */}
@@ -3887,7 +3941,22 @@ const CandidateDashboard = () => {
             )}
 
             {/* Upskill Yourself - Standalone Section */}
-            {activeMenu === "upskill" && (() => {
+            {activeMenu === "upskill" && !featureUnlocks.isUnlocked("upskill") && (
+              <LockedFeatureOverlay
+                feature="upskill"
+                onUnlocked={featureUnlocks.refresh}
+                onOpenAllPlans={() => setActiveMenu("upgrade")}
+              >
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold">Upskill Yourself</h2>
+                    <p className="text-sm text-muted-foreground">Personalised learning paths, courses & certifications (sample preview).</p>
+                  </div>
+                  <Card className="p-6"><p className="text-sm text-muted-foreground">Recommended courses, weak-area drilldowns and certification tracks unlock once you purchase Upskill access.</p></Card>
+                </div>
+              </LockedFeatureOverlay>
+            )}
+            {activeMenu === "upskill" && featureUnlocks.isUnlocked("upskill") && (() => {
               // Aggregate weak areas with supporting evidence (source + detail)
               type DrilldownDetail = {
                 label: string; // e.g. "Resume section" or "Question 3 (Technical Round)"
@@ -4694,7 +4763,17 @@ const CandidateDashboard = () => {
             )}
 
             {activeMenu === "resume" && (
-              <ResumeBuilderTab />
+              featureUnlocks.isUnlocked("resume") ? (
+                <ResumeBuilderTab />
+              ) : (
+                <LockedFeatureOverlay
+                  feature="resume"
+                  onUnlocked={featureUnlocks.refresh}
+                  onOpenAllPlans={() => setActiveMenu("upgrade")}
+                >
+                  <ResumeBuilderTab />
+                </LockedFeatureOverlay>
+              )
             )}
 
 
@@ -4713,6 +4792,8 @@ const CandidateDashboard = () => {
             {activeMenu === "upgrade" && (
               <div className="space-y-6">
                 {profile?.id && <PaymentStatusPanel userId={profile.id} />}
+
+                <FeatureUnlocksPanel />
 
                 <div className="text-center space-y-2">
                   <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full">

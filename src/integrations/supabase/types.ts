@@ -326,6 +326,42 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_feature_unlocks: {
+        Row: {
+          amount_paid: number
+          candidate_id: string
+          created_at: string
+          expires_at: string
+          feature: string
+          id: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          unlocked_at: string
+        }
+        Insert: {
+          amount_paid: number
+          candidate_id: string
+          created_at?: string
+          expires_at?: string
+          feature: string
+          id?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          unlocked_at?: string
+        }
+        Update: {
+          amount_paid?: number
+          candidate_id?: string
+          created_at?: string
+          expires_at?: string
+          feature?: string
+          id?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          unlocked_at?: string
+        }
+        Relationships: []
+      }
       candidate_feature_usage: {
         Row: {
           candidate_id: string
