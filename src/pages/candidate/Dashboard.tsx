@@ -4794,27 +4794,6 @@ const CandidateDashboard = () => {
 
                 <FeatureUnlocksPanel />
 
-                <div className="text-center space-y-2">
-                  <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
-                    <Crown className="h-5 w-5" />
-                    <span className="font-semibold">Upgrade Your Experience</span>
-                  </div>
-                  <h2 className="text-2xl font-bold text-foreground">Choose Your Position & Plan</h2>
-                  <p className="text-muted-foreground text-sm">
-                    Select your target education position — pricing is set by your band & salary range.
-                  </p>
-                </div>
-
-                <EducationPositionPlans
-                  prefill={{
-                    name: profile?.full_name || "",
-                    email: profile?.email || "",
-                    mobile: (profile as any)?.mobile || "",
-                  }}
-                  onActivated={async () => {
-                    try { await refreshProfile?.(); } catch {}
-                  }}
-                />
               </div>
             )}
 
