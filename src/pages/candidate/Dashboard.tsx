@@ -1444,7 +1444,6 @@ const CandidateDashboard = () => {
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "wallet", label: "My Subscription", icon: Crown },
     { id: "resume", label: "Resume Builder", icon: FileText },
     { id: "jobs", label: "Suitable Jobs", icon: Briefcase },
     { id: "aijobapply", label: "AI Job Apply", icon: Rocket },
