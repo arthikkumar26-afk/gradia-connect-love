@@ -3698,7 +3698,17 @@ const CandidateDashboard = () => {
                   <p className="text-sm text-muted-foreground">Track your interview progress</p>
                 </div>
                 {profile?.id && (
-                  <InterviewPipelineTab candidateId={profile.id} />
+                  featureUnlocks.isUnlocked("pipeline") ? (
+                    <InterviewPipelineTab candidateId={profile.id} />
+                  ) : (
+                    <LockedFeatureOverlay
+                      feature="pipeline"
+                      onUnlocked={featureUnlocks.refresh}
+                      onOpenAllPlans={() => setActiveMenu("upgrade")}
+                    >
+                      <InterviewPipelineTab candidateId={profile.id} />
+                    </LockedFeatureOverlay>
+                  )
                 )}
               </div>
             )}
