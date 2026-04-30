@@ -1892,11 +1892,14 @@ const CandidateSignup = () => {
       }
       const user = sessionData.session.user;
       const planSlug = 'registration';
-      const planLabel = 'Candidate Registration Fee';
+      const addonLabels = selectedAddons.map((id) => FEATURE_UNLOCKS[id].shortLabel);
+      const planLabel = addonLabels.length
+        ? `Candidate Registration + ${addonLabels.join(', ')}`
+        : 'Candidate Registration Fee';
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
-          amount: REGISTRATION_FEE,
+          amount: grandTotal,
           currency: 'INR',
           plan_id: planSlug,
           plan_name: planLabel,
@@ -1922,9 +1925,10 @@ const CandidateSignup = () => {
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 plan: planSlug,
-                amount: REGISTRATION_FEE,
+                amount: grandTotal,
                 position: 'Registration',
                 band: 'Registration',
+                addons: selectedAddons,
               },
             });
             if (error || !data?.activated) {
