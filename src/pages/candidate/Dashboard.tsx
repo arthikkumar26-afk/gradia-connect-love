@@ -269,6 +269,7 @@ const CandidateDashboard = () => {
   const [searchParams] = useSearchParams();
   const [activeMenu, setActiveMenu] = useState(() => searchParams.get("tab") || "dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const featureUnlocks = useFeatureUnlocks();
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysis | null>(null);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
