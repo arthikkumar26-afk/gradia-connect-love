@@ -28,7 +28,7 @@ export const useFeatureUnlocks = () => {
         .eq("candidate_id", user.id)
         .gt("expires_at", new Date().toISOString());
       const map: Record<string, string> = {};
-      ((data as UnlockRow[]) || []).forEach((r) => {
+      ((data as unknown as UnlockRow[]) || []).forEach((r) => {
         // keep latest expiry per feature
         if (!map[r.feature] || new Date(r.expires_at) > new Date(map[r.feature])) {
           map[r.feature] = r.expires_at;
