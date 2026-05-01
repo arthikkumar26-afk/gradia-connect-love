@@ -282,7 +282,9 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-medium text-muted-foreground">Vacancies in scope</span>
               <div className="border rounded-md px-3 py-2 text-sm bg-muted/30 h-9 flex items-center">
-                {loadingJobs ? "Loading…" : `${targetJobs.length} ${activeJobs.length ? "active" : "total"} vacancy${targetJobs.length === 1 ? "" : "s"}`}
+                {loadingJobs
+                  ? "Loading…"
+                  : `${targetJobs.length} ${activeJobs.length ? "active" : "total"} vacancy${targetJobs.length === 1 ? "" : "s"}${(activeJobs.length || jobs.length) > targetJobs.length ? ` (of ${activeJobs.length || jobs.length})` : ""}`}
               </div>
             </div>
           </div>
