@@ -97,17 +97,20 @@ ${rowSummary || "(none provided)"}
 
 Score the attached resume against the target role context above. Return a single integer 0-100 plus a short reason.`;
 
-    const messageContent = isDocx || isDoc
-      ? [
-          {
-            type: "text",
-            text: `${userPrompt}\n\n--- RESUME CONTENT ---\n\n${isDocx ? await extractDocxText(arrayBuffer) : extractDocText(arrayBuffer)}`,
-          },
-        ]
-      : [
-          { type: "text", text: userPrompt },
-          { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
-        ];
+    const resumeText = isPdf
+      ? await extractPdfText(arrayBuffer)
+      : isDocx
+        ? await extractDocxText(arrayBuffer)
+        : isDoc
+          ? extractDocText(arrayBuffer)
+          : await extractPdfText(arrayBuffer);
+
+    const messageContent = [
+      {
+        type: "text",
+        text: `${userPrompt}\n\n--- RESUME CONTENT ---\n\n${resumeText.slice(0, 18000)}`,
+      },
+    ];
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -153,7 +156,7 @@ Score the attached resume against the target role context above. Return a single
         });
       }
       if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Add AI balance, then click Re-scan." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
