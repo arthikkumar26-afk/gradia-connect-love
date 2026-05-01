@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import JSZip from "https://esm.sh/jszip@3.10.1";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,6 +32,14 @@ async function extractDocxText(arrayBuffer: ArrayBuffer): Promise<string> {
     .trim();
 }
 
+async function extractPdfText(arrayBuffer: ArrayBuffer): Promise<string> {
+  const pdf = await getDocumentProxy(new Uint8Array(arrayBuffer));
+  const { text } = await extractText(pdf, { mergePages: true });
+  const cleaned = text.replace(/\s{3,}/g, " ").trim();
+  if (cleaned.length < 80) throw new Error("Could not read enough text from this PDF resume. Please upload a text-based PDF or DOCX.");
+  return cleaned;
+}
+
 function extractDocText(arrayBuffer: ArrayBuffer): string {
   const text = new TextDecoder("utf-8", { fatal: false })
     .decode(arrayBuffer)
@@ -55,29 +64,16 @@ serve(async (req) => {
       });
     }
 
-    // Fetch resume binary -> base64
+    // Fetch resume binary and extract text before sending to AI. Sending PDFs as
+    // base64 image payloads is slow and can cause function shutdowns/non-2xx errors.
     const resp = await fetch(resumeUrl);
     if (!resp.ok) throw new Error(`Failed to download resume: ${resp.status}`);
     const arrayBuffer = await resp.arrayBuffer();
-    const buf = new Uint8Array(arrayBuffer);
-    let base64 = "";
-    const CHUNK = 0x8000;
-    for (let i = 0; i < buf.length; i += CHUNK) {
-      base64 += String.fromCharCode(...buf.subarray(i, i + CHUNK));
-    }
-    base64 = btoa(base64);
     const urlPath = resumeUrl.toLowerCase().split("?")[0];
     const fileName = String(candidateRow.fileName || "").toLowerCase();
     const isPdf = urlPath.endsWith(".pdf") || fileName.endsWith(".pdf");
     const isDocx = urlPath.endsWith(".docx") || fileName.endsWith(".docx");
     const isDoc = urlPath.endsWith(".doc") || fileName.endsWith(".doc");
-    const mimeType = isPdf
-      ? "application/pdf"
-      : isDocx
-        ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        : isDoc
-          ? "application/msword"
-          : "application/pdf";
 
     const rowSummary = Object.entries(candidateRow)
       .filter(([, v]) => v && String(v).trim())
@@ -101,17 +97,20 @@ ${rowSummary || "(none provided)"}
 
 Score the attached resume against the target role context above. Return a single integer 0-100 plus a short reason.`;
 
-    const messageContent = isDocx || isDoc
-      ? [
-          {
-            type: "text",
-            text: `${userPrompt}\n\n--- RESUME CONTENT ---\n\n${isDocx ? await extractDocxText(arrayBuffer) : extractDocText(arrayBuffer)}`,
-          },
-        ]
-      : [
-          { type: "text", text: userPrompt },
-          { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
-        ];
+    const resumeText = isPdf
+      ? await extractPdfText(arrayBuffer)
+      : isDocx
+        ? await extractDocxText(arrayBuffer)
+        : isDoc
+          ? extractDocText(arrayBuffer)
+          : await extractPdfText(arrayBuffer);
+
+    const messageContent = [
+      {
+        type: "text",
+        text: `${userPrompt}\n\n--- RESUME CONTENT ---\n\n${resumeText.slice(0, 18000)}`,
+      },
+    ];
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -157,7 +156,7 @@ Score the attached resume against the target role context above. Return a single
         });
       }
       if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted." }), {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Add AI balance, then click Re-scan." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

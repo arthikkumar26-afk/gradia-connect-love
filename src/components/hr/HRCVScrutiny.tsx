@@ -42,6 +42,31 @@ interface ResumeRow {
   error?: string;
 }
 
+const getScanErrorMessage = async (error?: { message?: string; context?: unknown } | null, data?: { error?: string } | null) => {
+  let contextMessage = "";
+  if (error?.context instanceof Response) {
+    try {
+      const body = await error.context.clone().json();
+      contextMessage = String(body?.error || "");
+    } catch {
+      contextMessage = await error.context.clone().text().catch(() => "");
+    }
+  } else if (typeof error?.context === "object" && error.context !== null && "error" in error.context) {
+    contextMessage = String((error.context as { error?: string }).error || "");
+  }
+  const raw = String(data?.error || contextMessage || error?.message || "Scan failed");
+  if (raw.includes("AI credits exhausted") || raw.includes("Payment Required") || raw.includes("402")) {
+    return "AI credits exhausted. Add AI balance, then Re-scan.";
+  }
+  if (raw.includes("Rate limited") || raw.includes("429")) {
+    return "AI is busy. Wait a minute, then Re-scan.";
+  }
+  if (raw.includes("non-2xx") || raw.includes("FunctionsHttpError")) {
+    return "Scan service failed. Please click Re-scan.";
+  }
+  return raw;
+};
+
 interface Props {
   hrUserId: string;
   employerUserId: string;
@@ -135,11 +160,11 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
           const score = Math.max(0, Math.min(100, parseInt(String(data?.score ?? 0), 10) || 0));
           matches.push({ jobId: job.id, jobTitle: job.job_title, score, reason: String(data?.reason || "") });
         } else {
-          lastError = String(data?.error || error?.message || "Scan failed");
+          lastError = await getScanErrorMessage(error, data);
           console.error("score-resume-match error", error || data?.error);
         }
-      } catch (e: any) {
-        lastError = e?.message || "Scan failed";
+      } catch (e: unknown) {
+        lastError = e instanceof Error ? e.message : "Scan failed";
         console.error("scan error", e);
       }
       const sorted = [...matches].sort((a, b) => b.score - a.score);
@@ -184,7 +209,10 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
 
     const ok = uploaded.filter(Boolean) as { id: string; url: string; name: string }[];
     if (ok.length === 0) return;
-    toast.success(`${ok.length} resume${ok.length > 1 ? "s" : ""} uploaded. Click "Scan All" to match against vacancies.`);
+    toast.success(`${ok.length} resume${ok.length > 1 ? "s" : ""} uploaded. Scanning now…`);
+    for (const u of ok) {
+      await scanRow(u.id, { resumeUrl: u.url, fileName: u.name });
+    }
   };
 
   const scanAll = async () => {
