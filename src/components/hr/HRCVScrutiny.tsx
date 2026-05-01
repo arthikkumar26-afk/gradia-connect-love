@@ -528,10 +528,19 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                       return (
                         <TableRow key={r.id}>
                           <TableCell className="text-xs">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="truncate max-w-[200px]" title={r.fileName}>{r.fileName}</span>
-                              {r.uploading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <span className="truncate max-w-[200px] font-medium" title={r.fileName}>
+                                  {r.candidateName || r.fileName}
+                                </span>
+                                {(r.uploading || r.parsing) && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                              </div>
+                              {r.candidateEmail && (
+                                <span className="text-[10px] text-muted-foreground truncate max-w-[220px] pl-5" title={r.candidateEmail}>
+                                  {r.candidateEmail}
+                                </span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-xs">
