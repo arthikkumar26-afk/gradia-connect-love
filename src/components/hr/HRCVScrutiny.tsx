@@ -184,17 +184,27 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
 
     const ok = uploaded.filter(Boolean) as { id: string; url: string; name: string }[];
     if (ok.length === 0) return;
+    toast.success(`${ok.length} resume${ok.length > 1 ? "s" : ""} uploaded. Click "Scan All" to match against vacancies.`);
+  };
 
+  const scanAll = async () => {
+    const pending = rows.filter(r => r.resumeUrl && !r.scanning && !r.uploading && r.matches.length === 0);
+    if (pending.length === 0) {
+      toast.info("No unscanned resumes to process.");
+      return;
+    }
+    if (targetJobs.length === 0) {
+      toast.error("No vacancies available to scan against.");
+      return;
+    }
     setBulkScanning(true);
-    // Run rows in parallel with limited concurrency so each uploaded resume
-    // begins scanning as soon as its upload finishes — no waiting in queue.
     const CONCURRENCY = 3;
     let cursor = 0;
-    const workers = Array.from({ length: Math.min(CONCURRENCY, ok.length) }, async () => {
-      while (cursor < ok.length) {
-        const u = ok[cursor++];
+    const workers = Array.from({ length: Math.min(CONCURRENCY, pending.length) }, async () => {
+      while (cursor < pending.length) {
+        const u = pending[cursor++];
         try {
-          await scanRow(u.id, { resumeUrl: u.url, fileName: u.name });
+          await scanRow(u.id, { resumeUrl: u.resumeUrl!, fileName: u.fileName });
         } catch (e) {
           console.error("scanRow failed", e);
         }
@@ -202,7 +212,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
     });
     await Promise.all(workers);
     setBulkScanning(false);
-    toast.success(`CV Scrutiny complete (${ok.length} resume${ok.length > 1 ? "s" : ""} × ${targetJobs.length} vacancies)`);
+    toast.success(`CV Scrutiny complete (${pending.length} resume${pending.length > 1 ? "s" : ""} × ${targetJobs.length} vacancies)`);
   };
 
   const removeRow = (id: string) => setRows(prev => prev.filter(r => r.id !== id));
