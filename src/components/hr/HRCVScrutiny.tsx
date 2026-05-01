@@ -415,10 +415,27 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       setRows(prev => prev.map(r => {
         if (!targetIds.includes(r.id)) return r;
         const match = results.find(x => x.email?.toLowerCase() === (r.candidateEmail || "").toLowerCase());
-        if (!match) return { ...r, emailStatus: "failed", emailError: "No response from server" };
-        return match.status === "sent"
-          ? { ...r, emailStatus: "sent", emailSentAt: now, emailError: undefined }
-          : { ...r, emailStatus: "failed", emailError: match.error || "Send failed" };
+        const recipient = recips.find(x => x.email.toLowerCase() === (r.candidateEmail || "").toLowerCase());
+        const baseRec = {
+          rowId: r.id,
+          candidateName: recipient?.name || r.candidateName || r.fileName,
+          candidateEmail: r.candidateEmail || "",
+          fileName: r.fileName,
+          jobTitle: recipient?.jobTitle || r.matches[0]?.jobTitle || "",
+          score: r.matches[0]?.score ?? null,
+          subject,
+          sentAt: now,
+        };
+        if (!match) {
+          upsertEmailRecord({ ...baseRec, status: "failed", error: "No response from server" });
+          return { ...r, emailStatus: "failed", emailError: "No response from server" };
+        }
+        if (match.status === "sent") {
+          upsertEmailRecord({ ...baseRec, status: "sent" });
+          return { ...r, emailStatus: "sent", emailSentAt: now, emailError: undefined };
+        }
+        upsertEmailRecord({ ...baseRec, status: "failed", error: match.error || "Send failed" });
+        return { ...r, emailStatus: "failed", emailError: match.error || "Send failed" };
       }));
       const sent = Number(data?.sent || 0);
       const total = Number(data?.total || recips.length);
