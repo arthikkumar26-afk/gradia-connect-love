@@ -443,9 +443,25 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       return { sent, total };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to send emails.";
-      setRows(prev => prev.map(r => targetIds.includes(r.id)
-        ? { ...r, emailStatus: "failed", emailError: msg }
-        : r));
+      const now = new Date().toISOString();
+      setRows(prev => prev.map(r => {
+        if (!targetIds.includes(r.id)) return r;
+        if (r.candidateEmail) {
+          upsertEmailRecord({
+            rowId: r.id,
+            candidateName: r.candidateName || r.fileName,
+            candidateEmail: r.candidateEmail,
+            fileName: r.fileName,
+            jobTitle: r.matches[0]?.jobTitle || "",
+            score: r.matches[0]?.score ?? null,
+            subject,
+            sentAt: now,
+            status: "failed",
+            error: msg,
+          });
+        }
+        return { ...r, emailStatus: "failed", emailError: msg };
+      }));
       toast.error(msg);
       return null;
     } finally {
