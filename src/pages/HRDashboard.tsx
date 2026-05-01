@@ -14,6 +14,7 @@ import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
 import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 import HRProfileMatchScanner from "@/components/hr/HRProfileMatchScanner";
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
+import HRCandidatesData from "@/components/hr/HRCandidatesData";
 
 interface JobRow {
   id: string;
