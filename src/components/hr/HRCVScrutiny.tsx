@@ -318,6 +318,18 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                 onChange={(e) => setFilter(e.target.value)}
                 className="h-8 text-xs max-w-xs"
               />
+              <Button
+                size="sm"
+                className="h-8 text-xs ml-auto"
+                onClick={scanAll}
+                disabled={bulkScanning || rows.every(r => r.uploading || r.scanning || r.matches.length > 0)}
+              >
+                {bulkScanning ? (
+                  <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Scanning…</>
+                ) : (
+                  <><ScanSearch className="h-3.5 w-3.5 mr-1" /> Scan All ({rows.filter(r => r.resumeUrl && r.matches.length === 0 && !r.scanning).length})</>
+                )}
+              </Button>
               <Button size="sm" variant="outline" className="h-8 text-xs" onClick={exportCsv}>
                 <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
               </Button>
