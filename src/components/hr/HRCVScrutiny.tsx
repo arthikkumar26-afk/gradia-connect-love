@@ -543,6 +543,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                       <TableHead className="text-xs">Best-suited Vacancy</TableHead>
                       <TableHead className="text-xs">Score</TableHead>
                       <TableHead className="text-xs">Top 3 Matches</TableHead>
+                      <TableHead className="text-xs">Mail Status</TableHead>
                       <TableHead className="text-xs text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
