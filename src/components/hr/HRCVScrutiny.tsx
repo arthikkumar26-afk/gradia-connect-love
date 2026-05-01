@@ -77,7 +77,11 @@ export default function HRCVScrutiny({ hrUserId, employerUserId, employerName }:
     [jobs]
   );
 
-  const targetJobs = activeJobs.length ? activeJobs : jobs;
+  // Cap the number of vacancies each resume is scored against so bulk uploads
+  // finish in a reasonable time (otherwise N resumes × M jobs sequential AI
+  // calls makes the UI appear to "hang" after upload).
+  const MAX_JOBS_PER_SCAN = 15;
+  const targetJobs = (activeJobs.length ? activeJobs : jobs).slice(0, MAX_JOBS_PER_SCAN);
 
   const scoreTone = (n: number) =>
     n >= 75 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
@@ -182,9 +186,21 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
     if (ok.length === 0) return;
 
     setBulkScanning(true);
-    for (const u of ok) {
-      await scanRow(u.id, { resumeUrl: u.url, fileName: u.name });
-    }
+    // Run rows in parallel with limited concurrency so each uploaded resume
+    // begins scanning as soon as its upload finishes — no waiting in queue.
+    const CONCURRENCY = 3;
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, ok.length) }, async () => {
+      while (cursor < ok.length) {
+        const u = ok[cursor++];
+        try {
+          await scanRow(u.id, { resumeUrl: u.url, fileName: u.name });
+        } catch (e) {
+          console.error("scanRow failed", e);
+        }
+      }
+    });
+    await Promise.all(workers);
     setBulkScanning(false);
     toast.success(`CV Scrutiny complete (${ok.length} resume${ok.length > 1 ? "s" : ""} × ${targetJobs.length} vacancies)`);
   };
@@ -266,7 +282,9 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-medium text-muted-foreground">Vacancies in scope</span>
               <div className="border rounded-md px-3 py-2 text-sm bg-muted/30 h-9 flex items-center">
-                {loadingJobs ? "Loading…" : `${targetJobs.length} ${activeJobs.length ? "active" : "total"} vacancy${targetJobs.length === 1 ? "" : "s"}`}
+                {loadingJobs
+                  ? "Loading…"
+                  : `${targetJobs.length} ${activeJobs.length ? "active" : "total"} vacancy${targetJobs.length === 1 ? "" : "s"}${(activeJobs.length || jobs.length) > targetJobs.length ? ` (of ${activeJobs.length || jobs.length})` : ""}`}
               </div>
             </div>
           </div>
