@@ -378,15 +378,22 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
   };
 
   const sendMails = async () => {
-    const recips = mailRowIds
-      .map(id => rows.find(r => r.id === id))
-      .filter((r): r is ResumeRow => !!r && !!r.candidateEmail)
+    const targetIds = mailRowIds.filter(id => {
+      const r = rows.find(x => x.id === id);
+      return r && r.candidateEmail;
+    });
+    const recips = targetIds
+      .map(id => rows.find(r => r.id === id)!)
       .map(buildRecipient);
     if (recips.length === 0) {
       toast.error("No valid recipients.");
       return;
     }
     setMailSending(true);
+    // Mark rows as sending
+    setRows(prev => prev.map(r => targetIds.includes(r.id)
+      ? { ...r, emailStatus: "sending", emailError: undefined }
+      : r));
     try {
       const { data, error } = await supabase.functions.invoke("send-cv-scrutiny-email", {
         body: {
@@ -397,14 +404,28 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         },
       });
       if (error) throw error;
+      const results: { email: string; status: "sent" | "failed"; error?: string }[] = Array.isArray(data?.results) ? data.results : [];
+      const now = new Date().toISOString();
+      setRows(prev => prev.map(r => {
+        if (!targetIds.includes(r.id)) return r;
+        const match = results.find(x => x.email?.toLowerCase() === (r.candidateEmail || "").toLowerCase());
+        if (!match) return { ...r, emailStatus: "failed", emailError: "No response from server" };
+        return match.status === "sent"
+          ? { ...r, emailStatus: "sent", emailSentAt: now, emailError: undefined }
+          : { ...r, emailStatus: "failed", emailError: match.error || "Send failed" };
+      }));
       const sent = Number(data?.sent || 0);
       const total = Number(data?.total || recips.length);
       if (sent === total) toast.success(`Sent ${sent} email${sent !== 1 ? "s" : ""}.`);
-      else if (sent > 0) toast.warning(`Sent ${sent}/${total}. Some failed.`);
-      else toast.error("Failed to send emails.");
+      else if (sent > 0) toast.warning(`Sent ${sent}/${total}. Some failed — see status column.`);
+      else toast.error("Failed to send emails. See status column for details.");
       setMailOpen(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to send emails.");
+      const msg = e instanceof Error ? e.message : "Failed to send emails.";
+      setRows(prev => prev.map(r => targetIds.includes(r.id)
+        ? { ...r, emailStatus: "failed", emailError: msg }
+        : r));
+      toast.error(msg);
     } finally {
       setMailSending(false);
     }
