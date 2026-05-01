@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import JSZip from "https://esm.sh/jszip@3.10.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,6 +10,35 @@ interface Body {
   resumeUrl: string;
   jobContext?: string;       // Employer name + role/domain hint
   candidateRow?: Record<string, string>; // optional row context (skills, experience, etc.)
+}
+
+async function extractDocxText(arrayBuffer: ArrayBuffer): Promise<string> {
+  const zip = new JSZip();
+  await zip.loadAsync(arrayBuffer);
+  const documentXml = await zip.file("word/document.xml")?.async("string");
+  if (!documentXml) throw new Error("Could not read DOCX resume text");
+  return documentXml
+    .replace(/<w:p[^>]*>/g, "\n")
+    .replace(/<w:br[^>]*>/g, "\n")
+    .replace(/<w:tab[^>]*>/g, "\t")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function extractDocText(arrayBuffer: ArrayBuffer): string {
+  const text = new TextDecoder("utf-8", { fatal: false })
+    .decode(arrayBuffer)
+    .replace(/[^\x20-\x7E\n\r\t]/g, " ")
+    .replace(/\s{3,}/g, " ")
+    .trim();
+  if (text.length < 100) throw new Error("Old Word format (.doc) could not be read. Please upload PDF or DOCX.");
+  return text;
 }
 
 serve(async (req) => {
@@ -28,18 +58,26 @@ serve(async (req) => {
     // Fetch resume binary -> base64
     const resp = await fetch(resumeUrl);
     if (!resp.ok) throw new Error(`Failed to download resume: ${resp.status}`);
-    const buf = new Uint8Array(await resp.arrayBuffer());
+    const arrayBuffer = await resp.arrayBuffer();
+    const buf = new Uint8Array(arrayBuffer);
     let base64 = "";
     const CHUNK = 0x8000;
     for (let i = 0; i < buf.length; i += CHUNK) {
       base64 += String.fromCharCode(...buf.subarray(i, i + CHUNK));
     }
     base64 = btoa(base64);
-    const mimeType = resumeUrl.toLowerCase().endsWith(".pdf")
+    const urlPath = resumeUrl.toLowerCase().split("?")[0];
+    const fileName = String(candidateRow.fileName || "").toLowerCase();
+    const isPdf = urlPath.endsWith(".pdf") || fileName.endsWith(".pdf");
+    const isDocx = urlPath.endsWith(".docx") || fileName.endsWith(".docx");
+    const isDoc = urlPath.endsWith(".doc") || fileName.endsWith(".doc");
+    const mimeType = isPdf
       ? "application/pdf"
-      : resumeUrl.toLowerCase().endsWith(".docx")
+      : isDocx
         ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-        : "application/pdf";
+        : isDoc
+          ? "application/msword"
+          : "application/pdf";
 
     const rowSummary = Object.entries(candidateRow)
       .filter(([, v]) => v && String(v).trim())
@@ -63,6 +101,18 @@ ${rowSummary || "(none provided)"}
 
 Score the attached resume against the target role context above. Return a single integer 0-100 plus a short reason.`;
 
+    const messageContent = isDocx || isDoc
+      ? [
+          {
+            type: "text",
+            text: `${userPrompt}\n\n--- RESUME CONTENT ---\n\n${isDocx ? await extractDocxText(arrayBuffer) : extractDocText(arrayBuffer)}`,
+          },
+        ]
+      : [
+          { type: "text", text: userPrompt },
+          { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
+        ];
+
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -75,10 +125,7 @@ Score the attached resume against the target role context above. Return a single
           { role: "system", content: systemPrompt },
           {
             role: "user",
-            content: [
-              { type: "text", text: userPrompt },
-              { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64}` } },
-            ],
+            content: messageContent,
           },
         ],
         tools: [{
