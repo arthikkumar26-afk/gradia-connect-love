@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch } from "lucide-react";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
@@ -48,14 +48,97 @@ const HRDashboard = () => {
   const [jobStatusFilter, setJobStatusFilter] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const reloadJobs = async (employerId: string) => {
-    const { data: jobsData } = await supabase
+  const reloadJobs = useCallback(async (employerId: string) => {
+    const { data: jobsData, error } = await supabase
       .from("jobs")
       .select("id, job_title, location, status, created_at")
       .eq("employer_id", employerId)
       .order("created_at", { ascending: false });
+    if (error) throw error;
     setJobs((jobsData as JobRow[]) ?? []);
-  };
+  }, []);
+
+  const loadDashboardData = useCallback(async (options?: { silent?: boolean }) => {
+    if (!user) return;
+    if (!options?.silent) setLoading(true);
+    try {
+      const { data: link, error: linkError } = await supabase
+        .from("hr_employer_links")
+        .select("employer_user_id, is_active, updated_at")
+        .eq("hr_user_id", user.id)
+        .eq("is_active", true)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (linkError) throw linkError;
+
+      if (!link) {
+        toast.error("Your HR account is not linked to any Employer yet. Contact your Employer admin.");
+        setParentEmployerId(null);
+        setParentEmployerName("");
+        setParentEmployerEmail("");
+        setJobs([]);
+        setCandidates([]);
+        return;
+      }
+
+      setParentEmployerId(link.employer_user_id);
+
+      const { data: empProfile, error: empError } = await supabase
+        .from("profiles")
+        .select("full_name, company_name, email")
+        .eq("id", link.employer_user_id)
+        .maybeSingle();
+      if (empError) throw empError;
+
+      setParentEmployerName(empProfile?.company_name || empProfile?.full_name || "Linked Employer");
+      setParentEmployerEmail(empProfile?.email || "");
+
+      const { data: jobsData, error: jobsError } = await supabase
+        .from("jobs")
+        .select("id, job_title, location, status, created_at")
+        .eq("employer_id", link.employer_user_id)
+        .order("created_at", { ascending: false });
+      if (jobsError) throw jobsError;
+
+      setJobs((jobsData as JobRow[]) ?? []);
+
+      const jobIds = (jobsData ?? []).map((j: any) => j.id);
+      if (jobIds.length) {
+        const { data: cands, error: candsError } = await supabase
+          .from("interview_candidates")
+          .select("id, candidate_id, job_id, current_stage, status, created_at, ai_score")
+          .in("job_id", jobIds)
+          .order("created_at", { ascending: false })
+          .limit(200);
+        if (candsError) throw candsError;
+
+        const candIds = Array.from(new Set((cands ?? []).map((c: any) => c.candidate_id)));
+        const { data: profs, error: profsError } = candIds.length
+          ? await supabase.from("profiles").select("id, full_name").in("id", candIds)
+          : { data: [] as any[], error: null };
+        if (profsError) throw profsError;
+
+        const nameMap = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name]));
+        const titleMap = Object.fromEntries((jobsData ?? []).map((j: any) => [j.id, j.job_title]));
+        setCandidates(
+          (cands ?? []).map((c: any) => ({
+            ...c,
+            candidate_name: nameMap[c.candidate_id] || "Candidate",
+            job_title: titleMap[c.job_id] || "—",
+          }))
+        );
+      } else {
+        setCandidates([]);
+      }
+    } catch (error) {
+      console.error("Failed to refresh HR dashboard", error);
+      toast.error("Couldn't refresh HR dashboard data.");
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   // Auth guard
   useEffect(() => {
@@ -72,69 +155,24 @@ const HRDashboard = () => {
 
   // Resolve parent employer
   useEffect(() => {
-    const load = async () => {
-      if (!user) return;
-      setLoading(true);
-      const { data: link } = await supabase
-        .from("hr_employer_links")
-        .select("employer_user_id, is_active")
-        .eq("hr_user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
+    loadDashboardData();
+  }, [loadDashboardData]);
 
-      if (!link) {
-        toast.error("Your HR account is not linked to any Employer yet. Contact your Employer admin.");
-        setLoading(false);
-        return;
+  useEffect(() => {
+    if (!user) return;
+    const refreshVisibleDashboard = () => {
+      if (document.visibilityState === "visible") {
+        loadDashboardData({ silent: true });
       }
-      setParentEmployerId(link.employer_user_id);
-
-      const { data: empProfile } = await supabase
-        .from("profiles")
-        .select("full_name, company_name, email")
-        .eq("id", link.employer_user_id)
-        .maybeSingle();
-      setParentEmployerName(empProfile?.company_name || empProfile?.full_name || "Linked Employer");
-      setParentEmployerEmail(empProfile?.email || "");
-
-      // Jobs
-      const { data: jobsData } = await supabase
-        .from("jobs")
-        .select("id, job_title, location, status, created_at")
-        .eq("employer_id", link.employer_user_id)
-        .order("created_at", { ascending: false });
-      setJobs((jobsData as JobRow[]) ?? []);
-
-      // Candidates
-      const jobIds = (jobsData ?? []).map((j: any) => j.id);
-      if (jobIds.length) {
-        const { data: cands } = await supabase
-          .from("interview_candidates")
-          .select("id, candidate_id, job_id, current_stage, status, created_at, ai_score")
-          .in("job_id", jobIds)
-          .order("created_at", { ascending: false })
-          .limit(200);
-
-        const candIds = Array.from(new Set((cands ?? []).map((c: any) => c.candidate_id)));
-        const { data: profs } = candIds.length
-          ? await supabase.from("profiles").select("id, full_name").in("id", candIds)
-          : { data: [] as any[] };
-        const nameMap = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name]));
-        const titleMap = Object.fromEntries((jobsData ?? []).map((j: any) => [j.id, j.job_title]));
-        setCandidates(
-          (cands ?? []).map((c: any) => ({
-            ...c,
-            candidate_name: nameMap[c.candidate_id] || "Candidate",
-            job_title: titleMap[c.job_id] || "—",
-          }))
-        );
-      } else {
-        setCandidates([]);
-      }
-      setLoading(false);
     };
-    load();
-  }, [user]);
+
+    window.addEventListener("focus", refreshVisibleDashboard);
+    document.addEventListener("visibilitychange", refreshVisibleDashboard);
+    return () => {
+      window.removeEventListener("focus", refreshVisibleDashboard);
+      document.removeEventListener("visibilitychange", refreshVisibleDashboard);
+    };
+  }, [user, loadDashboardData]);
 
   const handleLogout = async () => {
     await logout();
