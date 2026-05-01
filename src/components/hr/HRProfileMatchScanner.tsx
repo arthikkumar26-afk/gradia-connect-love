@@ -282,9 +282,9 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                     {r.uploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
                   </CardTitle>
                   {r.bestScore !== undefined && r.bestJobTitle && (
-                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1 flex-wrap">
                       <Trophy className="h-3 w-3 text-amber-500" />
-                      Best match: <span className="font-medium text-foreground">{r.bestJobTitle}</span>
+                      Suitable position: <span className="font-medium text-foreground">{r.bestJobTitle}</span>
                       <Badge className={`text-[11px] ml-1 ${scoreToTone(r.bestScore)}`} variant="secondary">{r.bestScore}%</Badge>
                     </div>
                   )}
@@ -321,6 +321,14 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                   <p className="text-xs text-muted-foreground italic">Waiting…</p>
                 ) : (
                   <div className="space-y-1.5">
+                    {r.results[0] && (
+                      <div className="rounded-md border border-primary/20 bg-primary/5 p-2 text-xs flex items-center gap-2 flex-wrap">
+                        <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-muted-foreground">Suitable position:</span>
+                        <span className="font-semibold text-foreground">{r.results[0].jobTitle}</span>
+                        <Badge className={`${scoreToTone(r.results[0].score)} text-[11px]`} variant="secondary">{r.results[0].score}%</Badge>
+                      </div>
+                    )}
                     {r.results.map(res => (
                       <div key={res.jobId} className="flex items-center gap-2 text-xs">
                         <Badge className={`${scoreToTone(res.score)} font-semibold w-12 justify-center`} variant="secondary">
