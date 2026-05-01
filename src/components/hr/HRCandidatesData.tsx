@@ -150,9 +150,11 @@ export default function HRCandidatesData({ hrUserId }: Props) {
       resumeUrl: "",
       uploading: true,
       parsing: false,
+      _file: f,
     }));
     setProfiles(prev => [...placeholders, ...prev]);
     setBulkBusy(true);
+    setCreditsOut(false);
 
     // Upload all in parallel
     const uploaded = await Promise.all(arr.map(async (f, i) => {
