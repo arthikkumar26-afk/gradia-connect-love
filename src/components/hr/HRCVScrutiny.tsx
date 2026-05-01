@@ -48,6 +48,9 @@ interface ResumeRow {
   candidateName?: string;
   candidateEmail?: string;
   parsing?: boolean;
+  emailStatus?: "sending" | "sent" | "failed";
+  emailError?: string;
+  emailSentAt?: string;
 }
 
 const getScanErrorMessage = async (error?: { message?: string; context?: unknown } | null, data?: { error?: string } | null) => {
