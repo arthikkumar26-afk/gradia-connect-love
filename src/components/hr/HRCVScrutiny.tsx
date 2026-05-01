@@ -105,8 +105,8 @@ export default function HRCVScrutiny({ hrUserId, employerUserId, employerName }:
     return { url: urlData.publicUrl, name: file.name };
   };
 
-  const scanRow = async (rowId: string) => {
-    const row = rows.find(r => r.id === rowId);
+  const scanRow = async (rowId: string, rowOverride?: Pick<ResumeRow, "resumeUrl" | "fileName">) => {
+    const row = rowOverride?.resumeUrl ? rowOverride : rows.find(r => r.id === rowId);
     if (!row?.resumeUrl) return;
     if (targetJobs.length === 0) {
       toast.error("No vacancies available to scan against.");
@@ -117,6 +117,7 @@ export default function HRCVScrutiny({ hrUserId, employerUserId, employerName }:
       : r));
 
     const matches: Match[] = [];
+    let lastError = "";
     for (const job of targetJobs) {
       const jobContext = `Employer: ${employerName}
 Job Title: ${job.job_title}
@@ -129,8 +130,12 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         if (!error && !data?.error) {
           const score = Math.max(0, Math.min(100, parseInt(String(data?.score ?? 0), 10) || 0));
           matches.push({ jobId: job.id, jobTitle: job.job_title, score, reason: String(data?.reason || "") });
+        } else {
+          lastError = String(data?.error || error?.message || "Scan failed");
+          console.error("score-resume-match error", error || data?.error);
         }
-      } catch (e) {
+      } catch (e: any) {
+        lastError = e?.message || "Scan failed";
         console.error("scan error", e);
       }
       const sorted = [...matches].sort((a, b) => b.score - a.score);
@@ -139,7 +144,9 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         : r));
     }
 
-    setRows(prev => prev.map(r => r.id === rowId ? { ...r, scanning: false } : r));
+    setRows(prev => prev.map(r => r.id === rowId
+      ? { ...r, scanning: false, error: matches.length ? undefined : lastError || "Scan failed. Please retry with a PDF or DOCX resume." }
+      : r));
   };
 
   const handleFiles = async (files: FileList | null) => {
@@ -168,15 +175,15 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         return null;
       }
       setRows(prev => prev.map(r => r.id === id ? { ...r, uploading: false, resumeUrl: out.url } : r));
-      return { id, url: out.url };
+      return { id, url: out.url, name: out.name };
     }));
 
-    const ok = uploaded.filter(Boolean) as { id: string; url: string }[];
+    const ok = uploaded.filter(Boolean) as { id: string; url: string; name: string }[];
     if (ok.length === 0) return;
 
     setBulkScanning(true);
     for (const u of ok) {
-      await scanRow(u.id);
+      await scanRow(u.id, { resumeUrl: u.url, fileName: u.name });
     }
     setBulkScanning(false);
     toast.success(`CV Scrutiny complete (${ok.length} resume${ok.length > 1 ? "s" : ""} × ${targetJobs.length} vacancies)`);
