@@ -406,8 +406,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       setMailSending(false);
     }
   };
-
-
+  return (
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
