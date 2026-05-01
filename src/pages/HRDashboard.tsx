@@ -427,7 +427,7 @@ const HRDashboard = () => {
   return (
     <div className="min-h-screen bg-subtle">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border z-50 flex items-center justify-between px-4">
+      <header className="md:hidden fixed top-0 left-0 right-0 h-14 bg-card border-b border-border z-50 flex items-center justify-between px-4">
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -440,17 +440,17 @@ const HRDashboard = () => {
         <div className="w-10" />
       </header>
 
-      <div className="flex pt-14 lg:pt-0">
+      <div className="flex pt-14 md:pt-0">
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed lg:sticky top-14 lg:top-0 left-0 h-[calc(100vh-3.5rem)] lg:h-screen bg-card border-r border-border transition-all duration-300 z-40 overflow-hidden",
-            sidebarOpen ? "w-64" : "w-0 lg:w-64"
+            "fixed md:sticky top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-screen bg-card border-r border-border transition-all duration-300 z-40 overflow-hidden",
+            sidebarOpen ? "w-64" : "w-0 md:w-64"
           )}
         >
           <div className="flex flex-col h-full w-64">
             {/* Logo */}
-            <div className="hidden lg:flex items-center gap-2 p-4 border-b border-border">
+            <div className="hidden md:flex items-center gap-2 p-4 border-b border-border">
               <img src={gradiaLogo} alt="Gradia" className="h-7 w-auto flex-shrink-0" />
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Users className="h-3 w-3" /> HR Portal
