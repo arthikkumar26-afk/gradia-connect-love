@@ -187,6 +187,7 @@ const HRDashboard = () => {
     { id: "post", label: "Post Job", icon: Plus },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
     { id: "candidates", label: "Candidates", icon: Users },
+    { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
     { id: "profile-match", label: "Profile Match", icon: Sparkles },
     { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
