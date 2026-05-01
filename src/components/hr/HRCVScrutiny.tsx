@@ -11,7 +11,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Upload, Loader2, FileText, Trophy, ScanSearch, Trash2, Download,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Upload, Loader2, FileText, Trophy, ScanSearch, Trash2, Download, Mail, Send,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +45,9 @@ interface ResumeRow {
   totalToScan: number;
   matches: Match[];
   error?: string;
+  candidateName?: string;
+  candidateEmail?: string;
+  parsing?: boolean;
 }
 
 const getScanErrorMessage = async (error?: { message?: string; context?: unknown } | null, data?: { error?: string } | null) => {
@@ -80,6 +88,18 @@ export default function HRCVScrutiny({ hrUserId, employerUserId, employerName }:
   const [bulkScanning, setBulkScanning] = useState(false);
   const [filter, setFilter] = useState("");
   const [tab, setTab] = useState("by-resume");
+
+  // Email composer state
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailRowIds, setMailRowIds] = useState<string[]>([]);
+  const [mailSubject, setMailSubject] = useState(
+    `Update on your application — {{job}} at {{company}}`
+  );
+  const [mailBody, setMailBody] = useState(
+    `Hi {{name}},\n\nThank you for sharing your resume with {{company}}. After reviewing your profile against our open vacancy "{{job}}", your AI-match score is {{score}}%.\n\nWe'd like to take your candidature forward. Our team will reach out shortly with the next steps.\n\nBest regards,\n{{company}} Hiring Team`
+  );
+  const [mailPreviewIndex, setMailPreviewIndex] = useState(0);
+  const [mailSending, setMailSending] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -178,6 +198,27 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       : r));
   };
 
+  // Quick parse to extract candidate name + email for mailing
+  const parseRow = async (rowId: string, file: File) => {
+    setRows(prev => prev.map(r => r.id === rowId ? { ...r, parsing: true } : r));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { data, error } = await supabase.functions.invoke("parse-resume", { body: fd });
+      if (error || data?.error) {
+        setRows(prev => prev.map(r => r.id === rowId ? { ...r, parsing: false } : r));
+        return;
+      }
+      const name = String(data?.full_name || "").trim();
+      const email = String(data?.email || "").trim().toLowerCase();
+      setRows(prev => prev.map(r => r.id === rowId
+        ? { ...r, parsing: false, candidateName: name || r.candidateName, candidateEmail: email || r.candidateEmail }
+        : r));
+    } catch {
+      setRows(prev => prev.map(r => r.id === rowId ? { ...r, parsing: false } : r));
+    }
+  };
+
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     if (targetJobs.length === 0) {
@@ -204,6 +245,8 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         return null;
       }
       setRows(prev => prev.map(r => r.id === id ? { ...r, uploading: false, resumeUrl: out.url } : r));
+      // Parse for email/name in background (non-blocking)
+      parseRow(id, f).catch(() => {});
       return { id, url: out.url, name: out.name };
     }));
 
@@ -291,6 +334,78 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
     URL.revokeObjectURL(url);
   };
 
+  // ---- Email composer helpers ----
+  const mailableRows = useMemo(
+    () => rows.filter(r => r.matches.length > 0 && r.candidateEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.candidateEmail)),
+    [rows]
+  );
+
+  const openMailFor = (rowIds: string[]) => {
+    const valid = rowIds.filter(id => mailableRows.find(r => r.id === id));
+    if (valid.length === 0) {
+      toast.error("No scanned candidates with valid email yet. Wait for parsing to complete.");
+      return;
+    }
+    setMailRowIds(valid);
+    setMailPreviewIndex(0);
+    setMailOpen(true);
+  };
+
+  const openMailAll = () => openMailFor(mailableRows.map(r => r.id));
+
+  const buildRecipient = (r: ResumeRow) => {
+    const best = r.matches[0];
+    return {
+      email: r.candidateEmail!,
+      name: r.candidateName || r.fileName.replace(/\.[^.]+$/, ""),
+      jobTitle: best?.jobTitle || "",
+      score: best?.score ?? 0,
+      fileName: r.fileName,
+    };
+  };
+
+  const applyTokens = (s: string, r: ResumeRow) => {
+    const rec = buildRecipient(r);
+    return s
+      .split("{{name}}").join(rec.name)
+      .split("{{job}}").join(rec.jobTitle)
+      .split("{{score}}").join(String(rec.score))
+      .split("{{company}}").join(employerName || "")
+      .split("{{file}}").join(rec.fileName);
+  };
+
+  const sendMails = async () => {
+    const recips = mailRowIds
+      .map(id => rows.find(r => r.id === id))
+      .filter((r): r is ResumeRow => !!r && !!r.candidateEmail)
+      .map(buildRecipient);
+    if (recips.length === 0) {
+      toast.error("No valid recipients.");
+      return;
+    }
+    setMailSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-cv-scrutiny-email", {
+        body: {
+          recipients: recips,
+          subject: mailSubject,
+          htmlBody: mailBody,
+          fromName: employerName,
+        },
+      });
+      if (error) throw error;
+      const sent = Number(data?.sent || 0);
+      const total = Number(data?.total || recips.length);
+      if (sent === total) toast.success(`Sent ${sent} email${sent !== 1 ? "s" : ""}.`);
+      else if (sent > 0) toast.warning(`Sent ${sent}/${total}. Some failed.`);
+      else toast.error("Failed to send emails.");
+      setMailOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to send emails.");
+    } finally {
+      setMailSending(false);
+    }
+  };
   return (
     <div className="space-y-4">
       <Card>
@@ -358,6 +473,16 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                   <><ScanSearch className="h-3.5 w-3.5 mr-1" /> Scan All ({rows.filter(r => r.resumeUrl && r.matches.length === 0 && !r.scanning).length})</>
                 )}
               </Button>
+              <Button
+                size="sm"
+                variant="default"
+                className="h-8 text-xs"
+                onClick={openMailAll}
+                disabled={mailableRows.length === 0}
+                title={mailableRows.length === 0 ? "No scanned candidates with email yet" : `Send email to ${mailableRows.length} candidate(s)`}
+              >
+                <Mail className="h-3.5 w-3.5 mr-1" /> Send Email ({mailableRows.length})
+              </Button>
               <Button size="sm" variant="outline" className="h-8 text-xs" onClick={exportCsv}>
                 <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
               </Button>
@@ -403,10 +528,19 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                       return (
                         <TableRow key={r.id}>
                           <TableCell className="text-xs">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="truncate max-w-[200px]" title={r.fileName}>{r.fileName}</span>
-                              {r.uploading && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <span className="truncate max-w-[200px] font-medium" title={r.fileName}>
+                                  {r.candidateName || r.fileName}
+                                </span>
+                                {(r.uploading || r.parsing) && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                              </div>
+                              {r.candidateEmail && (
+                                <span className="text-[10px] text-muted-foreground truncate max-w-[220px] pl-5" title={r.candidateEmail}>
+                                  {r.candidateEmail}
+                                </span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="text-xs">
@@ -460,6 +594,17 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                                   Re-scan
                                 </Button>
                               )}
+                              {r.matches.length > 0 && r.candidateEmail && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-[11px] text-primary"
+                                  onClick={() => openMailFor([r.id])}
+                                  title={`Send email to ${r.candidateEmail}`}
+                                >
+                                  <Mail className="h-3.5 w-3.5 mr-0.5" /> Mail
+                                </Button>
+                              )}
                               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeRow(r.id)}>
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
@@ -508,6 +653,96 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
           </TabsContent>
         </Tabs>
       )}
+
+      {/* Email composer dialog */}
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" /> Send Email to Candidate{mailRowIds.length > 1 ? "s" : ""}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {mailRowIds.length} recipient{mailRowIds.length !== 1 ? "s" : ""}.
+              Use tokens: <code className="text-[11px]">{"{{name}}"}</code>, <code className="text-[11px]">{"{{job}}"}</code>,
+              <code className="text-[11px] ml-1">{"{{score}}"}</code>, <code className="text-[11px] ml-1">{"{{company}}"}</code>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Composer */}
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Subject</Label>
+                <Input
+                  value={mailSubject}
+                  onChange={(e) => setMailSubject(e.target.value)}
+                  className="h-9 text-sm mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Body</Label>
+                <Textarea
+                  value={mailBody}
+                  onChange={(e) => setMailBody(e.target.value)}
+                  className="min-h-[260px] text-sm mt-1 font-mono"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Recipients ({mailRowIds.length})</Label>
+                <div className="border rounded-md p-2 max-h-[140px] overflow-y-auto space-y-1 mt-1 bg-muted/30">
+                  {mailRowIds.map((id, i) => {
+                    const r = rows.find(x => x.id === id);
+                    if (!r) return null;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setMailPreviewIndex(i)}
+                        className={`w-full text-left text-[11px] px-2 py-1 rounded ${i === mailPreviewIndex ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
+                      >
+                        <span className="font-medium">{r.candidateName || r.fileName}</span>
+                        <span className="text-muted-foreground ml-1">— {r.candidateEmail}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="space-y-2">
+              <Label className="text-xs">Live Preview</Label>
+              {(() => {
+                const r = rows.find(x => x.id === mailRowIds[mailPreviewIndex]);
+                if (!r) return <div className="text-xs text-muted-foreground">No preview.</div>;
+                return (
+                  <div className="border rounded-md bg-background overflow-hidden">
+                    <div className="px-3 py-2 border-b bg-muted/40 text-[11px]">
+                      <div><span className="text-muted-foreground">To:</span> {r.candidateEmail}</div>
+                      <div><span className="text-muted-foreground">Subject:</span> <span className="font-medium">{applyTokens(mailSubject, r)}</span></div>
+                    </div>
+                    <div className="p-3 text-xs whitespace-pre-wrap leading-relaxed max-h-[340px] overflow-y-auto">
+                      {applyTokens(mailBody, r)}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setMailOpen(false)} disabled={mailSending}>Cancel</Button>
+            <Button onClick={sendMails} disabled={mailSending || mailRowIds.length === 0}>
+              {mailSending ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Sending…</>
+              ) : (
+                <><Send className="h-3.5 w-3.5 mr-1" /> Send to {mailRowIds.length} candidate{mailRowIds.length !== 1 ? "s" : ""}</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
