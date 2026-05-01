@@ -12,7 +12,7 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
 import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
 import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
-import HRProfileMatchScanner from "@/components/hr/HRProfileMatchScanner";
+
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 import HRCandidatesData from "@/components/hr/HRCandidatesData";
 
@@ -189,7 +189,7 @@ const HRDashboard = () => {
     { id: "candidates", label: "Candidates", icon: Users },
     { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
-    { id: "profile-match", label: "Profile Match", icon: Sparkles },
+    
     { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
     { id: "pipeline", label: "Pipeline", icon: GitBranch },
     { id: "interviews", label: "Interviews", icon: Calendar },
@@ -400,16 +400,6 @@ const HRDashboard = () => {
       case "candidate-info":
         return parentEmployerId && user ? (
           <HRCandidateInfoSheet
-            hrUserId={user.id}
-            employerUserId={parentEmployerId}
-            employerName={parentEmployerName}
-          />
-        ) : (
-          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
-        );
-      case "profile-match":
-        return parentEmployerId && user ? (
-          <HRProfileMatchScanner
             hrUserId={user.id}
             employerUserId={parentEmployerId}
             employerName={parentEmployerName}
