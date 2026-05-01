@@ -36,6 +36,8 @@ interface ParsedProfile {
   skill_highlights?: string[];
   education?: Array<{ education_level?: string; school_college_name?: string; board_university?: string; year_of_passing?: string | number }>;
   experience?: Array<{ organization?: string; designation?: string; duration?: string; description?: string }>;
+  // kept in-memory only, used to retry parsing without re-uploading
+  _file?: File;
 }
 
 interface Props {
@@ -48,7 +50,33 @@ export default function HRCandidatesData({ hrUserId }: Props) {
   const [profiles, setProfiles] = useState<ParsedProfile[]>([]);
   const [filter, setFilter] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [creditsOut, setCreditsOut] = useState(false);
   const [openProfile, setOpenProfile] = useState<ParsedProfile | null>(null);
+
+  // Deep-parse Supabase FunctionsHttpError to surface the real backend message
+  // (e.g. "AI credits exhausted") instead of the generic "non-2xx status code".
+  const parseInvokeError = async (
+    error?: { message?: string; context?: unknown } | null,
+    data?: { error?: string } | null,
+  ): Promise<{ raw: string; status?: number }> => {
+    let contextMessage = "";
+    let status: number | undefined;
+    if (error?.context instanceof Response) {
+      status = error.context.status;
+      try {
+        const body = await error.context.clone().json();
+        contextMessage = String(body?.error || body?.message || "");
+      } catch {
+        contextMessage = await error.context.clone().text().catch(() => "");
+      }
+    } else if (typeof error?.context === "object" && error.context !== null) {
+      const ctx = error.context as { error?: string; status?: number };
+      contextMessage = String(ctx.error || "");
+      status = ctx.status;
+    }
+    const raw = String(data?.error || contextMessage || error?.message || "Parse failed");
+    return { raw, status };
+  };
 
   const uploadOne = async (file: File): Promise<{ url: string; name: string } | null> => {
     const lower = file.name.toLowerCase();
@@ -78,12 +106,15 @@ export default function HRCandidatesData({ hrUserId }: Props) {
       fd.append("file", file);
       const { data, error } = await supabase.functions.invoke("parse-resume", { body: fd });
       if (error || data?.error) {
-        const raw = String(data?.error || error?.message || "Parse failed");
-        const friendly = raw.includes("402") || raw.includes("credits exhausted")
+        const { raw, status } = await parseInvokeError(error, data);
+        const isCredits = status === 402 || /402|credits exhausted|payment_required|Not enough credits/i.test(raw);
+        const isBusy = status === 429 || /429|rate.?limit|busy/i.test(raw);
+        const friendly = isCredits
           ? "AI credits exhausted. Add balance, then retry."
-          : raw.includes("429") || raw.includes("busy")
+          : isBusy
             ? "AI is busy. Wait a moment and retry."
             : raw;
+        if (isCredits) setCreditsOut(true);
         setProfiles(prev => prev.map(p => p.id === id ? { ...p, parsing: false, error: friendly } : p));
         return;
       }
@@ -119,9 +150,11 @@ export default function HRCandidatesData({ hrUserId }: Props) {
       resumeUrl: "",
       uploading: true,
       parsing: false,
+      _file: f,
     }));
     setProfiles(prev => [...placeholders, ...prev]);
     setBulkBusy(true);
+    setCreditsOut(false);
 
     // Upload all in parallel
     const uploaded = await Promise.all(arr.map(async (f, i) => {
@@ -155,6 +188,27 @@ export default function HRCandidatesData({ hrUserId }: Props) {
 
   const removeProfile = (id: string) => setProfiles(prev => prev.filter(p => p.id !== id));
   const clearAll = () => setProfiles([]);
+
+  const retryFailed = async () => {
+    const pending = profiles.filter(p => p.error && p._file && !p.parsing && !p.uploading);
+    if (pending.length === 0) {
+      toast.info("Nothing to retry.");
+      return;
+    }
+    setCreditsOut(false);
+    setBulkBusy(true);
+    const CONCURRENCY = 3;
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, pending.length) }, async () => {
+      while (cursor < pending.length) {
+        const p = pending[cursor++];
+        if (p._file) await parseOne(p.id, p._file);
+      }
+    });
+    await Promise.all(workers);
+    setBulkBusy(false);
+    toast.success("Retry complete.");
+  };
 
   const filtered = profiles.filter(p => {
     const q = filter.trim().toLowerCase();
@@ -199,6 +253,21 @@ export default function HRCandidatesData({ hrUserId }: Props) {
             </div>
           )}
 
+          {creditsOut && (
+            <div className="text-xs border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 rounded-md p-3 flex items-start gap-2">
+              <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-amber-900 dark:text-amber-200">AI credits exhausted</p>
+                <p className="text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                  Resumes uploaded successfully, but AI parsing couldn't run because the workspace has no AI credits left. Add AI balance, then click <strong>Retry parsing</strong> below — your uploaded resumes are still here.
+                </p>
+              </div>
+              <Button size="sm" className="h-7 text-xs shrink-0" onClick={retryFailed} disabled={bulkBusy}>
+                Retry parsing
+              </Button>
+            </div>
+          )}
+
           {profiles.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap pt-1">
               <Input
@@ -207,6 +276,12 @@ export default function HRCandidatesData({ hrUserId }: Props) {
                 onChange={(e) => setFilter(e.target.value)}
                 className="h-8 text-xs max-w-xs"
               />
+              {profiles.some(p => p.error && p._file) && (
+                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={retryFailed} disabled={bulkBusy}>
+                  {bulkBusy ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                  Retry failed ({profiles.filter(p => p.error && p._file).length})
+                </Button>
+              )}
               <Button size="sm" variant="ghost" className="h-8 text-xs text-destructive ml-auto" onClick={clearAll}>
                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
               </Button>
