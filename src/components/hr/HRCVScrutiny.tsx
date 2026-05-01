@@ -19,6 +19,7 @@ import {
   Upload, Loader2, FileText, Trophy, ScanSearch, Trash2, Download, Mail, Send, RotateCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { upsertEmailRecord } from "@/lib/hrEmailStatusStore";
 
 interface JobLite {
   id: string;
