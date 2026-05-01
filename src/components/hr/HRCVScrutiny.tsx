@@ -606,6 +606,40 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                               )}
                             </div>
                           </TableCell>
+                          <TableCell className="text-xs">
+                            {!r.candidateEmail ? (
+                              <span className="text-muted-foreground text-[11px]">—</span>
+                            ) : r.emailStatus === "sending" ? (
+                              <Badge variant="secondary" className="text-[10px] gap-1">
+                                <Loader2 className="h-2.5 w-2.5 animate-spin" /> Sending
+                              </Badge>
+                            ) : r.emailStatus === "sent" ? (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                title={r.emailSentAt ? `Sent ${new Date(r.emailSentAt).toLocaleString()}` : "Sent"}
+                              >
+                                ✓ Sent
+                              </Badge>
+                            ) : r.emailStatus === "failed" ? (
+                              <div className="flex flex-col gap-0.5 max-w-[180px]">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 self-start"
+                                  title={r.emailError || "Send failed"}
+                                >
+                                  ✗ Failed
+                                </Badge>
+                                {r.emailError && (
+                                  <span className="text-[10px] text-destructive truncate" title={r.emailError}>
+                                    {r.emailError}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-[11px]">Not sent</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
                               {r.resumeUrl && (
