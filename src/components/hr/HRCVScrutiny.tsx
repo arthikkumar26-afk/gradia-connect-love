@@ -367,11 +367,11 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
   const applyTokens = (s: string, r: ResumeRow) => {
     const rec = buildRecipient(r);
     return s
-      .replaceAll("{{name}}", rec.name)
-      .replaceAll("{{job}}", rec.jobTitle)
-      .replaceAll("{{score}}", String(rec.score))
-      .replaceAll("{{company}}", employerName || "")
-      .replaceAll("{{file}}", rec.fileName);
+      .split("{{name}}").join(rec.name)
+      .split("{{job}}").join(rec.jobTitle)
+      .split("{{score}}").join(String(rec.score))
+      .split("{{company}}").join(employerName || "")
+      .split("{{file}}").join(rec.fileName);
   };
 
   const sendMails = async () => {
