@@ -189,6 +189,27 @@ export default function HRCandidatesData({ hrUserId }: Props) {
   const removeProfile = (id: string) => setProfiles(prev => prev.filter(p => p.id !== id));
   const clearAll = () => setProfiles([]);
 
+  const retryFailed = async () => {
+    const pending = profiles.filter(p => p.error && p._file && !p.parsing && !p.uploading);
+    if (pending.length === 0) {
+      toast.info("Nothing to retry.");
+      return;
+    }
+    setCreditsOut(false);
+    setBulkBusy(true);
+    const CONCURRENCY = 3;
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, pending.length) }, async () => {
+      while (cursor < pending.length) {
+        const p = pending[cursor++];
+        if (p._file) await parseOne(p.id, p._file);
+      }
+    });
+    await Promise.all(workers);
+    setBulkBusy(false);
+    toast.success("Retry complete.");
+  };
+
   const filtered = profiles.filter(p => {
     const q = filter.trim().toLowerCase();
     if (!q) return true;
