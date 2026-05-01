@@ -42,10 +42,18 @@ interface ResumeRow {
   error?: string;
 }
 
-const getScanErrorMessage = (error?: { message?: string; context?: unknown } | null, data?: { error?: string } | null) => {
-  const contextMessage = typeof error?.context === "object" && error.context !== null && "error" in error.context
-    ? String((error.context as { error?: string }).error || "")
-    : "";
+const getScanErrorMessage = async (error?: { message?: string; context?: unknown } | null, data?: { error?: string } | null) => {
+  let contextMessage = "";
+  if (error?.context instanceof Response) {
+    try {
+      const body = await error.context.clone().json();
+      contextMessage = String(body?.error || "");
+    } catch {
+      contextMessage = await error.context.clone().text().catch(() => "");
+    }
+  } else if (typeof error?.context === "object" && error.context !== null && "error" in error.context) {
+    contextMessage = String((error.context as { error?: string }).error || "");
+  }
   const raw = String(data?.error || contextMessage || error?.message || "Scan failed");
   if (raw.includes("AI credits exhausted") || raw.includes("Payment Required") || raw.includes("402")) {
     return "AI credits exhausted. Add AI balance, then Re-scan.";
@@ -152,7 +160,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
           const score = Math.max(0, Math.min(100, parseInt(String(data?.score ?? 0), 10) || 0));
           matches.push({ jobId: job.id, jobTitle: job.job_title, score, reason: String(data?.reason || "") });
         } else {
-          lastError = getScanErrorMessage(error, data);
+          lastError = await getScanErrorMessage(error, data);
           console.error("score-resume-match error", error || data?.error);
         }
       } catch (e: any) {
