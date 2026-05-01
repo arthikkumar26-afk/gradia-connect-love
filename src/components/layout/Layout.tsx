@@ -23,6 +23,7 @@ const Layout = ({ children }: LayoutProps) => {
                      location.pathname.startsWith('/candidate/dashboard') ||
                      location.pathname.startsWith('/admin/') ||
                      location.pathname.startsWith('/freelancer/dashboard') ||
+                     location.pathname.startsWith('/hr/') ||
                      location.pathname.startsWith('/owner/') ||
                      location.pathname.startsWith('/edutech/dashboard') ||
                      location.pathname === '/edit-profile';
