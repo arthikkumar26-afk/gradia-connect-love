@@ -182,9 +182,21 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
     if (ok.length === 0) return;
 
     setBulkScanning(true);
-    for (const u of ok) {
-      await scanRow(u.id, { resumeUrl: u.url, fileName: u.name });
-    }
+    // Run rows in parallel with limited concurrency so each uploaded resume
+    // begins scanning as soon as its upload finishes — no waiting in queue.
+    const CONCURRENCY = 3;
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, ok.length) }, async () => {
+      while (cursor < ok.length) {
+        const u = ok[cursor++];
+        try {
+          await scanRow(u.id, { resumeUrl: u.url, fileName: u.name });
+        } catch (e) {
+          console.error("scanRow failed", e);
+        }
+      }
+    });
+    await Promise.all(workers);
     setBulkScanning(false);
     toast.success(`CV Scrutiny complete (${ok.length} resume${ok.length > 1 ? "s" : ""} × ${targetJobs.length} vacancies)`);
   };
