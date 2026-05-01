@@ -585,6 +585,17 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                                   Re-scan
                                 </Button>
                               )}
+                              {r.matches.length > 0 && r.candidateEmail && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-[11px] text-primary"
+                                  onClick={() => openMailFor([r.id])}
+                                  title={`Send email to ${r.candidateEmail}`}
+                                >
+                                  <Mail className="h-3.5 w-3.5 mr-0.5" /> Mail
+                                </Button>
+                              )}
                               <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeRow(r.id)}>
                                 <Trash2 className="h-3.5 w-3.5" />
                               </Button>
