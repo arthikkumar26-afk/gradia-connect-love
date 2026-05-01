@@ -105,8 +105,8 @@ export default function HRProfileMatchScanner({ hrUserId, employerUserId, employ
     return { url: urlData.publicUrl, name: file.name };
   };
 
-  const scanRow = async (rowId: string) => {
-    const row = rows.find(r => r.id === rowId);
+  const scanRow = async (rowId: string, rowOverride?: Pick<ScanRow, "resumeUrl" | "fileName">) => {
+    const row = rowOverride?.resumeUrl ? rowOverride : rows.find(r => r.id === rowId);
     if (!row?.resumeUrl) return;
     if (targetJobs.length === 0) {
       toast.error("No jobs available to scan against.");
@@ -115,6 +115,7 @@ export default function HRProfileMatchScanner({ hrUserId, employerUserId, employ
     setRows(prev => prev.map(r => r.id === rowId ? { ...r, scanning: true, results: [], error: undefined } : r));
 
     const results: ScanRow["results"] = [];
+    let lastError = "";
     for (const job of targetJobs) {
       const jobContext = `Employer: ${employerName}
 Job Title: ${job.job_title}
@@ -125,6 +126,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
           body: { resumeUrl: row.resumeUrl, jobContext, candidateRow: { fileName: row.fileName } },
         });
         if (error || data?.error) {
+          lastError = String(data?.error || error?.message || "Scan failed");
           console.error("score-resume-match error", error || data?.error);
           continue;
         }
@@ -133,6 +135,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         // Live update so user sees progress
         setRows(prev => prev.map(r => r.id === rowId ? { ...r, results: [...results].sort((a, b) => b.score - a.score) } : r));
       } catch (e: any) {
+        lastError = e?.message || "Scan failed";
         console.error(e);
       }
     }
@@ -140,7 +143,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
     const sorted = [...results].sort((a, b) => b.score - a.score);
     const best = sorted[0];
     setRows(prev => prev.map(r => r.id === rowId
-      ? { ...r, scanning: false, results: sorted, bestScore: best?.score, bestJobTitle: best?.jobTitle }
+      ? { ...r, scanning: false, results: sorted, bestScore: best?.score, bestJobTitle: best?.jobTitle, error: sorted.length ? undefined : lastError || "Scan failed. Please retry with a PDF or DOCX resume." }
       : r));
   };
 
@@ -166,19 +169,19 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         return null;
       }
       setRows(prev => prev.map(r => r.id === id ? { ...r, uploading: false, resumeUrl: out.url } : r));
-      return { id, url: out.url };
+      return { id, url: out.url, name: out.name };
     }));
 
-    const ok = uploaded.filter(Boolean) as { id: string; url: string }[];
+    const ok = uploaded.filter(Boolean) as { id: string; url: string; name: string }[];
     if (ok.length === 0) return;
 
     // Scan: if multiple, treat as bulk and run sequentially per-file (each file scans all target jobs)
     if (ok.length === 1) {
-      await scanRow(ok[0].id);
+      await scanRow(ok[0].id, { resumeUrl: ok[0].url, fileName: ok[0].name });
     } else {
       setBulkScanning(true);
       for (const u of ok) {
-        await scanRow(u.id);
+        await scanRow(u.id, { resumeUrl: u.url, fileName: u.name });
       }
       setBulkScanning(false);
       toast.success(`Bulk scan complete (${ok.length} resumes)`);
@@ -279,9 +282,9 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                     {r.uploading && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
                   </CardTitle>
                   {r.bestScore !== undefined && r.bestJobTitle && (
-                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1 flex-wrap">
                       <Trophy className="h-3 w-3 text-amber-500" />
-                      Best match: <span className="font-medium text-foreground">{r.bestJobTitle}</span>
+                      Suitable position: <span className="font-medium text-foreground">{r.bestJobTitle}</span>
                       <Badge className={`text-[11px] ml-1 ${scoreToTone(r.bestScore)}`} variant="secondary">{r.bestScore}%</Badge>
                     </div>
                   )}
@@ -318,6 +321,14 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                   <p className="text-xs text-muted-foreground italic">Waiting…</p>
                 ) : (
                   <div className="space-y-1.5">
+                    {r.results[0] && (
+                      <div className="rounded-md border border-primary/20 bg-primary/5 p-2 text-xs flex items-center gap-2 flex-wrap">
+                        <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-muted-foreground">Suitable position:</span>
+                        <span className="font-semibold text-foreground">{r.results[0].jobTitle}</span>
+                        <Badge className={`${scoreToTone(r.results[0].score)} text-[11px]`} variant="secondary">{r.results[0].score}%</Badge>
+                      </div>
+                    )}
                     {r.results.map(res => (
                       <div key={res.jobId} className="flex items-center gap-2 text-xs">
                         <Badge className={`${scoreToTone(res.score)} font-semibold w-12 justify-center`} variant="secondary">

@@ -28,7 +28,7 @@ interface CandidateRow {
   job_id: string;
   current_stage: string | null;
   status: string | null;
-  created_at: string;
+  applied_at: string | null;
   ai_score: number | null;
   candidate_name?: string;
   job_title?: string;
@@ -108,9 +108,9 @@ const HRDashboard = () => {
       if (jobIds.length) {
         const { data: cands, error: candsError } = await supabase
           .from("interview_candidates")
-          .select("id, candidate_id, job_id, current_stage, status, created_at, ai_score")
+          .select("id, candidate_id, job_id, current_stage:interview_stages!interview_candidates_current_stage_id_fkey(name), status, applied_at, ai_score")
           .in("job_id", jobIds)
-          .order("created_at", { ascending: false })
+          .order("applied_at", { ascending: false })
           .limit(200);
         if (candsError) throw candsError;
 
@@ -125,6 +125,7 @@ const HRDashboard = () => {
         setCandidates(
           (cands ?? []).map((c: any) => ({
             ...c,
+            current_stage: c.current_stage?.name || null,
             candidate_name: nameMap[c.candidate_id] || "Candidate",
             job_title: titleMap[c.job_id] || "—",
           }))
@@ -134,7 +135,7 @@ const HRDashboard = () => {
       }
     } catch (error) {
       console.error("Failed to refresh HR dashboard", error);
-      toast.error("Couldn't refresh HR dashboard data.");
+      if (!options?.silent) toast.error("Couldn't refresh HR dashboard data.");
     } finally {
       setLoading(false);
     }
