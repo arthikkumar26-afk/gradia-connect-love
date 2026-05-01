@@ -387,6 +387,16 @@ const HRDashboard = () => {
           </Card>
           </div>
         );
+      case "candidates-data":
+        return parentEmployerId && user ? (
+          <HRCandidatesData
+            hrUserId={user.id}
+            employerUserId={parentEmployerId}
+            employerName={parentEmployerName}
+          />
+        ) : (
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
+        );
       case "candidate-info":
         return parentEmployerId && user ? (
           <HRCandidateInfoSheet
