@@ -48,7 +48,33 @@ export default function HRCandidatesData({ hrUserId }: Props) {
   const [profiles, setProfiles] = useState<ParsedProfile[]>([]);
   const [filter, setFilter] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [creditsOut, setCreditsOut] = useState(false);
   const [openProfile, setOpenProfile] = useState<ParsedProfile | null>(null);
+
+  // Deep-parse Supabase FunctionsHttpError to surface the real backend message
+  // (e.g. "AI credits exhausted") instead of the generic "non-2xx status code".
+  const parseInvokeError = async (
+    error?: { message?: string; context?: unknown } | null,
+    data?: { error?: string } | null,
+  ): Promise<{ raw: string; status?: number }> => {
+    let contextMessage = "";
+    let status: number | undefined;
+    if (error?.context instanceof Response) {
+      status = error.context.status;
+      try {
+        const body = await error.context.clone().json();
+        contextMessage = String(body?.error || body?.message || "");
+      } catch {
+        contextMessage = await error.context.clone().text().catch(() => "");
+      }
+    } else if (typeof error?.context === "object" && error.context !== null) {
+      const ctx = error.context as { error?: string; status?: number };
+      contextMessage = String(ctx.error || "");
+      status = ctx.status;
+    }
+    const raw = String(data?.error || contextMessage || error?.message || "Parse failed");
+    return { raw, status };
+  };
 
   const uploadOne = async (file: File): Promise<{ url: string; name: string } | null> => {
     const lower = file.name.toLowerCase();
