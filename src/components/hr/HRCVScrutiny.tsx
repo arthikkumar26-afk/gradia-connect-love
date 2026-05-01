@@ -48,6 +48,9 @@ interface ResumeRow {
   candidateName?: string;
   candidateEmail?: string;
   parsing?: boolean;
+  emailStatus?: "sending" | "sent" | "failed";
+  emailError?: string;
+  emailSentAt?: string;
 }
 
 const getScanErrorMessage = async (error?: { message?: string; context?: unknown } | null, data?: { error?: string } | null) => {
@@ -375,15 +378,22 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
   };
 
   const sendMails = async () => {
-    const recips = mailRowIds
-      .map(id => rows.find(r => r.id === id))
-      .filter((r): r is ResumeRow => !!r && !!r.candidateEmail)
+    const targetIds = mailRowIds.filter(id => {
+      const r = rows.find(x => x.id === id);
+      return r && r.candidateEmail;
+    });
+    const recips = targetIds
+      .map(id => rows.find(r => r.id === id)!)
       .map(buildRecipient);
     if (recips.length === 0) {
       toast.error("No valid recipients.");
       return;
     }
     setMailSending(true);
+    // Mark rows as sending
+    setRows(prev => prev.map(r => targetIds.includes(r.id)
+      ? { ...r, emailStatus: "sending", emailError: undefined }
+      : r));
     try {
       const { data, error } = await supabase.functions.invoke("send-cv-scrutiny-email", {
         body: {
@@ -394,14 +404,28 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         },
       });
       if (error) throw error;
+      const results: { email: string; status: "sent" | "failed"; error?: string }[] = Array.isArray(data?.results) ? data.results : [];
+      const now = new Date().toISOString();
+      setRows(prev => prev.map(r => {
+        if (!targetIds.includes(r.id)) return r;
+        const match = results.find(x => x.email?.toLowerCase() === (r.candidateEmail || "").toLowerCase());
+        if (!match) return { ...r, emailStatus: "failed", emailError: "No response from server" };
+        return match.status === "sent"
+          ? { ...r, emailStatus: "sent", emailSentAt: now, emailError: undefined }
+          : { ...r, emailStatus: "failed", emailError: match.error || "Send failed" };
+      }));
       const sent = Number(data?.sent || 0);
       const total = Number(data?.total || recips.length);
       if (sent === total) toast.success(`Sent ${sent} email${sent !== 1 ? "s" : ""}.`);
-      else if (sent > 0) toast.warning(`Sent ${sent}/${total}. Some failed.`);
-      else toast.error("Failed to send emails.");
+      else if (sent > 0) toast.warning(`Sent ${sent}/${total}. Some failed — see status column.`);
+      else toast.error("Failed to send emails. See status column for details.");
       setMailOpen(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to send emails.");
+      const msg = e instanceof Error ? e.message : "Failed to send emails.";
+      setRows(prev => prev.map(r => targetIds.includes(r.id)
+        ? { ...r, emailStatus: "failed", emailError: msg }
+        : r));
+      toast.error(msg);
     } finally {
       setMailSending(false);
     }
@@ -519,6 +543,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                       <TableHead className="text-xs">Best-suited Vacancy</TableHead>
                       <TableHead className="text-xs">Score</TableHead>
                       <TableHead className="text-xs">Top 3 Matches</TableHead>
+                      <TableHead className="text-xs">Mail Status</TableHead>
                       <TableHead className="text-xs text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -580,6 +605,40 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                                 <Loader2 className="h-3 w-3 animate-spin text-muted-foreground self-center" />
                               )}
                             </div>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {!r.candidateEmail ? (
+                              <span className="text-muted-foreground text-[11px]">—</span>
+                            ) : r.emailStatus === "sending" ? (
+                              <Badge variant="secondary" className="text-[10px] gap-1">
+                                <Loader2 className="h-2.5 w-2.5 animate-spin" /> Sending
+                              </Badge>
+                            ) : r.emailStatus === "sent" ? (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                title={r.emailSentAt ? `Sent ${new Date(r.emailSentAt).toLocaleString()}` : "Sent"}
+                              >
+                                ✓ Sent
+                              </Badge>
+                            ) : r.emailStatus === "failed" ? (
+                              <div className="flex flex-col gap-0.5 max-w-[180px]">
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 self-start"
+                                  title={r.emailError || "Send failed"}
+                                >
+                                  ✗ Failed
+                                </Badge>
+                                {r.emailError && (
+                                  <span className="text-[10px] text-destructive truncate" title={r.emailError}>
+                                    {r.emailError}
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-[11px]">Not sent</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex items-center justify-end gap-1">
