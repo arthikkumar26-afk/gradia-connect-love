@@ -189,6 +189,7 @@ const HRDashboard = () => {
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
     { id: "candidates", label: "Candidates", icon: Users },
     { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
+    { id: "email-status", label: "Email Status", icon: Mail },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
     
     { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
