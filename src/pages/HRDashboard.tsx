@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw, UserSquare2 } from "lucide-react";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw, UserSquare2, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
@@ -15,6 +15,7 @@ import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 import HRCandidatesData from "@/components/hr/HRCandidatesData";
+import HREmailStatus from "@/components/hr/HREmailStatus";
 
 interface JobRow {
   id: string;
@@ -188,6 +189,7 @@ const HRDashboard = () => {
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
     { id: "candidates", label: "Candidates", icon: Users },
     { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
+    { id: "email-status", label: "Email Status", icon: Mail },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
     
     { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
@@ -397,6 +399,8 @@ const HRDashboard = () => {
         ) : (
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
         );
+      case "email-status":
+        return <HREmailStatus />;
       case "candidate-info":
         return parentEmployerId && user ? (
           <HRCandidateInfoSheet
