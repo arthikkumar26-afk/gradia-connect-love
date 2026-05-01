@@ -507,7 +507,7 @@ const HRDashboard = () => {
         {/* Mobile Overlay */}
         {sidebarOpen && (
           <div
-            className="lg:hidden fixed inset-0 top-14 bg-background/80 backdrop-blur-sm z-30"
+            className="md:hidden fixed inset-0 top-14 bg-background/80 backdrop-blur-sm z-30"
             onClick={() => setSidebarOpen(false)}
           />
         )}
