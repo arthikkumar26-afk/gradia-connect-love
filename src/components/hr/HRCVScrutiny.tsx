@@ -163,8 +163,8 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
           lastError = await getScanErrorMessage(error, data);
           console.error("score-resume-match error", error || data?.error);
         }
-      } catch (e: any) {
-        lastError = e?.message || "Scan failed";
+      } catch (e: unknown) {
+        lastError = e instanceof Error ? e.message : "Scan failed";
         console.error("scan error", e);
       }
       const sorted = [...matches].sort((a, b) => b.score - a.score);
