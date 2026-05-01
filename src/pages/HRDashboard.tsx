@@ -518,7 +518,7 @@ const HRDashboard = () => {
               <h1 className="text-xl md:text-2xl font-bold capitalize">
                 {menuItems.find(m => m.id === activeTab)?.label || "Dashboard"}
               </h1>
-              <div className="hidden lg:flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => loadDashboardData()} disabled={loading}>
                   <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
                   Refresh
