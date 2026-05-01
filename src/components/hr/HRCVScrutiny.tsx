@@ -16,7 +16,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Upload, Loader2, FileText, Trophy, ScanSearch, Trash2, Download, Mail, Send,
+  Upload, Loader2, FileText, Trophy, ScanSearch, Trash2, Download, Mail, Send, RotateCw,
 } from "lucide-react";
 import { toast } from "sonner";
 
