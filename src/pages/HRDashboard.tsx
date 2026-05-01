@@ -513,8 +513,8 @@ const HRDashboard = () => {
         )}
 
         {/* Main */}
-        <main className="flex-1 min-h-screen">
-          <div className="container mx-auto p-4 md:p-6 max-w-7xl">
+        <main className="flex-1 min-w-0 min-h-screen overflow-x-hidden">
+          <div className="container mx-auto p-4 md:p-6 max-w-7xl min-w-0">
             <div className="mb-4 flex items-center justify-between">
               <h1 className="text-xl md:text-2xl font-bold capitalize">
                 {menuItems.find(m => m.id === activeTab)?.label || "Dashboard"}
