@@ -519,6 +519,10 @@ const HRDashboard = () => {
                 {menuItems.find(m => m.id === activeTab)?.label || "Dashboard"}
               </h1>
               <div className="hidden lg:flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => loadDashboardData()} disabled={loading}>
+                  <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+                  Refresh
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(!sidebarOpen)}>
                   <Menu className="h-4 w-4" />
                 </Button>
