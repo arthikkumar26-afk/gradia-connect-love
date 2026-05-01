@@ -653,6 +653,96 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
           </TabsContent>
         </Tabs>
       )}
+
+      {/* Email composer dialog */}
+      <Dialog open={mailOpen} onOpenChange={setMailOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-primary" /> Send Email to Candidate{mailRowIds.length > 1 ? "s" : ""}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {mailRowIds.length} recipient{mailRowIds.length !== 1 ? "s" : ""}.
+              Use tokens: <code className="text-[11px]">{"{{name}}"}</code>, <code className="text-[11px]">{"{{job}}"}</code>,
+              <code className="text-[11px] ml-1">{"{{score}}"}</code>, <code className="text-[11px] ml-1">{"{{company}}"}</code>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Composer */}
+            <div className="space-y-3">
+              <div>
+                <Label className="text-xs">Subject</Label>
+                <Input
+                  value={mailSubject}
+                  onChange={(e) => setMailSubject(e.target.value)}
+                  className="h-9 text-sm mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Body</Label>
+                <Textarea
+                  value={mailBody}
+                  onChange={(e) => setMailBody(e.target.value)}
+                  className="min-h-[260px] text-sm mt-1 font-mono"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Recipients ({mailRowIds.length})</Label>
+                <div className="border rounded-md p-2 max-h-[140px] overflow-y-auto space-y-1 mt-1 bg-muted/30">
+                  {mailRowIds.map((id, i) => {
+                    const r = rows.find(x => x.id === id);
+                    if (!r) return null;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setMailPreviewIndex(i)}
+                        className={`w-full text-left text-[11px] px-2 py-1 rounded ${i === mailPreviewIndex ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
+                      >
+                        <span className="font-medium">{r.candidateName || r.fileName}</span>
+                        <span className="text-muted-foreground ml-1">— {r.candidateEmail}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="space-y-2">
+              <Label className="text-xs">Live Preview</Label>
+              {(() => {
+                const r = rows.find(x => x.id === mailRowIds[mailPreviewIndex]);
+                if (!r) return <div className="text-xs text-muted-foreground">No preview.</div>;
+                return (
+                  <div className="border rounded-md bg-background overflow-hidden">
+                    <div className="px-3 py-2 border-b bg-muted/40 text-[11px]">
+                      <div><span className="text-muted-foreground">To:</span> {r.candidateEmail}</div>
+                      <div><span className="text-muted-foreground">Subject:</span> <span className="font-medium">{applyTokens(mailSubject, r)}</span></div>
+                    </div>
+                    <div className="p-3 text-xs whitespace-pre-wrap leading-relaxed max-h-[340px] overflow-y-auto">
+                      {applyTokens(mailBody, r)}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setMailOpen(false)} disabled={mailSending}>Cancel</Button>
+            <Button onClick={sendMails} disabled={mailSending || mailRowIds.length === 0}>
+              {mailSending ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Sending…</>
+              ) : (
+                <><Send className="h-3.5 w-3.5 mr-1" /> Send to {mailRowIds.length} candidate{mailRowIds.length !== 1 ? "s" : ""}</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
