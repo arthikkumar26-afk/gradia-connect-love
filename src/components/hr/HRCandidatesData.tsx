@@ -253,6 +253,21 @@ export default function HRCandidatesData({ hrUserId }: Props) {
             </div>
           )}
 
+          {creditsOut && (
+            <div className="text-xs border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 rounded-md p-3 flex items-start gap-2">
+              <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-amber-900 dark:text-amber-200">AI credits exhausted</p>
+                <p className="text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                  Resumes uploaded successfully, but AI parsing couldn't run because the workspace has no AI credits left. Add AI balance, then click <strong>Retry parsing</strong> below — your uploaded resumes are still here.
+                </p>
+              </div>
+              <Button size="sm" className="h-7 text-xs shrink-0" onClick={retryFailed} disabled={bulkBusy}>
+                Retry parsing
+              </Button>
+            </div>
+          )}
+
           {profiles.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap pt-1">
               <Input
@@ -261,6 +276,12 @@ export default function HRCandidatesData({ hrUserId }: Props) {
                 onChange={(e) => setFilter(e.target.value)}
                 className="h-8 text-xs max-w-xs"
               />
+              {profiles.some(p => p.error && p._file) && (
+                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={retryFailed} disabled={bulkBusy}>
+                  {bulkBusy ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                  Retry failed ({profiles.filter(p => p.error && p._file).length})
+                </Button>
+              )}
               <Button size="sm" variant="ghost" className="h-8 text-xs text-destructive ml-auto" onClick={clearAll}>
                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
               </Button>
