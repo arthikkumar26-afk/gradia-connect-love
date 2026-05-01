@@ -399,6 +399,8 @@ const HRDashboard = () => {
         ) : (
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
         );
+      case "email-status":
+        return <HREmailStatus />;
       case "candidate-info":
         return parentEmployerId && user ? (
           <HRCandidateInfoSheet
