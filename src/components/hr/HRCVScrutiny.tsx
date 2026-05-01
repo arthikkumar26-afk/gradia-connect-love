@@ -473,6 +473,16 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                   <><ScanSearch className="h-3.5 w-3.5 mr-1" /> Scan All ({rows.filter(r => r.resumeUrl && r.matches.length === 0 && !r.scanning).length})</>
                 )}
               </Button>
+              <Button
+                size="sm"
+                variant="default"
+                className="h-8 text-xs"
+                onClick={openMailAll}
+                disabled={mailableRows.length === 0}
+                title={mailableRows.length === 0 ? "No scanned candidates with email yet" : `Send email to ${mailableRows.length} candidate(s)`}
+              >
+                <Mail className="h-3.5 w-3.5 mr-1" /> Send Email ({mailableRows.length})
+              </Button>
               <Button size="sm" variant="outline" className="h-8 text-xs" onClick={exportCsv}>
                 <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
               </Button>
