@@ -11,7 +11,12 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Upload, Loader2, FileText, Trophy, ScanSearch, Trash2, Download,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Upload, Loader2, FileText, Trophy, ScanSearch, Trash2, Download, Mail, Send,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +45,9 @@ interface ResumeRow {
   totalToScan: number;
   matches: Match[];
   error?: string;
+  candidateName?: string;
+  candidateEmail?: string;
+  parsing?: boolean;
 }
 
 const getScanErrorMessage = async (error?: { message?: string; context?: unknown } | null, data?: { error?: string } | null) => {
