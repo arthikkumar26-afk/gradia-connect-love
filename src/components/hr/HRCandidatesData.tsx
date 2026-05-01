@@ -36,6 +36,8 @@ interface ParsedProfile {
   skill_highlights?: string[];
   education?: Array<{ education_level?: string; school_college_name?: string; board_university?: string; year_of_passing?: string | number }>;
   experience?: Array<{ organization?: string; designation?: string; duration?: string; description?: string }>;
+  // kept in-memory only, used to retry parsing without re-uploading
+  _file?: File;
 }
 
 interface Props {
