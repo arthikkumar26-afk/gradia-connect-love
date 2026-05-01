@@ -134,7 +134,7 @@ const HRDashboard = () => {
       }
     } catch (error) {
       console.error("Failed to refresh HR dashboard", error);
-      toast.error("Couldn't refresh HR dashboard data.");
+      if (!options?.silent) toast.error("Couldn't refresh HR dashboard data.");
     } finally {
       setLoading(false);
     }
