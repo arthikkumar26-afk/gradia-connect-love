@@ -377,8 +377,14 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       .split("{{file}}").join(rec.fileName);
   };
 
-  const sendMails = async () => {
-    const targetIds = mailRowIds.filter(id => {
+  // Core sender — used by initial send AND retry. Updates per-row status live.
+  const dispatchEmails = async (
+    rowIds: string[],
+    opts: { closeDialog?: boolean; subject?: string; body?: string } = {},
+  ): Promise<{ sent: number; total: number } | null> => {
+    const subject = opts.subject ?? mailSubject;
+    const body = opts.body ?? mailBody;
+    const targetIds = rowIds.filter(id => {
       const r = rows.find(x => x.id === id);
       return r && r.candidateEmail;
     });
@@ -387,10 +393,9 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       .map(buildRecipient);
     if (recips.length === 0) {
       toast.error("No valid recipients.");
-      return;
+      return null;
     }
     setMailSending(true);
-    // Mark rows as sending
     setRows(prev => prev.map(r => targetIds.includes(r.id)
       ? { ...r, emailStatus: "sending", emailError: undefined }
       : r));
@@ -398,8 +403,8 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       const { data, error } = await supabase.functions.invoke("send-cv-scrutiny-email", {
         body: {
           recipients: recips,
-          subject: mailSubject,
-          htmlBody: mailBody,
+          subject,
+          htmlBody: body,
           fromName: employerName,
         },
       });
@@ -416,19 +421,48 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       }));
       const sent = Number(data?.sent || 0);
       const total = Number(data?.total || recips.length);
-      if (sent === total) toast.success(`Sent ${sent} email${sent !== 1 ? "s" : ""}.`);
-      else if (sent > 0) toast.warning(`Sent ${sent}/${total}. Some failed — see status column.`);
-      else toast.error("Failed to send emails. See status column for details.");
-      setMailOpen(false);
+      if (opts.closeDialog) setMailOpen(false);
+      return { sent, total };
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to send emails.";
       setRows(prev => prev.map(r => targetIds.includes(r.id)
         ? { ...r, emailStatus: "failed", emailError: msg }
         : r));
       toast.error(msg);
+      return null;
     } finally {
       setMailSending(false);
     }
+  };
+
+  const sendMails = async () => {
+    const res = await dispatchEmails(mailRowIds, { closeDialog: true });
+    if (!res) return;
+    const { sent, total } = res;
+    if (sent === total) toast.success(`Sent ${sent} email${sent !== 1 ? "s" : ""}.`);
+    else if (sent > 0) toast.warning(`Sent ${sent}/${total}. Some failed — see status column.`);
+    else toast.error("Failed to send emails. See status column for details.");
+  };
+
+  // Retry only rows that previously failed
+  const failedRows = useMemo(
+    () => rows.filter(r => r.emailStatus === "failed" && r.candidateEmail),
+    [rows]
+  );
+
+  const retryFailed = async () => {
+    if (failedRows.length === 0) {
+      toast.info("No failed emails to retry.");
+      return;
+    }
+    const ids = failedRows.map(r => r.id);
+    toast.info(`Retrying ${ids.length} failed email${ids.length !== 1 ? "s" : ""}…`);
+    const res = await dispatchEmails(ids);
+    if (!res) return;
+    const { sent, total } = res;
+    if (sent === total) toast.success(`Retry succeeded for all ${sent} candidate${sent !== 1 ? "s" : ""}.`);
+    else if (sent > 0) toast.warning(`Retry: ${sent}/${total} sent. ${total - sent} still failing.`);
+    else toast.error("Retry failed for all candidates. See status column.");
   };
   return (
     <div className="space-y-4">
