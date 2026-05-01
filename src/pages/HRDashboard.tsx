@@ -364,6 +364,16 @@ const HRDashboard = () => {
         ) : (
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
         );
+      case "cv-scrutiny":
+        return parentEmployerId && user ? (
+          <HRCVScrutiny
+            hrUserId={user.id}
+            employerUserId={parentEmployerId}
+            employerName={parentEmployerName}
+          />
+        ) : (
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
+        );
       case "pipeline":
         return <SampleCandidateDemo />;
       case "interviews":
