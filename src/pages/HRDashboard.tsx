@@ -473,7 +473,7 @@ const HRDashboard = () => {
                     key={item.id}
                     onClick={() => {
                       setActiveTab(item.id);
-                      if (window.innerWidth < 1024) setSidebarOpen(false);
+                      if (window.innerWidth < 768) setSidebarOpen(false);
                     }}
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-left",
