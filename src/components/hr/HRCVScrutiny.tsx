@@ -89,6 +89,18 @@ export default function HRCVScrutiny({ hrUserId, employerUserId, employerName }:
   const [filter, setFilter] = useState("");
   const [tab, setTab] = useState("by-resume");
 
+  // Email composer state
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailRowIds, setMailRowIds] = useState<string[]>([]);
+  const [mailSubject, setMailSubject] = useState(
+    `Update on your application — {{job}} at {{company}}`
+  );
+  const [mailBody, setMailBody] = useState(
+    `Hi {{name}},\n\nThank you for sharing your resume with {{company}}. After reviewing your profile against our open vacancy "{{job}}", your AI-match score is {{score}}%.\n\nWe'd like to take your candidature forward. Our team will reach out shortly with the next steps.\n\nBest regards,\n{{company}} Hiring Team`
+  );
+  const [mailPreviewIndex, setMailPreviewIndex] = useState(0);
+  const [mailSending, setMailSending] = useState(false);
+
   useEffect(() => {
     (async () => {
       setLoadingJobs(true);
