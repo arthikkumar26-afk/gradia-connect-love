@@ -104,12 +104,15 @@ export default function HRCandidatesData({ hrUserId }: Props) {
       fd.append("file", file);
       const { data, error } = await supabase.functions.invoke("parse-resume", { body: fd });
       if (error || data?.error) {
-        const raw = String(data?.error || error?.message || "Parse failed");
-        const friendly = raw.includes("402") || raw.includes("credits exhausted")
+        const { raw, status } = await parseInvokeError(error, data);
+        const isCredits = status === 402 || /402|credits exhausted|payment_required|Not enough credits/i.test(raw);
+        const isBusy = status === 429 || /429|rate.?limit|busy/i.test(raw);
+        const friendly = isCredits
           ? "AI credits exhausted. Add balance, then retry."
-          : raw.includes("429") || raw.includes("busy")
+          : isBusy
             ? "AI is busy. Wait a moment and retry."
             : raw;
+        if (isCredits) setCreditsOut(true);
         setProfiles(prev => prev.map(p => p.id === id ? { ...p, parsing: false, error: friendly } : p));
         return;
       }
