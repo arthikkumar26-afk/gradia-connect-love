@@ -334,7 +334,80 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
     URL.revokeObjectURL(url);
   };
 
-  return (
+  // ---- Email composer helpers ----
+  const mailableRows = useMemo(
+    () => rows.filter(r => r.matches.length > 0 && r.candidateEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.candidateEmail)),
+    [rows]
+  );
+
+  const openMailFor = (rowIds: string[]) => {
+    const valid = rowIds.filter(id => mailableRows.find(r => r.id === id));
+    if (valid.length === 0) {
+      toast.error("No scanned candidates with valid email yet. Wait for parsing to complete.");
+      return;
+    }
+    setMailRowIds(valid);
+    setMailPreviewIndex(0);
+    setMailOpen(true);
+  };
+
+  const openMailAll = () => openMailFor(mailableRows.map(r => r.id));
+
+  const buildRecipient = (r: ResumeRow) => {
+    const best = r.matches[0];
+    return {
+      email: r.candidateEmail!,
+      name: r.candidateName || r.fileName.replace(/\.[^.]+$/, ""),
+      jobTitle: best?.jobTitle || "",
+      score: best?.score ?? 0,
+      fileName: r.fileName,
+    };
+  };
+
+  const applyTokens = (s: string, r: ResumeRow) => {
+    const rec = buildRecipient(r);
+    return s
+      .replaceAll("{{name}}", rec.name)
+      .replaceAll("{{job}}", rec.jobTitle)
+      .replaceAll("{{score}}", String(rec.score))
+      .replaceAll("{{company}}", employerName || "")
+      .replaceAll("{{file}}", rec.fileName);
+  };
+
+  const sendMails = async () => {
+    const recips = mailRowIds
+      .map(id => rows.find(r => r.id === id))
+      .filter((r): r is ResumeRow => !!r && !!r.candidateEmail)
+      .map(buildRecipient);
+    if (recips.length === 0) {
+      toast.error("No valid recipients.");
+      return;
+    }
+    setMailSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-cv-scrutiny-email", {
+        body: {
+          recipients: recips,
+          subject: mailSubject,
+          htmlBody: mailBody,
+          fromName: employerName,
+        },
+      });
+      if (error) throw error;
+      const sent = Number(data?.sent || 0);
+      const total = Number(data?.total || recips.length);
+      if (sent === total) toast.success(`Sent ${sent} email${sent !== 1 ? "s" : ""}.`);
+      else if (sent > 0) toast.warning(`Sent ${sent}/${total}. Some failed.`);
+      else toast.error("Failed to send emails.");
+      setMailOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to send emails.");
+    } finally {
+      setMailSending(false);
+    }
+  };
+
+
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
