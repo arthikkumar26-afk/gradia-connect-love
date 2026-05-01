@@ -213,7 +213,8 @@ const HRDashboard = () => {
             </Card>
           </div>
         );
-      case "jobs": {
+      case "jobs":
+      case "vacancies": {
         const statusOptions = ["all", "active", "approved", "open", "draft", "closed", "rejected", "pending"];
         const filtered = jobs.filter(j => {
           if (jobStatusFilter === "all") return true;
