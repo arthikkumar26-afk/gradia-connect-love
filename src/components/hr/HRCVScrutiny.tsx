@@ -77,7 +77,11 @@ export default function HRCVScrutiny({ hrUserId, employerUserId, employerName }:
     [jobs]
   );
 
-  const targetJobs = activeJobs.length ? activeJobs : jobs;
+  // Cap the number of vacancies each resume is scored against so bulk uploads
+  // finish in a reasonable time (otherwise N resumes × M jobs sequential AI
+  // calls makes the UI appear to "hang" after upload).
+  const MAX_JOBS_PER_SCAN = 15;
+  const targetJobs = (activeJobs.length ? activeJobs : jobs).slice(0, MAX_JOBS_PER_SCAN);
 
   const scoreTone = (n: number) =>
     n >= 75 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" :
