@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles } from "lucide-react";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
@@ -13,6 +13,7 @@ import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
 import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
 import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 import HRProfileMatchScanner from "@/components/hr/HRProfileMatchScanner";
+import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 
 interface JobRow {
   id: string;
@@ -147,6 +148,7 @@ const HRDashboard = () => {
     { id: "candidates", label: "Candidates", icon: Users },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
     { id: "profile-match", label: "Profile Match", icon: Sparkles },
+    { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
     { id: "pipeline", label: "Pipeline", icon: GitBranch },
     { id: "interviews", label: "Interviews", icon: Calendar },
   ];
@@ -355,6 +357,16 @@ const HRDashboard = () => {
       case "profile-match":
         return parentEmployerId && user ? (
           <HRProfileMatchScanner
+            hrUserId={user.id}
+            employerUserId={parentEmployerId}
+            employerName={parentEmployerName}
+          />
+        ) : (
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
+        );
+      case "cv-scrutiny":
+        return parentEmployerId && user ? (
+          <HRCVScrutiny
             hrUserId={user.id}
             employerUserId={parentEmployerId}
             employerName={parentEmployerName}
