@@ -198,6 +198,27 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
       : r));
   };
 
+  // Quick parse to extract candidate name + email for mailing
+  const parseRow = async (rowId: string, file: File) => {
+    setRows(prev => prev.map(r => r.id === rowId ? { ...r, parsing: true } : r));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { data, error } = await supabase.functions.invoke("parse-resume", { body: fd });
+      if (error || data?.error) {
+        setRows(prev => prev.map(r => r.id === rowId ? { ...r, parsing: false } : r));
+        return;
+      }
+      const name = String(data?.full_name || "").trim();
+      const email = String(data?.email || "").trim().toLowerCase();
+      setRows(prev => prev.map(r => r.id === rowId
+        ? { ...r, parsing: false, candidateName: name || r.candidateName, candidateEmail: email || r.candidateEmail }
+        : r));
+    } catch {
+      setRows(prev => prev.map(r => r.id === rowId ? { ...r, parsing: false } : r));
+    }
+  };
+
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     if (targetJobs.length === 0) {
@@ -224,6 +245,8 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
         return null;
       }
       setRows(prev => prev.map(r => r.id === id ? { ...r, uploading: false, resumeUrl: out.url } : r));
+      // Parse for email/name in background (non-blocking)
+      parseRow(id, f).catch(() => {});
       return { id, url: out.url, name: out.name };
     }));
 
