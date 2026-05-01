@@ -541,6 +541,22 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
               >
                 <Mail className="h-3.5 w-3.5 mr-1" /> Send Email ({mailableRows.length})
               </Button>
+              {failedRows.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs border-destructive/40 text-destructive hover:bg-destructive/10"
+                  onClick={retryFailed}
+                  disabled={mailSending}
+                  title={`Retry ${failedRows.length} failed email${failedRows.length !== 1 ? "s" : ""}`}
+                >
+                  {mailSending ? (
+                    <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Retrying…</>
+                  ) : (
+                    <><RotateCw className="h-3.5 w-3.5 mr-1" /> Retry Failed ({failedRows.length})</>
+                  )}
+                </Button>
+              )}
               <Button size="sm" variant="outline" className="h-8 text-xs" onClick={exportCsv}>
                 <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
               </Button>
