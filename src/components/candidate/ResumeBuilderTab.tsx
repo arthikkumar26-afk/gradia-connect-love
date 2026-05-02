@@ -73,7 +73,13 @@ export default function ResumeBuilderTab() {
     education: [{ degree: "", school: "", year: "" }],
     skills: [],
     projects: [{ name: "", technologies: "", duration: "", description: "" }],
+    photoUrl: "",
+    photoPosition: "left",
   });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [rawImageUrl, setRawImageUrl] = useState<string>("");
 
   useEffect(() => {
     loadSavedResume();
