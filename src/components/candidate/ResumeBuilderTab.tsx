@@ -321,8 +321,11 @@ export default function ResumeBuilderTab() {
   };
 
   const handleInputChange = (field: keyof ResumeData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ ...prev, [field]: value as never }));
     setHasUnsavedChanges(true);
+
+  const _photoSpacer_ = null; // (formatting anchor)
+
   };
 
   const handleExperienceChange = (index: number, field: keyof Experience, value: string) => {
