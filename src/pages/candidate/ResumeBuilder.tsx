@@ -11,6 +11,7 @@ import { ArrowLeft, Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Chec
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 interface Experience {
   title: string;
@@ -91,6 +92,8 @@ export default function ResumeBuilder() {
   });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [rawImageUrl, setRawImageUrl] = useState<string>("");
 
   useEffect(() => {
     fetchUserProfile();
@@ -211,7 +214,7 @@ export default function ResumeBuilder() {
     setFormData(prev => ({ ...prev, [field]: value as never }));
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -222,22 +225,34 @@ export default function ResumeBuilder() {
       toast({ title: "File too large", description: "Image must be under 5MB.", variant: "destructive" });
       return;
     }
+    // Open the crop modal — we always force a 1:1 (square) crop before upload
+    const url = URL.createObjectURL(file);
+    setRawImageUrl(url);
+    setCropOpen(true);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const handleCroppedPhoto = async (croppedBlob: Blob) => {
     setUploadingPhoto(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${user.id}/resume-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("profile-pictures").upload(path, file, { upsert: true });
+      const path = `${user.id}/resume-${Date.now()}.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from("profile-pictures")
+        .upload(path, croppedBlob, { upsert: true, contentType: "image/jpeg" });
       if (upErr) throw upErr;
       const { data } = supabase.storage.from("profile-pictures").getPublicUrl(path);
       setFormData(prev => ({ ...prev, photoUrl: data.publicUrl }));
-      toast({ title: "Photo uploaded", description: "Your photo will appear on the resume." });
+      toast({ title: "Photo ready", description: "Cropped to a clean square for your resume." });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message || "Could not upload image.", variant: "destructive" });
     } finally {
       setUploadingPhoto(false);
-      if (photoInputRef.current) photoInputRef.current.value = "";
+      if (rawImageUrl) {
+        URL.revokeObjectURL(rawImageUrl);
+        setRawImageUrl("");
+      }
     }
   };
 
@@ -828,6 +843,22 @@ export default function ResumeBuilder() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ImageCropModal
+        open={cropOpen}
+        imageUrl={rawImageUrl}
+        onClose={() => {
+          setCropOpen(false);
+          if (rawImageUrl) {
+            URL.revokeObjectURL(rawImageUrl);
+            setRawImageUrl("");
+          }
+        }}
+        onCropComplete={(blob) => {
+          setCropOpen(false);
+          handleCroppedPhoto(blob);
+        }}
+      />
     </div>
   );
 }
