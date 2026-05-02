@@ -92,6 +92,8 @@ export default function ResumeBuilder() {
   });
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [rawImageUrl, setRawImageUrl] = useState<string>("");
 
   useEffect(() => {
     fetchUserProfile();
