@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp, Crown, Zap, Lock } from "lucide-react";
+import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp, Crown, Zap, Lock, ImageIcon, X } from "lucide-react";
 import ATSScoreCard from "./ATSScoreCard";
 import { toast as sonnerToast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 interface Experience {
   title: string;
