@@ -44,6 +44,8 @@ interface ResumeData {
   education: Education[];
   skills: string[];
   projects: Project[];
+  photoUrl?: string;
+  photoPosition?: "left" | "right" | "none";
 }
 
 import { TEMPLATE_CONFIG, getTemplateComponent } from "./ResumeTemplates";
