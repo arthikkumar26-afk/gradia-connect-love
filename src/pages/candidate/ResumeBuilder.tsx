@@ -209,8 +209,40 @@ export default function ResumeBuilder() {
   };
 
   const handleInputChange = (field: keyof ResumeData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ ...prev, [field]: value as never }));
   };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please upload an image file.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Image must be under 5MB.", variant: "destructive" });
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/resume-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("profile-pictures").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("profile-pictures").getPublicUrl(path);
+      setFormData(prev => ({ ...prev, photoUrl: data.publicUrl }));
+      toast({ title: "Photo uploaded", description: "Your photo will appear on the resume." });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message || "Could not upload image.", variant: "destructive" });
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const removePhoto = () => setFormData(prev => ({ ...prev, photoUrl: "" }));
 
   const handleExperienceChange = (index: number, field: keyof Experience, value: string) => {
     const updated = [...formData.experience];
