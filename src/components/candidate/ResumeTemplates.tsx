@@ -32,6 +32,22 @@ interface ResumeData {
   education: Education[];
   skills: string[];
   projects?: Project[];
+  photoUrl?: string;
+  photoPosition?: "left" | "right" | "none";
+}
+
+// Reusable photo chip rendered inside template headers.
+// Returns null when there's no photo or when user hid it.
+function ResumePhoto({ data, scale, ringClass = "ring-2 ring-white/70" }: { data: ResumeData; scale?: boolean; ringClass?: string }) {
+  if (!data.photoUrl || data.photoPosition === "none") return null;
+  const size = scale ? "h-3 w-3" : "h-14 w-14";
+  return (
+    <img
+      src={data.photoUrl}
+      alt={data.fullName || "Profile"}
+      className={`${size} rounded-full object-cover ${ringClass} shadow-sm shrink-0`}
+    />
+  );
 }
 
 interface ResumeTemplateProps {
@@ -53,7 +69,13 @@ export function ExecutiveTemplate({ data, scale }: ResumeTemplateProps) {
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`}>
       {/* Header - Name & Summary */}
       <div className="mb-3">
-        <h1 className={`${scale ? 'text-[12px]' : 'text-xl'} font-bold text-[#1e3a5f]`}>{data.fullName || "Your Name"}</h1>
+        <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+          <ResumePhoto data={data} scale={scale} />
+
+          <h1 className={`${scale ? 'text-[12px]' : 'text-xl'} font-bold text-[#1e3a5f]`}>{data.fullName || "Your Name"}</h1>
+
+        </div>
         {data.summary && (
           <p className="text-[#555] mt-1 leading-relaxed">{data.summary}</p>
         )}
@@ -153,7 +175,13 @@ export function ProfessionalTemplate({ data, scale }: ResumeTemplateProps) {
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`}>
       {/* Header */}
       <div className="border-b-2 border-[#2563eb] pb-3 mb-3">
-        <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#1e293b]`}>{data.fullName || "Your Name"}</h1>
+        <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+          <ResumePhoto data={data} scale={scale} />
+
+          <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#1e293b]`}>{data.fullName || "Your Name"}</h1>
+
+        </div>
         <p className="text-[#2563eb] font-medium">{data.experience[0]?.title || "Professional"}</p>
         <div className="flex flex-wrap gap-2 mt-1 text-[#64748b]">
           {data.email && <span className="flex items-center gap-0.5"><Mail className="h-2 w-2" />{data.email}</span>}
@@ -241,7 +269,13 @@ export function ModernAccentTemplate({ data, scale }: ResumeTemplateProps) {
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} min-h-[400px]`}>
       {/* Header with accent */}
       <div className="bg-gradient-to-r from-[#0f766e] to-[#14b8a6] text-white p-3">
-        <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold`}>{data.fullName || "Your Name"}</h1>
+        <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+          <ResumePhoto data={data} scale={scale} />
+
+          <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold`}>{data.fullName || "Your Name"}</h1>
+
+        </div>
         <p className="opacity-90">{data.experience[0]?.title || "Professional"}</p>
         <div className="flex flex-wrap gap-2 mt-1 opacity-80">
           {data.email && <span>{data.email}</span>}
@@ -332,7 +366,13 @@ export function BoldSplitTemplate({ data, scale }: ResumeTemplateProps) {
         <div className="flex-1 p-3">
           {/* Name header */}
           <div className="mb-3">
-            <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-black text-[#1e1b4b]`}>{(data.fullName || "Your Name").toUpperCase()}</h1>
+            <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+              <ResumePhoto data={data} scale={scale} />
+
+              <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-black text-[#1e1b4b]`}>{(data.fullName || "Your Name").toUpperCase()}</h1>
+
+            </div>
             <p className="text-[#7c3aed] font-semibold">{data.experience[0]?.title || "Professional"}</p>
             <div className="flex flex-wrap gap-2 mt-1 text-[#6b7280]">
               {data.email && <span>{data.email}</span>}
@@ -413,7 +453,13 @@ export function MinimalistTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`}>
       <div className="text-center mb-3">
-        <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-light tracking-[0.3em] text-[#111827] uppercase`}>{data.fullName || "Your Name"}</h1>
+        <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+          <ResumePhoto data={data} scale={scale} />
+
+          <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-light tracking-[0.3em] text-[#111827] uppercase`}>{data.fullName || "Your Name"}</h1>
+
+        </div>
         <div className="w-12 h-px bg-[#d1d5db] mx-auto my-1.5" />
         <p className="text-[#6b7280] tracking-wider">{data.experience[0]?.title || "Professional"}</p>
         <div className="flex justify-center gap-3 mt-1 text-[#9ca3af]">
@@ -473,7 +519,13 @@ export function CorporateTemplate({ data, scale }: ResumeTemplateProps) {
       {/* Right sidebar */}
       <div className="w-[65%] p-3 space-y-3">
         <div>
-          <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#0f172a]`}>{data.fullName || "Your Name"}</h1>
+          <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+            <ResumePhoto data={data} scale={scale} />
+
+            <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#0f172a]`}>{data.fullName || "Your Name"}</h1>
+
+          </div>
           <p className="text-[#ea580c] font-medium">{data.experience[0]?.title || "Professional"}</p>
         </div>
 
@@ -544,7 +596,13 @@ export function TwoColumnTemplate({ data, scale }: ResumeTemplateProps) {
           <User className={`${scale ? 'h-3 w-3' : 'h-5 w-5'}`} />
         </div>
         <div>
-          <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold`}>{data.fullName || "Your Name"}</h1>
+          <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+            <ResumePhoto data={data} scale={scale} />
+
+            <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold`}>{data.fullName || "Your Name"}</h1>
+
+          </div>
           <p className="opacity-80">{data.experience[0]?.title || "Professional"}</p>
         </div>
       </div>
@@ -621,7 +679,10 @@ export function WarmSidebarTemplate({ data, scale }: ResumeTemplateProps) {
           <div className="w-10 h-10 mx-auto rounded-full bg-[#d97706] flex items-center justify-center mb-1">
             <User className={`${scale ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
           </div>
-          <h2 className={`${scale ? 'text-[8px]' : 'text-sm'} font-bold text-[#78350f]`}>{data.fullName || "Your Name"}</h2>
+          <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+            <ResumePhoto data={data} scale={scale} />
+            <h2 className={`${scale ? 'text-[8px]' : 'text-sm'} font-bold text-[#78350f]`}>{data.fullName || "Your Name"}</h2>
+          </div>
           <p className="text-[#92400e]">{data.experience[0]?.title || "Professional"}</p>
         </div>
 
@@ -690,7 +751,13 @@ export function TechGridTemplate({ data, scale }: ResumeTemplateProps) {
     <div className={`bg-[#fafafa] ${scale ? 'text-[6px]' : 'text-xs'} p-3 min-h-[400px]`}>
       <div className="flex items-center gap-3 mb-3 pb-2 border-b-2 border-[#18181b]">
         <div>
-          <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-black text-[#18181b] tracking-tight`}>{data.fullName || "Your Name"}</h1>
+          <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+            <ResumePhoto data={data} scale={scale} />
+
+            <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-black text-[#18181b] tracking-tight`}>{data.fullName || "Your Name"}</h1>
+
+          </div>
           <p className="text-[#a1a1aa] uppercase tracking-widest font-medium">{data.experience[0]?.title || "Professional"}</p>
         </div>
       </div>
@@ -766,7 +833,13 @@ export function ClassicSerifTemplate({ data, scale }: ResumeTemplateProps) {
   return (
     <div className={`bg-white ${scale ? 'text-[6px]' : 'text-xs'} p-4 min-h-[400px]`} style={{ fontFamily: 'Georgia, serif' }}>
       <div className="text-center border-b-2 border-[#1f2937] pb-2 mb-3">
-        <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#1f2937]`}>{data.fullName || "Your Name"}</h1>
+        <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+
+          <ResumePhoto data={data} scale={scale} />
+
+          <h1 className={`${scale ? 'text-[10px]' : 'text-lg'} font-bold text-[#1f2937]`}>{data.fullName || "Your Name"}</h1>
+
+        </div>
         <div className="flex justify-center gap-2 mt-0.5 text-[#6b7280]">
           {data.email && <span>{data.email}</span>}
           {data.phone && <span>| {data.phone}</span>}

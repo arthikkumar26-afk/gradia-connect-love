@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp, Crown, Zap, Lock } from "lucide-react";
+import { Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Save, Loader2, Upload, TrendingUp, Crown, Zap, Lock, ImageIcon, X } from "lucide-react";
 import ATSScoreCard from "./ATSScoreCard";
 import { toast as sonnerToast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 interface Experience {
   title: string;
@@ -43,6 +44,8 @@ interface ResumeData {
   education: Education[];
   skills: string[];
   projects: Project[];
+  photoUrl?: string;
+  photoPosition?: "left" | "right" | "none";
 }
 
 import { TEMPLATE_CONFIG, getTemplateComponent } from "./ResumeTemplates";
@@ -70,7 +73,13 @@ export default function ResumeBuilderTab() {
     education: [{ degree: "", school: "", year: "" }],
     skills: [],
     projects: [{ name: "", technologies: "", duration: "", description: "" }],
+    photoUrl: "",
+    photoPosition: "left",
   });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [cropOpen, setCropOpen] = useState(false);
+  const [rawImageUrl, setRawImageUrl] = useState<string>("");
 
   useEffect(() => {
     loadSavedResume();
@@ -312,7 +321,54 @@ export default function ResumeBuilderTab() {
   };
 
   const handleInputChange = (field: keyof ResumeData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ ...prev, [field]: value as never }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please upload an image file.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Image must be under 5MB.", variant: "destructive" });
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setRawImageUrl(url);
+    setCropOpen(true);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const handleCroppedPhoto = async (croppedBlob: Blob) => {
+    setUploadingPhoto(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const path = `${user.id}/resume-${Date.now()}.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from("profile-pictures")
+        .upload(path, croppedBlob, { upsert: true, contentType: "image/jpeg" });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("profile-pictures").getPublicUrl(path);
+      setFormData(prev => ({ ...prev, photoUrl: data.publicUrl }));
+      setHasUnsavedChanges(true);
+      toast({ title: "Photo ready", description: "Cropped to a clean square for your resume." });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message || "Could not upload image.", variant: "destructive" });
+    } finally {
+      setUploadingPhoto(false);
+      if (rawImageUrl) {
+        URL.revokeObjectURL(rawImageUrl);
+        setRawImageUrl("");
+      }
+    }
+  };
+
+  const removePhoto = () => {
+    setFormData(prev => ({ ...prev, photoUrl: "" }));
     setHasUnsavedChanges(true);
   };
 
@@ -932,6 +988,85 @@ export default function ResumeBuilderTab() {
               </CardContent>
             </Card>
 
+            {/* Profile Photo */}
+            <Card>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  Profile Photo
+                </CardTitle>
+                <CardDescription className="text-[11px]">
+                  Optional — auto-cropped to a square so your resume header never looks stretched.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="flex flex-col sm:flex-row items-start gap-3">
+                  <div className="relative">
+                    {formData.photoUrl ? (
+                      <div className="relative h-20 w-20 rounded-md overflow-hidden border bg-muted">
+                        <img src={formData.photoUrl} alt="Resume photo" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={removePhoto}
+                          className="absolute top-0.5 right-0.5 bg-background/90 hover:bg-background rounded-full p-0.5 border shadow-sm"
+                          aria-label="Remove photo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-20 w-20 rounded-md border-2 border-dashed flex items-center justify-center bg-muted/30 text-muted-foreground">
+                        <ImageIcon className="h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2 w-full">
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                        className="h-7 text-xs"
+                      >
+                        <Upload className="h-3 w-3 mr-1.5" />
+                        {uploadingPhoto ? "Uploading..." : formData.photoUrl ? "Replace Photo" : "Upload Photo"}
+                      </Button>
+                    </div>
+                    <div>
+                      <Label className="text-[11px] mb-1 block">Position on Resume</Label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(["left", "right", "none"] as const).map((pos) => (
+                          <Button
+                            key={pos}
+                            type="button"
+                            size="sm"
+                            variant={formData.photoPosition === pos ? "default" : "outline"}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, photoPosition: pos }));
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="h-6 text-[11px] px-2 capitalize"
+                          >
+                            {pos === "none" ? "Hide" : `${pos} edge`}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">JPG / PNG, square works best. Max 5MB.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Experience */}
             <Card>
               <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
@@ -1044,6 +1179,22 @@ export default function ResumeBuilderTab() {
           </div>
         </TabsContent>
       </Tabs>
+
+      <ImageCropModal
+        open={cropOpen}
+        imageUrl={rawImageUrl}
+        onClose={() => {
+          setCropOpen(false);
+          if (rawImageUrl) {
+            URL.revokeObjectURL(rawImageUrl);
+            setRawImageUrl("");
+          }
+        }}
+        onCropComplete={(blob) => {
+          setCropOpen(false);
+          handleCroppedPhoto(blob);
+        }}
+      />
     </div>
   );
 }
