@@ -11,6 +11,7 @@ import { ArrowLeft, Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Chec
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 interface Experience {
   title: string;
