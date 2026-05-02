@@ -35,6 +35,8 @@ interface ResumeData {
   experience: Experience[];
   education: Education[];
   skills: string[];
+  photoUrl: string;
+  photoPosition: "left" | "right" | "none";
 }
 
 const RESUME_TEMPLATES = [
