@@ -36,6 +36,20 @@ interface ResumeData {
   photoPosition?: "left" | "right" | "none";
 }
 
+// Reusable photo chip rendered inside template headers.
+// Returns null when there's no photo or when user hid it.
+function ResumePhoto({ data, scale, ringClass = "ring-2 ring-white/70" }: { data: ResumeData; scale?: boolean; ringClass?: string }) {
+  if (!data.photoUrl || data.photoPosition === "none") return null;
+  const size = scale ? "h-3 w-3" : "h-14 w-14";
+  return (
+    <img
+      src={data.photoUrl}
+      alt={data.fullName || "Profile"}
+      className={`${size} rounded-full object-cover ${ringClass} shadow-sm shrink-0`}
+    />
+  );
+}
+
 interface ResumeTemplateProps {
   data: ResumeData;
   scale?: boolean;
