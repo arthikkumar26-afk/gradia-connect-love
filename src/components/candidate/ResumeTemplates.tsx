@@ -679,7 +679,10 @@ export function WarmSidebarTemplate({ data, scale }: ResumeTemplateProps) {
           <div className="w-10 h-10 mx-auto rounded-full bg-[#d97706] flex items-center justify-center mb-1">
             <User className={`${scale ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
           </div>
-          <h2 className={`${scale ? 'text-[8px]' : 'text-sm'} font-bold text-[#78350f]`}>{data.fullName || "Your Name"}</h2>
+          <div className={`flex items-center gap-2 ${data.photoPosition === "right" ? "flex-row-reverse justify-end" : ""}`}>
+            <ResumePhoto data={data} scale={scale} />
+            <h2 className={`${scale ? 'text-[8px]' : 'text-sm'} font-bold text-[#78350f]`}>{data.fullName || "Your Name"}</h2>
+          </div>
           <p className="text-[#92400e]">{data.experience[0]?.title || "Professional"}</p>
         </div>
 
