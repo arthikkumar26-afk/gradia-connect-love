@@ -988,6 +988,85 @@ export default function ResumeBuilderTab() {
               </CardContent>
             </Card>
 
+            {/* Profile Photo */}
+            <Card>
+              <CardHeader className="py-2 px-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  Profile Photo
+                </CardTitle>
+                <CardDescription className="text-[11px]">
+                  Optional — auto-cropped to a square so your resume header never looks stretched.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="flex flex-col sm:flex-row items-start gap-3">
+                  <div className="relative">
+                    {formData.photoUrl ? (
+                      <div className="relative h-20 w-20 rounded-md overflow-hidden border bg-muted">
+                        <img src={formData.photoUrl} alt="Resume photo" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={removePhoto}
+                          className="absolute top-0.5 right-0.5 bg-background/90 hover:bg-background rounded-full p-0.5 border shadow-sm"
+                          aria-label="Remove photo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-20 w-20 rounded-md border-2 border-dashed flex items-center justify-center bg-muted/30 text-muted-foreground">
+                        <ImageIcon className="h-6 w-6" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2 w-full">
+                    <div className="flex flex-wrap gap-2">
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                        className="h-7 text-xs"
+                      >
+                        <Upload className="h-3 w-3 mr-1.5" />
+                        {uploadingPhoto ? "Uploading..." : formData.photoUrl ? "Replace Photo" : "Upload Photo"}
+                      </Button>
+                    </div>
+                    <div>
+                      <Label className="text-[11px] mb-1 block">Position on Resume</Label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(["left", "right", "none"] as const).map((pos) => (
+                          <Button
+                            key={pos}
+                            type="button"
+                            size="sm"
+                            variant={formData.photoPosition === pos ? "default" : "outline"}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, photoPosition: pos }));
+                              setHasUnsavedChanges(true);
+                            }}
+                            className="h-6 text-[11px] px-2 capitalize"
+                          >
+                            {pos === "none" ? "Hide" : `${pos} edge`}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">JPG / PNG, square works best. Max 5MB.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Experience */}
             <Card>
               <CardHeader className="py-2 px-3 flex flex-row items-center justify-between">
