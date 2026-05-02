@@ -32,6 +32,8 @@ interface ResumeData {
   education: Education[];
   skills: string[];
   projects?: Project[];
+  photoUrl?: string;
+  photoPosition?: "left" | "right" | "none";
 }
 
 interface ResumeTemplateProps {
