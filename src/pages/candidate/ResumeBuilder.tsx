@@ -843,6 +843,22 @@ export default function ResumeBuilder() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ImageCropModal
+        open={cropOpen}
+        imageUrl={rawImageUrl}
+        onClose={() => {
+          setCropOpen(false);
+          if (rawImageUrl) {
+            URL.revokeObjectURL(rawImageUrl);
+            setRawImageUrl("");
+          }
+        }}
+        onCropComplete={(blob) => {
+          setCropOpen(false);
+          handleCroppedPhoto(blob);
+        }}
+      />
     </div>
   );
 }
