@@ -500,6 +500,82 @@ export default function ResumeBuilder() {
                   </CardContent>
                 </Card>
 
+                {/* Profile Photo */}
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" />
+                      Profile Photo
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Optional — appears on the left or right edge of your resume header.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="py-0 pb-4">
+                    <div className="flex flex-col sm:flex-row items-start gap-4">
+                      <div className="relative">
+                        {formData.photoUrl ? (
+                          <div className="relative h-24 w-24 rounded-md overflow-hidden border bg-muted">
+                            <img src={formData.photoUrl} alt="Resume photo" className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={removePhoto}
+                              className="absolute top-1 right-1 bg-background/90 hover:bg-background rounded-full p-0.5 border shadow-sm"
+                              aria-label="Remove photo"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="h-24 w-24 rounded-md border-2 border-dashed flex items-center justify-center bg-muted/30 text-muted-foreground">
+                            <ImageIcon className="h-7 w-7" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-3 w-full">
+                        <div className="flex flex-wrap gap-2">
+                          <input
+                            ref={photoInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => photoInputRef.current?.click()}
+                            disabled={uploadingPhoto}
+                            className="h-8"
+                          >
+                            <Upload className="h-3 w-3 mr-1.5" />
+                            {uploadingPhoto ? "Uploading..." : formData.photoUrl ? "Replace Photo" : "Upload Photo"}
+                          </Button>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Photo Position on Resume</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {(["left", "right", "none"] as const).map((pos) => (
+                              <Button
+                                key={pos}
+                                type="button"
+                                size="sm"
+                                variant={formData.photoPosition === pos ? "default" : "outline"}
+                                onClick={() => setFormData(prev => ({ ...prev, photoPosition: pos }))}
+                                className="h-7 text-xs capitalize"
+                              >
+                                {pos === "none" ? "Hide" : `${pos} edge`}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">JPG / PNG, square works best. Max 5MB.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Work Experience */}
                 <Card>
                   <CardHeader className="py-3">
