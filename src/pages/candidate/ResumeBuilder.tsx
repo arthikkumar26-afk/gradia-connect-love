@@ -115,6 +115,7 @@ export default function ResumeBuilder() {
             email: profile.email || "",
             phone: profile.mobile || "",
             location: profile.location || `${profile.current_district || ""}, ${profile.current_state || ""}`.replace(/^, |, $/g, ""),
+            photoUrl: prev.photoUrl || profile.profile_picture || "",
           }));
         }
 
