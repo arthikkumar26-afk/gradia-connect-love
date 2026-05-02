@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette } from "lucide-react";
+import { ArrowLeft, Download, Eye, FileText, Plus, Trash2, Sparkles, Edit2, Check, RefreshCw, Layout, Palette, Upload, X, ImageIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,8 @@ interface ResumeData {
   experience: Experience[];
   education: Education[];
   skills: string[];
+  photoUrl: string;
+  photoPosition: "left" | "right" | "none";
 }
 
 const RESUME_TEMPLATES = [
@@ -84,7 +86,11 @@ export default function ResumeBuilder() {
     experience: [{ title: "", company: "", duration: "", description: "" }],
     education: [{ degree: "", school: "", year: "" }],
     skills: [],
+    photoUrl: "",
+    photoPosition: "left",
   });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchUserProfile();
@@ -108,6 +114,7 @@ export default function ResumeBuilder() {
             email: profile.email || "",
             phone: profile.mobile || "",
             location: profile.location || `${profile.current_district || ""}, ${profile.current_state || ""}`.replace(/^, |, $/g, ""),
+            photoUrl: prev.photoUrl || profile.profile_picture || "",
           }));
         }
 
@@ -201,8 +208,40 @@ export default function ResumeBuilder() {
   };
 
   const handleInputChange = (field: keyof ResumeData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ ...prev, [field]: value as never }));
   };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please upload an image file.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Image must be under 5MB.", variant: "destructive" });
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/resume-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("profile-pictures").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("profile-pictures").getPublicUrl(path);
+      setFormData(prev => ({ ...prev, photoUrl: data.publicUrl }));
+      toast({ title: "Photo uploaded", description: "Your photo will appear on the resume." });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message || "Could not upload image.", variant: "destructive" });
+    } finally {
+      setUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const removePhoto = () => setFormData(prev => ({ ...prev, photoUrl: "" }));
 
   const handleExperienceChange = (index: number, field: keyof Experience, value: string) => {
     const updated = [...formData.experience];
@@ -460,6 +499,82 @@ export default function ResumeBuilder() {
                   </CardContent>
                 </Card>
 
+                {/* Profile Photo */}
+                <Card>
+                  <CardHeader className="py-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" />
+                      Profile Photo
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Optional — appears on the left or right edge of your resume header.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="py-0 pb-4">
+                    <div className="flex flex-col sm:flex-row items-start gap-4">
+                      <div className="relative">
+                        {formData.photoUrl ? (
+                          <div className="relative h-24 w-24 rounded-md overflow-hidden border bg-muted">
+                            <img src={formData.photoUrl} alt="Resume photo" className="h-full w-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={removePhoto}
+                              className="absolute top-1 right-1 bg-background/90 hover:bg-background rounded-full p-0.5 border shadow-sm"
+                              aria-label="Remove photo"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="h-24 w-24 rounded-md border-2 border-dashed flex items-center justify-center bg-muted/30 text-muted-foreground">
+                            <ImageIcon className="h-7 w-7" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-3 w-full">
+                        <div className="flex flex-wrap gap-2">
+                          <input
+                            ref={photoInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => photoInputRef.current?.click()}
+                            disabled={uploadingPhoto}
+                            className="h-8"
+                          >
+                            <Upload className="h-3 w-3 mr-1.5" />
+                            {uploadingPhoto ? "Uploading..." : formData.photoUrl ? "Replace Photo" : "Upload Photo"}
+                          </Button>
+                        </div>
+                        <div>
+                          <Label className="text-xs mb-1.5 block">Photo Position on Resume</Label>
+                          <div className="flex flex-wrap gap-2">
+                            {(["left", "right", "none"] as const).map((pos) => (
+                              <Button
+                                key={pos}
+                                type="button"
+                                size="sm"
+                                variant={formData.photoPosition === pos ? "default" : "outline"}
+                                onClick={() => setFormData(prev => ({ ...prev, photoPosition: pos }))}
+                                className="h-7 text-xs capitalize"
+                              >
+                                {pos === "none" ? "Hide" : `${pos} edge`}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">JPG / PNG, square works best. Max 5MB.</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* Work Experience */}
                 <Card>
                   <CardHeader className="py-3">
@@ -626,11 +741,20 @@ export default function ResumeBuilder() {
               <Card className="p-6 overflow-hidden">
                 <div className="max-w-3xl mx-auto">
                   {/* Header based on template */}
-                  <div className={`${templateStyles.headerBg} ${templateStyles.headerText} -mx-6 -mt-6 px-6 py-6 mb-6`}>
-                    <h2 className="text-2xl font-bold">{formData.fullName || "Your Name"}</h2>
-                    <p className="text-sm opacity-90">
-                      {[formData.email, formData.phone, formData.location].filter(Boolean).join(" | ") || "Contact Information"}
-                    </p>
+                  <div className={`${templateStyles.headerBg} ${templateStyles.headerText} -mx-6 -mt-6 px-6 py-6 mb-6 flex items-center gap-4 ${formData.photoPosition === "right" ? "flex-row-reverse" : ""}`}>
+                    {formData.photoUrl && formData.photoPosition !== "none" && (
+                      <img
+                        src={formData.photoUrl}
+                        alt={formData.fullName || "Profile"}
+                        className="h-20 w-20 rounded-full object-cover border-2 border-white/70 shadow-md flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-2xl font-bold">{formData.fullName || "Your Name"}</h2>
+                      <p className="text-sm opacity-90 break-words">
+                        {[formData.email, formData.phone, formData.location].filter(Boolean).join(" | ") || "Contact Information"}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Summary */}
