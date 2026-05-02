@@ -323,9 +323,53 @@ export default function ResumeBuilderTab() {
   const handleInputChange = (field: keyof ResumeData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value as never }));
     setHasUnsavedChanges(true);
+  };
 
-  const _photoSpacer_ = null; // (formatting anchor)
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please upload an image file.", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Image must be under 5MB.", variant: "destructive" });
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setRawImageUrl(url);
+    setCropOpen(true);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
 
+  const handleCroppedPhoto = async (croppedBlob: Blob) => {
+    setUploadingPhoto(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const path = `${user.id}/resume-${Date.now()}.jpg`;
+      const { error: upErr } = await supabase.storage
+        .from("profile-pictures")
+        .upload(path, croppedBlob, { upsert: true, contentType: "image/jpeg" });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from("profile-pictures").getPublicUrl(path);
+      setFormData(prev => ({ ...prev, photoUrl: data.publicUrl }));
+      setHasUnsavedChanges(true);
+      toast({ title: "Photo ready", description: "Cropped to a clean square for your resume." });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message || "Could not upload image.", variant: "destructive" });
+    } finally {
+      setUploadingPhoto(false);
+      if (rawImageUrl) {
+        URL.revokeObjectURL(rawImageUrl);
+        setRawImageUrl("");
+      }
+    }
+  };
+
+  const removePhoto = () => {
+    setFormData(prev => ({ ...prev, photoUrl: "" }));
+    setHasUnsavedChanges(true);
   };
 
   const handleExperienceChange = (index: number, field: keyof Experience, value: string) => {
