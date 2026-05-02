@@ -87,7 +87,11 @@ export default function ResumeBuilder() {
     experience: [{ title: "", company: "", duration: "", description: "" }],
     education: [{ degree: "", school: "", year: "" }],
     skills: [],
+    photoUrl: "",
+    photoPosition: "left",
   });
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchUserProfile();
