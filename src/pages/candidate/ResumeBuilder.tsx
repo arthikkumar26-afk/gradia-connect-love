@@ -742,11 +742,20 @@ export default function ResumeBuilder() {
               <Card className="p-6 overflow-hidden">
                 <div className="max-w-3xl mx-auto">
                   {/* Header based on template */}
-                  <div className={`${templateStyles.headerBg} ${templateStyles.headerText} -mx-6 -mt-6 px-6 py-6 mb-6`}>
-                    <h2 className="text-2xl font-bold">{formData.fullName || "Your Name"}</h2>
-                    <p className="text-sm opacity-90">
-                      {[formData.email, formData.phone, formData.location].filter(Boolean).join(" | ") || "Contact Information"}
-                    </p>
+                  <div className={`${templateStyles.headerBg} ${templateStyles.headerText} -mx-6 -mt-6 px-6 py-6 mb-6 flex items-center gap-4 ${formData.photoPosition === "right" ? "flex-row-reverse" : ""}`}>
+                    {formData.photoUrl && formData.photoPosition !== "none" && (
+                      <img
+                        src={formData.photoUrl}
+                        alt={formData.fullName || "Profile"}
+                        className="h-20 w-20 rounded-full object-cover border-2 border-white/70 shadow-md flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-2xl font-bold">{formData.fullName || "Your Name"}</h2>
+                      <p className="text-sm opacity-90 break-words">
+                        {[formData.email, formData.phone, formData.location].filter(Boolean).join(" | ") || "Contact Information"}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Summary */}
