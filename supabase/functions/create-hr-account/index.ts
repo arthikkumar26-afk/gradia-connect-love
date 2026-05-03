@@ -30,27 +30,35 @@ Deno.serve(async (req) => {
 
     // Verify caller is an employer
     const { data: profile } = await admin.from("profiles").select("role,email,company_name,full_name").eq("id", employerId).maybeSingle();
-    if (!profile || profile.role !== "employer") {
-      return new Response(JSON.stringify({ error: "Only employers can create HR accounts" }), {
+    if (!profile || !["employer", "admin", "owner"].includes(profile.role)) {
+      return new Response(JSON.stringify({ error: "Only employers/admins can manage HR accounts" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const isPrivileged = profile.role === "admin" || profile.role === "owner";
 
     const body = await req.json();
     const { email, password, full_name, action } = body;
 
     if (action === "list") {
-      const { data: links } = await admin
+      let linksQuery = admin
         .from("hr_employer_links")
-        .select("id, hr_user_id, is_active, created_at, permissions")
-        .eq("employer_user_id", employerId)
+        .select("id, hr_user_id, employer_user_id, is_active, created_at, permissions")
         .order("created_at", { ascending: false });
-      const ids = (links ?? []).map(l => l.hr_user_id);
-      const { data: profiles } = ids.length
-        ? await admin.from("profiles").select("id,full_name,email").in("id", ids)
+      if (!isPrivileged) linksQuery = linksQuery.eq("employer_user_id", employerId);
+      const { data: links } = await linksQuery;
+      const hrIds = (links ?? []).map(l => l.hr_user_id);
+      const empIds = Array.from(new Set((links ?? []).map(l => l.employer_user_id)));
+      const allIds = Array.from(new Set([...hrIds, ...empIds]));
+      const { data: profiles } = allIds.length
+        ? await admin.from("profiles").select("id,full_name,email,company_name").in("id", allIds)
         : { data: [] as any[] };
       const map = Object.fromEntries((profiles ?? []).map(p => [p.id, p]));
-      const merged = (links ?? []).map(l => ({ ...l, profile: map[l.hr_user_id] || null }));
+      const merged = (links ?? []).map(l => ({
+        ...l,
+        profile: map[l.hr_user_id] || null,
+        employer_profile: map[l.employer_user_id] || null,
+      }));
       return new Response(JSON.stringify({ hr_accounts: merged }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -58,12 +66,15 @@ Deno.serve(async (req) => {
 
     if (action === "deactivate") {
       const { hr_user_id } = body;
-      await admin.from("hr_employer_links").update({ is_active: false }).eq("hr_user_id", hr_user_id).eq("employer_user_id", employerId);
+      const q = admin.from("hr_employer_links").update({ is_active: false }).eq("hr_user_id", hr_user_id);
+      if (!isPrivileged) q.eq("employer_user_id", employerId);
+      await q;
       return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Verify HR is owned by this employer (helper)
+    // Verify HR is owned by this employer (helper) — admins/owners bypass
     const verifyOwnership = async (hr_user_id: string) => {
+      if (isPrivileged) return true;
       const { data: link } = await admin
         .from("hr_employer_links")
         .select("id")
@@ -172,6 +183,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // For admins/owners, allow targeting a specific employer; otherwise self.
+    const targetEmployerId = isPrivileged && body.employer_id ? body.employer_id : employerId;
+    let parentCompanyName: string | null = profile.company_name ?? null;
+    if (isPrivileged && body.employer_id) {
+      const { data: ep } = await admin.from("profiles").select("company_name,full_name").eq("id", body.employer_id).maybeSingle();
+      parentCompanyName = ep?.company_name ?? ep?.full_name ?? null;
+    }
+
     // Create the auth user with role=hr
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
       email,
@@ -192,7 +211,7 @@ Deno.serve(async (req) => {
       email,
       full_name,
       role: "hr",
-      company_name: profile.company_name ?? null,
+      company_name: parentCompanyName,
     }, { onConflict: "id" });
 
     // user_roles entry
@@ -201,7 +220,7 @@ Deno.serve(async (req) => {
     // Link
     await admin.from("hr_employer_links").upsert({
       hr_user_id: hrId,
-      employer_user_id: employerId,
+      employer_user_id: targetEmployerId,
       created_by: employerId,
       is_active: true,
     }, { onConflict: "hr_user_id" });
@@ -212,7 +231,7 @@ Deno.serve(async (req) => {
     try {
       const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
       if (RESEND_API_KEY) {
-        const companyName = profile.company_name || profile.full_name || "your employer";
+        const companyName = parentCompanyName || profile.full_name || "your employer";
         const loginUrl = "https://gradiaa.com/hr/login";
         const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

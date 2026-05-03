@@ -149,6 +149,7 @@ const CandidateResumes = lazyWithRetry(() => import("./pages/admin/CandidateResu
 const RazorpayWebhooks = lazyWithRetry(() => import("./pages/admin/RazorpayWebhooks"));
 const SubscriptionActivationLogs = lazyWithRetry(() => import("./pages/admin/SubscriptionActivationLogs"));
 const PlanControl = lazyWithRetry(() => import("./pages/admin/PlanControl"));
+const AdminHRManagement = lazyWithRetry(() => import("./pages/admin/HRManagement"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -320,6 +321,7 @@ const MainRoutes = () => (
         <Route path="/admin/feedback" element={<ManagementFeedback />} />
         <Route path="/admin/live-demo" element={<LiveDemoView />} />
         <Route path="/admin/hr-negotiations" element={<HRNegotiations />} />
+        <Route path="/admin/hr-management" element={<AdminHRManagement />} />
         <Route path="/admin/coupons" element={<CouponManagement />} />
         <Route path="/admin/external-jobs" element={<ExternalJobs />} />
         <Route path="/admin/event-alerts" element={<EventAlerts />} />
