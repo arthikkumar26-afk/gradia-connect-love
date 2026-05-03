@@ -41,6 +41,7 @@ import { StageResultsModal } from "@/components/employer/StageResultsModal";
 import { AllStagesReviewSummary } from "@/components/employer/AllStagesReviewSummary";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import ResumeAnalysisReport from "@/components/shared/ResumeAnalysisReport";
+import LiveRoundRecorder from "@/components/candidate/LiveRoundRecorder";
 
 interface InterviewStage {
   id: string;
