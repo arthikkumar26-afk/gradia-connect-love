@@ -312,30 +312,27 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
     return arr;
   }, [rows]);
 
-  const exportCsv = () => {
+  const exportExcel = async () => {
     if (rows.length === 0) return;
+    const XLSX = await import("xlsx");
     const header = ["Resume", "Best Vacancy", "Best Score", ...targetJobs.map(j => j.job_title)];
-    const lines = [header.join(",")];
+    const data: (string | number)[][] = [header];
     for (const r of rows) {
       const best = r.matches[0];
-      const row = [
-        `"${r.fileName.replace(/"/g, '""')}"`,
-        best ? `"${best.jobTitle.replace(/"/g, '""')}"` : "",
-        best ? String(best.score) : "",
+      data.push([
+        r.fileName,
+        best ? best.jobTitle : "",
+        best ? best.score : "",
         ...targetJobs.map(j => {
           const m = r.matches.find(x => x.jobId === j.id);
-          return m ? String(m.score) : "";
+          return m ? m.score : "";
         }),
-      ];
-      lines.push(row.join(","));
+      ]);
     }
-    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `cv-scrutiny-${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "CV Scrutiny");
+    XLSX.writeFile(wb, `cv-scrutiny-${Date.now()}.xlsx`);
   };
 
   // ---- Email composer helpers ----
