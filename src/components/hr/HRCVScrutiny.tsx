@@ -589,7 +589,7 @@ Requirements: ${(job.requirements || "").slice(0, 1500)}`;
                 </Button>
               )}
               <Button size="sm" variant="outline" className="h-8 text-xs" onClick={exportExcel}>
-                <Download className="h-3.5 w-3.5 mr-1" /> Export CSV
+                <Download className="h-3.5 w-3.5 mr-1" /> Export Excel
               </Button>
               <Button size="sm" variant="ghost" className="h-8 text-xs text-destructive" onClick={clearAll}>
                 <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
