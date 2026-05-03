@@ -183,6 +183,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    // For admins/owners, allow targeting a specific employer; otherwise self.
+    const targetEmployerId = isPrivileged && body.employer_id ? body.employer_id : employerId;
+    let parentCompanyName: string | null = profile.company_name ?? null;
+    if (isPrivileged && body.employer_id) {
+      const { data: ep } = await admin.from("profiles").select("company_name,full_name").eq("id", body.employer_id).maybeSingle();
+      parentCompanyName = ep?.company_name ?? ep?.full_name ?? null;
+    }
+
     // Create the auth user with role=hr
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
       email,
@@ -203,7 +211,7 @@ Deno.serve(async (req) => {
       email,
       full_name,
       role: "hr",
-      company_name: profile.company_name ?? null,
+      company_name: parentCompanyName,
     }, { onConflict: "id" });
 
     // user_roles entry
@@ -212,7 +220,7 @@ Deno.serve(async (req) => {
     // Link
     await admin.from("hr_employer_links").upsert({
       hr_user_id: hrId,
-      employer_user_id: employerId,
+      employer_user_id: targetEmployerId,
       created_by: employerId,
       is_active: true,
     }, { onConflict: "hr_user_id" });
