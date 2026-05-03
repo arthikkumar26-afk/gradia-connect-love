@@ -2370,6 +2370,80 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       {getStageReviewContent(stage, event)}
                     </div>
                   )}
+
+                  {/* Recording metadata panel — visible whenever a recording exists for this stage */}
+                  {(() => {
+                    // Live round recording (Demo/HR/Management/etc.)
+                    const liveRec = liveRecordings.find(r => r.stage_id === stage.id)
+                      || liveRecordings.find(r => r.stage_name?.toLowerCase() === stage.name.toLowerCase());
+                    // Written test / technical assessment recording
+                    const writtenResp = event ? responses.find(r => r.interview_event_id === event.id && r.recording_url) : null;
+
+                    const recUrl = liveRec?.recording_url || writtenResp?.recording_url || null;
+                    if (!recUrl) return null;
+
+                    const startIso = liveRec?.started_at || null;
+                    const endIso = liveRec?.ended_at || writtenResp?.completed_at || null;
+                    const dur = liveRec?.duration_seconds ?? writtenResp?.time_taken_seconds ?? null;
+                    const fmtDur = (s: number | null) => {
+                      if (s == null) return '—';
+                      const m = Math.floor(s / 60);
+                      const r = s % 60;
+                      return `${m}m ${r}s`;
+                    };
+
+                    return (
+                      <div className="mx-3 mb-3 ml-[52px] rounded-md border border-border/60 bg-muted/30 p-3 text-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 font-medium text-foreground">
+                            <Video className="h-3.5 w-3.5 text-primary" />
+                            Session Recording — {stage.name}
+                          </div>
+                          <a
+                            href={recUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                          >
+                            <Eye className="h-3 w-3" /> View
+                          </a>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-muted-foreground">
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide">Started</div>
+                            <div className="text-foreground">{startIso ? formatDate(startIso) : '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide">Ended</div>
+                            <div className="text-foreground">{endIso ? formatDate(endIso) : '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide">Duration</div>
+                            <div className="text-foreground">{fmtDur(dur)}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide">Round</div>
+                            <div className="text-foreground">{liveRec?.stage_name || stage.name}</div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {participantNames.candidate && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              <UserCheck className="h-3 w-3 mr-1" />
+                              {participantNames.candidate}
+                            </Badge>
+                          )}
+                          {participantNames.employer && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              <Building2 className="h-3 w-3 mr-1" />
+                              {participantNames.employer}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
