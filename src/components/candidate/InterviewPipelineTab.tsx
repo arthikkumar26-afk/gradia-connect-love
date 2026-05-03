@@ -586,6 +586,33 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         console.error('[Pipeline] Error fetching reviews:', reviewsError);
       }
       setReviews(reviewsData || []);
+
+      // Live round recordings (Demo/HR/Management/etc.)
+      const { data: recordingsData } = await supabase
+        .from('live_round_recordings')
+        .select('id, stage_id, stage_name, recording_url, duration_seconds, started_at, ended_at, candidate_id, employer_id, created_at')
+        .eq('interview_candidate_id', interview.id)
+        .order('created_at', { ascending: false });
+      setLiveRecordings(recordingsData || []);
+
+      // Resolve participant display names (candidate + employer/company)
+      const candId = recordingsData?.[0]?.candidate_id || candidateId;
+      const empId = recordingsData?.[0]?.employer_id || null;
+      const ids = [candId, empId].filter(Boolean) as string[];
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, full_name, company_name, role')
+          .in('id', ids);
+        const next: { candidate?: string; employer?: string } = {};
+        for (const p of profs || []) {
+          if (p.id === candId) next.candidate = p.full_name || 'Candidate';
+          if (p.id === empId) next.employer = p.company_name || p.full_name || 'Employer';
+        }
+        setParticipantNames(next);
+      } else {
+        setParticipantNames({});
+      }
     } catch (error) {
       console.error('Error fetching review data:', error);
     }
