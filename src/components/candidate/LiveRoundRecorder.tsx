@@ -204,14 +204,29 @@ export const LiveRoundRecorder = ({
 
       const { data: pub } = supabase.storage.from("interview-recordings").getPublicUrl(fileName);
 
-      // Persist recording metadata
+      // Persist recording metadata (start/end, participants)
+      const startedAt = new Date(startTimeRef.current).toISOString();
+      const endedAt = new Date().toISOString();
       try {
+        // Resolve participants from interview_candidates -> jobs (employer_id)
+        const { data: ic } = await supabase
+          .from("interview_candidates")
+          .select("candidate_id, jobs:job_id(employer_id)")
+          .eq("id", interviewCandidateId)
+          .maybeSingle();
+        const candidateId = (ic as any)?.candidate_id ?? null;
+        const employerId = (ic as any)?.jobs?.employer_id ?? null;
+
         await supabase.from("live_round_recordings").insert({
           interview_candidate_id: interviewCandidateId,
           stage_id: stageId,
           stage_name: stageName,
           recording_url: pub.publicUrl,
           duration_seconds: Math.floor((Date.now() - startTimeRef.current) / 1000),
+          started_at: startedAt,
+          ended_at: endedAt,
+          candidate_id: candidateId,
+          employer_id: employerId,
         });
       } catch (e) {
         console.warn("[LiveRoundRecorder] could not persist recording", e);
