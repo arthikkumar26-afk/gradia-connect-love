@@ -30,11 +30,12 @@ Deno.serve(async (req) => {
 
     // Verify caller is an employer
     const { data: profile } = await admin.from("profiles").select("role,email,company_name,full_name").eq("id", employerId).maybeSingle();
-    if (!profile || profile.role !== "employer") {
-      return new Response(JSON.stringify({ error: "Only employers can create HR accounts" }), {
+    if (!profile || !["employer", "admin", "owner"].includes(profile.role)) {
+      return new Response(JSON.stringify({ error: "Only employers/admins can manage HR accounts" }), {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const isPrivileged = profile.role === "admin" || profile.role === "owner";
 
     const body = await req.json();
     const { email, password, full_name, action } = body;
