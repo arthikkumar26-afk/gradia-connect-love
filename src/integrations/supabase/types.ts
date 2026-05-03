@@ -2035,33 +2035,73 @@ export type Database = {
       }
       live_round_recordings: {
         Row: {
+          candidate_id: string | null
           created_at: string
           duration_seconds: number | null
+          employer_id: string | null
+          ended_at: string | null
           id: string
           interview_candidate_id: string
           recording_url: string
           stage_id: string | null
           stage_name: string
+          started_at: string | null
         }
         Insert: {
+          candidate_id?: string | null
           created_at?: string
           duration_seconds?: number | null
+          employer_id?: string | null
+          ended_at?: string | null
           id?: string
           interview_candidate_id: string
           recording_url: string
           stage_id?: string | null
           stage_name: string
+          started_at?: string | null
         }
         Update: {
+          candidate_id?: string | null
           created_at?: string
           duration_seconds?: number | null
+          employer_id?: string | null
+          ended_at?: string | null
           id?: string
           interview_candidate_id?: string
           recording_url?: string
           stage_id?: string | null
           stage_name?: string
+          started_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "live_round_recordings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_round_recordings_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_round_recordings_employer_id_fkey"
+            columns: ["employer_id"]
+            isOneToOne: false
+            referencedRelation: "employer_public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_round_recordings_employer_id_fkey"
+            columns: ["employer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "live_round_recordings_interview_candidate_id_fkey"
             columns: ["interview_candidate_id"]
