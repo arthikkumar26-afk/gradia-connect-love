@@ -146,6 +146,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [responses, setResponses] = useState<InterviewResponse[]>([]);
   const [reviews, setReviews] = useState<ManagementReview[]>([]);
+  const [liveRecordings, setLiveRecordings] = useState<Array<{
+    id: string;
+    stage_id: string | null;
+    stage_name: string;
+    recording_url: string;
+    duration_seconds: number | null;
+    started_at: string | null;
+    ended_at: string | null;
+    candidate_id: string | null;
+    employer_id: string | null;
+    created_at: string;
+  }>>([]);
+  const [participantNames, setParticipantNames] = useState<{ candidate?: string; employer?: string }>({});
   const [resumeAnalysis, setResumeAnalysis] = useState<any>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedStageForResults, setSelectedStageForResults] = useState<{ stageId: string; stageName: string; interviewCandidateId: string } | null>(null);
