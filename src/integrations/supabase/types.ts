@@ -2033,6 +2033,51 @@ export type Database = {
           },
         ]
       }
+      live_round_recordings: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          interview_candidate_id: string
+          recording_url: string
+          stage_id: string | null
+          stage_name: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          interview_candidate_id: string
+          recording_url: string
+          stage_id?: string | null
+          stage_name: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          interview_candidate_id?: string
+          recording_url?: string
+          stage_id?: string | null
+          stage_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_round_recordings_interview_candidate_id_fkey"
+            columns: ["interview_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "interview_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_round_recordings_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "interview_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       management_reviews: {
         Row: {
           areas_for_improvement: string[] | null

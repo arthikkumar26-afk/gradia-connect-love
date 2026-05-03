@@ -41,6 +41,7 @@ import { StageResultsModal } from "@/components/employer/StageResultsModal";
 import { AllStagesReviewSummary } from "@/components/employer/AllStagesReviewSummary";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
 import ResumeAnalysisReport from "@/components/shared/ResumeAnalysisReport";
+import LiveRoundRecorder from "@/components/candidate/LiveRoundRecorder";
 
 interface InterviewStage {
   id: string;
@@ -2174,33 +2175,15 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
                         if (isLiveRound) {
                           if (liveRoundJoinAction) {
-                            if (liveRoundJoinAction.external) {
-                              return (
-                                <a
-                                  href={liveRoundJoinAction.href}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
-                                >
-                                  <Video className="h-3 w-3" />
-                                  Join Meeting
-                                </a>
-                              );
-                            }
-
                             return (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(liveRoundJoinAction.href);
-                                }}
-                                className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:bg-primary/90 transition-colors flex items-center gap-1 font-medium"
-                              >
-                                <Video className="h-3 w-3" />
-                                Join Meeting
-                              </button>
+                              <LiveRoundRecorder
+                                interviewCandidateId={currentInterview.id}
+                                stageId={stage.id}
+                                stageName={stage.name}
+                                joinHref={liveRoundJoinAction.href}
+                                joinExternal={!!liveRoundJoinAction.external}
+                                onNavigateInternal={(href) => navigate(href)}
+                              />
                             );
                           }
 
