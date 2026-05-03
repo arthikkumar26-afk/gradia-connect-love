@@ -146,6 +146,19 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
   const [expandedStageId, setExpandedStageId] = useState<string | null>(null);
   const [responses, setResponses] = useState<InterviewResponse[]>([]);
   const [reviews, setReviews] = useState<ManagementReview[]>([]);
+  const [liveRecordings, setLiveRecordings] = useState<Array<{
+    id: string;
+    stage_id: string | null;
+    stage_name: string;
+    recording_url: string;
+    duration_seconds: number | null;
+    started_at: string | null;
+    ended_at: string | null;
+    candidate_id: string | null;
+    employer_id: string | null;
+    created_at: string;
+  }>>([]);
+  const [participantNames, setParticipantNames] = useState<{ candidate?: string; employer?: string }>({});
   const [resumeAnalysis, setResumeAnalysis] = useState<any>(null);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
   const [selectedStageForResults, setSelectedStageForResults] = useState<{ stageId: string; stageName: string; interviewCandidateId: string } | null>(null);
@@ -573,6 +586,33 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         console.error('[Pipeline] Error fetching reviews:', reviewsError);
       }
       setReviews(reviewsData || []);
+
+      // Live round recordings (Demo/HR/Management/etc.)
+      const { data: recordingsData } = await supabase
+        .from('live_round_recordings')
+        .select('id, stage_id, stage_name, recording_url, duration_seconds, started_at, ended_at, candidate_id, employer_id, created_at')
+        .eq('interview_candidate_id', interview.id)
+        .order('created_at', { ascending: false });
+      setLiveRecordings(recordingsData || []);
+
+      // Resolve participant display names (candidate + employer/company)
+      const candId = recordingsData?.[0]?.candidate_id || candidateId;
+      const empId = recordingsData?.[0]?.employer_id || null;
+      const ids = [candId, empId].filter(Boolean) as string[];
+      if (ids.length) {
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('id, full_name, company_name, role')
+          .in('id', ids);
+        const next: { candidate?: string; employer?: string } = {};
+        for (const p of profs || []) {
+          if (p.id === candId) next.candidate = p.full_name || 'Candidate';
+          if (p.id === empId) next.employer = p.company_name || p.full_name || 'Employer';
+        }
+        setParticipantNames(next);
+      } else {
+        setParticipantNames({});
+      }
     } catch (error) {
       console.error('Error fetching review data:', error);
     }
@@ -2330,6 +2370,80 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
                       {getStageReviewContent(stage, event)}
                     </div>
                   )}
+
+                  {/* Recording metadata panel — visible whenever a recording exists for this stage */}
+                  {(() => {
+                    // Live round recording (Demo/HR/Management/etc.)
+                    const liveRec = liveRecordings.find(r => r.stage_id === stage.id)
+                      || liveRecordings.find(r => r.stage_name?.toLowerCase() === stage.name.toLowerCase());
+                    // Written test / technical assessment recording
+                    const writtenResp = event ? responses.find(r => r.interview_event_id === event.id && r.recording_url) : null;
+
+                    const recUrl = liveRec?.recording_url || writtenResp?.recording_url || null;
+                    if (!recUrl) return null;
+
+                    const startIso = liveRec?.started_at || null;
+                    const endIso = liveRec?.ended_at || writtenResp?.completed_at || null;
+                    const dur = liveRec?.duration_seconds ?? writtenResp?.time_taken_seconds ?? null;
+                    const fmtDur = (s: number | null) => {
+                      if (s == null) return '—';
+                      const m = Math.floor(s / 60);
+                      const r = s % 60;
+                      return `${m}m ${r}s`;
+                    };
+
+                    return (
+                      <div className="mx-3 mb-3 ml-[52px] rounded-md border border-border/60 bg-muted/30 p-3 text-xs space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 font-medium text-foreground">
+                            <Video className="h-3.5 w-3.5 text-primary" />
+                            Session Recording — {stage.name}
+                          </div>
+                          <a
+                            href={recUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                          >
+                            <Eye className="h-3 w-3" /> View
+                          </a>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-muted-foreground">
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide">Started</div>
+                            <div className="text-foreground">{startIso ? formatDate(startIso) : '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide">Ended</div>
+                            <div className="text-foreground">{endIso ? formatDate(endIso) : '—'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide">Duration</div>
+                            <div className="text-foreground">{fmtDur(dur)}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] uppercase tracking-wide">Round</div>
+                            <div className="text-foreground">{liveRec?.stage_name || stage.name}</div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {participantNames.candidate && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              <UserCheck className="h-3 w-3 mr-1" />
+                              {participantNames.candidate}
+                            </Badge>
+                          )}
+                          {participantNames.employer && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              <Building2 className="h-3 w-3 mr-1" />
+                              {participantNames.employer}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             );
