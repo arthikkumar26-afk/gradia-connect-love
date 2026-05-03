@@ -41,17 +41,24 @@ Deno.serve(async (req) => {
     const { email, password, full_name, action } = body;
 
     if (action === "list") {
-      const { data: links } = await admin
+      let linksQuery = admin
         .from("hr_employer_links")
-        .select("id, hr_user_id, is_active, created_at, permissions")
-        .eq("employer_user_id", employerId)
+        .select("id, hr_user_id, employer_user_id, is_active, created_at, permissions")
         .order("created_at", { ascending: false });
-      const ids = (links ?? []).map(l => l.hr_user_id);
-      const { data: profiles } = ids.length
-        ? await admin.from("profiles").select("id,full_name,email").in("id", ids)
+      if (!isPrivileged) linksQuery = linksQuery.eq("employer_user_id", employerId);
+      const { data: links } = await linksQuery;
+      const hrIds = (links ?? []).map(l => l.hr_user_id);
+      const empIds = Array.from(new Set((links ?? []).map(l => l.employer_user_id)));
+      const allIds = Array.from(new Set([...hrIds, ...empIds]));
+      const { data: profiles } = allIds.length
+        ? await admin.from("profiles").select("id,full_name,email,company_name").in("id", allIds)
         : { data: [] as any[] };
       const map = Object.fromEntries((profiles ?? []).map(p => [p.id, p]));
-      const merged = (links ?? []).map(l => ({ ...l, profile: map[l.hr_user_id] || null }));
+      const merged = (links ?? []).map(l => ({
+        ...l,
+        profile: map[l.hr_user_id] || null,
+        employer_profile: map[l.employer_user_id] || null,
+      }));
       return new Response(JSON.stringify({ hr_accounts: merged }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -59,12 +66,15 @@ Deno.serve(async (req) => {
 
     if (action === "deactivate") {
       const { hr_user_id } = body;
-      await admin.from("hr_employer_links").update({ is_active: false }).eq("hr_user_id", hr_user_id).eq("employer_user_id", employerId);
+      const q = admin.from("hr_employer_links").update({ is_active: false }).eq("hr_user_id", hr_user_id);
+      if (!isPrivileged) q.eq("employer_user_id", employerId);
+      await q;
       return new Response(JSON.stringify({ ok: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Verify HR is owned by this employer (helper)
+    // Verify HR is owned by this employer (helper) — admins/owners bypass
     const verifyOwnership = async (hr_user_id: string) => {
+      if (isPrivileged) return true;
       const { data: link } = await admin
         .from("hr_employer_links")
         .select("id")
