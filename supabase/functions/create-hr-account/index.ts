@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
     try {
       const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
       if (RESEND_API_KEY) {
-        const companyName = profile.company_name || profile.full_name || "your employer";
+        const companyName = parentCompanyName || profile.full_name || "your employer";
         const loginUrl = "https://gradiaa.com/hr/login";
         const html = `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
