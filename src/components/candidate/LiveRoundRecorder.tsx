@@ -204,15 +204,17 @@ export const LiveRoundRecorder = ({
 
       const { data: pub } = supabase.storage.from("interview-recordings").getPublicUrl(fileName);
 
-      // Best-effort: persist URL on the stage record so employer can review
+      // Persist recording metadata
       try {
-        await supabase
-          .from("interview_candidate_stages")
-          .update({ recording_url: pub.publicUrl } as any)
-          .eq("interview_candidate_id", interviewCandidateId)
-          .eq("stage_id", stageId);
+        await supabase.from("live_round_recordings").insert({
+          interview_candidate_id: interviewCandidateId,
+          stage_id: stageId,
+          stage_name: stageName,
+          recording_url: pub.publicUrl,
+          duration_seconds: Math.floor((Date.now() - startTimeRef.current) / 1000),
+        });
       } catch (e) {
-        console.warn("[LiveRoundRecorder] could not persist recording_url", e);
+        console.warn("[LiveRoundRecorder] could not persist recording", e);
       }
 
       toast.success("Recording uploaded");
