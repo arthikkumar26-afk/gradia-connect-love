@@ -169,6 +169,28 @@ const HRDashboard = () => {
       } else {
         setCandidates([]);
       }
+
+      // HR Manager: load all employers + all candidates for the new tabs
+      if (isManager) {
+        const [{ data: empAll }, { data: candAll }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("id, full_name, email, company_name, phone, created_at")
+            .eq("role", "employer")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("profiles")
+            .select("id, full_name, email, phone, preferred_role, created_at")
+            .eq("role", "candidate")
+            .order("created_at", { ascending: false })
+            .limit(500),
+        ]);
+        setEmployers((empAll as EmployerRow[]) ?? []);
+        setAllCandidates((candAll as AllCandidateRow[]) ?? []);
+      } else {
+        setEmployers([]);
+        setAllCandidates([]);
+      }
     } catch (error) {
       console.error("Failed to refresh HR dashboard", error);
       if (!options?.silent) toast.error("Couldn't refresh HR dashboard data.");
