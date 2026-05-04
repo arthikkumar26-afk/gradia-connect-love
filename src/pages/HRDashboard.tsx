@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw, UserSquare2, Mail } from "lucide-react";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw, UserSquare2, Mail, Building } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
