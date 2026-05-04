@@ -34,6 +34,7 @@ interface CandidateRow {
   ai_score: number | null;
   candidate_name?: string;
   job_title?: string;
+}
 interface EmployerRow {
   id: string;
   full_name: string | null;
