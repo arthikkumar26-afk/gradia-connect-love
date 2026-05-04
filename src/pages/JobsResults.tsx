@@ -314,6 +314,11 @@ const JobsResults = () => {
                   onClick={() => handleJobSelect(job)}
                 >
                   <CardHeader className="pb-3">
+                    {job.hr_transfer && (
+                      <div className="text-[11px] text-muted-foreground mb-1">
+                        🔗 Transferred by HR: <span className="font-medium text-foreground">{job.hr_transfer.hr_name}</span>
+                      </div>
+                    )}
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-lg">{job.category === "software" ? "💻" : "🎓"}</span>
