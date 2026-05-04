@@ -2062,12 +2062,56 @@ const CandidateSignup = () => {
             })}
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
             <div className="text-5xl font-bold text-primary">
               ₹{REGISTRATION_FEE.toLocaleString('en-IN')}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               one-time payment · {REGISTRATION_TIERS[selectedRegistrationTier].label} tier
+            </p>
+          </div>
+
+          {/* Inline summary + pay */}
+          <div className="text-left border-t pt-4 mt-2 space-y-1.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Registration Fee</span>
+              <span className="text-foreground">₹{REGISTRATION_FEE.toLocaleString('en-IN')}</span>
+            </div>
+            {selectedAddons.length > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Add-ons ({selectedAddons.length})</span>
+                <span className="text-foreground">₹{addonsTotal.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+            {servicesTotal > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Services ({Object.keys(selectedServiceTiers).length})</span>
+                <span className="text-foreground">₹{servicesTotal.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-2 mt-2 border-t">
+              <div>
+                <p className="text-sm text-muted-foreground">Amount due</p>
+                <p className="text-base font-bold text-foreground">Candidate Account</p>
+              </div>
+              <p className="text-2xl font-bold text-primary">
+                ₹{grandTotal.toLocaleString('en-IN')}
+              </p>
+            </div>
+            <div className="flex gap-2 pt-3">
+              <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+              </Button>
+              <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
+                {paying ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+                ) : (
+                  <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{grandTotal.toLocaleString('en-IN')}</>
+                )}
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground text-center pt-2">
+              Payment is required to activate your account. Powered by Razorpay (secure).
             </p>
           </div>
         </Card>
@@ -2154,51 +2198,6 @@ const CandidateSignup = () => {
           )}
         </Card>
         </div>
-
-        <Card className="p-5 max-w-xl mx-auto">
-          <div className="space-y-1.5 mb-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Registration Fee</span>
-              <span className="text-foreground">₹{REGISTRATION_FEE.toLocaleString('en-IN')}</span>
-            </div>
-            {selectedAddons.length > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Add-ons ({selectedAddons.length})</span>
-                <span className="text-foreground">₹{addonsTotal.toLocaleString('en-IN')}</span>
-              </div>
-            )}
-            {servicesTotal > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Services ({Object.keys(selectedServiceTiers).length})</span>
-                <span className="text-foreground">₹{servicesTotal.toLocaleString('en-IN')}</span>
-              </div>
-            )}
-            <div className="flex items-center justify-between pt-2 mt-2 border-t">
-              <div>
-                <p className="text-sm text-muted-foreground">Amount due</p>
-                <p className="text-lg font-bold text-foreground">Candidate Account</p>
-              </div>
-              <p className="text-2xl font-bold text-primary">
-                ₹{grandTotal.toLocaleString('en-IN')}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
-            </Button>
-            <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
-              {paying ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
-              ) : (
-                <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{grandTotal.toLocaleString('en-IN')}</>
-              )}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground text-center mt-3">
-            Payment is required to activate your account. Powered by Razorpay (secure).
-          </p>
-        </Card>
       </div>
     );
   };
