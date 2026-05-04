@@ -42,6 +42,8 @@ interface Job {
   tags?: string[];
   benefits?: string[];
   companyDescription?: string;
+  employer_id?: string;
+  hr_transfer?: { hr_name: string; created_at: string } | null;
 }
 
 const JobsResults = () => {
