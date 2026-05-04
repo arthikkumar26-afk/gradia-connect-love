@@ -2014,7 +2014,7 @@ const CandidateSignup = () => {
 
   const renderPlanStep = () => {
     return (
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-6xl">
         <ProgressIndicator />
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-foreground mb-2">Registration Fee</h2>
@@ -2023,7 +2023,8 @@ const CandidateSignup = () => {
           </p>
         </div>
 
-        <Card className="p-8 max-w-xl mx-auto mb-6 text-center border-2 border-primary/30 shadow-xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
+        <Card className="p-8 mb-0 text-center border-2 border-primary/30 shadow-xl">
           <Badge className="mb-4 gap-1 mx-auto w-fit">
             <Star className="h-3 w-3" /> One-Time Registration
           </Badge>
@@ -2072,7 +2073,7 @@ const CandidateSignup = () => {
         </Card>
 
         {/* Detailed Service Add-ons (from pricing sheet) */}
-        <Card className="p-5 max-w-xl mx-auto mb-6">
+        <Card className="p-5 mb-0">
           <div className="mb-4">
             <h4 className="text-base font-bold text-foreground">Boost Your Account with Add-ons</h4>
             <p className="text-xs text-muted-foreground">
@@ -2152,6 +2153,7 @@ const CandidateSignup = () => {
             </div>
           )}
         </Card>
+        </div>
 
         <Card className="p-5 max-w-xl mx-auto">
           <div className="space-y-1.5 mb-4">
