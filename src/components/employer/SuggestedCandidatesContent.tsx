@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, Briefcase, MapPin, Mail, Phone, Users, GraduationCap, IndianRupee, Lock, Coins, ExternalLink } from "lucide-react";
+import { Sparkles, Briefcase, MapPin, Mail, Phone, Users, GraduationCap, IndianRupee, Lock, Coins, ExternalLink, UserCheck } from "lucide-react";
 import { toast } from "sonner";
+import { useCandidatesTransferredToEmployer } from "@/hooks/useHRTransfers";
 
 const PROFILE_UNLOCK_COST = 200;
 
