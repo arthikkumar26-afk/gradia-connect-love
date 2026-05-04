@@ -277,7 +277,7 @@ export function AllCandidatesContent() {
       </div>
 
       {/* Candidates List */}
-      {loading ? (
+      {loading || transferLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="border-border">
@@ -299,7 +299,10 @@ export function AllCandidatesContent() {
           <div className="h-16 w-16 rounded-full border-4 border-dashed border-border flex items-center justify-center">
             <Users className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground">No candidates found</p>
+          <p className="text-sm font-medium text-foreground">No candidates yet</p>
+          <p className="text-xs text-muted-foreground max-w-sm text-center">
+            Candidates will appear here once an HR Recruiter or HR Manager transfers them to your account.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
