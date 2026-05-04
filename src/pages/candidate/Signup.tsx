@@ -2153,6 +2153,7 @@ const CandidateSignup = () => {
             </div>
           )}
         </Card>
+        </div>
 
         <Card className="p-5 max-w-xl mx-auto">
           <div className="space-y-1.5 mb-4">
