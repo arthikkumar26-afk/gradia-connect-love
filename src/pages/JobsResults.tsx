@@ -49,7 +49,11 @@ interface Job {
 const JobsResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, profile } = useAuth();
+  const { isAuthenticated, profile, user } = useAuth();
+  const isCandidate = profile?.role === 'candidate';
+  const { employerMap, jobMap, loading: transferLoading } = useEmployersTransferredToCandidate(
+    isCandidate ? user?.id : undefined
+  );
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyingJob, setApplyingJob] = useState<Job | null>(null);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
