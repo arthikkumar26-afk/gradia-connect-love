@@ -77,8 +77,8 @@ const HRLogin = () => {
             <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-pink-100 dark:bg-pink-900 mb-2">
               <Users className="h-5 w-5 text-pink-600 dark:text-pink-300" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">HR / HR Manager Login</h1>
-            <p className="text-sm text-muted-foreground">Sign in to your HR or HR Manager account</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">HR Recruiter / HR Manager Login</h1>
+            <p className="text-sm text-muted-foreground">Sign in to your HR Recruiter or HR Manager account</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
