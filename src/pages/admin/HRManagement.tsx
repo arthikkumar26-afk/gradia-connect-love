@@ -43,6 +43,7 @@ export default function AdminHRManagement() {
 
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [accountType, setAccountType] = useState<"hr" | "hr_manager">("hr");
   const [form, setForm] = useState({ full_name: "", email: "", password: "", employer_id: "" });
 
   const [pwdTarget, setPwdTarget] = useState<HRAccount | null>(null);
@@ -87,23 +88,25 @@ export default function AdminHRManagement() {
   }, [hrAccounts, search, employerFilter]);
 
   const handleCreate = async () => {
-    if (!form.full_name || !form.email || !form.password || !form.employer_id) {
-      toast.error("Please fill all fields including employer");
+    const isManager = accountType === "hr_manager";
+    if (!form.full_name || !form.email || !form.password || (!isManager && !form.employer_id)) {
+      toast.error(isManager ? "Please fill all fields" : "Please fill all fields including employer");
       return;
     }
     if (form.password.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     setCreating(true);
     const { data, error } = await supabase.functions.invoke("create-hr-account", {
-      body: { action: "create", ...form },
+      body: { action: "create", ...form, account_type: accountType, employer_id: isManager ? undefined : form.employer_id },
     });
     setCreating(false);
     if (error || data?.error) {
-      toast.error(data?.error || error?.message || "Failed to create HR account");
+      toast.error(data?.error || error?.message || "Failed to create account");
       return;
     }
-    if (data?.email_sent) toast.success(`HR created — credentials emailed to ${form.email}`);
-    else toast.success(`HR created${data?.email_error ? ` (email failed: ${data.email_error})` : ""}`);
+    if (data?.email_sent) toast.success(`${isManager ? "HR Manager" : "HR"} created — credentials emailed to ${form.email}`);
+    else toast.success(`${isManager ? "HR Manager" : "HR"} created${data?.email_error ? ` (email failed: ${data.email_error})` : ""}`);
     setForm({ full_name: "", email: "", password: "", employer_id: "" });
+    setAccountType("hr");
     setOpen(false);
     load();
   };
@@ -159,24 +162,39 @@ export default function AdminHRManagement() {
           </div>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><UserPlus className="h-4 w-4 mr-1" /> Add HR Account</Button>
+              <Button><UserPlus className="h-4 w-4 mr-1" /> Add HR / HR Manager</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Create HR Account</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Create Account</DialogTitle></DialogHeader>
               <div className="space-y-3 pt-2">
                 <div className="space-y-1.5">
-                  <Label>Employer (Company)</Label>
-                  <Select value={form.employer_id} onValueChange={(v) => setForm({ ...form, employer_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select an employer" /></SelectTrigger>
+                  <Label>Account Type</Label>
+                  <Select value={accountType} onValueChange={(v) => setAccountType(v as "hr" | "hr_manager")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {employers.map(e => (
-                        <SelectItem key={e.id} value={e.id}>
-                          {e.company_name || e.full_name || e.email} {e.email ? `· ${e.email}` : ""}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="hr">HR (linked to one employer)</SelectItem>
+                      <SelectItem value="hr_manager">HR Manager (full HR panel control)</SelectItem>
                     </SelectContent>
                   </Select>
+                  {accountType === "hr_manager" && (
+                    <p className="text-[11px] text-muted-foreground">HR Managers oversee all HR accounts and have full access to the HR panel across all employers.</p>
+                  )}
                 </div>
+                {accountType === "hr" && (
+                  <div className="space-y-1.5">
+                    <Label>Employer (Company)</Label>
+                    <Select value={form.employer_id} onValueChange={(v) => setForm({ ...form, employer_id: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select an employer" /></SelectTrigger>
+                      <SelectContent>
+                        {employers.map(e => (
+                          <SelectItem key={e.id} value={e.id}>
+                            {e.company_name || e.full_name || e.email} {e.email ? `· ${e.email}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label>Full Name</Label>
                   <Input value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} placeholder="Jane Doe" />
@@ -190,7 +208,7 @@ export default function AdminHRManagement() {
                   <Input type="text" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Min 8 characters" />
                 </div>
                 <Button className="w-full" onClick={handleCreate} disabled={creating}>
-                  {creating ? "Creating…" : "Create Account"}
+                  {creating ? "Creating…" : `Create ${accountType === "hr_manager" ? "HR Manager" : "HR"} Account`}
                 </Button>
               </div>
             </DialogContent>
