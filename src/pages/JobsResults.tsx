@@ -169,26 +169,34 @@ const JobsResults = () => {
     }
   }, [pendingApplyJobId, isAuthenticated, profile, jobs]);
 
-  // Filter jobs based on search parameters
+  // Filter jobs based on search parameters + HR transfer gating for candidates
   useEffect(() => {
     const query = searchParams.get('q')?.toLowerCase() || '';
     const loc = searchParams.get('location')?.toLowerCase() || '';
-    
+
     const filtered = jobs.filter(job => {
-      const matchesQuery = !query || 
+      if (isCandidate) {
+        const allowed =
+          (job.employer_id && employerMap[job.employer_id]) ||
+          jobMap[job.id];
+        if (!allowed) return false;
+      }
+      const matchesQuery = !query ||
         job.title.toLowerCase().includes(query) ||
         job.company.toLowerCase().includes(query) ||
         job.skills.some(skill => skill.toLowerCase().includes(query)) ||
         job.description.toLowerCase().includes(query);
-      
-      const matchesLocation = !loc || 
+      const matchesLocation = !loc ||
         job.location.toLowerCase().includes(loc);
-      
       return matchesQuery && matchesLocation;
+    }).map(job => {
+      if (!isCandidate) return job;
+      const t = (job.employer_id && employerMap[job.employer_id]) || jobMap[job.id];
+      return t ? { ...job, hr_transfer: { hr_name: t.hr_name, created_at: t.created_at } } : job;
     });
-    
+
     setFilteredJobs(filtered);
-  }, [searchParams, jobs]);
+  }, [searchParams, jobs, isCandidate, employerMap, jobMap]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
