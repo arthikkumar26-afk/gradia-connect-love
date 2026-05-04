@@ -183,20 +183,32 @@ Deno.serve(async (req) => {
       });
     }
 
-    // For admins/owners, allow targeting a specific employer; otherwise self.
-    const targetEmployerId = isPrivileged && body.employer_id ? body.employer_id : employerId;
+    const accountType: "hr" | "hr_manager" = body.account_type === "hr_manager" ? "hr_manager" : "hr";
+    const isManagerCreation = accountType === "hr_manager";
+
+    // Only admin/owner can create HR Manager
+    if (isManagerCreation && !isPrivileged) {
+      return new Response(JSON.stringify({ error: "Only admin/owner can create HR Manager accounts" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // For admins/owners creating regular HR, allow targeting a specific employer; otherwise self.
+    const targetEmployerId = !isManagerCreation && isPrivileged && body.employer_id
+      ? body.employer_id
+      : (!isManagerCreation ? employerId : null);
     let parentCompanyName: string | null = profile.company_name ?? null;
-    if (isPrivileged && body.employer_id) {
+    if (!isManagerCreation && isPrivileged && body.employer_id) {
       const { data: ep } = await admin.from("profiles").select("company_name,full_name").eq("id", body.employer_id).maybeSingle();
       parentCompanyName = ep?.company_name ?? ep?.full_name ?? null;
     }
 
-    // Create the auth user with role=hr
+    // Create the auth user with the chosen role
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: { role: "hr", full_name },
+      user_metadata: { role: accountType, full_name },
     });
     if (createErr || !created.user) {
       return new Response(JSON.stringify({ error: createErr?.message || "Failed to create user" }), {
@@ -205,25 +217,27 @@ Deno.serve(async (req) => {
     }
     const hrId = created.user.id;
 
-    // Ensure profile row says hr
+    // Ensure profile row reflects role
     await admin.from("profiles").upsert({
       id: hrId,
       email,
       full_name,
-      role: "hr",
-      company_name: parentCompanyName,
+      role: accountType,
+      company_name: isManagerCreation ? null : parentCompanyName,
     }, { onConflict: "id" });
 
     // user_roles entry
-    await admin.from("user_roles").upsert({ user_id: hrId, role: "hr" } as any, { onConflict: "user_id,role" });
+    await admin.from("user_roles").upsert({ user_id: hrId, role: accountType } as any, { onConflict: "user_id,role" });
 
-    // Link
-    await admin.from("hr_employer_links").upsert({
-      hr_user_id: hrId,
-      employer_user_id: targetEmployerId,
-      created_by: employerId,
-      is_active: true,
-    }, { onConflict: "hr_user_id" });
+    // Link only for regular HR
+    if (!isManagerCreation && targetEmployerId) {
+      await admin.from("hr_employer_links").upsert({
+        hr_user_id: hrId,
+        employer_user_id: targetEmployerId,
+        created_by: employerId,
+        is_active: true,
+      }, { onConflict: "hr_user_id" });
+    }
 
     // Send credentials email via Resend
     let emailSent = false;
@@ -233,7 +247,19 @@ Deno.serve(async (req) => {
       if (RESEND_API_KEY) {
         const companyName = parentCompanyName || profile.full_name || "your employer";
         const loginUrl = "https://gradiaa.com/hr/login";
-        const html = `
+        const html = isManagerCreation ? `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #111;">Welcome to Gradia — HR Manager Access</h2>
+            <p>Hi ${full_name},</p>
+            <p>You've been granted <strong>HR Manager</strong> access on Gradia. You have full control over the HR panel and oversight across all employer HR accounts.</p>
+            <div style="background:#f4f4f5; border-radius:8px; padding:16px; margin:20px 0;">
+              <p style="margin:0 0 8px;"><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
+              <p style="margin:0 0 8px;"><strong>Email:</strong> ${email}</p>
+              <p style="margin:0;"><strong>Temporary Password:</strong> <code>${password}</code></p>
+            </div>
+            <p style="color:#666; font-size:13px;">For security, please change your password after your first login.</p>
+          </div>
+        ` : `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #111;">Welcome to Gradia HR Portal</h2>
             <p>Hi ${full_name},</p>
@@ -256,7 +282,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Gradia Hiring <noreply@gradia.co.in>",
             to: [email],
-            subject: `Your HR account for ${companyName} on Gradia`,
+            subject: isManagerCreation ? `Your HR Manager account on Gradia` : `Your HR account for ${companyName} on Gradia`,
             html,
           }),
         });

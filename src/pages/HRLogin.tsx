@@ -20,12 +20,13 @@ const HRLogin = () => {
 
   useEffect(() => {
     if (isAuthenticated && profile) {
-      if ((profile.role as string) === "hr") {
+      const r = profile.role as string;
+      if (r === "hr" || r === "hr_manager") {
         navigate("/hr/dashboard");
       } else {
         toast({
           title: "Access Denied",
-          description: "This login is for HR accounts only.",
+          description: "This login is for HR / HR Manager accounts only.",
           variant: "destructive",
         });
         supabase.auth.signOut();
@@ -43,16 +44,16 @@ const HRLogin = () => {
         return;
       }
       const { data: prof } = await supabase.from("profiles").select("role").eq("id", data.user.id).single();
-      if (prof?.role !== "hr") {
+      if (prof?.role !== "hr" && prof?.role !== "hr_manager") {
         toast({
           title: "Access Denied",
-          description: `This login is for HR only. Your account is registered as ${prof?.role}.`,
+          description: `This login is for HR / HR Manager only. Your account is registered as ${prof?.role}.`,
           variant: "destructive",
         });
         await supabase.auth.signOut();
         return;
       }
-      toast({ title: "Welcome", description: "Signed in to HR portal" });
+      toast({ title: "Welcome", description: prof.role === "hr_manager" ? "Signed in as HR Manager" : "Signed in to HR portal" });
       navigate("/hr/dashboard");
     } catch (err: any) {
       toast({ title: "Error", description: err.message ?? "Login failed", variant: "destructive" });
@@ -76,8 +77,8 @@ const HRLogin = () => {
             <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-pink-100 dark:bg-pink-900 mb-2">
               <Users className="h-5 w-5 text-pink-600 dark:text-pink-300" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground mb-1">HR Login</h1>
-            <p className="text-sm text-muted-foreground">Sign in to your HR account</p>
+            <h1 className="text-2xl font-bold text-foreground mb-1">HR / HR Manager Login</h1>
+            <p className="text-sm text-muted-foreground">Sign in to your HR or HR Manager account</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -95,7 +96,7 @@ const HRLogin = () => {
             </Button>
           </form>
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            HR accounts are created by your linked Employer. Contact your Employer admin if you need access.
+            HR accounts are created by your linked Employer. HR Manager accounts are created by Admin and have full control over the HR panel.
           </p>
         </div>
       </div>
