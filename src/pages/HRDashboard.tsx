@@ -440,7 +440,64 @@ const HRDashboard = () => {
                 )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">All Registered Candidates ({allCandidates.length})</CardTitle></CardHeader>
+            <CardContent>
+              {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
+                : allCandidates.length === 0 ? <p className="text-sm text-muted-foreground">No candidates registered yet.</p>
+                : (
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                    {allCandidates.map(c => (
+                      <div key={c.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{c.full_name || "Candidate"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{c.email || "—"} · {c.preferred_role || "—"}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.id}`)}>
+                            <FileText className="h-3.5 w-3.5 mr-1" /> View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </CardContent>
+          </Card>
           </div>
+        );
+      case "employers":
+        return (
+          <Card>
+            <CardHeader><CardTitle className="text-base">Employer Accounts ({employers.length})</CardTitle></CardHeader>
+            <CardContent>
+              {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
+                : employers.length === 0 ? <p className="text-sm text-muted-foreground">No employer accounts found.</p>
+                : (
+                  <div className="space-y-2 max-h-[700px] overflow-y-auto">
+                    {employers.map(e => (
+                      <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Building className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate">{e.company_name || e.full_name || "Employer"}</p>
+                            <p className="text-xs text-muted-foreground truncate">{e.email || "—"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
+                          <Badge variant="outline">Employer</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </CardContent>
+          </Card>
         );
       case "candidates-data":
         return parentEmployerId && user ? (
