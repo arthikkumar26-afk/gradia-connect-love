@@ -660,6 +660,25 @@ const HRDashboard = () => {
           </div>
         </main>
       </div>
+
+      {transferCandidate && user && (
+        <TransferCandidateDialog
+          open={!!transferCandidate}
+          onOpenChange={(v) => !v && setTransferCandidate(null)}
+          hrUserId={user.id}
+          candidateId={transferCandidate.id}
+          candidateName={transferCandidate.name}
+        />
+      )}
+      {transferEmployer && user && (
+        <TransferEmployerDialog
+          open={!!transferEmployer}
+          onOpenChange={(v) => !v && setTransferEmployer(null)}
+          hrUserId={user.id}
+          employerId={transferEmployer.id}
+          employerName={transferEmployer.name}
+        />
+      )}
     </div>
   );
 };
