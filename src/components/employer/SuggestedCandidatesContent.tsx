@@ -288,7 +288,15 @@ export const SuggestedCandidatesContent = () => {
                         <AvatarImage src={c.profile_picture || undefined} />
                         <AvatarFallback>{c.full_name?.[0] || "C"}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-sm hover:text-primary hover:underline">{c.full_name}</span>
+                      <div className="min-w-0">
+                        <span className="font-medium text-sm hover:text-primary hover:underline block">{c.full_name}</span>
+                        {transferMap[c.id] && (
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <UserCheck className="h-2.5 w-2.5 text-primary" />
+                            HR: {transferMap[c.id].hr_name}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">
