@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { JobApplicationFlow } from "@/components/jobs/JobApplicationFlow";
 import { correctJobTitle, correctLocation } from "@/utils/spellCorrect";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmployersTransferredToCandidate } from "@/hooks/useHRTransfers";
 import { 
   Search, 
   ArrowLeft, 
