@@ -175,18 +175,18 @@ const HRDashboard = () => {
         const [{ data: empAll }, { data: candAll }] = await Promise.all([
           supabase
             .from("profiles")
-            .select("id, full_name, email, company_name, phone, created_at")
+            .select("id, full_name, email, company_name, created_at")
             .eq("role", "employer")
             .order("created_at", { ascending: false }),
           supabase
             .from("profiles")
-            .select("id, full_name, email, phone, preferred_role, created_at")
+            .select("id, full_name, email, preferred_role, created_at")
             .eq("role", "candidate")
             .order("created_at", { ascending: false })
             .limit(500),
         ]);
-        setEmployers((empAll as EmployerRow[]) ?? []);
-        setAllCandidates((candAll as AllCandidateRow[]) ?? []);
+        setEmployers(((empAll as any[]) ?? []) as EmployerRow[]);
+        setAllCandidates(((candAll as any[]) ?? []) as AllCandidateRow[]);
       } else {
         setEmployers([]);
         setAllCandidates([]);
