@@ -2014,7 +2014,7 @@ const CandidateSignup = () => {
 
   const renderPlanStep = () => {
     return (
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-6xl">
         <ProgressIndicator />
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-foreground mb-2">Registration Fee</h2>
