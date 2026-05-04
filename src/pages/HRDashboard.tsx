@@ -171,26 +171,22 @@ const HRDashboard = () => {
       }
 
       // HR Manager: load all employers + all candidates for the new tabs
-      if (isManager) {
-        const [{ data: empAll }, { data: candAll }] = await Promise.all([
-          supabase
-            .from("profiles")
-            .select("id, full_name, email, company_name, created_at")
-            .eq("role", "employer")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("profiles")
-            .select("id, full_name, email, preferred_role, created_at")
-            .eq("role", "candidate")
-            .order("created_at", { ascending: false })
-            .limit(500),
-        ]);
-        setEmployers(((empAll as any[]) ?? []) as EmployerRow[]);
-        setAllCandidates(((candAll as any[]) ?? []) as AllCandidateRow[]);
-      } else {
-        setEmployers([]);
-        setAllCandidates([]);
-      }
+      // Load all employers + all candidates for the Employers Data tab and All Candidates view
+      const [{ data: empAll }, { data: candAll }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, email, company_name, created_at")
+          .eq("role", "employer")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("profiles")
+          .select("id, full_name, email, preferred_role, created_at")
+          .eq("role", "candidate")
+          .order("created_at", { ascending: false })
+          .limit(500),
+      ]);
+      setEmployers(((empAll as any[]) ?? []) as EmployerRow[]);
+      setAllCandidates(((candAll as any[]) ?? []) as AllCandidateRow[]);
     } catch (error) {
       console.error("Failed to refresh HR dashboard", error);
       if (!options?.silent) toast.error("Couldn't refresh HR dashboard data.");
