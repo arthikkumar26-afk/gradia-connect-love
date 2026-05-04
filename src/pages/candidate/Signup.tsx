@@ -2028,14 +2028,46 @@ const CandidateSignup = () => {
             <Star className="h-3 w-3" /> One-Time Registration
           </Badge>
           <h3 className="text-xl font-bold text-foreground mb-2">Candidate Registration</h3>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-muted-foreground mb-4">
             Unlock your Gradia candidate dashboard and start applying to jobs, taking mock interviews, and building your career.
           </p>
+
+          {/* Tier selector */}
+          <div className="grid grid-cols-3 gap-2 mb-5">
+            {REGISTRATION_TIERS.map((tier, idx) => {
+              const active = selectedRegistrationTier === idx;
+              return (
+                <button
+                  type="button"
+                  key={tier.label}
+                  onClick={() => setSelectedRegistrationTier(idx as 0 | 1 | 2)}
+                  className={`rounded-lg border-2 p-3 text-center transition-all ${
+                    active
+                      ? 'border-primary bg-primary/5 shadow-md'
+                      : 'border-border bg-background hover:border-primary/50'
+                  }`}
+                >
+                  <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    {tier.label}
+                  </div>
+                  <div className={`text-lg font-bold ${active ? 'text-primary' : 'text-foreground'}`}>
+                    ₹{tier.price.toLocaleString('en-IN')}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground leading-tight mt-1">
+                    {tier.tagline}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
           <div className="mb-6">
             <div className="text-5xl font-bold text-primary">
               ₹{REGISTRATION_FEE.toLocaleString('en-IN')}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">one-time payment</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              one-time payment · {REGISTRATION_TIERS[selectedRegistrationTier].label} tier
+            </p>
           </div>
           <ul className="space-y-2 mb-2 text-left max-w-sm mx-auto">
             {[
