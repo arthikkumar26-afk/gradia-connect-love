@@ -396,6 +396,8 @@ const CandidateSignup = () => {
   const [selectedAddons, setSelectedAddons] = useState<UnlockFeature[]>([]);
   // Detailed service add-ons (from pricing sheet). Each item has 3 tier prices; user picks one tier per item.
   const [selectedServiceTiers, setSelectedServiceTiers] = useState<Record<string, 0 | 1 | 2>>({});
+  // Registration tier (Basic / Standard / Premium)
+  const [selectedRegistrationTier, setSelectedRegistrationTier] = useState<0 | 1 | 2>(0);
 
   useEffect(() => {
     if ((window as any).Razorpay) { setRazorpayLoaded(true); return; }
