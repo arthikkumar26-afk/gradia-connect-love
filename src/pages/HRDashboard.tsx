@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw, UserSquare2, Mail } from "lucide-react";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw, UserSquare2, Mail, Building } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
@@ -35,6 +35,22 @@ interface CandidateRow {
   candidate_name?: string;
   job_title?: string;
 }
+interface EmployerRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  company_name?: string | null;
+  phone?: string | null;
+  created_at?: string | null;
+}
+interface AllCandidateRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone?: string | null;
+  preferred_role?: string | null;
+  created_at?: string | null;
+}
 
 const HRDashboard = () => {
   const { user, profile, logout, isLoading: authLoading } = useAuth();
@@ -44,6 +60,8 @@ const HRDashboard = () => {
   const [parentEmployerEmail, setParentEmployerEmail] = useState<string>("");
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
+  const [employers, setEmployers] = useState<EmployerRow[]>([]);
+  const [allCandidates, setAllCandidates] = useState<AllCandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -151,6 +169,24 @@ const HRDashboard = () => {
       } else {
         setCandidates([]);
       }
+
+      // HR Manager: load all employers + all candidates for the new tabs
+      // Load all employers + all candidates for the Employers Data tab and All Candidates view
+      const [{ data: empAll }, { data: candAll }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, email, company_name, created_at")
+          .eq("role", "employer")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("profiles")
+          .select("id, full_name, email, preferred_role, created_at")
+          .eq("role", "candidate")
+          .order("created_at", { ascending: false })
+          .limit(500),
+      ]);
+      setEmployers(((empAll as any[]) ?? []) as EmployerRow[]);
+      setAllCandidates(((candAll as any[]) ?? []) as AllCandidateRow[]);
     } catch (error) {
       console.error("Failed to refresh HR dashboard", error);
       if (!options?.silent) toast.error("Couldn't refresh HR dashboard data.");
@@ -201,6 +237,7 @@ const HRDashboard = () => {
   const menuItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "jobs", label: "Jobs", icon: Briefcase },
+    { id: "employers", label: "Employers Data", icon: Building },
     { id: "post", label: "Post Job", icon: Plus },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
     { id: "candidates", label: "Candidates", icon: Users },
@@ -403,7 +440,64 @@ const HRDashboard = () => {
                 )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">All Registered Candidates ({allCandidates.length})</CardTitle></CardHeader>
+            <CardContent>
+              {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
+                : allCandidates.length === 0 ? <p className="text-sm text-muted-foreground">No candidates registered yet.</p>
+                : (
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
+                    {allCandidates.map(c => (
+                      <div key={c.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{c.full_name || "Candidate"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{c.email || "—"} · {c.preferred_role || "—"}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.id}`)}>
+                            <FileText className="h-3.5 w-3.5 mr-1" /> View
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </CardContent>
+          </Card>
           </div>
+        );
+      case "employers":
+        return (
+          <Card>
+            <CardHeader><CardTitle className="text-base">Employer Accounts ({employers.length})</CardTitle></CardHeader>
+            <CardContent>
+              {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
+                : employers.length === 0 ? <p className="text-sm text-muted-foreground">No employer accounts found.</p>
+                : (
+                  <div className="space-y-2 max-h-[700px] overflow-y-auto">
+                    {employers.map(e => (
+                      <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <Building className="h-4 w-4 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate">{e.company_name || e.full_name || "Employer"}</p>
+                            <p className="text-xs text-muted-foreground truncate">{e.email || "—"}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
+                          <Badge variant="outline">Employer</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </CardContent>
+          </Card>
         );
       case "candidates-data":
         return parentEmployerId && user ? (
