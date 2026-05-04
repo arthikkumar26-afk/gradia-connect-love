@@ -150,8 +150,8 @@ const HRDashboard = () => {
       navigate("/hr/login");
       return;
     }
-    if (profile && (profile.role as string) !== "hr") {
-      toast.error("This dashboard is for HR accounts only.");
+    if (profile && (profile.role as string) !== "hr" && (profile.role as string) !== "hr_manager") {
+      toast.error("This dashboard is for HR / HR Manager accounts only.");
       navigate("/");
     }
   }, [user, profile, authLoading, navigate]);
