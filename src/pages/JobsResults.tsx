@@ -116,7 +116,8 @@ const JobsResults = () => {
           posted: job.posted_date ? new Date(job.posted_date).toLocaleDateString() : 'Recently',
           applicants: Math.floor(Math.random() * 50) + 5,
           featured: false,
-          tags: job.job_type === 'full-time' ? ['Easy Apply'] : []
+          tags: job.job_type === 'full-time' ? ['Easy Apply'] : [],
+          employer_id: job.employer_id,
         }));
 
         setJobs(transformedJobs);
