@@ -25,7 +25,7 @@ interface MatchedJob {
 const Careers = () => {
   const { user, profile } = useAuth();
   const isCandidate = profile?.role === 'candidate';
-  const { employerMap, jobMap } = useEmployersTransferredToCandidate(
+  const { employerMap: employerMap_t, jobMap } = useEmployersTransferredToCandidate(
     isCandidate ? user?.id : undefined
   );
   const [jobs, setJobs] = useState<MatchedJob[]>([]);
