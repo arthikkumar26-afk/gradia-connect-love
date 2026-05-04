@@ -499,6 +499,9 @@ const HRDashboard = () => {
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
                           <Badge variant="outline">Employer</Badge>
+                          <Button size="sm" onClick={() => setTransferEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer" })}>
+                            <Send className="h-3.5 w-3.5 mr-1" /> Transfer to Candidate
+                          </Button>
                         </div>
                       </div>
                     ))}
