@@ -2023,7 +2023,8 @@ const CandidateSignup = () => {
           </p>
         </div>
 
-        <Card className="p-8 max-w-xl mx-auto mb-6 text-center border-2 border-primary/30 shadow-xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
+        <Card className="p-8 mb-0 text-center border-2 border-primary/30 shadow-xl">
           <Badge className="mb-4 gap-1 mx-auto w-fit">
             <Star className="h-3 w-3" /> One-Time Registration
           </Badge>
