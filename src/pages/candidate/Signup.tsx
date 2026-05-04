@@ -1874,8 +1874,13 @@ const CandidateSignup = () => {
   );
 
   // ---------- Registration fee step ----------
-  // Flat ₹5,000 one-time registration fee for all candidates.
-  const REGISTRATION_FEE = 5000;
+  // One-time registration fee — three tiers
+  const REGISTRATION_TIERS: { label: string; price: number; tagline: string }[] = [
+    { label: 'Basic', price: 4999, tagline: 'Essential candidate access' },
+    { label: 'Standard', price: 7999, tagline: 'Most popular — extra perks' },
+    { label: 'Premium', price: 9999, tagline: 'Full white-glove onboarding' },
+  ];
+  const REGISTRATION_FEE = REGISTRATION_TIERS[selectedRegistrationTier].price;
   const addonsTotal = selectedAddons.reduce((s, id) => s + FEATURE_UNLOCKS[id].price, 0);
 
   // Detailed service add-ons (from pricing reference sheet)
