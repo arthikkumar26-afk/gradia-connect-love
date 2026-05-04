@@ -461,6 +461,9 @@ const HRDashboard = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
+                          <Button size="sm" onClick={() => setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" })}>
+                            <Send className="h-3.5 w-3.5 mr-1" /> Transfer to Employer
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.id}`)}>
                             <FileText className="h-3.5 w-3.5 mr-1" /> View
                           </Button>
