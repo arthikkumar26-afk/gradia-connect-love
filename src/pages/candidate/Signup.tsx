@@ -2073,7 +2073,7 @@ const CandidateSignup = () => {
         </Card>
 
         {/* Detailed Service Add-ons (from pricing sheet) */}
-        <Card className="p-5 max-w-xl mx-auto mb-6">
+        <Card className="p-5 mb-0">
           <div className="mb-4">
             <h4 className="text-base font-bold text-foreground">Boost Your Account with Add-ons</h4>
             <p className="text-xs text-muted-foreground">
