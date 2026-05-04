@@ -34,6 +34,21 @@ interface CandidateRow {
   ai_score: number | null;
   candidate_name?: string;
   job_title?: string;
+interface EmployerRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  company_name?: string | null;
+  phone?: string | null;
+  created_at?: string | null;
+}
+interface AllCandidateRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone?: string | null;
+  preferred_role?: string | null;
+  created_at?: string | null;
 }
 
 const HRDashboard = () => {
@@ -44,6 +59,8 @@ const HRDashboard = () => {
   const [parentEmployerEmail, setParentEmployerEmail] = useState<string>("");
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
+  const [employers, setEmployers] = useState<EmployerRow[]>([]);
+  const [allCandidates, setAllCandidates] = useState<AllCandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
