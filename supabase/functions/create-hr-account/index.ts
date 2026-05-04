@@ -247,7 +247,19 @@ Deno.serve(async (req) => {
       if (RESEND_API_KEY) {
         const companyName = parentCompanyName || profile.full_name || "your employer";
         const loginUrl = "https://gradiaa.com/hr/login";
-        const html = `
+        const html = isManagerCreation ? `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #111;">Welcome to Gradia — HR Manager Access</h2>
+            <p>Hi ${full_name},</p>
+            <p>You've been granted <strong>HR Manager</strong> access on Gradia. You have full control over the HR panel and oversight across all employer HR accounts.</p>
+            <div style="background:#f4f4f5; border-radius:8px; padding:16px; margin:20px 0;">
+              <p style="margin:0 0 8px;"><strong>Login URL:</strong> <a href="${loginUrl}">${loginUrl}</a></p>
+              <p style="margin:0 0 8px;"><strong>Email:</strong> ${email}</p>
+              <p style="margin:0;"><strong>Temporary Password:</strong> <code>${password}</code></p>
+            </div>
+            <p style="color:#666; font-size:13px;">For security, please change your password after your first login.</p>
+          </div>
+        ` : `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2 style="color: #111;">Welcome to Gradia HR Portal</h2>
             <p>Hi ${full_name},</p>
@@ -270,7 +282,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Gradia Hiring <noreply@gradia.co.in>",
             to: [email],
-            subject: `Your HR account for ${companyName} on Gradia`,
+            subject: isManagerCreation ? `Your HR Manager account on Gradia` : `Your HR account for ${companyName} on Gradia`,
             html,
           }),
         });
