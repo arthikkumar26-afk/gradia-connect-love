@@ -89,6 +89,7 @@ const JobsResults = () => {
             department,
             posted_date,
             status,
+            employer_id,
             employer:profiles!jobs_employer_id_fkey(company_name)
           `)
           .eq('status', 'active')
