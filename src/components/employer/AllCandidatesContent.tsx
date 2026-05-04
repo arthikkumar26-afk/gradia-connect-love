@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { openResume } from "@/utils/resumeUrl";
 import { useInterviewUnlock } from "@/hooks/useInterviewUnlock";
 import { InterviewUnlockDialog } from "./InterviewUnlockDialog";
+import { useCandidatesTransferredToEmployer } from "@/hooks/useHRTransfers";
 
 
 interface CandidateProfile {
