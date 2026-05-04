@@ -204,6 +204,7 @@ export function AllCandidatesContent() {
   };
 
   const filtered = candidates
+    .filter((c) => !!transferMap[c.id]) // Only HR-transferred candidates are visible
     .filter((c) => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
