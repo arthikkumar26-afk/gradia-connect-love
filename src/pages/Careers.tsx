@@ -6,6 +6,7 @@ import { MapPin, Clock, ArrowRight, Briefcase, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmployersTransferredToCandidate } from "@/hooks/useHRTransfers";
 
 interface MatchedJob {
   id: string;
