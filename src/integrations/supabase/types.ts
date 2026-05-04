@@ -4393,6 +4393,7 @@ export type Database = {
       is_employer_by_role: { Args: { _user_id: string }; Returns: boolean }
       is_employer_profile: { Args: { _user_id: string }; Returns: boolean }
       is_freelancer_profile: { Args: { _user_id: string }; Returns: boolean }
+      is_hr_manager: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
@@ -4405,6 +4406,7 @@ export type Database = {
         | "individual"
         | "edutech"
         | "hr"
+        | "hr_manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4542,6 +4544,7 @@ export const Constants = {
         "individual",
         "edutech",
         "hr",
+        "hr_manager",
       ],
     },
   },
