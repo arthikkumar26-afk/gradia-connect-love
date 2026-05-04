@@ -61,6 +61,7 @@ const PROFILE_UNLOCK_COST = 200;
 
 export function AllCandidatesContent() {
   const { user } = useAuth();
+  const { map: transferMap, loading: transferLoading } = useCandidatesTransferredToEmployer(user?.id);
   const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
