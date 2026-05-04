@@ -6,6 +6,7 @@ import { MapPin, Clock, ArrowRight, Briefcase, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmployersTransferredToCandidate } from "@/hooks/useHRTransfers";
 
 interface MatchedJob {
   id: string;
@@ -22,7 +23,11 @@ interface MatchedJob {
 }
 
 const Careers = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const isCandidate = profile?.role === 'candidate';
+  const { employerMap: employerMap_t, jobMap } = useEmployersTransferredToCandidate(
+    isCandidate ? user?.id : undefined
+  );
   const [jobs, setJobs] = useState<MatchedJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -115,10 +120,15 @@ const Careers = () => {
 
         const employerMap = new Map(employers?.map(e => [e.id, e.company_name || e.full_name]) || []);
 
-        setJobs(topJobs.map(j => ({
+        const mapped = topJobs.map(j => ({
           ...j,
           company_name: employerMap.get(j.employer_id) || 'Company',
-        })));
+        }));
+        // Candidates only see HR-transferred employers/jobs
+        const visible = isCandidate
+          ? mapped.filter(j => employerMap_t[j.employer_id] || jobMap[j.id])
+          : mapped;
+        setJobs(visible);
       } catch (err) {
         console.error('Error fetching careers:', err);
         setJobs([]);

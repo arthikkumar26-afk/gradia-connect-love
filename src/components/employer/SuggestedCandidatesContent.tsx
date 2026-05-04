@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Sparkles, Briefcase, MapPin, Mail, Phone, Users, GraduationCap, IndianRupee, Lock, Coins, ExternalLink } from "lucide-react";
+import { Sparkles, Briefcase, MapPin, Mail, Phone, Users, GraduationCap, IndianRupee, Lock, Coins, ExternalLink, UserCheck } from "lucide-react";
 import { toast } from "sonner";
+import { useCandidatesTransferredToEmployer } from "@/hooks/useHRTransfers";
 
 const PROFILE_UNLOCK_COST = 200;
 
@@ -80,6 +81,7 @@ const scoreCandidate = (c: CandidateRow, job: JobItem): ScoredCandidate => {
 export const SuggestedCandidatesContent = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { map: transferMap, loading: transferLoading } = useCandidatesTransferredToEmployer(user?.id);
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [candidates, setCandidates] = useState<CandidateRow[]>([]);
@@ -188,13 +190,15 @@ export const SuggestedCandidatesContent = () => {
 
   const matched: ScoredCandidate[] = useMemo(() => {
     if (!selectedJob) return [];
-    const scored = candidates
+    // Only HR-transferred candidates are eligible
+    const allowed = candidates.filter((c) => !!transferMap[c.id]);
+    const scored = allowed
       .map((c) => scoreCandidate(c, selectedJob))
       .sort((a, b) => b.score - a.score);
     const withScore = scored.filter((c) => c.score > 0);
-    // Fallback: if no scored matches, still surface top candidates so the panel isn't empty
+    // Fallback: if no scored matches, still surface top transferred candidates
     return (withScore.length > 0 ? withScore : scored).slice(0, 50);
-  }, [candidates, selectedJob]);
+  }, [candidates, selectedJob, transferMap]);
 
   return (
     <div className="space-y-4">
@@ -245,7 +249,7 @@ export const SuggestedCandidatesContent = () => {
       )}
 
       <Card className="overflow-hidden">
-        {loading ? (
+        {loading || transferLoading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Loading suggestions…</div>
         ) : !selectedJob ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
@@ -254,7 +258,10 @@ export const SuggestedCandidatesContent = () => {
         ) : matched.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
             <Users className="h-8 w-8 opacity-40" />
-            No matching candidates found for this vacancy yet.
+            <p className="font-medium text-foreground">No transferred candidates yet</p>
+            <p className="text-xs max-w-sm">
+              Suggestions appear once an HR Recruiter or HR Manager transfers candidates to your account.
+            </p>
           </div>
         ) : (
           <Table>
@@ -281,7 +288,15 @@ export const SuggestedCandidatesContent = () => {
                         <AvatarImage src={c.profile_picture || undefined} />
                         <AvatarFallback>{c.full_name?.[0] || "C"}</AvatarFallback>
                       </Avatar>
-                      <span className="font-medium text-sm hover:text-primary hover:underline">{c.full_name}</span>
+                      <div className="min-w-0">
+                        <span className="font-medium text-sm hover:text-primary hover:underline block">{c.full_name}</span>
+                        {transferMap[c.id] && (
+                          <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <UserCheck className="h-2.5 w-2.5 text-primary" />
+                            HR: {transferMap[c.id].hr_name}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">

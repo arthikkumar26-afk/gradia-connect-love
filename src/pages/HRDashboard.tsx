@@ -16,6 +16,9 @@ import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 import HRCandidatesData from "@/components/hr/HRCandidatesData";
 import HREmailStatus from "@/components/hr/HREmailStatus";
+import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
+import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
+import { Send } from "lucide-react";
 
 interface JobRow {
   id: string;
@@ -67,6 +70,8 @@ const HRDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [jobStatusFilter, setJobStatusFilter] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [transferCandidate, setTransferCandidate] = useState<{ id: string; name: string } | null>(null);
+  const [transferEmployer, setTransferEmployer] = useState<{ id: string; name: string } | null>(null);
 
   const reloadJobs = useCallback(async (employerId: string) => {
     const { data: jobsData, error } = await supabase
@@ -456,6 +461,9 @@ const HRDashboard = () => {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
+                          <Button size="sm" onClick={() => setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" })}>
+                            <Send className="h-3.5 w-3.5 mr-1" /> Transfer to Employer
+                          </Button>
                           <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.id}`)}>
                             <FileText className="h-3.5 w-3.5 mr-1" /> View
                           </Button>
@@ -491,6 +499,9 @@ const HRDashboard = () => {
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
                           <Badge variant="outline">Employer</Badge>
+                          <Button size="sm" onClick={() => setTransferEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer" })}>
+                            <Send className="h-3.5 w-3.5 mr-1" /> Transfer to Candidate
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -649,6 +660,25 @@ const HRDashboard = () => {
           </div>
         </main>
       </div>
+
+      {transferCandidate && user && (
+        <TransferCandidateDialog
+          open={!!transferCandidate}
+          onOpenChange={(v) => !v && setTransferCandidate(null)}
+          hrUserId={user.id}
+          candidateId={transferCandidate.id}
+          candidateName={transferCandidate.name}
+        />
+      )}
+      {transferEmployer && user && (
+        <TransferEmployerDialog
+          open={!!transferEmployer}
+          onOpenChange={(v) => !v && setTransferEmployer(null)}
+          hrUserId={user.id}
+          employerId={transferEmployer.id}
+          employerName={transferEmployer.name}
+        />
+      )}
     </div>
   );
 };

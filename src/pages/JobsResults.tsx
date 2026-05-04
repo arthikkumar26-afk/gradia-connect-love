@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { JobApplicationFlow } from "@/components/jobs/JobApplicationFlow";
 import { correctJobTitle, correctLocation } from "@/utils/spellCorrect";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmployersTransferredToCandidate } from "@/hooks/useHRTransfers";
 import { 
   Search, 
   ArrowLeft, 
@@ -41,12 +42,18 @@ interface Job {
   tags?: string[];
   benefits?: string[];
   companyDescription?: string;
+  employer_id?: string;
+  hr_transfer?: { hr_name: string; created_at: string } | null;
 }
 
 const JobsResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, profile } = useAuth();
+  const { isAuthenticated, profile, user } = useAuth();
+  const isCandidate = profile?.role === 'candidate';
+  const { employerMap, jobMap, loading: transferLoading } = useEmployersTransferredToCandidate(
+    isCandidate ? user?.id : undefined
+  );
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyingJob, setApplyingJob] = useState<Job | null>(null);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
@@ -82,6 +89,7 @@ const JobsResults = () => {
             department,
             posted_date,
             status,
+            employer_id,
             employer:profiles!jobs_employer_id_fkey(company_name)
           `)
           .eq('status', 'active')
@@ -108,7 +116,8 @@ const JobsResults = () => {
           posted: job.posted_date ? new Date(job.posted_date).toLocaleDateString() : 'Recently',
           applicants: Math.floor(Math.random() * 50) + 5,
           featured: false,
-          tags: job.job_type === 'full-time' ? ['Easy Apply'] : []
+          tags: job.job_type === 'full-time' ? ['Easy Apply'] : [],
+          employer_id: job.employer_id,
         }));
 
         setJobs(transformedJobs);
@@ -160,26 +169,34 @@ const JobsResults = () => {
     }
   }, [pendingApplyJobId, isAuthenticated, profile, jobs]);
 
-  // Filter jobs based on search parameters
+  // Filter jobs based on search parameters + HR transfer gating for candidates
   useEffect(() => {
     const query = searchParams.get('q')?.toLowerCase() || '';
     const loc = searchParams.get('location')?.toLowerCase() || '';
-    
+
     const filtered = jobs.filter(job => {
-      const matchesQuery = !query || 
+      if (isCandidate) {
+        const allowed =
+          (job.employer_id && employerMap[job.employer_id]) ||
+          jobMap[job.id];
+        if (!allowed) return false;
+      }
+      const matchesQuery = !query ||
         job.title.toLowerCase().includes(query) ||
         job.company.toLowerCase().includes(query) ||
         job.skills.some(skill => skill.toLowerCase().includes(query)) ||
         job.description.toLowerCase().includes(query);
-      
-      const matchesLocation = !loc || 
+      const matchesLocation = !loc ||
         job.location.toLowerCase().includes(loc);
-      
       return matchesQuery && matchesLocation;
+    }).map(job => {
+      if (!isCandidate) return job;
+      const t = (job.employer_id && employerMap[job.employer_id]) || jobMap[job.id];
+      return t ? { ...job, hr_transfer: { hr_name: t.hr_name, created_at: t.created_at } } : job;
     });
-    
+
     setFilteredJobs(filtered);
-  }, [searchParams, jobs]);
+  }, [searchParams, jobs, isCandidate, employerMap, jobMap]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -297,6 +314,11 @@ const JobsResults = () => {
                   onClick={() => handleJobSelect(job)}
                 >
                   <CardHeader className="pb-3">
+                    {job.hr_transfer && (
+                      <div className="text-[11px] text-muted-foreground mb-1">
+                        🔗 Transferred by HR: <span className="font-medium text-foreground">{job.hr_transfer.hr_name}</span>
+                      </div>
+                    )}
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-lg">{job.category === "software" ? "💻" : "🎓"}</span>

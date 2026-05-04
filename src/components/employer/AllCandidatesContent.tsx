@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { openResume } from "@/utils/resumeUrl";
 import { useInterviewUnlock } from "@/hooks/useInterviewUnlock";
 import { InterviewUnlockDialog } from "./InterviewUnlockDialog";
+import { useCandidatesTransferredToEmployer } from "@/hooks/useHRTransfers";
 
 
 interface CandidateProfile {
@@ -60,6 +61,7 @@ const PROFILE_UNLOCK_COST = 200;
 
 export function AllCandidatesContent() {
   const { user } = useAuth();
+  const { map: transferMap, loading: transferLoading } = useCandidatesTransferredToEmployer(user?.id);
   const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -202,6 +204,7 @@ export function AllCandidatesContent() {
   };
 
   const filtered = candidates
+    .filter((c) => !!transferMap[c.id]) // Only HR-transferred candidates are visible
     .filter((c) => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
@@ -274,7 +277,7 @@ export function AllCandidatesContent() {
       </div>
 
       {/* Candidates List */}
-      {loading ? (
+      {loading || transferLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="border-border">
@@ -296,18 +299,32 @@ export function AllCandidatesContent() {
           <div className="h-16 w-16 rounded-full border-4 border-dashed border-border flex items-center justify-center">
             <Users className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="text-sm text-muted-foreground">No candidates found</p>
+          <p className="text-sm font-medium text-foreground">No candidates yet</p>
+          <p className="text-xs text-muted-foreground max-w-sm text-center">
+            Candidates will appear here once an HR Recruiter or HR Manager transfers them to your account.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filtered.map((candidate) => {
             const isUnlocked = unlockedProfiles.has(candidate.id);
+            const transfer = transferMap[candidate.id];
             return (
             <Card
               key={candidate.id}
               className="border-border hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => openCandidate(candidate)}
             >
+              {transfer && (
+                <div className="px-4 pt-3 -mb-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <UserCheck className="h-3 w-3 text-primary" />
+                  <span>
+                    Transferred by HR: <span className="font-medium text-foreground">{transfer.hr_name}</span>
+                    {" · "}
+                    {new Date(transfer.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <Avatar className="h-10 w-10">

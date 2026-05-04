@@ -1242,6 +1242,33 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_candidate_transfers: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          employer_id: string
+          hr_user_id: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          employer_id: string
+          hr_user_id: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          employer_id?: string
+          hr_user_id?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       hr_employer_links: {
         Row: {
           created_at: string
@@ -1272,6 +1299,36 @@ export type Database = {
           is_active?: boolean
           permissions?: Json
           updated_at?: string
+        }
+        Relationships: []
+      }
+      hr_employer_transfers: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          employer_id: string
+          hr_user_id: string
+          id: string
+          job_id: string | null
+          note: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          employer_id: string
+          hr_user_id: string
+          id?: string
+          job_id?: string | null
+          note?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          employer_id?: string
+          hr_user_id?: string
+          id?: string
+          job_id?: string | null
+          note?: string | null
         }
         Relationships: []
       }
@@ -4384,6 +4441,7 @@ export type Database = {
         Args: { coupon_id_input: string }
         Returns: undefined
       }
+      is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
       is_candidate_review: {
         Args: { _interview_candidate_id: string; _user_id: string }
         Returns: boolean
@@ -4394,6 +4452,7 @@ export type Database = {
       is_employer_profile: { Args: { _user_id: string }; Returns: boolean }
       is_freelancer_profile: { Args: { _user_id: string }; Returns: boolean }
       is_hr_manager: { Args: { _user_id: string }; Returns: boolean }
+      is_hr_user: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
