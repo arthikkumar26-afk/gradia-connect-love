@@ -2069,20 +2069,6 @@ const CandidateSignup = () => {
               one-time payment · {REGISTRATION_TIERS[selectedRegistrationTier].label} tier
             </p>
           </div>
-          <ul className="space-y-2 mb-2 text-left max-w-sm mx-auto">
-            {[
-              'Full access to candidate dashboard',
-              'Apply to unlimited jobs',
-              'AI resume scan & ATS score',
-              'Mock interviews & feedback',
-              'Application tracking & email alerts',
-            ].map((f) => (
-              <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
         </Card>
 
         {/* Detailed Service Add-ons (from pricing sheet) */}
