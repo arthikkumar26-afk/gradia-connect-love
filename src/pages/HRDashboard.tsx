@@ -237,6 +237,7 @@ const HRDashboard = () => {
   const menuItems = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "jobs", label: "Jobs", icon: Briefcase },
+    { id: "employers", label: "Employers Data", icon: Building },
     { id: "post", label: "Post Job", icon: Plus },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
     { id: "candidates", label: "Candidates", icon: Users },
