@@ -64,44 +64,60 @@ const HRDashboard = () => {
     if (!user) return;
     if (!options?.silent) setLoading(true);
     try {
-      const { data: link, error: linkError } = await supabase
-        .from("hr_employer_links")
-        .select("employer_user_id, is_active, updated_at")
-        .eq("hr_user_id", user.id)
-        .eq("is_active", true)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      const isManager = (profile?.role as string) === "hr_manager";
 
-      if (linkError) throw linkError;
+      let employerIdsForJobs: string[] = [];
 
-      if (!link) {
-        toast.error("Your HR account is not linked to any Employer yet. Contact your Employer admin.");
+      if (isManager) {
+        // HR Manager: full access — pull all employers' jobs
+        const { data: empProfiles } = await supabase
+          .from("profiles")
+          .select("id, full_name, company_name, email")
+          .eq("role", "employer");
+        employerIdsForJobs = (empProfiles ?? []).map((p: any) => p.id);
         setParentEmployerId(null);
-        setParentEmployerName("");
+        setParentEmployerName(`HR Manager — ${empProfiles?.length ?? 0} Employers`);
         setParentEmployerEmail("");
-        setJobs([]);
-        setCandidates([]);
-        return;
+      } else {
+        const { data: link, error: linkError } = await supabase
+          .from("hr_employer_links")
+          .select("employer_user_id, is_active, updated_at")
+          .eq("hr_user_id", user.id)
+          .eq("is_active", true)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (linkError) throw linkError;
+
+        if (!link) {
+          toast.error("Your HR account is not linked to any Employer yet. Contact your Employer admin.");
+          setParentEmployerId(null);
+          setParentEmployerName("");
+          setParentEmployerEmail("");
+          setJobs([]);
+          setCandidates([]);
+          return;
+        }
+
+        setParentEmployerId(link.employer_user_id);
+        const { data: empProfile, error: empError } = await supabase
+          .from("profiles")
+          .select("full_name, company_name, email")
+          .eq("id", link.employer_user_id)
+          .maybeSingle();
+        if (empError) throw empError;
+        setParentEmployerName(empProfile?.company_name || empProfile?.full_name || "Linked Employer");
+        setParentEmployerEmail(empProfile?.email || "");
+        employerIdsForJobs = [link.employer_user_id];
       }
 
-      setParentEmployerId(link.employer_user_id);
-
-      const { data: empProfile, error: empError } = await supabase
-        .from("profiles")
-        .select("full_name, company_name, email")
-        .eq("id", link.employer_user_id)
-        .maybeSingle();
-      if (empError) throw empError;
-
-      setParentEmployerName(empProfile?.company_name || empProfile?.full_name || "Linked Employer");
-      setParentEmployerEmail(empProfile?.email || "");
-
-      const { data: jobsData, error: jobsError } = await supabase
+      let jobsQuery = supabase
         .from("jobs")
         .select("id, job_title, location, status, created_at")
-        .eq("employer_id", link.employer_user_id)
         .order("created_at", { ascending: false });
+      if (!isManager) jobsQuery = jobsQuery.eq("employer_id", employerIdsForJobs[0]);
+      const { data: jobsData, error: jobsError } = await jobsQuery;
       if (jobsError) throw jobsError;
 
       setJobs((jobsData as JobRow[]) ?? []);
@@ -141,7 +157,7 @@ const HRDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, profile?.role]);
 
   // Auth guard
   useEffect(() => {
