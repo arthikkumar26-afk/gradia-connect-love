@@ -553,8 +553,11 @@ const PlanControl = ({ accessRole }: Props) => {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+      </>
+    );
 
+  const dialogs = (
+    <>
       {/* Plan-change dialog */}
       <Dialog open={planDlgOpen} onOpenChange={setPlanDlgOpen}>
         <DialogContent>
@@ -606,6 +609,36 @@ const PlanControl = ({ accessRole }: Props) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </>
+  );
+
+  if (accessRole === "admin") {
+    return (
+      <AdminShell title="Plan Control" headerRight={headerControls}>
+        {pageBody}
+        {dialogs}
+      </AdminShell>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-muted/30">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-6 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="sm"><Link to={backPath}><ArrowLeft className="h-4 w-4 mr-1" />Back</Link></Button>
+            <div>
+              <h1 className="text-lg font-bold flex items-center gap-2"><Receipt className="h-5 w-5 text-primary" />Plan Control</h1>
+              <p className="text-xs text-muted-foreground">Upgrade, change, view payment history & invoices</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">{headerControls}</div>
+        </div>
+      </header>
+      <main className="p-6 max-w-[1400px] mx-auto">
+        {pageBody}
+      </main>
+      {dialogs}
     </div>
   );
 };
