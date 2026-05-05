@@ -470,6 +470,13 @@ export const MyVacanciesContent = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <FullCandidateProfileDialog
+          open={!!profileView}
+          onClose={() => setProfileView(null)}
+          candidateId={profileView?.candidate_id || null}
+          resumeUrl={profileView?.resume_url || null}
+        />
       </div>
     );
   }
