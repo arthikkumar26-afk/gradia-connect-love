@@ -28,6 +28,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import FullCandidateProfileDialog from "./FullCandidateProfileDialog";
 
 const UNLOCK_COST = 10; // points to unlock one CV
 
