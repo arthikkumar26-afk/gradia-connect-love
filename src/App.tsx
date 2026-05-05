@@ -252,7 +252,9 @@ const MainRoutes = () => (
         <Route path="/employer/onboarding" element={<Onboarding />} />
         <Route path="/employer/dashboard" element={<EmployerDashboard />} />
         <Route path="/hr/login" element={<HRLogin />} />
-        <Route path="/hr/dashboard" element={<HRDashboard />} />
+        <Route path="/hr/dashboard" element={<HRPortalChoice />} />
+        <Route path="/hr/dashboard/employer" element={<HRDashboard view="employer" />} />
+        <Route path="/hr/dashboard/candidate" element={<HRDashboard view="candidate" />} />
         <Route path="/employer/candidate/:candidateId" element={<CandidateProfilePage />} />
         <Route path="/learning-platform" element={<LearningPlatform />} />
         <Route path="/employer/post-job" element={<PostJob />} />
