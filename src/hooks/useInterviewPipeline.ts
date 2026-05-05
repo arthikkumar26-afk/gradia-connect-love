@@ -277,11 +277,41 @@ export const useInterviewPipeline = () => {
             const jobCustomStages = c.jobs?.pipeline_stages as Array<{ order: number; name: string; description: string; isAutomated: boolean }> | null;
 
             // Ensure Interview Guidelines (or equivalent like Instruction Mail) is always included as the first stage
-            const effectiveCustomStages = jobCustomStages && jobCustomStages.length > 0
+            const baseCustomStages = jobCustomStages && jobCustomStages.length > 0
               ? (jobCustomStages.some(cs => cs.name === 'Interview Guidelines' || cs.name === 'Instruction Mail')
                 ? jobCustomStages
                 : [{ order: 0, name: 'Interview Guidelines', description: 'Automated interview guidelines sent to candidate', isAutomated: true }, ...jobCustomStages])
               : null;
+
+            // Inject the actual live round between every "Slot Booking" and its matching "Feedback"
+            // (e.g. "Segment Round Slot Booking" → "Segment Round" → "Segment Feedback")
+            const injectRoundStages = (stages: typeof jobCustomStages) => {
+              if (!stages) return stages;
+              const out: typeof stages = [];
+              for (let i = 0; i < stages.length; i++) {
+                const cur = stages[i];
+                out.push(cur);
+                const slotMatch = cur.name.match(/^(.*?)\s+Slot Booking$/i);
+                if (slotMatch) {
+                  const baseName = slotMatch[1].trim();
+                  const roundName = /round$/i.test(baseName) ? baseName : `${baseName} Round`;
+                  const next = stages[i + 1];
+                  const isRoundAlreadyThere = next && (next.name === roundName || next.name === baseName);
+                  const isFeedbackNext = next && /(Feedback|Round Feedback)$/i.test(next.name);
+                  if (!isRoundAlreadyThere && isFeedbackNext) {
+                    out.push({
+                      order: cur.order + 0.5,
+                      name: roundName,
+                      description: `Live ${roundName} — add meeting link & observer emails`,
+                      isAutomated: false,
+                    } as any);
+                  }
+                }
+              }
+              return out;
+            };
+
+            const effectiveCustomStages = injectRoundStages(baseCustomStages);
 
             // Principal/advanced pipelines store local step order in jobs.pipeline_stages,
             // which does NOT match the global interview_stages.stage_order values.
