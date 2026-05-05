@@ -395,28 +395,37 @@ export const MyVacanciesContent = () => {
 
                       <div className="flex flex-col gap-2 shrink-0">
                         {a.unlocked ? (
-                          a.resume_url ? (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => openResume(a.resume_url!, false)}
-                              >
-                                <Eye className="h-3.5 w-3.5 mr-1" /> View CV
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openResume(a.resume_url!, true)}
-                              >
-                                <Download className="h-3.5 w-3.5 mr-1" /> Download
-                              </Button>
-                            </>
-                          ) : (
-                            <Badge variant="outline" className="text-xs">
-                              No CV uploaded
-                            </Badge>
-                          )
+                          <>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => setProfileView(a)}
+                            >
+                              <Eye className="h-3.5 w-3.5 mr-1" /> View Profile
+                            </Button>
+                            {a.resume_url ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openResume(a.resume_url!, false)}
+                                >
+                                  <FileText className="h-3.5 w-3.5 mr-1" /> View CV
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openResume(a.resume_url!, true)}
+                                >
+                                  <Download className="h-3.5 w-3.5 mr-1" /> Download
+                                </Button>
+                              </>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                No CV uploaded
+                              </Badge>
+                            )}
+                          </>
                         ) : (
                           <Button
                             size="sm"
