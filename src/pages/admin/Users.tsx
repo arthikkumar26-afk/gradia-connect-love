@@ -1058,7 +1058,14 @@ const Users = () => {
                   <Label className="text-xs">Plan</Label>
                   <Select
                     value={manageForm.plan}
-                    onValueChange={(v) => setManageForm((p) => ({ ...p, plan: v }))}
+                    onValueChange={(v) => {
+                      const found = (PLANS[manageForm.role as PlanRole] ?? []).find((pl) => pl.id === v);
+                      setManageForm((p) => ({
+                        ...p,
+                        plan: v,
+                        points: v === "none" ? p.points : (found ? String(found.points) : p.points),
+                      }));
+                    }}
                   >
                     <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
                     <SelectContent>
