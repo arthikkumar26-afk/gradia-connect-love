@@ -15,6 +15,7 @@ import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 import HRCandidatesData from "@/components/hr/HRCandidatesData";
+import { CandidateFullProfile } from "@/components/employer/CandidateFullProfile";
 import HREmailStatus from "@/components/hr/HREmailStatus";
 import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
 import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
@@ -97,6 +98,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [transferCandidate, setTransferCandidate] = useState<{ id: string; name: string } | null>(null);
   const [transferEmployer, setTransferEmployer] = useState<{ id: string; name: string } | null>(null);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
 
   const reloadJobs = useCallback(async (employerId: string) => {
     const { data: jobsData, error } = await supabase
@@ -483,7 +485,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                           <div className="flex items-center gap-2 flex-wrap">
                             {c.ai_score != null && <Badge variant="secondary">AI {c.ai_score}%</Badge>}
                             <Badge variant="outline">{c.status || "pending"}</Badge>
-                            <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.candidate_id}?interview=${c.id}`)}>
+                            <Button size="sm" variant="outline" onClick={() => setSelectedCandidateId(c.id)}>
                               <FileText className="h-3.5 w-3.5 mr-1" /> View
                             </Button>
                           </div>
@@ -541,7 +543,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                               <Button size="sm" onClick={() => setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" })}>
                                 <Send className="h-3.5 w-3.5 mr-1" /> Transfer
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.id}`)}>
+                              <Button size="sm" variant="outline" onClick={() => setSelectedCandidateId(c.id)}>
                                 <FileText className="h-3.5 w-3.5 mr-1" /> View
                               </Button>
                             </div>
@@ -751,7 +753,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 </Button>
               </div>
             </div>
-            {renderContent()}
+            {selectedCandidateId ? (
+              <CandidateFullProfile
+                candidateIdProp={selectedCandidateId}
+                onBack={() => setSelectedCandidateId(null)}
+              />
+            ) : (
+              renderContent()
+            )}
           </div>
         </main>
       </div>
