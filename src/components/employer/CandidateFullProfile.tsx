@@ -700,7 +700,9 @@ export const CandidateFullProfile = ({ candidateIdProp, onBack }: CandidateFullP
               variant="ghost" 
               size="icon" 
               onClick={() => {
-                if (window.history.length > 1) {
+                if (onBack) {
+                  onBack();
+                } else if (window.history.length > 1) {
                   navigate(-1);
                 } else {
                   navigate('/employer/dashboard');
