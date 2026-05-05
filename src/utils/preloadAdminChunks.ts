@@ -17,7 +17,7 @@ const adminImports: Array<() => Promise<unknown>> = [
   () => import("@/pages/admin/Management"),
   () => import("@/pages/admin/ManagementFeedback"),
   () => import("@/pages/admin/LiveDemoView"),
-  () => import("@/pages/admin/HRNegotiations"),
+  
   () => import("@/pages/admin/CouponManagement"),
   () => import("@/pages/admin/ExternalJobs"),
   () => import("@/pages/admin/EventAlerts"),

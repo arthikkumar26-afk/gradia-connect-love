@@ -36,7 +36,6 @@ const menuItems = [
   { title: "Companies", icon: Building2, path: "/admin/companies" },
   { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
   { title: "Management", icon: UserCog, path: "/admin/management" },
-  { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
   { title: "Coupons", icon: Ticket, path: "/admin/coupons" },
   { title: "Popup Ads", icon: Bell, path: "/admin/popup-ads" },
   { title: "Event Alerts", icon: Bell, path: "/admin/event-alerts" },

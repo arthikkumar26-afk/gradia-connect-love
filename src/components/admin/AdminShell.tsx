@@ -33,7 +33,6 @@ const menuItems = [
   { title: "Companies", icon: Building2, path: "/admin/companies" },
   { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
   { title: "Management", icon: UserCog, path: "/admin/management" },
-  { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
   { title: "Coupons", icon: Ticket, path: "/admin/coupons" },
   { title: "Reports", icon: BarChart3, path: "/admin/reports" },
   { title: "Audit Logs", icon: FileText, path: "/admin/audit" },
