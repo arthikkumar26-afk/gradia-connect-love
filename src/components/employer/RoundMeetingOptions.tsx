@@ -193,6 +193,8 @@ export const RoundMeetingOptions = ({
             placeholder="Paste Zoom link (e.g., zoom.us/j/123456789)"
             value={meetLink}
             onChange={(e) => { setMeetLink(e.target.value); setIsSaved(false); }}
+            onBlur={handleMeetLinkSubmit}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMeetLinkSubmit(); } }}
             className="h-7 text-xs border-purple-200 focus:border-purple-400"
           />
           <p className="text-[9px] text-muted-foreground">
