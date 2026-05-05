@@ -474,17 +474,30 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 : (
                   <div className="space-y-2">
                     {candidates.map(c => (
-                      <div key={c.id} className="border border-border rounded-md p-3 flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-sm">{c.candidate_name}</p>
-                          <p className="text-xs text-muted-foreground">{c.job_title} · {c.current_stage || "—"}</p>
+                      <div key={c.id} className="border border-border rounded-md p-3 space-y-2">
+                        <div className="flex items-start justify-between gap-3 flex-wrap">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm">{c.candidate_name}</p>
+                            <p className="text-xs text-muted-foreground">{c.job_title} · {c.current_stage || "—"}</p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {c.ai_score != null && <Badge variant="secondary">AI {c.ai_score}%</Badge>}
+                            <Badge variant="outline">{c.status || "pending"}</Badge>
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.candidate_id}?interview=${c.id}`)}>
+                              <FileText className="h-3.5 w-3.5 mr-1" /> View
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {c.ai_score != null && <Badge variant="secondary">AI {c.ai_score}%</Badge>}
-                          <Badge variant="outline">{c.status || "pending"}</Badge>
-                          <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.candidate_id}?interview=${c.id}`)}>
-                            <FileText className="h-3.5 w-3.5 mr-1" /> View
-                          </Button>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1 text-[11px] pt-1 border-t border-border/50">
+                          <div><span className="text-muted-foreground">Date: </span><span className="font-medium">{c.applied_at ? new Date(c.applied_at).toLocaleDateString() : "—"}</span></div>
+                          <div><span className="text-muted-foreground">Code: </span><span className="font-medium">{c.registration_number || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Mobile: </span><span className="font-medium">{c.mobile || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Sector: </span><span className="font-medium">{c.category || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Segment: </span><span className="font-medium">{c.segment || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Pref State: </span><span className="font-medium">{c.preferred_state || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Pref Location: </span><span className="font-medium">{c.preferred_district || c.location || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Subject: </span><span className="font-medium">{c.primary_subject || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Designation: </span><span className="font-medium">{c.preferred_role || "—"}</span></div>
                         </div>
                       </div>
                     ))}
