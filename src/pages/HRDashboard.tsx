@@ -295,6 +295,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const candidateMenu = [
     { id: "candidates", label: "Candidates", icon: Users },
     { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
+    { id: "invite-candidate", label: "Invite a Candidate", icon: Mail },
     { id: "email-status", label: "Email Status", icon: Mail },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
     { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
