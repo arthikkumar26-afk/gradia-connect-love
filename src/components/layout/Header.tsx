@@ -290,6 +290,7 @@ const Header = () => {
                        userRole === 'owner' ? 'Owner' : 
                        userRole === 'employer' ? (companyName || profile?.company_name || profile?.full_name?.split(' ')[0] || 'Account') :
                        userRole === 'freelancer' ? 'Freelancer' :
+                       (userRole === 'hr' || userRole === 'hr_manager' || userRole?.startsWith('hr_')) ? 'HR' :
                        profile?.full_name?.split(' ')[0] || 'Account'}</span>
                       <ChevronDown className="h-3 w-3" />
                     </Button>
@@ -300,7 +301,7 @@ const Header = () => {
                         userRole === 'admin' ? '/admin/dashboard' : 
                         userRole === 'owner' ? '/owner/dashboard' : 
                         userRole === 'employer' ? '/employer/dashboard' : 
-                        userRole === 'hr' ? '/hr/dashboard' :
+                        (userRole === 'hr' || userRole === 'hr_manager' || userRole?.startsWith('hr_')) ? '/hr/dashboard' :
                         userRole === 'freelancer' ? '/freelancer/dashboard' :
                         '/candidate/dashboard'
                       } className="flex items-center gap-3 py-2">
