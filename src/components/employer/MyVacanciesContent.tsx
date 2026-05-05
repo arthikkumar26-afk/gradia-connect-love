@@ -28,6 +28,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import FullCandidateProfileDialog from "./FullCandidateProfileDialog";
 
 const UNLOCK_COST = 10; // points to unlock one CV
 
@@ -65,6 +66,7 @@ export const MyVacanciesContent = () => {
   const [confirmUnlock, setConfirmUnlock] = useState<ApplicantRow | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [walletPoints, setWalletPoints] = useState<number>(0);
+  const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
 
   const loadVacancies = async () => {
     if (!user?.id) return;
@@ -337,9 +339,17 @@ export const MyVacanciesContent = () => {
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-foreground">
-                            {a.unlocked ? a.full_name || "Candidate" : "🔒 Locked Profile"}
-                          </h3>
+                          {a.unlocked ? (
+                            <button
+                              type="button"
+                              onClick={() => setProfileView(a)}
+                              className="font-semibold text-foreground hover:text-primary hover:underline text-left"
+                            >
+                              {a.full_name || "Candidate"}
+                            </button>
+                          ) : (
+                            <h3 className="font-semibold text-foreground">🔒 Locked Profile</h3>
+                          )}
                           {a.unlocked ? (
                             <Badge variant="default" className="text-xs">
                               <Unlock className="h-3 w-3 mr-1" /> Unlocked
@@ -385,28 +395,37 @@ export const MyVacanciesContent = () => {
 
                       <div className="flex flex-col gap-2 shrink-0">
                         {a.unlocked ? (
-                          a.resume_url ? (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => openResume(a.resume_url!, false)}
-                              >
-                                <Eye className="h-3.5 w-3.5 mr-1" /> View CV
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openResume(a.resume_url!, true)}
-                              >
-                                <Download className="h-3.5 w-3.5 mr-1" /> Download
-                              </Button>
-                            </>
-                          ) : (
-                            <Badge variant="outline" className="text-xs">
-                              No CV uploaded
-                            </Badge>
-                          )
+                          <>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => setProfileView(a)}
+                            >
+                              <Eye className="h-3.5 w-3.5 mr-1" /> View Profile
+                            </Button>
+                            {a.resume_url ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openResume(a.resume_url!, false)}
+                                >
+                                  <FileText className="h-3.5 w-3.5 mr-1" /> View CV
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openResume(a.resume_url!, true)}
+                                >
+                                  <Download className="h-3.5 w-3.5 mr-1" /> Download
+                                </Button>
+                              </>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                No CV uploaded
+                              </Badge>
+                            )}
+                          </>
                         ) : (
                           <Button
                             size="sm"
@@ -451,6 +470,13 @@ export const MyVacanciesContent = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <FullCandidateProfileDialog
+          open={!!profileView}
+          onClose={() => setProfileView(null)}
+          candidateId={profileView?.candidate_id || null}
+          resumeUrl={profileView?.resume_url || null}
+        />
       </div>
     );
   }
