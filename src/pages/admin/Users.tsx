@@ -1059,22 +1059,28 @@ const Users = () => {
                   <Select
                     value={manageForm.plan}
                     onValueChange={(v) => {
-                      const found = (PLANS[manageForm.role as PlanRole] ?? []).find((pl) => pl.id === v);
+                      const role = manageForm.role as PlanRole;
+                      const found = (PLANS[role] ?? []).find((pl) => pl.id === v);
+                      // Candidates don't use wallet points for plans (per-feature Razorpay unlocks instead)
+                      const autoFillPoints = role !== "candidate" && v !== "none" && found;
                       setManageForm((p) => ({
                         ...p,
                         plan: v,
-                        points: v === "none" ? p.points : (found ? String(found.points) : p.points),
+                        points: autoFillPoints ? String(found!.points) : p.points,
                       }));
                     }}
                   >
                     <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No change</SelectItem>
-                      {(PLANS[manageForm.role as PlanRole] ?? PLANS.candidate).map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name}{p.points ? ` — ${p.points.toLocaleString("en-IN")} pts` : " — Free"}
-                        </SelectItem>
-                      ))}
+                      {(PLANS[manageForm.role as PlanRole] ?? PLANS.candidate).map((p) => {
+                        const showPts = manageForm.role !== "candidate" && p.points > 0;
+                        return (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}{showPts ? ` — ${p.points.toLocaleString("en-IN")} pts` : ""}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
