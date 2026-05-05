@@ -33,6 +33,8 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
   const [education, setEducation] = useState<any[]>([]);
   const [experience, setExperience] = useState<any[]>([]);
   const [address, setAddress] = useState<any>(null);
+  const [matchedJobs, setMatchedJobs] = useState<any[]>([]);
+  const [matchLoading, setMatchLoading] = useState(false);
 
   // Mail templates state
   const [templates, setTemplates] = useState<MailTemplate[]>([]);
