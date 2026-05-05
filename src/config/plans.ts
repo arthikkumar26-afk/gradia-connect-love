@@ -9,8 +9,12 @@ export interface PlanDefinition {
   id: string;
   /** Display label shown in UI. */
   name: string;
-  /** Wallet points cost (₹5 = 1 pt). 0 = free tier. */
+  /** Wallet points cost (₹5 = 1 pt). 0 = free tier. Not used for candidate per-feature unlocks. */
   points: number;
+  /** Direct INR price (used by candidate per-feature unlocks & bundles). */
+  priceInr?: number;
+  /** Optional grouping tag for candidate (feature | bundle). */
+  group?: "feature" | "bundle";
   popular?: boolean;
   features: string[];
   cta: string;
