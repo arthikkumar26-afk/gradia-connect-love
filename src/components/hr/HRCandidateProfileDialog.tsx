@@ -69,7 +69,55 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
     load();
   }, [open, candidateId]);
 
-  const reloadTemplates = async () => {
+  // Fetch suggested / referred jobs matching candidate profile
+  useEffect(() => {
+    if (!profile) return;
+    const loadMatches = async () => {
+      setMatchLoading(true);
+      try {
+        const { data } = await supabase
+          .from("jobs")
+          .select("id, job_title, organisation, location, salary_range, skills, designation, segment, program, category, sector_division, posted_date, status, moderation_status")
+          .in("status", ["active", "open", "approved"])
+          .order("posted_date", { ascending: false })
+          .limit(200);
+        const jobs = (data || []).filter((j: any) =>
+          !j.moderation_status || ["approved", "active"].includes(j.moderation_status)
+        );
+
+        const norm = (v: any) => (v ? String(v).toLowerCase().trim() : "");
+        const skillsC: string[] = (profile.skills || []).map((s: string) => norm(s)).filter(Boolean);
+        const role = norm(profile.preferred_role);
+        const subj = norm(profile.primary_subject);
+        const seg = norm(profile.segment);
+        const prog = norm(profile.program);
+        const loc = norm(profile.preferred_state || profile.current_state || profile.location);
+
+        const scored = jobs.map((j: any) => {
+          let score = 0;
+          const reasons: string[] = [];
+          const title = norm(j.job_title) + " " + norm(j.designation);
+          if (role && title.includes(role)) { score += 40; reasons.push("Role match"); }
+          if (subj && (norm(j.subjects).includes(subj) || title.includes(subj))) { score += 20; reasons.push("Subject"); }
+          if (seg && norm(j.segment) === seg) { score += 10; reasons.push("Segment"); }
+          if (prog && norm(j.program) === prog) { score += 8; reasons.push("Program"); }
+          if (loc && norm(j.location).includes(loc)) { score += 12; reasons.push("Location"); }
+          const jobSkills = (j.skills || []).map((s: string) => norm(s));
+          const skillHits = skillsC.filter(s => jobSkills.some((js: string) => js.includes(s) || s.includes(js))).length;
+          if (skillHits) { score += Math.min(skillHits * 6, 30); reasons.push(`${skillHits} skill${skillHits > 1 ? "s" : ""}`); }
+          return { ...j, _score: score, _reasons: reasons };
+        }).filter((j: any) => j._score > 0)
+          .sort((a: any, b: any) => b._score - a._score)
+          .slice(0, 8);
+        setMatchedJobs(scored);
+      } catch (e) {
+        console.error("match fetch", e);
+      } finally {
+        setMatchLoading(false);
+      }
+    };
+    loadMatches();
+  }, [profile]);
     const { data } = await supabase.from("hr_mail_templates").select("*").order("created_at", { ascending: false });
     setTemplates((data as MailTemplate[]) || []);
   };
