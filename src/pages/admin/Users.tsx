@@ -146,6 +146,9 @@ const Users = () => {
     email: "",
     password: "",
     role: "candidate" as "candidate" | "employer",
+    plan: "none",
+    billingCycle: "monthly" as "monthly" | "annual",
+    points: "",
   });
   const [createLoading, setCreateLoading] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
