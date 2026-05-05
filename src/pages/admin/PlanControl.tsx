@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import jsPDF from "jspdf";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 type AccessRole = "admin" | "owner";
 
