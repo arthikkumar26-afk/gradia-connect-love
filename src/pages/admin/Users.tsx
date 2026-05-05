@@ -1208,7 +1208,7 @@ const Users = () => {
               <Label htmlFor="cu-role">Account Type</Label>
               <Select
                 value={createForm.role}
-                onValueChange={(v) => setCreateForm((p) => ({ ...p, role: v as "candidate" | "employer" }))}
+                onValueChange={(v) => setCreateForm((p) => ({ ...p, role: v as "candidate" | "employer", plan: "none" }))}
               >
                 <SelectTrigger id="cu-role">
                   <SelectValue />
