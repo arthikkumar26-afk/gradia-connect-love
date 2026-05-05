@@ -94,6 +94,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatDistanceToNow, format } from "date-fns";
 import { exportToExcel } from "@/utils/exportToExcel";
+import { PLANS, type PlanRole } from "@/config/plans";
 import { Download } from "lucide-react";
 
 interface User {
