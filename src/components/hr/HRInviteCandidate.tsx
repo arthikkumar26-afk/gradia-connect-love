@@ -306,6 +306,7 @@ const HRInviteCandidate = ({ hrName, companyName, hrEmail }: Props) => {
       }
     }
     setBulkSending(false);
+    fetchHistory();
     toast.success(`Bulk send done: ${ok} sent · ${fail} failed`);
   };
 
