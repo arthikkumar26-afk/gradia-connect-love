@@ -175,6 +175,8 @@ export const RoundMeetingOptions = ({
             placeholder="Paste Google Meet link (e.g., meet.google.com/abc-defg-hij)"
             value={meetLink}
             onChange={(e) => { setMeetLink(e.target.value); setIsSaved(false); }}
+            onBlur={handleMeetLinkSubmit}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMeetLinkSubmit(); } }}
             className="h-7 text-xs border-blue-200 focus:border-blue-400"
           />
           <p className="text-[9px] text-muted-foreground">
