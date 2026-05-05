@@ -534,6 +534,63 @@ const HRInviteCandidate = ({ hrName, companyName, hrEmail }: Props) => {
                   <p className="text-[11px] text-muted-foreground text-center">Each email is personalized and sent from <strong>noreply@gradia.co.in</strong>.</p>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader className="pb-2 flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <History className="h-4 w-4 text-primary" /> Sent Invites History
+                    <Badge variant="secondary" className="text-[10px] ml-1">{history.length}</Badge>
+                  </CardTitle>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={fetchHistory} disabled={historyLoading}>
+                    {historyLoading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                    Refresh
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {history.length === 0 ? (
+                    <div className="text-xs text-muted-foreground text-center py-6 border rounded-md bg-muted/30">
+                      {historyLoading ? "Loading…" : "No invites sent yet. Once you send invites, the delivery history appears here."}
+                    </div>
+                  ) : (
+                    <div className="border rounded-md overflow-hidden">
+                      <div className="grid grid-cols-12 gap-2 px-3 py-2 bg-muted/50 text-[11px] font-semibold border-b">
+                        <div className="col-span-3">Candidate</div>
+                        <div className="col-span-3">Email</div>
+                        <div className="col-span-3">Subject</div>
+                        <div className="col-span-1 text-center">Status</div>
+                        <div className="col-span-2 text-right">When</div>
+                      </div>
+                      <div className="max-h-[28rem] overflow-auto divide-y">
+                        {history.map(h => {
+                          const isSent = h.status === "sent" || h.status === "accepted";
+                          const isFailed = h.status === "failed";
+                          const Icon = isSent ? CheckCircle2 : isFailed ? XCircle : Clock;
+                          const variant = isSent ? "default" : isFailed ? "destructive" : "secondary";
+                          const ts = h.sent_at || h.created_at;
+                          return (
+                            <div key={h.id} className="grid grid-cols-12 gap-2 px-3 py-2 text-xs items-center hover:bg-muted/30">
+                              <div className="col-span-3 truncate font-medium">{h.candidate_name || "—"}</div>
+                              <div className="col-span-3 truncate text-muted-foreground">{h.recipient_email}</div>
+                              <div className="col-span-3 truncate">{h.subject || "—"}</div>
+                              <div className="col-span-1 flex justify-center">
+                                <Badge variant={variant as any} className="text-[10px] gap-1">
+                                  <Icon className="h-3 w-3" />{h.status}
+                                </Badge>
+                              </div>
+                              <div className="col-span-2 text-right text-[11px] text-muted-foreground">
+                                {new Date(ts).toLocaleString()}
+                              </div>
+                              {h.error_message && (
+                                <div className="col-span-12 text-[10px] text-destructive pl-1">{h.error_message}</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </CardContent>
