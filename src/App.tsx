@@ -320,7 +320,7 @@ const MainRoutes = () => (
         <Route path="/admin/management" element={<AdminManagement />} />
         <Route path="/admin/feedback" element={<ManagementFeedback />} />
         <Route path="/admin/live-demo" element={<LiveDemoView />} />
-        <Route path="/admin/hr-negotiations" element={<HRNegotiations />} />
+        
         <Route path="/admin/hr-management" element={<AdminHRManagement />} />
         <Route path="/admin/coupons" element={<CouponManagement />} />
         <Route path="/admin/external-jobs" element={<ExternalJobs />} />
