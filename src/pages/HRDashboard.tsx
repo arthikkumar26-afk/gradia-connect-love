@@ -478,7 +478,8 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 : (
                   <div className="space-y-2">
                     {candidates.map(c => (
-                      <div key={c.id} className="border border-border rounded-md p-3 space-y-2">
+                      <div key={c.id} role="button" tabIndex={0} onClick={() => setSelectedCandidateId(c.candidate_id)} onKeyDown={(e) => { if (e.key === "Enter") setSelectedCandidateId(c.candidate_id); }} className="border border-border rounded-md p-3 space-y-2 cursor-pointer hover:bg-muted/40 hover:border-primary/40 transition-colors">
+
                         <div className="flex items-start justify-between gap-3 flex-wrap">
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm">{c.candidate_name}</p>
@@ -525,7 +526,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                       const subject = c.primary_subject || "—";
                       const designation = c.preferred_role || "—";
                       return (
-                        <div key={c.id} className="border border-border rounded-md p-3 space-y-2">
+                        <div key={c.id} role="button" tabIndex={0} onClick={() => setSelectedCandidateId(c.id)} onKeyDown={(e) => { if (e.key === "Enter") setSelectedCandidateId(c.id); }} className="border border-border rounded-md p-3 space-y-2 cursor-pointer hover:bg-muted/40 hover:border-primary/40 transition-colors">
                           <div className="flex items-start justify-between gap-3 flex-wrap">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
@@ -538,14 +539,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
                               {c.resume_url && (
-                                <Button size="sm" variant="outline" onClick={() => window.open(c.resume_url!, "_blank")}>
+                                <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); window.open(c.resume_url!, "_blank"); }}>
                                   <FileText className="h-3.5 w-3.5 mr-1" /> Resume
                                 </Button>
                               )}
-                              <Button size="sm" onClick={() => setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" })}>
+                              <Button size="sm" onClick={(e) => { e.stopPropagation(); setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" }); }}>
                                 <Send className="h-3.5 w-3.5 mr-1" /> Transfer
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => setSelectedCandidateId(c.id)}>
+                              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setSelectedCandidateId(c.id); }}>
                                 <FileText className="h-3.5 w-3.5 mr-1" /> View
                               </Button>
                             </div>
