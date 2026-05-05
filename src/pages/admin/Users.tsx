@@ -154,6 +154,92 @@ const Users = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [viewLoading, setViewLoading] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetailsResponse | null>(null);
+  const [manageDialogOpen, setManageDialogOpen] = useState(false);
+  const [manageLoading, setManageLoading] = useState(false);
+  const [manageForm, setManageForm] = useState({
+    role: "candidate" as "candidate" | "employer" | "admin" | "owner",
+    plan: "none",
+    billingCycle: "monthly" as "monthly" | "annual",
+    planAction: "activate" as "activate" | "cancel",
+    points: "",
+  });
+
+  const openManageDialog = (user: User) => {
+    setSelectedUser(user);
+    const r = (["candidate", "employer", "admin", "owner"].includes(user.role)
+      ? user.role
+      : "candidate") as typeof manageForm.role;
+    setManageForm({
+      role: r,
+      plan: "none",
+      billingCycle: "monthly",
+      planAction: "activate",
+      points: "",
+    });
+    setManageDialogOpen(true);
+  };
+
+  const handleManageSubmit = async () => {
+    if (!selectedUser) return;
+    const { role, plan, billingCycle, planAction, points } = manageForm;
+    const pointsNum = points.trim() ? Number(points) : 0;
+    if (points.trim() && (!Number.isFinite(pointsNum) || pointsNum < 0)) {
+      toast({ title: "Invalid points", description: "Points must be a positive number.", variant: "destructive" });
+      return;
+    }
+    setManageLoading(true);
+    try {
+      // 1. Role change (if different)
+      if (role !== selectedUser.role) {
+        const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+          body: { action: "assign-role", targetUserId: selectedUser.id, role },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        // Also update profiles.role for consistency
+        await supabase.from("profiles").update({ role }).eq("id", selectedUser.id);
+      }
+
+      // 2. Plan change (only for candidate/employer)
+      if (plan !== "none" && (role === "candidate" || role === "employer")) {
+        const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+          body: {
+            action: "update-subscription",
+            targetUserId: selectedUser.id,
+            targetRole: role,
+            plan,
+            billingCycle,
+            planAction,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+      }
+
+      // 3. Wallet points
+      if (pointsNum > 0) {
+        const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+          body: {
+            action: "credit-wallet-points",
+            targetUserId: selectedUser.id,
+            points: pointsNum,
+            description: "Admin updated via All Users",
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+      }
+
+      toast({ title: "Updated", description: `${selectedUser.full_name} updated successfully.` });
+      setManageDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to update user", variant: "destructive" });
+    } finally {
+      setManageLoading(false);
+    }
+  };
 
   const generatePassword = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
@@ -776,6 +862,10 @@ const Users = () => {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => openManageDialog(user)}>
+                                      <CreditCard className="h-4 w-4 mr-2" />
+                                      Plan & Role
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem
                                       className="text-orange-600"
                                       onClick={() => { setSelectedUser(user); setBlockDialogOpen(true); }}
@@ -918,6 +1008,122 @@ const Users = () => {
               </Card>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Manage Plan & Role Dialog */}
+      <Dialog open={manageDialogOpen} onOpenChange={setManageDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Plan & Role</DialogTitle>
+            <DialogDescription>
+              Update role, assign a plan, or credit wallet points for {selectedUser?.full_name || "this user"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs">Role</Label>
+              <Select
+                value={manageForm.role}
+                onValueChange={(v) =>
+                  setManageForm((p) => ({ ...p, role: v as typeof manageForm.role, plan: "none" }))
+                }
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="candidate">Candidate</SelectItem>
+                  <SelectItem value="employer">Employer</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="owner">Owner</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(manageForm.role === "candidate" || manageForm.role === "employer") && (
+              <>
+                <div>
+                  <Label className="text-xs">Plan</Label>
+                  <Select
+                    value={manageForm.plan}
+                    onValueChange={(v) => setManageForm((p) => ({ ...p, plan: v }))}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No change</SelectItem>
+                      {manageForm.role === "candidate" ? (
+                        <>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="starter">Starter</SelectItem>
+                          <SelectItem value="professional">Professional</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {manageForm.plan !== "none" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Billing</Label>
+                      <Select
+                        value={manageForm.billingCycle}
+                        onValueChange={(v) =>
+                          setManageForm((p) => ({ ...p, billingCycle: v as "monthly" | "annual" }))
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="annual">Annual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Action</Label>
+                      <Select
+                        value={manageForm.planAction}
+                        onValueChange={(v) =>
+                          setManageForm((p) => ({ ...p, planAction: v as "activate" | "cancel" }))
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="activate">Activate</SelectItem>
+                          <SelectItem value="cancel">Cancel</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            <div>
+              <Label className="text-xs">Wallet Points (credit)</Label>
+              <Input
+                type="number"
+                min={0}
+                placeholder="0"
+                value={manageForm.points}
+                onChange={(e) => setManageForm((p) => ({ ...p, points: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">₹5 = 1 point. Leave 0 to skip.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManageDialogOpen(false)} disabled={manageLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleManageSubmit} disabled={manageLoading}>
+              {manageLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
