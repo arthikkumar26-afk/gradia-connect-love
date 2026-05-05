@@ -104,9 +104,15 @@ const getScoreColor = (score: number | null | undefined) => {
   return "text-red-600";
 };
 
-export const CandidateFullProfile = () => {
+interface CandidateFullProfileProps {
+  candidateIdProp?: string;
+  onBack?: () => void;
+}
+
+export const CandidateFullProfile = ({ candidateIdProp, onBack }: CandidateFullProfileProps = {}) => {
   const navigate = useNavigate();
-  const { candidateId } = useParams<{ candidateId: string }>();
+  const params = useParams<{ candidateId: string }>();
+  const candidateId = candidateIdProp || params.candidateId;
   
   const [loading, setLoading] = useState(true);
   const [candidate, setCandidate] = useState<CandidateData | null>(null);
