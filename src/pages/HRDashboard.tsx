@@ -526,7 +526,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                       const subject = c.primary_subject || "—";
                       const designation = c.preferred_role || "—";
                       return (
-                        <div key={c.id} className="border border-border rounded-md p-3 space-y-2">
+                        <div key={c.id} role="button" tabIndex={0} onClick={() => setSelectedCandidateId(c.id)} onKeyDown={(e) => { if (e.key === "Enter") setSelectedCandidateId(c.id); }} className="border border-border rounded-md p-3 space-y-2 cursor-pointer hover:bg-muted/40 hover:border-primary/40 transition-colors">
                           <div className="flex items-start justify-between gap-3 flex-wrap">
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-2 flex-wrap">
