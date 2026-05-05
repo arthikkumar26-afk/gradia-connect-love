@@ -61,6 +61,7 @@ const EmployerLogin = lazyWithRetry(() => import("./pages/EmployerLogin"));
 const EmployerDashboard = lazyWithRetry(() => import("./pages/EmployerDashboard"));
 const HRLogin = lazyWithRetry(() => import("./pages/HRLogin"));
 const HRDashboard = lazyWithRetry(() => import("./pages/HRDashboard"));
+const HRPortalChoice = lazyWithRetry(() => import("./pages/HRPortalChoice"));
 const CandidateLogin = lazyWithRetry(() => import("./pages/CandidateLogin"));
 const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazyWithRetry(() => import("./pages/ResetPassword"));
@@ -251,7 +252,9 @@ const MainRoutes = () => (
         <Route path="/employer/onboarding" element={<Onboarding />} />
         <Route path="/employer/dashboard" element={<EmployerDashboard />} />
         <Route path="/hr/login" element={<HRLogin />} />
-        <Route path="/hr/dashboard" element={<HRDashboard />} />
+        <Route path="/hr/dashboard" element={<HRPortalChoice />} />
+        <Route path="/hr/dashboard/employer" element={<HRDashboard view="employer" />} />
+        <Route path="/hr/dashboard/candidate" element={<HRDashboard view="candidate" />} />
         <Route path="/employer/candidate/:candidateId" element={<CandidateProfilePage />} />
         <Route path="/learning-platform" element={<LearningPlatform />} />
         <Route path="/employer/post-job" element={<PostJob />} />

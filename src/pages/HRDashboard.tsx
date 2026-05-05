@@ -62,7 +62,11 @@ interface AllCandidateRow {
   created_at?: string | null;
 }
 
-const HRDashboard = () => {
+interface HRDashboardProps {
+  view?: "employer" | "candidate" | "all";
+}
+
+const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const { user, profile, logout, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [parentEmployerId, setParentEmployerId] = useState<string | null>(null);
@@ -74,7 +78,7 @@ const HRDashboard = () => {
   const [allCandidates, setAllCandidates] = useState<AllCandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(view === "candidate" ? "candidates" : "overview");
   const [jobStatusFilter, setJobStatusFilter] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [transferCandidate, setTransferCandidate] = useState<{ id: string; name: string } | null>(null);
@@ -252,21 +256,26 @@ const HRDashboard = () => {
     navigate("/hr/login");
   };
 
-  const menuItems = [
+  const employerMenu = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
     { id: "post", label: "Post Job", icon: Plus },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
+  ];
+  const candidateMenu = [
     { id: "candidates", label: "Candidates", icon: Users },
     { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
     { id: "email-status", label: "Email Status", icon: Mail },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
-    
     { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
     { id: "pipeline", label: "Pipeline", icon: GitBranch },
     { id: "interviews", label: "Interviews", icon: Calendar },
   ];
+  const menuItems =
+    view === "employer" ? employerMenu :
+    view === "candidate" ? candidateMenu :
+    [...employerMenu, ...candidateMenu];
 
   const openJobsCount = jobs.filter(j => {
     const s = (j.status || "").toLowerCase();
