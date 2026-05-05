@@ -1011,6 +1011,122 @@ const Users = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Manage Plan & Role Dialog */}
+      <Dialog open={manageDialogOpen} onOpenChange={setManageDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manage Plan & Role</DialogTitle>
+            <DialogDescription>
+              Update role, assign a plan, or credit wallet points for {selectedUser?.full_name || "this user"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs">Role</Label>
+              <Select
+                value={manageForm.role}
+                onValueChange={(v) =>
+                  setManageForm((p) => ({ ...p, role: v as typeof manageForm.role, plan: "none" }))
+                }
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="candidate">Candidate</SelectItem>
+                  <SelectItem value="employer">Employer</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="owner">Owner</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(manageForm.role === "candidate" || manageForm.role === "employer") && (
+              <>
+                <div>
+                  <Label className="text-xs">Plan</Label>
+                  <Select
+                    value={manageForm.plan}
+                    onValueChange={(v) => setManageForm((p) => ({ ...p, plan: v }))}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No change</SelectItem>
+                      {manageForm.role === "candidate" ? (
+                        <>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="starter">Starter</SelectItem>
+                          <SelectItem value="professional">Professional</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {manageForm.plan !== "none" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Billing</Label>
+                      <Select
+                        value={manageForm.billingCycle}
+                        onValueChange={(v) =>
+                          setManageForm((p) => ({ ...p, billingCycle: v as "monthly" | "annual" }))
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="annual">Annual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Action</Label>
+                      <Select
+                        value={manageForm.planAction}
+                        onValueChange={(v) =>
+                          setManageForm((p) => ({ ...p, planAction: v as "activate" | "cancel" }))
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="activate">Activate</SelectItem>
+                          <SelectItem value="cancel">Cancel</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            <div>
+              <Label className="text-xs">Wallet Points (credit)</Label>
+              <Input
+                type="number"
+                min={0}
+                placeholder="0"
+                value={manageForm.points}
+                onChange={(e) => setManageForm((p) => ({ ...p, points: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">₹5 = 1 point. Leave 0 to skip.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManageDialogOpen(false)} disabled={manageLoading}>
+              Cancel
+            </Button>
+            <Button onClick={handleManageSubmit} disabled={manageLoading}>
+              {manageLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
