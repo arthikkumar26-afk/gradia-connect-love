@@ -1332,6 +1332,36 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_mail_templates: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hr_negotiations: {
         Row: {
           additional_requirements: string | null
