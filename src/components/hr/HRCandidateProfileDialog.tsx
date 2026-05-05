@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Mail, Phone, MapPin, Briefcase, GraduationCap, User, Eye, Download, Home,
-  Sparkles, Send, Trash2, Save, Wand2, Loader2,
+  Sparkles, Send, Trash2, Save, Wand2, Loader2, Target, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 
