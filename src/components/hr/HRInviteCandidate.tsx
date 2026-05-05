@@ -177,6 +177,31 @@ const HRInviteCandidate = ({ hrName, companyName, hrEmail }: Props) => {
   const [showTerms, setShowTerms] = useState(true);
   const [editedHtml, setEditedHtml] = useState<string | null>(null);
 
+  const [history, setHistory] = useState<InviteHistoryRow[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const fetchHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      let q = supabase
+        .from("resume_invites")
+        .select("id, candidate_name, recipient_email, subject, status, error_message, sent_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (user?.id) q = q.eq("sender_user_id", user.id);
+      const { data, error } = await q;
+      if (error) throw error;
+      setHistory((data || []) as InviteHistoryRow[]);
+    } catch (err: any) {
+      console.error("history fetch", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
+
   const updateRow = (id: string, patch: Partial<BulkRow>) =>
     setBulkRows(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
 
