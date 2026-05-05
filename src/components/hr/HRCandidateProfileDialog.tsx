@@ -364,8 +364,8 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
             </Card>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 
