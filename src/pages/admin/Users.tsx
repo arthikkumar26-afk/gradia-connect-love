@@ -181,6 +181,7 @@ const Users = () => {
 
   const handleManageSubmit = async () => {
     if (!selectedUser) return;
+    if (manageLoading) return; // prevent rapid double-clicks
     const { role, plan, billingCycle, planAction, points } = manageForm;
     const pointsNum = points.trim() ? Number(points) : 0;
     if (points.trim() && (!Number.isFinite(pointsNum) || pointsNum < 0)) {
@@ -188,49 +189,60 @@ const Users = () => {
       return;
     }
     setManageLoading(true);
+    // Snapshot the user so subsequent changes don't race
+    const target = selectedUser;
     try {
-      // 1. Role change (if different)
-      if (role !== selectedUser.role) {
+      // 1. Role change must happen first (other actions depend on role)
+      if (role !== target.role) {
         const { data, error } = await supabase.functions.invoke("manage-user-roles", {
-          body: { action: "assign-role", targetUserId: selectedUser.id, role },
+          body: { action: "assign-role", targetUserId: target.id, role },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        // Also update profiles.role for consistency
-        await supabase.from("profiles").update({ role }).eq("id", selectedUser.id);
+        // profiles.role update can run in background — no need to await
+        supabase.from("profiles").update({ role }).eq("id", target.id);
       }
 
-      // 2. Plan change (only for candidate/employer)
+      // 2 + 3 are independent — run them in parallel
+      const tasks: Promise<any>[] = [];
+
       if (plan !== "none" && (role === "candidate" || role === "employer")) {
-        const { data, error } = await supabase.functions.invoke("manage-user-roles", {
-          body: {
-            action: "update-subscription",
-            targetUserId: selectedUser.id,
-            targetRole: role,
-            plan,
-            billingCycle,
-            planAction,
-          },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
+        tasks.push(
+          supabase.functions.invoke("manage-user-roles", {
+            body: {
+              action: "update-subscription",
+              targetUserId: target.id,
+              targetRole: role,
+              plan,
+              billingCycle,
+              planAction,
+            },
+          }).then(({ data, error }) => {
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+          })
+        );
       }
 
-      // 3. Wallet points
       if (pointsNum > 0) {
-        const { data, error } = await supabase.functions.invoke("manage-user-roles", {
-          body: {
-            action: "credit-wallet-points",
-            targetUserId: selectedUser.id,
-            points: pointsNum,
-            description: "Admin updated via All Users",
-          },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
+        tasks.push(
+          supabase.functions.invoke("manage-user-roles", {
+            body: {
+              action: "credit-wallet-points",
+              targetUserId: target.id,
+              points: pointsNum,
+              description: "Admin updated via All Users",
+            },
+          }).then(({ data, error }) => {
+            if (error) throw error;
+            if (data?.error) throw new Error(data.error);
+          })
+        );
       }
 
-      toast({ title: "Updated", description: `${selectedUser.full_name} updated successfully.` });
+      if (tasks.length) await Promise.all(tasks);
+
+      toast({ title: "Updated", description: `${target.full_name} updated successfully.` });
       setManageDialogOpen(false);
       setSelectedUser(null);
       fetchUsers();
