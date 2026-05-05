@@ -118,6 +118,8 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
     };
     loadMatches();
   }, [profile]);
+
+  const reloadTemplates = async () => {
     const { data } = await supabase.from("hr_mail_templates").select("*").order("created_at", { ascending: false });
     setTemplates((data as MailTemplate[]) || []);
   };
