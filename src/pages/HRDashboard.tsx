@@ -60,6 +60,11 @@ interface AllCandidateRow {
   resume_url?: string | null;
   registration_number?: string | null;
   created_at?: string | null;
+  category?: string | null;
+  segment?: string | null;
+  preferred_state?: string | null;
+  preferred_district?: string | null;
+  primary_subject?: string | null;
 }
 
 interface HRDashboardProps {
