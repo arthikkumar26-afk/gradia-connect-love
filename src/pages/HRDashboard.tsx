@@ -78,7 +78,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [allCandidates, setAllCandidates] = useState<AllCandidateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(view === "candidate" ? "candidates" : "overview");
   const [jobStatusFilter, setJobStatusFilter] = useState<string>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [transferCandidate, setTransferCandidate] = useState<{ id: string; name: string } | null>(null);
