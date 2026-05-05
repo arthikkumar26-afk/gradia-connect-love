@@ -44,6 +44,7 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<{ state: "idle" | "sending" | "sent" | "failed"; message?: string; to?: string; at?: string }>({ state: "idle" });
 
   useEffect(() => {
     if (!open || !candidateId) return;
