@@ -1045,6 +1045,63 @@ const Users = () => {
                 The user will be asked to change this on first login.
               </p>
             </div>
+
+            <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+              <div className="text-sm font-semibold">Activate Plan & Add Points (optional)</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cu-plan" className="text-xs">Plan</Label>
+                  <Select
+                    value={createForm.plan}
+                    onValueChange={(v) => setCreateForm((p) => ({ ...p, plan: v }))}
+                  >
+                    <SelectTrigger id="cu-plan"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No plan</SelectItem>
+                      {createForm.role === "candidate" ? (
+                        <>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="starter">Starter</SelectItem>
+                          <SelectItem value="growth">Growth</SelectItem>
+                          <SelectItem value="professional">Professional</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cu-cycle" className="text-xs">Billing Cycle</Label>
+                  <Select
+                    value={createForm.billingCycle}
+                    onValueChange={(v) => setCreateForm((p) => ({ ...p, billingCycle: v as "monthly" | "annual" }))}
+                  >
+                    <SelectTrigger id="cu-cycle"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="annual">Annual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cu-points" className="text-xs">Wallet Points to Credit</Label>
+                <Input
+                  id="cu-points"
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 500"
+                  value={createForm.points}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, points: e.target.value }))}
+                />
+                <p className="text-[11px] text-muted-foreground">1 point = ₹5. Leave blank to skip.</p>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={createLoading}>
