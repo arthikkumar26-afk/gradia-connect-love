@@ -135,7 +135,7 @@ const MockInterviewPipeline = lazyWithRetry(() => import("./pages/admin/MockInte
 const AdminManagement = lazyWithRetry(() => import("./pages/admin/Management"));
 const ManagementFeedback = lazyWithRetry(() => import("./pages/admin/ManagementFeedback"));
 const LiveDemoView = lazyWithRetry(() => import("./pages/admin/LiveDemoView"));
-const HRNegotiations = lazyWithRetry(() => import("./pages/admin/HRNegotiations"));
+
 const CouponManagement = lazyWithRetry(() => import("./pages/admin/CouponManagement"));
 const UnsubscribedEmployers = lazyWithRetry(() => import("./pages/admin/UnsubscribedEmployers"));
 const UnsubscribedCandidates = lazyWithRetry(() => import("./pages/admin/UnsubscribedCandidates"));
