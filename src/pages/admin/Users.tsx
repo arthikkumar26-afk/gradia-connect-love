@@ -1058,7 +1058,14 @@ const Users = () => {
                   <Label className="text-xs">Plan</Label>
                   <Select
                     value={manageForm.plan}
-                    onValueChange={(v) => setManageForm((p) => ({ ...p, plan: v }))}
+                    onValueChange={(v) => {
+                      const found = (PLANS[manageForm.role as PlanRole] ?? []).find((pl) => pl.id === v);
+                      setManageForm((p) => ({
+                        ...p,
+                        plan: v,
+                        points: v === "none" ? p.points : (found ? String(found.points) : p.points),
+                      }));
+                    }}
                   >
                     <SelectTrigger><SelectValue placeholder="Select a plan" /></SelectTrigger>
                     <SelectContent>
@@ -1208,7 +1215,7 @@ const Users = () => {
               <Label htmlFor="cu-role">Account Type</Label>
               <Select
                 value={createForm.role}
-                onValueChange={(v) => setCreateForm((p) => ({ ...p, role: v as "candidate" | "employer" }))}
+                onValueChange={(v) => setCreateForm((p) => ({ ...p, role: v as "candidate" | "employer", plan: "none" }))}
               >
                 <SelectTrigger id="cu-role">
                   <SelectValue />
@@ -1264,7 +1271,14 @@ const Users = () => {
                   <Label htmlFor="cu-plan" className="text-xs">Plan</Label>
                   <Select
                     value={createForm.plan}
-                    onValueChange={(v) => setCreateForm((p) => ({ ...p, plan: v }))}
+                    onValueChange={(v) => {
+                      const found = (PLANS[createForm.role as PlanRole] ?? []).find((pl) => pl.id === v);
+                      setCreateForm((p) => ({
+                        ...p,
+                        plan: v,
+                        points: v === "none" ? p.points : (found ? String(found.points) : p.points),
+                      }));
+                    }}
                   >
                     <SelectTrigger id="cu-plan"><SelectValue /></SelectTrigger>
                     <SelectContent>
