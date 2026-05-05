@@ -362,6 +362,61 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
               </Section>
             )}
 
+            {/* Suggested / Referred Jobs */}
+            <Card className="border-primary/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary" />
+                  Suggested Jobs — Profile Matched
+                  {matchedJobs.length > 0 && <Badge variant="secondary" className="text-[10px]">{matchedJobs.length}</Badge>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {matchLoading ? (
+                  <div className="space-y-2">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+                ) : matchedJobs.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    No matching jobs found for this candidate's profile.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {matchedJobs.map((j) => (
+                      <div key={j.id} className="p-3 rounded-md border border-border bg-card hover:bg-muted/30 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-sm truncate">{j.job_title || j.designation}</div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {[j.organisation, j.location].filter(Boolean).join(" • ")}
+                            </div>
+                            {j.salary_range && (
+                              <div className="text-xs text-emerald-600 font-medium mt-0.5">{j.salary_range}</div>
+                            )}
+                            {j._reasons?.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {j._reasons.map((r: string, i: number) => (
+                                  <Badge key={i} variant="outline" className="text-[10px] py-0 h-4">{r}</Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <Badge className="text-[10px]" variant={j._score >= 50 ? "default" : "secondary"}>
+                              {Math.min(j._score, 100)}% match
+                            </Badge>
+                            <Button size="sm" variant="ghost" className="h-6 text-[11px]" asChild>
+                              <a href={`/jobs/${j.id}`} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3 mr-1" /> View
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Mail Templates Section */}
             <Card className="border-primary/30">
               <CardHeader className="pb-3">
