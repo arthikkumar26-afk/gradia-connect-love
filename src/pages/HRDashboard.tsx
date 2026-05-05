@@ -753,7 +753,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 </Button>
               </div>
             </div>
-            {renderContent()}
+            {selectedCandidateId ? (
+              <CandidateFullProfile
+                candidateIdProp={selectedCandidateId}
+                onBack={() => setSelectedCandidateId(null)}
+              />
+            ) : (
+              renderContent()
+            )}
           </div>
         </main>
       </div>
