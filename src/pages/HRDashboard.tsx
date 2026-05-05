@@ -62,7 +62,11 @@ interface AllCandidateRow {
   created_at?: string | null;
 }
 
-const HRDashboard = () => {
+interface HRDashboardProps {
+  view?: "employer" | "candidate" | "all";
+}
+
+const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const { user, profile, logout, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [parentEmployerId, setParentEmployerId] = useState<string | null>(null);
