@@ -37,6 +37,15 @@ interface CandidateRow {
   ai_score: number | null;
   candidate_name?: string;
   job_title?: string;
+  mobile?: string | null;
+  registration_number?: string | null;
+  category?: string | null;
+  segment?: string | null;
+  preferred_state?: string | null;
+  preferred_district?: string | null;
+  location?: string | null;
+  primary_subject?: string | null;
+  preferred_role?: string | null;
 }
 interface EmployerRow {
   id: string;
