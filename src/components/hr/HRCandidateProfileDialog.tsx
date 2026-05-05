@@ -89,7 +89,7 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
           .order("posted_date", { ascending: false })
           .limit(200);
         const jobs = (data || []).filter((j: any) =>
-          !j.moderation_status || ["approved", "active"].includes(j.moderation_status)
+          !j.moderation_status || ["approved", "active", "pending"].includes(j.moderation_status)
         );
 
         const norm = (v: any) => (v ? String(v).toLowerCase().trim() : "");
