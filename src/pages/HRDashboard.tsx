@@ -50,8 +50,15 @@ interface AllCandidateRow {
   id: string;
   full_name: string | null;
   email: string | null;
-  phone?: string | null;
+  mobile?: string | null;
   preferred_role?: string | null;
+  experience_level?: string | null;
+  highest_qualification?: string | null;
+  location?: string | null;
+  current_state?: string | null;
+  current_district?: string | null;
+  resume_url?: string | null;
+  registration_number?: string | null;
   created_at?: string | null;
 }
 
