@@ -50,8 +50,15 @@ interface AllCandidateRow {
   id: string;
   full_name: string | null;
   email: string | null;
-  phone?: string | null;
+  mobile?: string | null;
   preferred_role?: string | null;
+  experience_level?: string | null;
+  highest_qualification?: string | null;
+  location?: string | null;
+  current_state?: string | null;
+  current_district?: string | null;
+  resume_url?: string | null;
+  registration_number?: string | null;
   created_at?: string | null;
 }
 
@@ -185,10 +192,10 @@ const HRDashboard = () => {
           .order("created_at", { ascending: false }),
         supabase
           .from("profiles")
-          .select("id, full_name, email, preferred_role, created_at")
+          .select("id, full_name, email, mobile, preferred_role, experience_level, highest_qualification, location, current_state, current_district, resume_url, registration_number, created_at")
           .eq("role", "candidate")
           .order("created_at", { ascending: false })
-          .limit(500),
+          .limit(1000),
         supabase
           .from("user_roles")
           .select("user_id, role")
@@ -462,11 +469,27 @@ const HRDashboard = () => {
                     {allCandidates.map(c => (
                       <div key={c.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">{c.full_name || "Candidate"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{c.email || "—"} · {c.preferred_role || "—"}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-sm truncate">{c.full_name || "Candidate"}</p>
+                            {c.registration_number && <Badge variant="outline" className="text-[10px]">{c.registration_number}</Badge>}
+                            {c.experience_level && <Badge variant="secondary" className="text-[10px]">{c.experience_level}</Badge>}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {c.email || "—"}{c.mobile ? ` · ${c.mobile}` : ""}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {c.preferred_role || "—"}
+                            {c.highest_qualification ? ` · ${c.highest_qualification}` : ""}
+                            {(c.current_district || c.current_state || c.location) ? ` · ${[c.current_district, c.current_state].filter(Boolean).join(", ") || c.location}` : ""}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
+                          {c.resume_url && (
+                            <Button size="sm" variant="outline" onClick={() => window.open(c.resume_url!, "_blank")}>
+                              <FileText className="h-3.5 w-3.5 mr-1" /> Resume
+                            </Button>
+                          )}
                           <Button size="sm" onClick={() => setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" })}>
                             <Send className="h-3.5 w-3.5 mr-1" /> Transfer to Employer
                           </Button>
