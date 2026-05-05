@@ -192,10 +192,10 @@ const HRDashboard = () => {
           .order("created_at", { ascending: false }),
         supabase
           .from("profiles")
-          .select("id, full_name, email, preferred_role, created_at")
+          .select("id, full_name, email, mobile, preferred_role, experience_level, highest_qualification, location, current_state, current_district, resume_url, registration_number, created_at")
           .eq("role", "candidate")
           .order("created_at", { ascending: false })
-          .limit(500),
+          .limit(1000),
         supabase
           .from("user_roles")
           .select("user_id, role")
