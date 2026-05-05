@@ -48,22 +48,29 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
   const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<{ state: "idle" | "sending" | "sent" | "failed"; message?: string; to?: string; at?: string }>({ state: "idle" });
 
+  const [resumeData, setResumeData] = useState<any>(null);
+  const [resumeAnalysis, setResumeAnalysis] = useState<any>(null);
+
   useEffect(() => {
     if (!open || !candidateId) return;
     const load = async () => {
       setLoading(true);
-      const [{ data: p }, { data: edu }, { data: exp }, { data: addr }, { data: tpls }] = await Promise.all([
+      const [{ data: p }, { data: edu }, { data: exp }, { data: addr }, { data: tpls }, { data: cv }, { data: ra }] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", candidateId).maybeSingle(),
         supabase.from("educational_qualifications").select("*").eq("user_id", candidateId).order("display_order"),
         supabase.from("work_experience").select("*").eq("user_id", candidateId).order("display_order"),
         supabase.from("address_details").select("*").eq("user_id", candidateId).maybeSingle(),
         supabase.from("hr_mail_templates").select("*").order("created_at", { ascending: false }),
+        supabase.from("candidate_resumes").select("skills, summary, experience, education").eq("user_id", candidateId).maybeSingle(),
+        supabase.from("resume_analyses").select("skill_highlights, strengths, overall_score, career_level, experience_summary").eq("user_id", candidateId).order("analyzed_at", { ascending: false }).limit(1).maybeSingle(),
       ]);
       setProfile(p);
       setEducation(edu || []);
       setExperience(exp || []);
       setAddress(addr);
       setTemplates((tpls as MailTemplate[]) || []);
+      setResumeData(cv);
+      setResumeAnalysis(ra);
       setLoading(false);
     };
     load();
