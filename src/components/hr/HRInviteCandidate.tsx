@@ -277,6 +277,7 @@ const HRInviteCandidate = ({ hrName, companyName, hrEmail }: Props) => {
     try {
       await sendOne(candidateEmail, candidateName, finalHtml);
       toast.success(`Email sent to ${candidateEmail}`);
+      fetchHistory();
     } catch (err: any) { toast.error(err.message || "Send failed"); }
     finally { setSending(false); }
   };
