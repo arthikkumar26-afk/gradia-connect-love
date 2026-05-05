@@ -543,7 +543,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                               <Button size="sm" onClick={() => setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" })}>
                                 <Send className="h-3.5 w-3.5 mr-1" /> Transfer
                               </Button>
-                              <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.id}`)}>
+                              <Button size="sm" variant="outline" onClick={() => setSelectedCandidateId(c.id)}>
                                 <FileText className="h-3.5 w-3.5 mr-1" /> View
                               </Button>
                             </div>
