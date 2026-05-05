@@ -1264,7 +1264,14 @@ const Users = () => {
                   <Label htmlFor="cu-plan" className="text-xs">Plan</Label>
                   <Select
                     value={createForm.plan}
-                    onValueChange={(v) => setCreateForm((p) => ({ ...p, plan: v }))}
+                    onValueChange={(v) => {
+                      const found = (PLANS[createForm.role as PlanRole] ?? []).find((pl) => pl.id === v);
+                      setCreateForm((p) => ({
+                        ...p,
+                        plan: v,
+                        points: v === "none" ? p.points : (found ? String(found.points) : p.points),
+                      }));
+                    }}
                   >
                     <SelectTrigger id="cu-plan"><SelectValue /></SelectTrigger>
                     <SelectContent>
