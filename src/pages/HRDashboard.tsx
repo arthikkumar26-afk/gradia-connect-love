@@ -753,16 +753,19 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 </Button>
               </div>
             </div>
-            {renderContent()}
+            {selectedCandidateId ? (
+              <HRCandidateProfileDialog
+                open={true}
+                onClose={() => setSelectedCandidateId(null)}
+                candidateId={selectedCandidateId}
+              />
+            ) : (
+              renderContent()
+            )}
           </div>
         </main>
       </div>
 
-      <HRCandidateProfileDialog
-        open={!!selectedCandidateId}
-        onClose={() => setSelectedCandidateId(null)}
-        candidateId={selectedCandidateId}
-      />
 
       {transferCandidate && user && (
         <TransferCandidateDialog

@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,13 +169,21 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
     );
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-xl">{profile?.full_name || "Candidate Profile"}</DialogTitle>
-          <DialogDescription>Complete profile details and mail templates.</DialogDescription>
-        </DialogHeader>
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-4">
+        <Button variant="ghost" size="sm" onClick={onClose}>
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back
+        </Button>
+        <div className="text-right">
+          <h2 className="text-xl font-semibold">{profile?.full_name || "Candidate Profile"}</h2>
+          <p className="text-xs text-muted-foreground">Complete profile details and mail templates.</p>
+        </div>
+      </div>
+      <div className="w-full">
+
 
         {loading ? (
           <div className="space-y-3 py-4">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
@@ -358,8 +364,8 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
             </Card>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 
