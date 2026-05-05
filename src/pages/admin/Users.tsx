@@ -1064,6 +1064,7 @@ const Users = () => {
                       <SelectItem value="none">No change</SelectItem>
                       {manageForm.role === "candidate" ? (
                         <>
+                          <SelectItem value="starter">Starter</SelectItem>
                           <SelectItem value="basic">Basic</SelectItem>
                           <SelectItem value="pro">Pro</SelectItem>
                           <SelectItem value="premium">Premium</SelectItem>
@@ -1071,6 +1072,7 @@ const Users = () => {
                       ) : (
                         <>
                           <SelectItem value="starter">Starter</SelectItem>
+                          <SelectItem value="growth">Growth</SelectItem>
                           <SelectItem value="professional">Professional</SelectItem>
                           <SelectItem value="enterprise">Enterprise</SelectItem>
                         </>
@@ -1278,6 +1280,7 @@ const Users = () => {
                       <SelectItem value="none">No plan</SelectItem>
                       {createForm.role === "candidate" ? (
                         <>
+                          <SelectItem value="starter">Starter</SelectItem>
                           <SelectItem value="basic">Basic</SelectItem>
                           <SelectItem value="pro">Pro</SelectItem>
                           <SelectItem value="premium">Premium</SelectItem>
