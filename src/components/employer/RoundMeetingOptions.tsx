@@ -39,6 +39,52 @@ export const RoundMeetingOptions = ({
   const [observerEmails, setObserverEmails] = useState<string[]>(existingObserverEmails);
   const [newObserverEmail, setNewObserverEmail] = useState('');
 
+  const isMeetReady = () => {
+    if (meetType === 'ai_video') return true;
+    return !!meetLink.trim();
+  };
+
+  const handleSendMeetLink = async (
+    opts: { silent?: boolean; overrideObservers?: string[] } = {}
+  ) => {
+    const { silent = false, overrideObservers } = opts;
+    const recipients = overrideObservers ?? observerEmails;
+
+    if ((meetType === 'google_meet' || meetType === 'zoom_meet') && !meetLink.trim()) {
+      if (!silent) toast.error('Please enter a meeting link');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const { error } = await supabase.functions.invoke('send-demo-round-emails', {
+        body: {
+          interviewCandidateId,
+          observerEmail: recipients.length > 0 ? recipients.join(',') : undefined,
+          meetLink: (meetType === 'google_meet' || meetType === 'zoom_meet') ? meetLink : undefined,
+          meetType: meetType === 'google_meet' || meetType === 'zoom_meet' ? 'manual_link' : meetType,
+          roundName: stageName,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success(`${stageName} invitations sent!`, {
+        description: recipients.length > 0
+          ? `Emails sent to ${candidateName} and ${recipients.length} observer(s)`
+          : `Email sent to ${candidateName}`,
+        duration: 4000,
+      });
+      setIsSaved(true);
+      onUpdate?.();
+    } catch (err) {
+      console.error('Error sending round emails:', err);
+      if (!silent) toast.error('Failed to send round emails');
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   const handleAddObserver = () => {
     const email = newObserverEmail.trim().toLowerCase();
     if (!email) return;
@@ -50,9 +96,14 @@ export const RoundMeetingOptions = ({
       toast.error('Email already added');
       return;
     }
-    setObserverEmails(prev => [...prev, email]);
+    const next = [...observerEmails, email];
+    setObserverEmails(next);
     setNewObserverEmail('');
     setIsSaved(false);
+    // Auto-send observer invitation as soon as meet details are ready
+    if (isMeetReady()) {
+      void handleSendMeetLink({ silent: false, overrideObservers: next });
+    }
   };
 
   const handleRemoveObserver = (email: string) => {
@@ -60,41 +111,10 @@ export const RoundMeetingOptions = ({
     setIsSaved(false);
   };
 
-  const handleSendMeetLink = async () => {
-    if ((meetType === 'google_meet' || meetType === 'zoom_meet') && !meetLink.trim()) {
-      toast.error('Please enter a meeting link');
-      return;
-    }
-
-    setIsSending(true);
-    try {
-      // Send round emails (candidate + observers)
-      const { error } = await supabase.functions.invoke('send-demo-round-emails', {
-        body: {
-          interviewCandidateId,
-          observerEmail: observerEmails.length > 0 ? observerEmails.join(',') : undefined,
-          meetLink: (meetType === 'google_meet' || meetType === 'zoom_meet') ? meetLink : undefined,
-          meetType: meetType === 'google_meet' || meetType === 'zoom_meet' ? 'manual_link' : meetType,
-          roundName: stageName,
-        },
-      });
-
-      if (error) throw error;
-
-      toast.success(`${stageName} invitations sent!`, {
-        description: observerEmails.length > 0
-          ? `Emails sent to ${candidateName} and ${observerEmails.length} observer(s)`
-          : `Email sent to ${candidateName}`,
-        duration: 5000,
-      });
-      setIsSaved(true);
-      onUpdate?.();
-    } catch (err) {
-      console.error('Error sending round emails:', err);
-      toast.error('Failed to send round emails');
-    } finally {
-      setIsSending(false);
-    }
+  // Auto-send when meeting link finalizes (blur/Enter) and observers already exist
+  const handleMeetLinkSubmit = () => {
+    if (!isMeetReady() || observerEmails.length === 0 || isSending || isSaved) return;
+    void handleSendMeetLink({ silent: false });
   };
 
   return (
@@ -155,6 +175,8 @@ export const RoundMeetingOptions = ({
             placeholder="Paste Google Meet link (e.g., meet.google.com/abc-defg-hij)"
             value={meetLink}
             onChange={(e) => { setMeetLink(e.target.value); setIsSaved(false); }}
+            onBlur={handleMeetLinkSubmit}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMeetLinkSubmit(); } }}
             className="h-7 text-xs border-blue-200 focus:border-blue-400"
           />
           <p className="text-[9px] text-muted-foreground">
@@ -171,6 +193,8 @@ export const RoundMeetingOptions = ({
             placeholder="Paste Zoom link (e.g., zoom.us/j/123456789)"
             value={meetLink}
             onChange={(e) => { setMeetLink(e.target.value); setIsSaved(false); }}
+            onBlur={handleMeetLinkSubmit}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleMeetLinkSubmit(); } }}
             className="h-7 text-xs border-purple-200 focus:border-purple-400"
           />
           <p className="text-[9px] text-muted-foreground">
@@ -245,7 +269,7 @@ export const RoundMeetingOptions = ({
             ? 'bg-blue-600 hover:bg-blue-700'
             : 'bg-purple-600 hover:bg-purple-700'
         }`}
-        onClick={handleSendMeetLink}
+        onClick={() => handleSendMeetLink()}
         disabled={isSending || ((meetType === 'google_meet' || meetType === 'zoom_meet') && !meetLink.trim())}
       >
         {isSending ? (
