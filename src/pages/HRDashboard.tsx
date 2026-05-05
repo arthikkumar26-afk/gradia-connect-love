@@ -98,6 +98,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [transferCandidate, setTransferCandidate] = useState<{ id: string; name: string } | null>(null);
   const [transferEmployer, setTransferEmployer] = useState<{ id: string; name: string } | null>(null);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
 
   const reloadJobs = useCallback(async (employerId: string) => {
     const { data: jobsData, error } = await supabase
