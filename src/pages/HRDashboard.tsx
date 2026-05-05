@@ -60,6 +60,11 @@ interface AllCandidateRow {
   resume_url?: string | null;
   registration_number?: string | null;
   created_at?: string | null;
+  category?: string | null;
+  segment?: string | null;
+  preferred_state?: string | null;
+  preferred_district?: string | null;
+  primary_subject?: string | null;
 }
 
 interface HRDashboardProps {
@@ -196,7 +201,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           .order("created_at", { ascending: false }),
         supabase
           .from("profiles")
-          .select("id, full_name, email, mobile, preferred_role, experience_level, highest_qualification, location, current_state, current_district, resume_url, registration_number, created_at")
+          .select("id, full_name, email, mobile, preferred_role, experience_level, highest_qualification, location, current_state, current_district, resume_url, registration_number, created_at, category, segment, preferred_state, preferred_district, primary_subject")
           .eq("role", "candidate")
           .order("created_at", { ascending: false })
           .limit(1000),
@@ -474,39 +479,52 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 : allCandidates.length === 0 ? <p className="text-sm text-muted-foreground">No candidates registered yet.</p>
                 : (
                   <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                    {allCandidates.map(c => (
-                      <div key={c.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium text-sm truncate">{c.full_name || "Candidate"}</p>
-                            {c.registration_number && <Badge variant="outline" className="text-[10px]">{c.registration_number}</Badge>}
-                            {c.experience_level && <Badge variant="secondary" className="text-[10px]">{c.experience_level}</Badge>}
+                    {allCandidates.map(c => {
+                      const sector = c.category || "—";
+                      const segment = c.segment || "—";
+                      const prefState = c.preferred_state || "—";
+                      const prefLoc = c.preferred_district || c.location || "—";
+                      const subject = c.primary_subject || "—";
+                      const designation = c.preferred_role || "—";
+                      return (
+                        <div key={c.id} className="border border-border rounded-md p-3 space-y-2">
+                          <div className="flex items-start justify-between gap-3 flex-wrap">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <p className="font-medium text-sm truncate">{c.full_name || "Candidate"}</p>
+                                {c.registration_number && <Badge variant="outline" className="text-[10px]">{c.registration_number}</Badge>}
+                                {c.experience_level && <Badge variant="secondary" className="text-[10px]">{c.experience_level}</Badge>}
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">{c.email || "—"}</p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
+                              {c.resume_url && (
+                                <Button size="sm" variant="outline" onClick={() => window.open(c.resume_url!, "_blank")}>
+                                  <FileText className="h-3.5 w-3.5 mr-1" /> Resume
+                                </Button>
+                              )}
+                              <Button size="sm" onClick={() => setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" })}>
+                                <Send className="h-3.5 w-3.5 mr-1" /> Transfer
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.id}`)}>
+                                <FileText className="h-3.5 w-3.5 mr-1" /> View
+                              </Button>
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {c.email || "—"}{c.mobile ? ` · ${c.mobile}` : ""}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {c.preferred_role || "—"}
-                            {c.highest_qualification ? ` · ${c.highest_qualification}` : ""}
-                            {(c.current_district || c.current_state || c.location) ? ` · ${[c.current_district, c.current_state].filter(Boolean).join(", ") || c.location}` : ""}
-                          </p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-1 text-[11px] pt-1 border-t border-border/50">
+                            <div><span className="text-muted-foreground">Code: </span><span className="font-medium">{c.registration_number || "—"}</span></div>
+                            <div><span className="text-muted-foreground">Mobile: </span><span className="font-medium">{c.mobile || "—"}</span></div>
+                            <div><span className="text-muted-foreground">Sector: </span><span className="font-medium">{sector}</span></div>
+                            <div><span className="text-muted-foreground">Segment: </span><span className="font-medium">{segment}</span></div>
+                            <div><span className="text-muted-foreground">Pref State: </span><span className="font-medium">{prefState}</span></div>
+                            <div><span className="text-muted-foreground">Pref Location: </span><span className="font-medium">{prefLoc}</span></div>
+                            <div><span className="text-muted-foreground">Subject: </span><span className="font-medium">{subject}</span></div>
+                            <div><span className="text-muted-foreground">Designation: </span><span className="font-medium">{designation}</span></div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{c.created_at ? new Date(c.created_at).toLocaleDateString() : ""}</span>
-                          {c.resume_url && (
-                            <Button size="sm" variant="outline" onClick={() => window.open(c.resume_url!, "_blank")}>
-                              <FileText className="h-3.5 w-3.5 mr-1" /> Resume
-                            </Button>
-                          )}
-                          <Button size="sm" onClick={() => setTransferCandidate({ id: c.id, name: c.full_name || "Candidate" })}>
-                            <Send className="h-3.5 w-3.5 mr-1" /> Transfer to Employer
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.id}`)}>
-                            <FileText className="h-3.5 w-3.5 mr-1" /> View
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
             </CardContent>
