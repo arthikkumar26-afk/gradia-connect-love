@@ -108,11 +108,12 @@ export default function HRCVScrutiny({ hrUserId, employerUserId, employerName }:
   useEffect(() => {
     (async () => {
       setLoadingJobs(true);
-      const { data } = await supabase
+      let q = supabase
         .from("jobs")
         .select("id, job_title, description, requirements, status")
-        .eq("employer_id", employerUserId)
         .order("created_at", { ascending: false });
+      if (employerUserId) q = q.eq("employer_id", employerUserId);
+      const { data } = await q.limit(200);
       setJobs((data ?? []) as JobLite[]);
       setLoadingJobs(false);
     })();
