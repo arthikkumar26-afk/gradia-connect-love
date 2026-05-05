@@ -1280,6 +1280,7 @@ const Users = () => {
                       <SelectItem value="none">No plan</SelectItem>
                       {createForm.role === "candidate" ? (
                         <>
+                          <SelectItem value="starter">Starter</SelectItem>
                           <SelectItem value="basic">Basic</SelectItem>
                           <SelectItem value="pro">Pro</SelectItem>
                           <SelectItem value="premium">Premium</SelectItem>
