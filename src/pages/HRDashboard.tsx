@@ -485,7 +485,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                           <div className="flex items-center gap-2 flex-wrap">
                             {c.ai_score != null && <Badge variant="secondary">AI {c.ai_score}%</Badge>}
                             <Badge variant="outline">{c.status || "pending"}</Badge>
-                            <Button size="sm" variant="outline" onClick={() => navigate(`/employer/candidate/${c.candidate_id}?interview=${c.id}`)}>
+                            <Button size="sm" variant="outline" onClick={() => setSelectedCandidateId(c.id)}>
                               <FileText className="h-3.5 w-3.5 mr-1" /> View
                             </Button>
                           </div>
