@@ -701,6 +701,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                   <button
                     key={item.id}
                     onClick={() => {
+                      setSelectedCandidateId(null);
                       setActiveTab(item.id);
                       if (window.innerWidth < 768) setSidebarOpen(false);
                     }}
