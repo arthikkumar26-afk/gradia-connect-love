@@ -339,9 +339,17 @@ export const MyVacanciesContent = () => {
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-foreground">
-                            {a.unlocked ? a.full_name || "Candidate" : "🔒 Locked Profile"}
-                          </h3>
+                          {a.unlocked ? (
+                            <button
+                              type="button"
+                              onClick={() => setProfileView(a)}
+                              className="font-semibold text-foreground hover:text-primary hover:underline text-left"
+                            >
+                              {a.full_name || "Candidate"}
+                            </button>
+                          ) : (
+                            <h3 className="font-semibold text-foreground">🔒 Locked Profile</h3>
+                          )}
                           {a.unlocked ? (
                             <Badge variant="default" className="text-xs">
                               <Unlock className="h-3 w-3 mr-1" /> Unlocked
