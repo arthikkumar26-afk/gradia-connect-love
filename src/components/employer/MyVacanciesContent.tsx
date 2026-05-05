@@ -66,6 +66,7 @@ export const MyVacanciesContent = () => {
   const [confirmUnlock, setConfirmUnlock] = useState<ApplicantRow | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [walletPoints, setWalletPoints] = useState<number>(0);
+  const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
 
   const loadVacancies = async () => {
     if (!user?.id) return;
