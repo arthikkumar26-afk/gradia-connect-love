@@ -290,6 +290,7 @@ const Header = () => {
                        userRole === 'owner' ? 'Owner' : 
                        userRole === 'employer' ? (companyName || profile?.company_name || profile?.full_name?.split(' ')[0] || 'Account') :
                        userRole === 'freelancer' ? 'Freelancer' :
+                       (userRole === 'hr' || userRole === 'hr_manager' || userRole?.startsWith('hr_')) ? 'HR' :
                        profile?.full_name?.split(' ')[0] || 'Account'}</span>
                       <ChevronDown className="h-3 w-3" />
                     </Button>
