@@ -15,6 +15,7 @@ import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 import HRCandidatesData from "@/components/hr/HRCandidatesData";
+import HRInviteCandidate from "@/components/hr/HRInviteCandidate";
 import HRCandidateProfileDialog from "@/components/hr/HRCandidateProfileDialog";
 import HREmailStatus from "@/components/hr/HREmailStatus";
 import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
