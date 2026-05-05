@@ -146,6 +146,9 @@ const Users = () => {
     email: "",
     password: "",
     role: "candidate" as "candidate" | "employer",
+    plan: "none",
+    billingCycle: "monthly" as "monthly" | "annual",
+    points: "",
   });
   const [createLoading, setCreateLoading] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -160,13 +163,18 @@ const Users = () => {
   };
 
   const handleCreateUser = async () => {
-    const { fullName, email, password, role } = createForm;
+    const { fullName, email, password, role, plan, billingCycle, points } = createForm;
     if (!fullName.trim() || !email.trim() || !password.trim()) {
       toast({ title: "Missing fields", description: "Please fill all fields.", variant: "destructive" });
       return;
     }
     if (password.length < 6) {
       toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    const pointsNum = points.trim() ? Number(points) : 0;
+    if (points.trim() && (!Number.isFinite(pointsNum) || pointsNum < 0)) {
+      toast({ title: "Invalid points", description: "Points must be a positive number.", variant: "destructive" });
       return;
     }
     setCreateLoading(true);
@@ -176,6 +184,44 @@ const Users = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+
+      const newUserId: string | undefined = data?.userId;
+
+      // Activate plan if selected
+      if (plan && plan !== "none" && newUserId) {
+        try {
+          await supabase.functions.invoke("manage-user-roles", {
+            body: {
+              action: "update-subscription",
+              targetUserId: newUserId,
+              targetRole: role,
+              plan,
+              billingCycle,
+              planAction: "activate",
+            },
+          });
+        } catch (e: any) {
+          console.error("Plan activation failed:", e);
+          toast({ title: "Plan not activated", description: e.message || "Could not activate plan.", variant: "destructive" });
+        }
+      }
+
+      // Credit wallet points
+      if (pointsNum > 0 && newUserId) {
+        try {
+          await supabase.functions.invoke("manage-user-roles", {
+            body: {
+              action: "credit-wallet-points",
+              targetUserId: newUserId,
+              points: pointsNum,
+              description: `Admin granted on account creation`,
+            },
+          });
+        } catch (e: any) {
+          console.error("Points credit failed:", e);
+          toast({ title: "Points not credited", description: e.message || "Could not credit points.", variant: "destructive" });
+        }
+      }
 
       try {
         await supabase.functions.invoke("send-account-credentials", {
@@ -192,7 +238,7 @@ const Users = () => {
       }
 
       setCreateDialogOpen(false);
-      setCreateForm({ fullName: "", email: "", password: "", role: "candidate" });
+      setCreateForm({ fullName: "", email: "", password: "", role: "candidate", plan: "none", billingCycle: "monthly", points: "" });
       fetchUsers();
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to create user", variant: "destructive" });
@@ -998,6 +1044,63 @@ const Users = () => {
               <p className="text-xs text-muted-foreground">
                 The user will be asked to change this on first login.
               </p>
+            </div>
+
+            <div className="rounded-md border p-3 space-y-3 bg-muted/30">
+              <div className="text-sm font-semibold">Activate Plan & Add Points (optional)</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="cu-plan" className="text-xs">Plan</Label>
+                  <Select
+                    value={createForm.plan}
+                    onValueChange={(v) => setCreateForm((p) => ({ ...p, plan: v }))}
+                  >
+                    <SelectTrigger id="cu-plan"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No plan</SelectItem>
+                      {createForm.role === "candidate" ? (
+                        <>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="pro">Pro</SelectItem>
+                          <SelectItem value="premium">Premium</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="starter">Starter</SelectItem>
+                          <SelectItem value="growth">Growth</SelectItem>
+                          <SelectItem value="professional">Professional</SelectItem>
+                          <SelectItem value="enterprise">Enterprise</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cu-cycle" className="text-xs">Billing Cycle</Label>
+                  <Select
+                    value={createForm.billingCycle}
+                    onValueChange={(v) => setCreateForm((p) => ({ ...p, billingCycle: v as "monthly" | "annual" }))}
+                  >
+                    <SelectTrigger id="cu-cycle"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="annual">Annual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="cu-points" className="text-xs">Wallet Points to Credit</Label>
+                <Input
+                  id="cu-points"
+                  type="number"
+                  min={0}
+                  placeholder="e.g. 500"
+                  value={createForm.points}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, points: e.target.value }))}
+                />
+                <p className="text-[11px] text-muted-foreground">1 point = ₹5. Leave blank to skip.</p>
+              </div>
             </div>
           </div>
           <DialogFooter>

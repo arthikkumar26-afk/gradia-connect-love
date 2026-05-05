@@ -535,6 +535,60 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === "credit-wallet-points") {
+      const { points, description } = reqBody;
+      if (!targetUserId || !points || Number(points) <= 0) {
+        return new Response(
+          JSON.stringify({ error: "targetUserId and positive points are required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const pts = Math.floor(Number(points));
+
+      // Ensure wallet exists
+      const { data: existingWallet } = await supabaseAdmin
+        .from("wallets")
+        .select("id, points_balance")
+        .eq("user_id", targetUserId)
+        .maybeSingle();
+
+      let walletId = existingWallet?.id as string | undefined;
+      if (!walletId) {
+        const { data: newWallet, error: wErr } = await supabaseAdmin
+          .from("wallets")
+          .insert({ user_id: targetUserId, points_balance: pts })
+          .select("id")
+          .single();
+        if (wErr) {
+          return new Response(
+            JSON.stringify({ error: wErr.message }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        walletId = newWallet!.id;
+      } else {
+        await supabaseAdmin
+          .from("wallets")
+          .update({ points_balance: (existingWallet!.points_balance || 0) + pts, updated_at: new Date().toISOString() })
+          .eq("id", walletId);
+      }
+
+      await supabaseAdmin.from("wallet_transactions").insert({
+        wallet_id: walletId,
+        transaction_type: "credit",
+        category: "admin_grant",
+        amount: 0,
+        points: pts,
+        rewards: 0,
+        description: description || `Admin credited ${pts} points`,
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, message: `Credited ${pts} points` }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (action === "block-user") {
       if (!targetUserId) {
         return new Response(
