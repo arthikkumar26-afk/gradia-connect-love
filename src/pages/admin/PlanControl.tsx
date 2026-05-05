@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import jsPDF from "jspdf";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 type AccessRole = "admin" | "owner";
 
@@ -386,31 +387,22 @@ const PlanControl = ({ accessRole }: Props) => {
 
   const backPath = accessRole === "owner" ? "/owner/dashboard" : "/admin/dashboard";
 
-  return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-6 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Button asChild variant="ghost" size="sm"><Link to={backPath}><ArrowLeft className="h-4 w-4 mr-1" />Back</Link></Button>
-            <div>
-              <h1 className="text-lg font-bold flex items-center gap-2"><Receipt className="h-5 w-5 text-primary" />Plan Control</h1>
-              <p className="text-xs text-muted-foreground">Upgrade, change, view payment history & invoices</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, plan…" className="pl-8 h-9 w-72" />
-            </div>
-            <Button size="sm" variant="outline" onClick={fetchAll} disabled={loading}>
-              <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />Refresh
-            </Button>
-          </div>
-        </div>
-      </header>
+  const headerControls = (
+    <>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, plan…" className="pl-8 h-9 w-72" />
+      </div>
+      <Button size="sm" variant="outline" onClick={fetchAll} disabled={loading}>
+        <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} />Refresh
+      </Button>
+    </>
+  );
 
-      <main className="p-6 max-w-[1400px] mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+  const pageBody = (
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+
           <Stat label="Active Candidates" value={candidateSubs.filter(s => s.status === "active").length} />
           <Stat label="Active Employers" value={employerSubs.filter(s => s.status === "active").length} />
           <Stat label="Payments Logged" value={history.length} />
@@ -561,8 +553,11 @@ const PlanControl = ({ accessRole }: Props) => {
             </Card>
           </TabsContent>
         </Tabs>
-      </main>
+      </>
+    );
 
+  const dialogs = (
+    <>
       {/* Plan-change dialog */}
       <Dialog open={planDlgOpen} onOpenChange={setPlanDlgOpen}>
         <DialogContent>
@@ -614,6 +609,36 @@ const PlanControl = ({ accessRole }: Props) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </>
+  );
+
+  if (accessRole === "admin") {
+    return (
+      <AdminShell title="Plan Control" headerRight={headerControls}>
+        {pageBody}
+        {dialogs}
+      </AdminShell>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-muted/30">
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-6 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="sm"><Link to={backPath}><ArrowLeft className="h-4 w-4 mr-1" />Back</Link></Button>
+            <div>
+              <h1 className="text-lg font-bold flex items-center gap-2"><Receipt className="h-5 w-5 text-primary" />Plan Control</h1>
+              <p className="text-xs text-muted-foreground">Upgrade, change, view payment history & invoices</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">{headerControls}</div>
+        </div>
+      </header>
+      <main className="p-6 max-w-[1400px] mx-auto">
+        {pageBody}
+      </main>
+      {dialogs}
     </div>
   );
 };
