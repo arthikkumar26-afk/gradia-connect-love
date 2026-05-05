@@ -1074,10 +1074,13 @@ const Users = () => {
                     <SelectContent>
                       <SelectItem value="none">No change</SelectItem>
                       {(PLANS[manageForm.role as PlanRole] ?? PLANS.candidate).map((p) => {
-                        const showPts = manageForm.role !== "candidate" && p.points > 0;
+                        const isCandidate = manageForm.role === "candidate";
+                        const suffix = isCandidate
+                          ? (p.priceInr ? ` — ₹${p.priceInr.toLocaleString("en-IN")}${p.group === "bundle" ? " (bundle)" : ""}` : "")
+                          : (p.points > 0 ? ` — ${p.points.toLocaleString("en-IN")} pts` : "");
                         return (
                           <SelectItem key={p.id} value={p.id}>
-                            {p.name}{showPts ? ` — ${p.points.toLocaleString("en-IN")} pts` : ""}
+                            {p.name}{suffix}
                           </SelectItem>
                         );
                       })}
