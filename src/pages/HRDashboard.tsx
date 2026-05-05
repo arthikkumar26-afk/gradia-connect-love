@@ -615,6 +615,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
         );
       case "email-status":
         return <HREmailStatus />;
+      case "invite-candidate":
+        return (
+          <HRInviteCandidate
+            hrName={profile?.full_name || "HR Team"}
+            companyName={parentEmployerName || "Gradia"}
+            hrEmail={user?.email || "info@gradiaa.com"}
+          />
+        );
       case "candidate-info":
         return parentEmployerId && user ? (
           <HRCandidateInfoSheet
