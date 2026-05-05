@@ -635,14 +635,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
         );
       case "cv-scrutiny":
-        return parentEmployerId && user ? (
+        return user ? (
           <HRCVScrutiny
             hrUserId={user.id}
-            employerUserId={parentEmployerId}
-            employerName={parentEmployerName}
+            employerUserId={parentEmployerId || ""}
+            employerName={parentEmployerName || "Gradia"}
           />
         ) : (
-          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">Loading…</CardContent></Card>
         );
       case "pipeline":
         return <SampleCandidateDemo />;
