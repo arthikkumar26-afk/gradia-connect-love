@@ -182,19 +182,31 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
 
         const candIds = Array.from(new Set((cands ?? []).map((c: any) => c.candidate_id)));
         const { data: profs, error: profsError } = candIds.length
-          ? await supabase.from("profiles").select("id, full_name").in("id", candIds)
+          ? await supabase.from("profiles").select("id, full_name, mobile, registration_number, category, segment, preferred_state, preferred_district, location, primary_subject, preferred_role").in("id", candIds)
           : { data: [] as any[], error: null };
         if (profsError) throw profsError;
 
-        const nameMap = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p.full_name]));
+        const profMap = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
         const titleMap = Object.fromEntries((jobsData ?? []).map((j: any) => [j.id, j.job_title]));
         setCandidates(
-          (cands ?? []).map((c: any) => ({
-            ...c,
-            current_stage: c.current_stage?.name || null,
-            candidate_name: nameMap[c.candidate_id] || "Candidate",
-            job_title: titleMap[c.job_id] || "—",
-          }))
+          (cands ?? []).map((c: any) => {
+            const p = profMap[c.candidate_id] || {};
+            return {
+              ...c,
+              current_stage: c.current_stage?.name || null,
+              candidate_name: p.full_name || "Candidate",
+              job_title: titleMap[c.job_id] || "—",
+              mobile: p.mobile,
+              registration_number: p.registration_number,
+              category: p.category,
+              segment: p.segment,
+              preferred_state: p.preferred_state,
+              preferred_district: p.preferred_district,
+              location: p.location,
+              primary_subject: p.primary_subject,
+              preferred_role: p.preferred_role,
+            };
+          })
         );
       } else {
         setCandidates([]);
