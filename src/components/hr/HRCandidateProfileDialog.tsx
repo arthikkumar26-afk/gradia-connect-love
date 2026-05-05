@@ -84,7 +84,7 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
       try {
         const { data } = await supabase
           .from("jobs")
-          .select("id, job_title, organisation, location, salary_range, skills, designation, segment, program, category, sector_division, posted_date, status, moderation_status")
+          .select("id, job_title, organisation, location, salary_range, skills, designation, segment, program, category, sector_division, subjects, posted_date, status, moderation_status")
           .in("status", ["active", "open", "approved"])
           .order("posted_date", { ascending: false })
           .limit(200);
@@ -93,25 +93,41 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
         );
 
         const norm = (v: any) => (v ? String(v).toLowerCase().trim() : "");
-        const skillsC: string[] = (profile.skills || []).map((s: string) => norm(s)).filter(Boolean);
-        const role = norm(profile.preferred_role);
+        const skillSources: any[] = [];
+        if (Array.isArray(resumeData?.skills)) skillSources.push(...resumeData.skills);
+        if (Array.isArray(resumeAnalysis?.skill_highlights)) skillSources.push(...resumeAnalysis.skill_highlights);
+        const skillsC: string[] = skillSources
+          .map((s: any) => (typeof s === "string" ? s : s?.name || s?.skill || ""))
+          .map(norm)
+          .filter(Boolean);
+
+        const roleHints = new Set<string>();
+        if (profile.preferred_role) roleHints.add(norm(profile.preferred_role));
+        experience.forEach((w: any) => w.designation && roleHints.add(norm(w.designation)));
+
         const subj = norm(profile.primary_subject);
         const seg = norm(profile.segment);
         const prog = norm(profile.program);
         const loc = norm(profile.preferred_state || profile.current_state || profile.location);
+        const district = norm(profile.preferred_district || profile.current_district);
 
         const scored = jobs.map((j: any) => {
           let score = 0;
           const reasons: string[] = [];
           const title = norm(j.job_title) + " " + norm(j.designation);
-          if (role && title.includes(role)) { score += 40; reasons.push("Role match"); }
+          const matchedRole = Array.from(roleHints).find(r => r && title.includes(r));
+          if (matchedRole) { score += 40; reasons.push("Role match"); }
           if (subj && (norm(j.subjects).includes(subj) || title.includes(subj))) { score += 20; reasons.push("Subject"); }
           if (seg && norm(j.segment) === seg) { score += 10; reasons.push("Segment"); }
           if (prog && norm(j.program) === prog) { score += 8; reasons.push("Program"); }
           if (loc && norm(j.location).includes(loc)) { score += 12; reasons.push("Location"); }
+          if (district && norm(j.location).includes(district)) { score += 6; reasons.push("District"); }
           const jobSkills = (j.skills || []).map((s: string) => norm(s));
           const skillHits = skillsC.filter(s => jobSkills.some((js: string) => js.includes(s) || s.includes(js))).length;
           if (skillHits) { score += Math.min(skillHits * 6, 30); reasons.push(`${skillHits} skill${skillHits > 1 ? "s" : ""}`); }
+          if (score === 0 && profile.category && norm(j.category) === norm(profile.category)) {
+            score += 5; reasons.push("Sector");
+          }
           return { ...j, _score: score, _reasons: reasons };
         }).filter((j: any) => j._score > 0)
           .sort((a: any, b: any) => b._score - a._score)
@@ -124,7 +140,7 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
       }
     };
     loadMatches();
-  }, [profile]);
+  }, [profile, experience, resumeData, resumeAnalysis]);
 
   const reloadTemplates = async () => {
     const { data } = await supabase.from("hr_mail_templates").select("*").order("created_at", { ascending: false });
