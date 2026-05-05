@@ -44,6 +44,7 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState<{ state: "idle" | "sending" | "sent" | "failed"; message?: string; to?: string; at?: string }>({ state: "idle" });
 
   useEffect(() => {
     if (!open || !candidateId) return;
@@ -139,14 +140,20 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
     if (!candidateId) return;
     if (!tplSubject.trim() || !tplBody.trim()) { toast.error("Subject and body required"); return; }
     setSending(true);
+    setSendStatus({ state: "sending" });
     try {
       const { data, error } = await supabase.functions.invoke("send-hr-custom-email", {
         body: { candidateId, subject: tplSubject, body: tplBody },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`Email sent to ${(data as any)?.to || "candidate"}`);
-    } catch (e: any) { toast.error(e.message || "Send failed"); }
+      const to = (data as any)?.to || profile?.email || "candidate";
+      toast.success(`Email sent to ${to}`);
+      setSendStatus({ state: "sent", to, at: new Date().toLocaleString() });
+    } catch (e: any) {
+      toast.error(e.message || "Send failed");
+      setSendStatus({ state: "failed", message: e.message || "Send failed" });
+    }
     finally { setSending(false); }
   };
 
@@ -357,6 +364,23 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
                     Send to {profile?.email || "candidate"}
                   </Button>
                 </div>
+
+                {sendStatus.state !== "idle" && (
+                  <div
+                    className={
+                      "text-xs rounded-md border px-3 py-2 flex items-center gap-2 " +
+                      (sendStatus.state === "sent"
+                        ? "bg-green-500/10 border-green-500/40 text-green-700 dark:text-green-400"
+                        : sendStatus.state === "failed"
+                        ? "bg-destructive/10 border-destructive/40 text-destructive"
+                        : "bg-muted/40 border-border text-muted-foreground")
+                    }
+                  >
+                    {sendStatus.state === "sending" && (<><Loader2 className="h-3.5 w-3.5 animate-spin" /> Sending email…</>)}
+                    {sendStatus.state === "sent" && (<><Send className="h-3.5 w-3.5" /> Delivered to <strong>{sendStatus.to}</strong> · {sendStatus.at}</>)}
+                    {sendStatus.state === "failed" && (<>✗ Failed: {sendStatus.message}</>)}
+                  </div>
+                )}
                 <p className="text-[11px] text-muted-foreground">
                   Placeholders supported: <code>{"{{candidate_name}}"}</code>, <code>{"{{job_title}}"}</code>, <code>{"{{company_name}}"}</code>, <code>{"{{hr_name}}"}</code>, <code>{"{{date}}"}</code>, <code>{"{{time}}"}</code>.
                 </p>
