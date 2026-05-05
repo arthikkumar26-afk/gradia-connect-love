@@ -15,7 +15,7 @@ import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 import HRCandidatesData from "@/components/hr/HRCandidatesData";
-import { CandidateFullProfile } from "@/components/employer/CandidateFullProfile";
+import HRCandidateProfileDialog from "@/components/hr/HRCandidateProfileDialog";
 import HREmailStatus from "@/components/hr/HREmailStatus";
 import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
 import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
@@ -485,7 +485,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                           <div className="flex items-center gap-2 flex-wrap">
                             {c.ai_score != null && <Badge variant="secondary">AI {c.ai_score}%</Badge>}
                             <Badge variant="outline">{c.status || "pending"}</Badge>
-                            <Button size="sm" variant="outline" onClick={() => setSelectedCandidateId(c.id)}>
+                            <Button size="sm" variant="outline" onClick={() => setSelectedCandidateId(c.candidate_id)}>
                               <FileText className="h-3.5 w-3.5 mr-1" /> View
                             </Button>
                           </div>
@@ -753,17 +753,16 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 </Button>
               </div>
             </div>
-            {selectedCandidateId ? (
-              <CandidateFullProfile
-                candidateIdProp={selectedCandidateId}
-                onBack={() => setSelectedCandidateId(null)}
-              />
-            ) : (
-              renderContent()
-            )}
+            {renderContent()}
           </div>
         </main>
       </div>
+
+      <HRCandidateProfileDialog
+        open={!!selectedCandidateId}
+        onClose={() => setSelectedCandidateId(null)}
+        candidateId={selectedCandidateId}
+      />
 
       {transferCandidate && user && (
         <TransferCandidateDialog
