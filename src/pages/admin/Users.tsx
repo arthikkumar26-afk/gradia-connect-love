@@ -1269,21 +1269,11 @@ const Users = () => {
                     <SelectTrigger id="cu-plan"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No plan</SelectItem>
-                      {createForm.role === "candidate" ? (
-                        <>
-                          <SelectItem value="starter">Starter</SelectItem>
-                          <SelectItem value="basic">Basic</SelectItem>
-                          <SelectItem value="pro">Pro</SelectItem>
-                          <SelectItem value="premium">Premium</SelectItem>
-                        </>
-                      ) : (
-                        <>
-                          <SelectItem value="starter">Starter</SelectItem>
-                          <SelectItem value="growth">Growth</SelectItem>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="enterprise">Enterprise</SelectItem>
-                        </>
-                      )}
+                      {(PLANS[createForm.role as PlanRole] ?? PLANS.candidate).map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name}{p.points ? ` — ${p.points.toLocaleString("en-IN")} pts` : " — Free"}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
