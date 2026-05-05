@@ -256,21 +256,26 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
     navigate("/hr/login");
   };
 
-  const menuItems = [
+  const employerMenu = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
     { id: "post", label: "Post Job", icon: Plus },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
+  ];
+  const candidateMenu = [
     { id: "candidates", label: "Candidates", icon: Users },
     { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
     { id: "email-status", label: "Email Status", icon: Mail },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
-    
     { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
     { id: "pipeline", label: "Pipeline", icon: GitBranch },
     { id: "interviews", label: "Interviews", icon: Calendar },
   ];
+  const menuItems =
+    view === "employer" ? employerMenu :
+    view === "candidate" ? candidateMenu :
+    [...employerMenu, ...candidateMenu];
 
   const openJobsCount = jobs.filter(j => {
     const s = (j.status || "").toLowerCase();
