@@ -177,7 +177,7 @@ const HRDashboard = () => {
 
       // HR Manager: load all employers + all candidates for the new tabs
       // Load all employers + all candidates for the Employers Data tab and All Candidates view
-      const [{ data: empAll }, { data: candAll }] = await Promise.all([
+      const [{ data: empAll }, { data: candAll }, { data: privilegedRoles }] = await Promise.all([
         supabase
           .from("profiles")
           .select("id, full_name, email, company_name, created_at")
@@ -189,8 +189,14 @@ const HRDashboard = () => {
           .eq("role", "candidate")
           .order("created_at", { ascending: false })
           .limit(500),
+        supabase
+          .from("user_roles")
+          .select("user_id, role")
+          .in("role", ["admin", "owner", "hr"]),
       ]);
-      setEmployers(((empAll as any[]) ?? []) as EmployerRow[]);
+      const excludeIds = new Set(((privilegedRoles as any[]) ?? []).map(r => r.user_id));
+      const filteredEmployers = ((empAll as any[]) ?? []).filter(e => !excludeIds.has(e.id));
+      setEmployers(filteredEmployers as EmployerRow[]);
       setAllCandidates(((candAll as any[]) ?? []) as AllCandidateRow[]);
     } catch (error) {
       console.error("Failed to refresh HR dashboard", error);
