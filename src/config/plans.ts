@@ -9,8 +9,12 @@ export interface PlanDefinition {
   id: string;
   /** Display label shown in UI. */
   name: string;
-  /** Wallet points cost (₹5 = 1 pt). 0 = free tier. */
+  /** Wallet points cost (₹5 = 1 pt). 0 = free tier. Not used for candidate per-feature unlocks. */
   points: number;
+  /** Direct INR price (used by candidate per-feature unlocks & bundles). */
+  priceInr?: number;
+  /** Optional grouping tag for candidate (feature | bundle). */
+  group?: "feature" | "bundle";
   popular?: boolean;
   features: string[];
   cta: string;
@@ -18,32 +22,56 @@ export interface PlanDefinition {
 
 export const PLANS: Record<PlanRole, PlanDefinition[]> = {
   candidate: [
-    { id: "starter", name: "Starter", points: 400, features: [
-      "Unlimited job applications",
-      "1× Resume PDF export",
-      "AI ATS score & report",
-      "Application tracker",
+    // Per-feature unlocks (Razorpay, 1-month access)
+    { id: "resume", name: "Resume Builder", points: 0, priceInr: 4999, group: "feature", features: [
+      "ATS-optimised templates",
+      "Instant download & editing",
+      "Unlimited revisions for 1 month",
     ], cta: "/candidate/signup" },
-    { id: "basic", name: "Basic", points: 1000, features: [
-      "Everything in Starter",
-      "1× AI Mock Interview (Aptitude + Technical)",
-      "Basic AI feedback report",
-      "Weak-topic insights",
+    { id: "jobs", name: "Suitable Jobs (AI Matching)", points: 0, priceInr: 6999, group: "feature", features: [
+      "AI-matched job feed",
+      "Smart profile-based filtering",
+      "Daily refresh of openings",
     ], cta: "/candidate/signup" },
-    { id: "pro", name: "Pro", points: 2000, popular: true, features: [
-      "Everything in Basic",
-      "2× AI Mock Interviews (Tech + HR rounds)",
-      "Detailed AI feedback report",
-      "Featured profile boost (1×)",
-      "Priority application tag",
+    { id: "aijobapply", name: "AI Job Apply", points: 0, priceInr: 8999, group: "feature", features: [
+      "Auto-apply to multiple jobs daily",
+      "Tailored cover notes",
+      "Hands-free job hunting",
     ], cta: "/candidate/signup" },
-    { id: "premium", name: "Premium", points: 5000, features: [
-      "Everything in Pro",
-      "5× AI Mock Interviews (Full pipeline)",
-      "Coding / Demo / HR / Final rounds",
-      "Unlimited resume exports",
-      "Featured boost (3×) + Priority support",
-      "30-day improvement roadmap",
+    { id: "pipeline", name: "Interview Pipeline Tracker", points: 0, priceInr: 5999, group: "feature", features: [
+      "Stage-by-stage tracking",
+      "Status & feedback timeline",
+      "Organised job journey dashboard",
+    ], cta: "/candidate/signup" },
+    { id: "mocktest", name: "Mock Tests / Interviews", points: 0, priceInr: 9999, group: "feature", features: [
+      "Realistic AI-driven interviews",
+      "Detailed performance feedback",
+      "Score & improvement reports",
+    ], cta: "/candidate/signup" },
+    { id: "upskill", name: "Upskill Yourself", points: 0, priceInr: 12999, group: "feature", features: [
+      "Skill-based learning modules",
+      "Industry certifications",
+      "Career-ready training tracks",
+    ], cta: "/candidate/signup" },
+    // Smart bundles
+    { id: "starter_pack", name: "Starter Pack", points: 0, priceInr: 9999, group: "bundle", features: [
+      "Resume Builder",
+      "Suitable Jobs",
+    ], cta: "/candidate/signup" },
+    { id: "accelerator_pack", name: "Job Accelerator Pack", points: 0, priceInr: 17999, group: "bundle", popular: true, features: [
+      "Resume Builder",
+      "AI Job Apply",
+      "Suitable Jobs",
+    ], cta: "/candidate/signup" },
+    { id: "career_pro_pack", name: "Career Pro Pack", points: 0, priceInr: 29999, group: "bundle", features: [
+      "Resume + Suitable Jobs",
+      "AI Apply + Pipeline",
+      "Mock Interviews",
+    ], cta: "/candidate/signup" },
+    { id: "total_value_pack", name: "Total Value Pack (Full Access)", points: 0, priceInr: 45000, group: "bundle", features: [
+      "Every feature unlocked",
+      "Resume + Jobs + AI Apply",
+      "Pipeline + Mock + Upskill",
     ], cta: "/candidate/signup" },
   ],
   employer: [
