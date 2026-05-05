@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,19 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Upload, FileUp, Loader2, Sparkles, Send, Eye, FileEdit, Save, FileText, UserPlus, Mail,
+  History, RefreshCw, CheckCircle2, XCircle, Clock,
 } from "lucide-react";
+
+interface InviteHistoryRow {
+  id: string;
+  candidate_name: string | null;
+  recipient_email: string;
+  subject: string | null;
+  status: string;
+  error_message: string | null;
+  sent_at: string | null;
+  created_at: string;
+}
 
 interface ParsedResume {
   full_name?: string | null;
