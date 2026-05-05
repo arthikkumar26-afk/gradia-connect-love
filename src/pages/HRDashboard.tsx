@@ -478,7 +478,8 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 : (
                   <div className="space-y-2">
                     {candidates.map(c => (
-                      <div key={c.id} className="border border-border rounded-md p-3 space-y-2">
+                      <div key={c.id} role="button" tabIndex={0} onClick={() => setSelectedCandidateId(c.candidate_id)} onKeyDown={(e) => { if (e.key === "Enter") setSelectedCandidateId(c.candidate_id); }} className="border border-border rounded-md p-3 space-y-2 cursor-pointer hover:bg-muted/40 hover:border-primary/40 transition-colors">
+
                         <div className="flex items-start justify-between gap-3 flex-wrap">
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm">{c.candidate_name}</p>
