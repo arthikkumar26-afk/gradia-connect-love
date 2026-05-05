@@ -140,14 +140,20 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
     if (!candidateId) return;
     if (!tplSubject.trim() || !tplBody.trim()) { toast.error("Subject and body required"); return; }
     setSending(true);
+    setSendStatus({ state: "sending" });
     try {
       const { data, error } = await supabase.functions.invoke("send-hr-custom-email", {
         body: { candidateId, subject: tplSubject, body: tplBody },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success(`Email sent to ${(data as any)?.to || "candidate"}`);
-    } catch (e: any) { toast.error(e.message || "Send failed"); }
+      const to = (data as any)?.to || profile?.email || "candidate";
+      toast.success(`Email sent to ${to}`);
+      setSendStatus({ state: "sent", to, at: new Date().toLocaleString() });
+    } catch (e: any) {
+      toast.error(e.message || "Send failed");
+      setSendStatus({ state: "failed", message: e.message || "Send failed" });
+    }
     finally { setSending(false); }
   };
 
