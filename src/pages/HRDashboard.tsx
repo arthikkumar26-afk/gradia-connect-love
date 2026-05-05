@@ -201,7 +201,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           .order("created_at", { ascending: false }),
         supabase
           .from("profiles")
-          .select("id, full_name, email, mobile, preferred_role, experience_level, highest_qualification, location, current_state, current_district, resume_url, registration_number, created_at")
+          .select("id, full_name, email, mobile, preferred_role, experience_level, highest_qualification, location, current_state, current_district, resume_url, registration_number, created_at, category, segment, preferred_state, preferred_district, primary_subject")
           .eq("role", "candidate")
           .order("created_at", { ascending: false })
           .limit(1000),
