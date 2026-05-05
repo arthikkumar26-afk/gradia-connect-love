@@ -154,6 +154,92 @@ const Users = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [viewLoading, setViewLoading] = useState(false);
   const [userDetails, setUserDetails] = useState<UserDetailsResponse | null>(null);
+  const [manageDialogOpen, setManageDialogOpen] = useState(false);
+  const [manageLoading, setManageLoading] = useState(false);
+  const [manageForm, setManageForm] = useState({
+    role: "candidate" as "candidate" | "employer" | "admin" | "owner",
+    plan: "none",
+    billingCycle: "monthly" as "monthly" | "annual",
+    planAction: "activate" as "activate" | "cancel",
+    points: "",
+  });
+
+  const openManageDialog = (user: User) => {
+    setSelectedUser(user);
+    const r = (["candidate", "employer", "admin", "owner"].includes(user.role)
+      ? user.role
+      : "candidate") as typeof manageForm.role;
+    setManageForm({
+      role: r,
+      plan: "none",
+      billingCycle: "monthly",
+      planAction: "activate",
+      points: "",
+    });
+    setManageDialogOpen(true);
+  };
+
+  const handleManageSubmit = async () => {
+    if (!selectedUser) return;
+    const { role, plan, billingCycle, planAction, points } = manageForm;
+    const pointsNum = points.trim() ? Number(points) : 0;
+    if (points.trim() && (!Number.isFinite(pointsNum) || pointsNum < 0)) {
+      toast({ title: "Invalid points", description: "Points must be a positive number.", variant: "destructive" });
+      return;
+    }
+    setManageLoading(true);
+    try {
+      // 1. Role change (if different)
+      if (role !== selectedUser.role) {
+        const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+          body: { action: "assign-role", targetUserId: selectedUser.id, role },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        // Also update profiles.role for consistency
+        await supabase.from("profiles").update({ role }).eq("id", selectedUser.id);
+      }
+
+      // 2. Plan change (only for candidate/employer)
+      if (plan !== "none" && (role === "candidate" || role === "employer")) {
+        const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+          body: {
+            action: "update-subscription",
+            targetUserId: selectedUser.id,
+            targetRole: role,
+            plan,
+            billingCycle,
+            planAction,
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+      }
+
+      // 3. Wallet points
+      if (pointsNum > 0) {
+        const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+          body: {
+            action: "credit-wallet-points",
+            targetUserId: selectedUser.id,
+            points: pointsNum,
+            description: "Admin updated via All Users",
+          },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+      }
+
+      toast({ title: "Updated", description: `${selectedUser.full_name} updated successfully.` });
+      setManageDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to update user", variant: "destructive" });
+    } finally {
+      setManageLoading(false);
+    }
+  };
 
   const generatePassword = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
