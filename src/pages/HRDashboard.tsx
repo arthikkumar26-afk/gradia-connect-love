@@ -15,6 +15,7 @@ import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 import HRCandidatesData from "@/components/hr/HRCandidatesData";
+import HRInviteCandidate from "@/components/hr/HRInviteCandidate";
 import HRCandidateProfileDialog from "@/components/hr/HRCandidateProfileDialog";
 import HREmailStatus from "@/components/hr/HREmailStatus";
 import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
@@ -294,6 +295,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const candidateMenu = [
     { id: "candidates", label: "Candidates", icon: Users },
     { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
+    { id: "invite-candidate", label: "Invite a Candidate", icon: Mail },
     { id: "email-status", label: "Email Status", icon: Mail },
     { id: "candidate-info", label: "Candidate Info", icon: FileSpreadsheet },
     { id: "cv-scrutiny", label: "CV Scrutiny", icon: ScanSearch },
@@ -613,6 +615,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
         );
       case "email-status":
         return <HREmailStatus />;
+      case "invite-candidate":
+        return (
+          <HRInviteCandidate
+            hrName={profile?.full_name || "HR Team"}
+            companyName={parentEmployerName || "Gradia"}
+            hrEmail={user?.email || "info@gradiaa.com"}
+          />
+        );
       case "candidate-info":
         return parentEmployerId && user ? (
           <HRCandidateInfoSheet
