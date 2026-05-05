@@ -222,7 +222,6 @@ const AdminDashboard = () => {
     { title: "Companies", icon: Building2, path: "/admin/companies" },
     { title: "Mock Interview", icon: ClipboardList, path: "/admin/mock-interview-pipeline" },
     { title: "Management", icon: UserCog, path: "/admin/management" },
-    { title: "HR Negotiations", icon: MessageSquare, path: "/admin/hr-negotiations" },
     { title: "HR Management", icon: UserCog, path: "/admin/hr-management" },
     { title: "Coupons", icon: Ticket, path: "/admin/coupons" },
     { title: "AI Flyer Maker", icon: FileText, path: "/admin/flyer-maker" },
