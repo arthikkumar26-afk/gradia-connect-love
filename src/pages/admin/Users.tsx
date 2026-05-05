@@ -163,13 +163,18 @@ const Users = () => {
   };
 
   const handleCreateUser = async () => {
-    const { fullName, email, password, role } = createForm;
+    const { fullName, email, password, role, plan, billingCycle, points } = createForm;
     if (!fullName.trim() || !email.trim() || !password.trim()) {
       toast({ title: "Missing fields", description: "Please fill all fields.", variant: "destructive" });
       return;
     }
     if (password.length < 6) {
       toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    const pointsNum = points.trim() ? Number(points) : 0;
+    if (points.trim() && (!Number.isFinite(pointsNum) || pointsNum < 0)) {
+      toast({ title: "Invalid points", description: "Points must be a positive number.", variant: "destructive" });
       return;
     }
     setCreateLoading(true);
@@ -179,6 +184,44 @@ const Users = () => {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+
+      const newUserId: string | undefined = data?.userId;
+
+      // Activate plan if selected
+      if (plan && plan !== "none" && newUserId) {
+        try {
+          await supabase.functions.invoke("manage-user-roles", {
+            body: {
+              action: "update-subscription",
+              targetUserId: newUserId,
+              targetRole: role,
+              plan,
+              billingCycle,
+              planAction: "activate",
+            },
+          });
+        } catch (e: any) {
+          console.error("Plan activation failed:", e);
+          toast({ title: "Plan not activated", description: e.message || "Could not activate plan.", variant: "destructive" });
+        }
+      }
+
+      // Credit wallet points
+      if (pointsNum > 0 && newUserId) {
+        try {
+          await supabase.functions.invoke("manage-user-roles", {
+            body: {
+              action: "credit-wallet-points",
+              targetUserId: newUserId,
+              points: pointsNum,
+              description: `Admin granted on account creation`,
+            },
+          });
+        } catch (e: any) {
+          console.error("Points credit failed:", e);
+          toast({ title: "Points not credited", description: e.message || "Could not credit points.", variant: "destructive" });
+        }
+      }
 
       try {
         await supabase.functions.invoke("send-account-credentials", {
@@ -195,7 +238,7 @@ const Users = () => {
       }
 
       setCreateDialogOpen(false);
-      setCreateForm({ fullName: "", email: "", password: "", role: "candidate" });
+      setCreateForm({ fullName: "", email: "", password: "", role: "candidate", plan: "none", billingCycle: "monthly", points: "" });
       fetchUsers();
     } catch (err: any) {
       toast({ title: "Error", description: err.message || "Failed to create user", variant: "destructive" });
