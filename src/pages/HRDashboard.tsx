@@ -431,7 +431,6 @@ const HRDashboard = () => {
       case "candidates":
         return (
           <div className="space-y-4">
-            <SampleCandidateDemo />
             <Card>
             <CardHeader><CardTitle className="text-base">Real Applicants</CardTitle></CardHeader>
             <CardContent>
