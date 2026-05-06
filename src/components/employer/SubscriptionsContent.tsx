@@ -50,7 +50,7 @@ interface Receipt {
 export const SubscriptionsContent = () => {
   const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState("tariffs");
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
