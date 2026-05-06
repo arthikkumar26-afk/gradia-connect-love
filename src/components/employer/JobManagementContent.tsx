@@ -310,6 +310,9 @@ export const JobManagementContent = () => {
         .eq("id", job.id);
       if (error) throw error;
       setJobs(prev => prev.map(j => j.id === job.id ? { ...j, status: newLabel as Job["status"], published: newStatus === "active" } : j));
+      supabase.functions.invoke("notify-job-event", {
+        body: { event: newStatus === "active" ? "job_updated" : "job_closed", jobId: job.id },
+      }).catch((e) => console.warn("notify-job-event failed", e));
       toast({ title: `Job marked as ${newLabel}` });
     } catch (error: any) {
       toast({ title: "Update failed", description: error.message, variant: "destructive" });
