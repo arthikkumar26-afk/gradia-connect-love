@@ -614,35 +614,42 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
         return;
       }
 
-      // Check wallet balance before posting
-      const { data: wallet, error: walletErr } = await supabase
-        .from("wallets")
-        .select("id, points_balance")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const isHRMode = !!employerIdOverride;
+      const targetEmployerId = employerIdOverride || user.id;
+      let wallet: { id: string; points_balance: number } | null = null;
 
-      if (walletErr) throw walletErr;
-      if (!wallet || (wallet.points_balance ?? 0) < POST_JOB_COST) {
-        toast({
-          title: "Insufficient points",
-          description: `Posting a job requires ${POST_JOB_COST} pts. Please top up your wallet.`,
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
+      // Wallet check only in standard (employer) mode
+      if (!isHRMode) {
+        const { data: w, error: walletErr } = await supabase
+          .from("wallets")
+          .select("id, points_balance")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (walletErr) throw walletErr;
+        if (!w || (w.points_balance ?? 0) < POST_JOB_COST) {
+          toast({
+            title: "Insufficient points",
+            description: `Posting a job requires ${POST_JOB_COST} pts. Please top up your wallet.`,
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        wallet = w as any;
       }
 
       const skillsArray = (values.skills || "").split(",").map((s) => s.trim()).filter((s) => s.length > 0);
 
       const { data: insertedJob, error } = await supabase.from("jobs").insert([{
-        employer_id: user.id,
+        employer_id: targetEmployerId,
         job_title: values.job_title || "Untitled Job",
         department: values.department || null,
         job_type: values.job_type || null,
         location: values.location || null,
         experience_required: values.experience_required || null,
         salary_range: values.salary_range || null,
-        organisation: values.organisation || null,
+        organisation: values.organisation || employerNameOverride || null,
         description: values.description || null,
         requirements: values.requirements || null,
         skills: skillsArray.length > 0 ? skillsArray : null,
@@ -663,24 +670,36 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
 
       if (error) throw error;
 
-      // Deduct points & log transaction
-      await supabase
-        .from("wallets")
-        .update({ points_balance: (wallet.points_balance ?? 0) - POST_JOB_COST })
-        .eq("id", wallet.id);
+      if (!isHRMode && wallet) {
+        await supabase
+          .from("wallets")
+          .update({ points_balance: (wallet.points_balance ?? 0) - POST_JOB_COST })
+          .eq("id", wallet.id);
 
-      await supabase.from("wallet_transactions").insert({
-        wallet_id: wallet.id,
-        transaction_type: "debit",
-        category: "job_post",
-        amount: 0,
-        points: -POST_JOB_COST,
-        rewards: 0,
-        description: `Job posted: ${values.job_title || "Untitled Job"}`,
-        reference_id: insertedJob?.id ?? null,
+        await supabase.from("wallet_transactions").insert({
+          wallet_id: wallet.id,
+          transaction_type: "debit",
+          category: "job_post",
+          amount: 0,
+          points: -POST_JOB_COST,
+          rewards: 0,
+          description: `Job posted: ${values.job_title || "Untitled Job"}`,
+          reference_id: insertedJob?.id ?? null,
+        });
+      }
+
+      if (insertedJob?.id) {
+        supabase.functions.invoke("notify-job-event", {
+          body: { event: "job_posted", jobId: insertedJob.id },
+        }).catch((e) => console.warn("notify-job-event failed", e));
+      }
+
+      toast({
+        title: "Job posted successfully!",
+        description: isHRMode
+          ? `Posted on behalf of ${employerNameOverride || "employer"}.`
+          : `${POST_JOB_COST} pts deducted from your wallet.`,
       });
-
-      toast({ title: "Job posted successfully!", description: `${POST_JOB_COST} pts deducted from your wallet.` });
       onJobCreated();
     } catch (error: any) {
       console.error("Error posting job:", error);
