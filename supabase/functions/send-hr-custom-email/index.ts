@@ -51,7 +51,7 @@ serve(async (req) => {
     const resend = new Resend(RESEND_API_KEY);
     const fromName = (hrName ? `${hrName} via Gradia HR` : "Gradia HR").slice(0, 100);
     const result = await resend.emails.send({
-      from: `${fromName} <onboarding@resend.dev>`,
+      from: `${fromName} <noreply@gradia.co.in>`,
       to: [profile.email],
       subject: finalSubject,
       html,
