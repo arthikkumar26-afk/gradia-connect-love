@@ -17,7 +17,9 @@ import {
   Download,
   Eye,
   Wallet,
+  Plus,
 } from "lucide-react";
+import { InlineJobCreationForm } from "./InlineJobCreationForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
