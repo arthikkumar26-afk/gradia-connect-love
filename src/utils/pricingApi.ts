@@ -170,20 +170,20 @@ export const featureComparison = [
   { feature: 'Custom onboarding', starter: false, growth: false, professional: false, enterprise: true },
 ];
 
-// Mock subscription storage
-export const mockSubscribe = async (planId: string, billingCycle: 'monthly' | 'annual', userId: string) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+// Mock subscription storage (kept for legacy callers; real flow uses wallet deduction)
+export const mockSubscribe = async (planId: string, userId: string) => {
+  await new Promise(resolve => setTimeout(resolve, 800));
+
   const subscription = {
     id: `sub_${Date.now()}`,
     userId,
     planId,
-    billingCycle,
+    billingCycle: 'points' as const,
     status: 'active',
     startDate: new Date().toISOString(),
-    nextBillingDate: new Date(Date.now() + (billingCycle === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString(),
+    nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   };
-  
+
   localStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
   
   return { success: true, subscription };
