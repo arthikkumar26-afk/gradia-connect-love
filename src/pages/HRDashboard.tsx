@@ -39,6 +39,7 @@ interface CandidateRow {
   applied_at: string | null;
   ai_score: number | null;
   candidate_name?: string;
+  candidate_email?: string | null;
   job_title?: string;
   mobile?: string | null;
   registration_number?: string | null;
