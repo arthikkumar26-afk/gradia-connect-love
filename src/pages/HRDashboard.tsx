@@ -514,6 +514,8 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
         ) : (
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
         );
+      case "smm":
+        return <HRSMMSection />;
       case "candidates":
         return (
           <div className="space-y-4">
