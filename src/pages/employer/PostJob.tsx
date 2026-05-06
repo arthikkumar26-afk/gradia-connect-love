@@ -390,8 +390,13 @@ const PostJob = () => {
         pipeline_stages: customStages.length > 0 ? customStages : null,
       };
 
-      const { error } = await supabase.from("jobs").insert([jobData] as any);
+      const { data: inserted, error } = await supabase.from("jobs").insert([jobData] as any).select("id").single();
       if (error) throw error;
+      if (inserted?.id) {
+        supabase.functions.invoke("notify-job-event", {
+          body: { event: "job_posted", jobId: inserted.id },
+        }).catch((e) => console.warn("notify-job-event failed", e));
+      }
       toast({ title: "Job posted successfully!", description: "Your job listing is now live and visible to candidates." });
       navigate("/employer/dashboard");
     } catch (error: any) {
