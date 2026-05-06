@@ -521,7 +521,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
         );
       case "vacancies-list":
         return parentEmployerId ? (
-          <MyVacanciesContent employerIdOverride={parentEmployerId} hideWallet />
+          <MyVacanciesContent employerIdOverride={parentEmployerId} employerNameOverride={parentEmployerName} hideWallet />
         ) : (
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
         );
