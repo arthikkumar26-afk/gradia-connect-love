@@ -679,6 +679,9 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                               {stats.finished} interviews finished
                             </Badge>
                             <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
+                            <Button size="sm" variant="secondary" onClick={() => setViewEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer" })}>
+                              <Briefcase className="h-3.5 w-3.5 mr-1" /> View Vacancies
+                            </Button>
                             <Button size="sm" variant="outline" onClick={() => setScanEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer", email: e.email || "" })}>
                               <ScanSearch className="h-3.5 w-3.5 mr-1" /> AI Scan
                             </Button>
