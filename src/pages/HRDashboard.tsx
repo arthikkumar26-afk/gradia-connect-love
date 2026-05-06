@@ -24,6 +24,7 @@ import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
 import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
 import HRCreateEmployer from "@/components/hr/HRCreateEmployer";
 import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
+import HREmployerVacanciesDialog from "@/components/hr/HREmployerVacanciesDialog";
 import HRSMMSection from "@/components/hr/HRSMMSection";
 import { Send } from "lucide-react";
 
@@ -108,6 +109,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [candidateSearch, setCandidateSearch] = useState("");
   const [scanEmployer, setScanEmployer] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [viewEmployer, setViewEmployer] = useState<{ id: string; name: string } | null>(null);
   const [employerStats, setEmployerStats] = useState<Record<string, { vacancies: number; finished: number }>>({});
 
   const reloadJobs = useCallback(async (employerId: string) => {
@@ -677,6 +679,9 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                               {stats.finished} interviews finished
                             </Badge>
                             <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
+                            <Button size="sm" variant="secondary" onClick={() => setViewEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer" })}>
+                              <Briefcase className="h-3.5 w-3.5 mr-1" /> View Vacancies
+                            </Button>
                             <Button size="sm" variant="outline" onClick={() => setScanEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer", email: e.email || "" })}>
                               <ScanSearch className="h-3.5 w-3.5 mr-1" /> AI Scan
                             </Button>
@@ -907,6 +912,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           employerName={scanEmployer.name}
           employerEmail={scanEmployer.email}
           hrUserId={user.id}
+        />
+      )}
+      {viewEmployer && (
+        <HREmployerVacanciesDialog
+          open={!!viewEmployer}
+          onClose={() => setViewEmployer(null)}
+          employerId={viewEmployer.id}
+          employerName={viewEmployer.name}
         />
       )}
     </div>
