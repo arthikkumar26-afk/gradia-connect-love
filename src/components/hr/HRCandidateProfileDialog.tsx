@@ -512,8 +512,37 @@ Review matched candidate: ${reviewUrl}
                   <Button size="sm" variant="outline" onClick={handleNewTemplate}>New</Button>
                 </div>
 
+                <div className="space-y-2 p-3 border border-primary/30 rounded-md bg-gradient-to-br from-primary/5 to-transparent">
+                  <p className="text-xs font-medium text-foreground flex items-center gap-1">
+                    <Target className="h-3.5 w-3.5 text-primary" /> Build email from a high-match job
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={matchJobId}
+                      onChange={(e) => setMatchJobId(e.target.value)}
+                      className="border border-border rounded-md px-2 py-1.5 text-sm bg-background flex-1 min-w-[200px]"
+                      disabled={matchedJobs.length === 0}
+                    >
+                      <option value="">
+                        {matchedJobs.length === 0 ? "No matched jobs" : "— Choose a matched job —"}
+                      </option>
+                      {matchedJobs.map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {(j.job_title || j.designation)} {j.location ? `· ${j.location}` : ""} ({Math.min(j._score, 100)}%)
+                        </option>
+                      ))}
+                    </select>
+                    <Button size="sm" onClick={handleBuildMatchEmail} disabled={matchedJobs.length === 0}>
+                      <Wand2 className="h-3.5 w-3.5 mr-1" /> Build match email
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Generates a "Connect with candidates matching {`{role}`}" email using the candidate's experience and education — same format as outreach templates.
+                  </p>
+                </div>
+
                 <div className="space-y-2 p-3 border border-dashed border-primary/30 rounded-md bg-primary/5">
-                  <p className="text-xs font-medium text-foreground">Ask AI to draft an email</p>
+                  <p className="text-xs font-medium text-foreground">Or ask AI to draft an email</p>
                   <Textarea
                     rows={2}
                     placeholder="e.g. Write an interview shortlist email inviting the candidate for round 2 next Monday at 10 AM."
