@@ -315,54 +315,6 @@ export const SubscriptionsContent = () => {
                       )}
                     </div>
 
-          {/* Plans Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {pricingPlans.map((plan) => {
-              const isCurrentPlan = currentSubscription?.plan_id === plan.id;
-              const price = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
-
-              return (
-                <Card
-                  key={plan.id}
-                  className={`relative transition-all hover:shadow-lg ${
-                    plan.popular ? "ring-2 ring-primary shadow-xl" : ""
-                  } ${isCurrentPlan ? "border-success border-2" : ""}`}
-                >
-                  {plan.popular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
-                      Most Popular
-                    </Badge>
-                  )}
-                  {isCurrentPlan && (
-                    <Badge className="absolute -top-3 right-4 bg-success">
-                      Current Plan
-                    </Badge>
-                  )}
-
-                  <CardHeader className="text-center pb-2">
-                    <div className="mx-auto mb-2 p-3 rounded-full bg-primary/10 w-fit">
-                      {getPlanIcon(plan.id)}
-                    </div>
-                    <CardTitle className="text-xl">{plan.name}</CardTitle>
-                    <CardDescription>{plan.subtitle}</CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {/* Price */}
-                    <div className="text-center">
-                      <span className="text-4xl font-bold text-primary">
-                        ₹{price.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        /{billingCycle === "monthly" ? "month" : "year"}
-                      </span>
-                      {billingCycle === "annual" && price > 0 && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          ₹{(price / 12).toFixed(0)}/month billed annually
-                        </p>
-                      )}
-                    </div>
-
                     {/* Limits */}
                     <div className="p-3 bg-muted/30 rounded-lg text-sm">
                       <p className="text-muted-foreground">{plan.limits.jobPosts}</p>
@@ -387,21 +339,15 @@ export const SubscriptionsContent = () => {
                       variant={isCurrentPlan ? "outline" : plan.popular ? "default" : "outline"}
                     >
                       {processingPlan === plan.id ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Processing...
-                        </>
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processing...</>
                       ) : isCurrentPlan ? (
                         "Current Plan"
                       ) : plan.cta === "contact" ? (
-                        <>
-                          <Phone className="h-4 w-4 mr-2" />
-                          Contact Sales
-                        </>
-                      ) : plan.cta === "free" ? (
+                        <><Phone className="h-4 w-4 mr-2" />Contact Sales</>
+                      ) : plan.points === 0 ? (
                         "Get Started Free"
                       ) : (
-                        "Subscribe Now"
+                        <><Coins className="h-4 w-4 mr-2" />Pay {plan.points.toLocaleString()} pts</>
                       )}
                     </Button>
                   </CardContent>
