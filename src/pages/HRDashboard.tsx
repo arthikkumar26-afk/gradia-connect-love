@@ -140,6 +140,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           .select("id, full_name, company_name, email")
           .eq("role", "employer");
         employerIdsForJobs = (empProfiles ?? []).map((p: any) => p.id);
+        setAllEmployerIds(employerIdsForJobs);
         setParentEmployerId(null);
         setParentEmployerName(`HR Manager — ${empProfiles?.length ?? 0} Employers`);
         setParentEmployerEmail("");
