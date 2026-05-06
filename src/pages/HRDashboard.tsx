@@ -5,7 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw, UserSquare2, Mail, Building } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Briefcase, Users, GitBranch, Calendar, LogOut, Building2, FileText, Plus, LayoutDashboard, Menu, X, Copy, Share2, FileSpreadsheet, Sparkles, ScanSearch, RefreshCw, UserSquare2, Mail, Building, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
@@ -39,6 +40,7 @@ interface CandidateRow {
   applied_at: string | null;
   ai_score: number | null;
   candidate_name?: string;
+  candidate_email?: string | null;
   job_title?: string;
   mobile?: string | null;
   registration_number?: string | null;
@@ -101,6 +103,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [transferCandidate, setTransferCandidate] = useState<{ id: string; name: string } | null>(null);
   const [transferEmployer, setTransferEmployer] = useState<{ id: string; name: string } | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
+  const [candidateSearch, setCandidateSearch] = useState("");
 
   const reloadJobs = useCallback(async (employerId: string) => {
     const { data: jobsData, error } = await supabase
@@ -186,7 +189,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
 
         const candIds = Array.from(new Set((cands ?? []).map((c: any) => c.candidate_id)));
         const { data: profs, error: profsError } = candIds.length
-          ? await supabase.from("profiles").select("id, full_name, mobile, registration_number, category, segment, preferred_state, preferred_district, location, primary_subject, preferred_role").in("id", candIds)
+          ? await supabase.from("profiles").select("id, full_name, email, mobile, registration_number, category, segment, preferred_state, preferred_district, location, primary_subject, preferred_role").in("id", candIds)
           : { data: [] as any[], error: null };
         if (profsError) throw profsError;
 
@@ -199,6 +202,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
               ...c,
               current_stage: c.current_stage?.name || null,
               candidate_name: p.full_name || "Candidate",
+              candidate_email: p.email || null,
               job_title: titleMap[c.job_id] || "—",
               mobile: p.mobile,
               registration_number: p.registration_number,
@@ -473,13 +477,39 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
         return (
           <div className="space-y-4">
             <Card>
-            <CardHeader><CardTitle className="text-base">Real Applicants</CardTitle></CardHeader>
+            <CardHeader className="space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <CardTitle className="text-base">Real Applicants</CardTitle>
+                <div className="relative w-full sm:w-72">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={candidateSearch}
+                    onChange={(e) => setCandidateSearch(e.target.value)}
+                    placeholder="Search by name, email, mobile, code…"
+                    className="pl-8 h-9"
+                  />
+                </div>
+              </div>
+            </CardHeader>
             <CardContent>
-              {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
+              {(() => {
+                const q = candidateSearch.trim().toLowerCase();
+                const filtered = q
+                  ? candidates.filter(c => {
+                      const hay = [
+                        c.candidate_name, c.candidate_email, c.mobile, c.registration_number,
+                        c.job_title, c.current_stage, c.status, c.category, c.segment,
+                        c.preferred_state, c.preferred_district, c.location, c.primary_subject, c.preferred_role,
+                      ].filter(Boolean).join(" ").toLowerCase();
+                      return hay.includes(q);
+                    })
+                  : candidates;
+                return loading ? <p className="text-sm text-muted-foreground">Loading…</p>
                 : candidates.length === 0 ? <p className="text-sm text-muted-foreground">No real candidates yet — the sample above shows how all options work.</p>
+                : filtered.length === 0 ? <p className="text-sm text-muted-foreground">No candidates match "{candidateSearch}".</p>
                 : (
                   <div className="space-y-2">
-                    {candidates.map(c => (
+                    {filtered.map(c => (
                       <div key={c.id} role="button" tabIndex={0} onClick={() => setSelectedCandidateId(c.candidate_id)} onKeyDown={(e) => { if (e.key === "Enter") setSelectedCandidateId(c.candidate_id); }} className="border border-border rounded-md p-3 space-y-2 cursor-pointer hover:bg-muted/40 hover:border-primary/40 transition-colors">
 
                         <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -499,6 +529,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                           <div><span className="text-muted-foreground">Date: </span><span className="font-medium">{c.applied_at ? new Date(c.applied_at).toLocaleDateString() : "—"}</span></div>
                           <div><span className="text-muted-foreground">Code: </span><span className="font-medium">{c.registration_number || "—"}</span></div>
                           <div><span className="text-muted-foreground">Mobile: </span><span className="font-medium">{c.mobile || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Email: </span><span className="font-medium truncate">{c.candidate_email || "—"}</span></div>
                           <div><span className="text-muted-foreground">Sector: </span><span className="font-medium">{c.category || "—"}</span></div>
                           <div><span className="text-muted-foreground">Segment: </span><span className="font-medium">{c.segment || "—"}</span></div>
                           <div><span className="text-muted-foreground">Pref State: </span><span className="font-medium">{c.preferred_state || "—"}</span></div>
@@ -509,7 +540,8 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                       </div>
                     ))}
                   </div>
-                )}
+                );
+              })()}
             </CardContent>
           </Card>
 
