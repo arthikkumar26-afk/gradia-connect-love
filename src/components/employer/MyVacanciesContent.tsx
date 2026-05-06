@@ -60,15 +60,18 @@ interface ApplicantRow {
 interface MyVacanciesContentProps {
   /** Override the employer whose vacancies are loaded (used for HR posting on behalf of an employer). */
   employerIdOverride?: string;
+  /** Multi-employer override (HR Manager). When set, loads jobs across all listed employers. */
+  employerIdsOverride?: string[];
   /** Hide the wallet badge and unlock-pricing copy when in HR mode. */
   hideWallet?: boolean;
   /** Employer organisation name shown when HR creates a vacancy on behalf of an employer. */
   employerNameOverride?: string;
 }
 
-export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false, employerNameOverride }: MyVacanciesContentProps = {}) => {
+export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hideWallet = false, employerNameOverride }: MyVacanciesContentProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMultiEmployer = !!employerIdsOverride && employerIdsOverride.length > 0;
   const effectiveEmployerId = employerIdOverride || user?.id;
   const [vacancies, setVacancies] = useState<VacancyRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,13 +85,18 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false, emp
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const loadVacancies = async () => {
-    if (!effectiveEmployerId) return;
     setLoading(true);
-    const { data: jobs } = await supabase
+    let jobsQuery = supabase
       .from("jobs")
       .select("id, job_title, location, status, job_type, created_at")
-      .eq("employer_id", effectiveEmployerId)
       .order("created_at", { ascending: false });
+    if (isMultiEmployer) {
+      jobsQuery = jobsQuery.in("employer_id", employerIdsOverride!);
+    } else {
+      if (!effectiveEmployerId) { setVacancies([]); setLoading(false); return; }
+      jobsQuery = jobsQuery.eq("employer_id", effectiveEmployerId);
+    }
+    const { data: jobs } = await jobsQuery;
 
     if (!jobs) {
       setVacancies([]);
