@@ -55,9 +55,17 @@ interface ApplicantRow {
   unlocked: boolean;
 }
 
-export const MyVacanciesContent = () => {
+interface MyVacanciesContentProps {
+  /** Override the employer whose vacancies are loaded (used for HR posting on behalf of an employer). */
+  employerIdOverride?: string;
+  /** Hide the wallet badge and unlock-pricing copy when in HR mode. */
+  hideWallet?: boolean;
+}
+
+export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: MyVacanciesContentProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const effectiveEmployerId = employerIdOverride || user?.id;
   const [vacancies, setVacancies] = useState<VacancyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<VacancyRow | null>(null);
