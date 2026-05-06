@@ -247,7 +247,40 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
       const filteredEmployers = ((empAll as any[]) ?? []).filter(e => !excludeIds.has(e.id));
       setEmployers(filteredEmployers as EmployerRow[]);
       setAllCandidates(((candAll as any[]) ?? []) as AllCandidateRow[]);
-    } catch (error) {
+
+      // Load per-employer stats: vacancies count + finished interviews count
+      const empIds = filteredEmployers.map(e => e.id);
+      if (empIds.length) {
+        const { data: empJobs } = await supabase
+          .from("jobs")
+          .select("id, employer_id")
+          .in("employer_id", empIds);
+        const jobsByEmp: Record<string, string[]> = {};
+        (empJobs ?? []).forEach((j: any) => {
+          (jobsByEmp[j.employer_id] = jobsByEmp[j.employer_id] || []).push(j.id);
+        });
+        const allJobIds = (empJobs ?? []).map((j: any) => j.id);
+        let finishedByJob: Record<string, number> = {};
+        if (allJobIds.length) {
+          const { data: finishedCands } = await supabase
+            .from("interview_candidates")
+            .select("job_id, status")
+            .in("job_id", allJobIds)
+            .in("status", ["hired", "rejected", "completed"]);
+          (finishedCands ?? []).forEach((r: any) => {
+            finishedByJob[r.job_id] = (finishedByJob[r.job_id] || 0) + 1;
+          });
+        }
+        const stats: Record<string, { vacancies: number; finished: number }> = {};
+        empIds.forEach(id => {
+          const jids = jobsByEmp[id] || [];
+          const finished = jids.reduce((s, jid) => s + (finishedByJob[jid] || 0), 0);
+          stats[id] = { vacancies: jids.length, finished };
+        });
+        setEmployerStats(stats);
+      } else {
+        setEmployerStats({});
+      }
       console.error("Failed to refresh HR dashboard", error);
       if (!options?.silent) toast.error("Couldn't refresh HR dashboard data.");
     } finally {
