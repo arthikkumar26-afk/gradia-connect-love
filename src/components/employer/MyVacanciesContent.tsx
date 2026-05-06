@@ -77,12 +77,12 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: M
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
 
   const loadVacancies = async () => {
-    if (!user?.id) return;
+    if (!effectiveEmployerId) return;
     setLoading(true);
     const { data: jobs } = await supabase
       .from("jobs")
       .select("id, job_title, location, status, job_type, created_at")
-      .eq("employer_id", user.id)
+      .eq("employer_id", effectiveEmployerId)
       .order("created_at", { ascending: false });
 
     if (!jobs) {
