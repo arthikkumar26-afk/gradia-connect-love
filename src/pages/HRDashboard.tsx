@@ -339,6 +339,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
     { id: "post", label: "Post Job", icon: Plus },
+    { id: "vacancies-list", label: "Vacancies List", icon: FileText },
     { id: "smm", label: "SMM (AI Flyers)", icon: Share2 },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
   ];
