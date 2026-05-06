@@ -314,15 +314,17 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: M
             <div>
               <h2 className="text-xl font-bold text-foreground">{selectedJob.job_title}</h2>
               <p className="text-xs text-muted-foreground">
-                {applicants.length} applicant{applicants.length !== 1 ? "s" : ""} • Unlock cost:{" "}
-                {UNLOCK_COST} pts per CV
+                {applicants.length} applicant{applicants.length !== 1 ? "s" : ""}
+                {!hideWallet && <> • Unlock cost: {UNLOCK_COST} pts per CV</>}
               </p>
             </div>
           </div>
-          <Badge variant="secondary" className="text-sm px-3 py-1.5">
-            <Wallet className="h-3.5 w-3.5 mr-1.5" />
-            {walletPoints} pts
-          </Badge>
+          {!hideWallet && (
+            <Badge variant="secondary" className="text-sm px-3 py-1.5">
+              <Wallet className="h-3.5 w-3.5 mr-1.5" />
+              {walletPoints} pts
+            </Badge>
+          )}
         </div>
 
         <Card>
