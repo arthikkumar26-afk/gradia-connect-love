@@ -120,7 +120,7 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: M
   useEffect(() => {
     loadVacancies();
     loadWallet();
-  }, [user?.id]);
+  }, [effectiveEmployerId]);
 
   const openJob = async (job: VacancyRow) => {
     setSelectedJob(job);
