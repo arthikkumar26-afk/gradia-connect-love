@@ -504,10 +504,10 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
       }
       case "post":
         return parentEmployerId ? (
-          <HRJobPostingWizard
-            parentEmployerId={parentEmployerId}
-            parentEmployerName={parentEmployerName}
-            onPosted={async () => {
+          <InlineJobCreationForm
+            employerIdOverride={parentEmployerId}
+            employerNameOverride={parentEmployerName}
+            onJobCreated={async () => {
               if (parentEmployerId) await reloadJobs(parentEmployerId);
               setActiveTab("jobs");
             }}
