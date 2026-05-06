@@ -802,9 +802,6 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                   <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
                   Refresh
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(!sidebarOpen)}>
-                  <Menu className="h-4 w-4" />
-                </Button>
               </div>
             </div>
             {selectedCandidateId ? (
