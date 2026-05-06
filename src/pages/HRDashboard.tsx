@@ -187,7 +187,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
 
         const candIds = Array.from(new Set((cands ?? []).map((c: any) => c.candidate_id)));
         const { data: profs, error: profsError } = candIds.length
-          ? await supabase.from("profiles").select("id, full_name, mobile, registration_number, category, segment, preferred_state, preferred_district, location, primary_subject, preferred_role").in("id", candIds)
+          ? await supabase.from("profiles").select("id, full_name, email, mobile, registration_number, category, segment, preferred_state, preferred_district, location, primary_subject, preferred_role").in("id", candIds)
           : { data: [] as any[], error: null };
         if (profsError) throw profsError;
 
