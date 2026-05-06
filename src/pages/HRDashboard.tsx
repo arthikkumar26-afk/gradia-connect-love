@@ -477,10 +477,36 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
         return (
           <div className="space-y-4">
             <Card>
-            <CardHeader><CardTitle className="text-base">Real Applicants</CardTitle></CardHeader>
+            <CardHeader className="space-y-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <CardTitle className="text-base">Real Applicants</CardTitle>
+                <div className="relative w-full sm:w-72">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={candidateSearch}
+                    onChange={(e) => setCandidateSearch(e.target.value)}
+                    placeholder="Search by name, email, mobile, code…"
+                    className="pl-8 h-9"
+                  />
+                </div>
+              </div>
+            </CardHeader>
             <CardContent>
-              {loading ? <p className="text-sm text-muted-foreground">Loading…</p>
+              {(() => {
+                const q = candidateSearch.trim().toLowerCase();
+                const filtered = q
+                  ? candidates.filter(c => {
+                      const hay = [
+                        c.candidate_name, c.candidate_email, c.mobile, c.registration_number,
+                        c.job_title, c.current_stage, c.status, c.category, c.segment,
+                        c.preferred_state, c.preferred_district, c.location, c.primary_subject, c.preferred_role,
+                      ].filter(Boolean).join(" ").toLowerCase();
+                      return hay.includes(q);
+                    })
+                  : candidates;
+                return loading ? <p className="text-sm text-muted-foreground">Loading…</p>
                 : candidates.length === 0 ? <p className="text-sm text-muted-foreground">No real candidates yet — the sample above shows how all options work.</p>
+                : filtered.length === 0 ? <p className="text-sm text-muted-foreground">No candidates match "{candidateSearch}".</p>
                 : (
                   <div className="space-y-2">
                     {candidates.map(c => (
