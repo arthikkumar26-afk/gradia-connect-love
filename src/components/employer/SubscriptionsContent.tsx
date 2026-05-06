@@ -55,28 +55,16 @@ export const SubscriptionsContent = () => {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [walletPoints, setWalletPoints] = useState<number>(0);
+  const [walletId, setWalletId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    if ((window as any).Razorpay) {
-      setScriptLoaded(true);
-      return;
-    }
-
-    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
-    if (existing) {
-      existing.addEventListener("load", () => setScriptLoaded(true));
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => setScriptLoaded(true);
-    script.onerror = () => toast.error("Failed to load payment gateway");
-    document.body.appendChild(script);
-  }, []);
+  const loadWallet = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("wallets").select("id, points_balance").eq("user_id", user.id).maybeSingle();
+    setWalletId(data?.id ?? null);
+    setWalletPoints(data?.points_balance ?? 0);
+  };
 
   useEffect(() => {
     if (user?.id) {
