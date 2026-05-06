@@ -70,6 +70,7 @@ export const SubscriptionsContent = () => {
     if (user?.id) {
       fetchSubscription();
       generateMockReceipts();
+      loadWallet();
     }
   }, [user?.id]);
 
