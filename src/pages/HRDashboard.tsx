@@ -22,6 +22,8 @@ import HRCandidateProfileDialog from "@/components/hr/HRCandidateProfileDialog";
 import HREmailStatus from "@/components/hr/HREmailStatus";
 import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
 import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
+import HRCreateEmployer from "@/components/hr/HRCreateEmployer";
+import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
 import { Send } from "lucide-react";
 
 interface JobRow {
@@ -104,6 +106,8 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [transferEmployer, setTransferEmployer] = useState<{ id: string; name: string } | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [candidateSearch, setCandidateSearch] = useState("");
+  const [scanEmployer, setScanEmployer] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [employerStats, setEmployerStats] = useState<Record<string, { vacancies: number; finished: number }>>({});
 
   const reloadJobs = useCallback(async (employerId: string) => {
     const { data: jobsData, error } = await supabase
@@ -243,6 +247,40 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
       const filteredEmployers = ((empAll as any[]) ?? []).filter(e => !excludeIds.has(e.id));
       setEmployers(filteredEmployers as EmployerRow[]);
       setAllCandidates(((candAll as any[]) ?? []) as AllCandidateRow[]);
+
+      // Load per-employer stats: vacancies count + finished interviews count
+      const empIds = filteredEmployers.map(e => e.id);
+      if (empIds.length) {
+        const { data: empJobs } = await supabase
+          .from("jobs")
+          .select("id, employer_id")
+          .in("employer_id", empIds);
+        const jobsByEmp: Record<string, string[]> = {};
+        (empJobs ?? []).forEach((j: any) => {
+          (jobsByEmp[j.employer_id] = jobsByEmp[j.employer_id] || []).push(j.id);
+        });
+        const allJobIds = (empJobs ?? []).map((j: any) => j.id);
+        let finishedByJob: Record<string, number> = {};
+        if (allJobIds.length) {
+          const { data: finishedCands } = await supabase
+            .from("interview_candidates")
+            .select("job_id, status")
+            .in("job_id", allJobIds)
+            .in("status", ["hired", "rejected", "completed"]);
+          (finishedCands ?? []).forEach((r: any) => {
+            finishedByJob[r.job_id] = (finishedByJob[r.job_id] || 0) + 1;
+          });
+        }
+        const stats: Record<string, { vacancies: number; finished: number }> = {};
+        empIds.forEach(id => {
+          const jids = jobsByEmp[id] || [];
+          const finished = jids.reduce((s, jid) => s + (finishedByJob[jid] || 0), 0);
+          stats[id] = { vacancies: jids.length, finished };
+        });
+        setEmployerStats(stats);
+      } else {
+        setEmployerStats({});
+      }
     } catch (error) {
       console.error("Failed to refresh HR dashboard", error);
       if (!options?.silent) toast.error("Couldn't refresh HR dashboard data.");
@@ -292,6 +330,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
 
   const employerMenu = [
     { id: "invite-employer", label: "Invite Employer", icon: Building },
+    { id: "create-employer", label: "Create Employer Account", icon: Plus },
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
@@ -613,30 +652,50 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 : employers.length === 0 ? <p className="text-sm text-muted-foreground">No employer accounts found.</p>
                 : (
                   <div className="space-y-2 max-h-[700px] overflow-y-auto">
-                    {employers.map(e => (
-                      <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <Building className="h-4 w-4 text-primary" />
+                    {employers.map(e => {
+                      const stats = employerStats[e.id] || { vacancies: 0, finished: 0 };
+                      return (
+                        <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <Building className="h-4 w-4 text-primary" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{e.company_name || e.full_name || "Employer"}</p>
+                              <p className="text-xs text-muted-foreground truncate">{e.email || "—"}</p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-sm truncate">{e.company_name || e.full_name || "Employer"}</p>
-                            <p className="text-xs text-muted-foreground truncate">{e.email || "—"}</p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="secondary" className="text-[11px]">
+                              <Briefcase className="h-3 w-3 mr-1" />{stats.vacancies} vacancies
+                            </Badge>
+                            <Badge variant="outline" className="text-[11px]">
+                              {stats.finished} interviews finished
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
+                            <Button size="sm" variant="outline" onClick={() => setScanEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer", email: e.email || "" })}>
+                              <ScanSearch className="h-3.5 w-3.5 mr-1" /> AI Scan
+                            </Button>
+                            <Button size="sm" onClick={() => setTransferEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer" })}>
+                              <Send className="h-3.5 w-3.5 mr-1" /> Transfer
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
-                          <Badge variant="outline">Employer</Badge>
-                          <Button size="sm" onClick={() => setTransferEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer" })}>
-                            <Send className="h-3.5 w-3.5 mr-1" /> Transfer to Candidate
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
             </CardContent>
           </Card>
+        );
+      case "create-employer":
+        return (
+          <HRCreateEmployer
+            onCreated={() => {
+              loadDashboardData({ silent: true });
+              setActiveTab("employers");
+            }}
+          />
         );
       case "invite-employer":
         return (
@@ -834,6 +893,16 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           hrUserId={user.id}
           employerId={transferEmployer.id}
           employerName={transferEmployer.name}
+        />
+      )}
+      {scanEmployer && user && (
+        <EmployerAIScanDialog
+          open={!!scanEmployer}
+          onClose={() => setScanEmployer(null)}
+          employerId={scanEmployer.id}
+          employerName={scanEmployer.name}
+          employerEmail={scanEmployer.email}
+          hrUserId={user.id}
         />
       )}
     </div>
