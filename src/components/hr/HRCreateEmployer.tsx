@@ -30,7 +30,7 @@ const HRCreateEmployer = ({ onCreated }: Props) => {
   const [industry, setIndustry] = useState("");
   const [location, setLocation] = useState("");
   const [planId, setPlanId] = useState("starter");
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
+  
   const [creating, setCreating] = useState(false);
 
   const generatePassword = () => {
