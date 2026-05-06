@@ -150,7 +150,7 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: M
       supabase
         .from("cv_unlocks")
         .select("application_id, candidate_id")
-        .eq("employer_id", user!.id)
+        .eq("employer_id", effectiveEmployerId!)
         .eq("job_id", job.id)
         .in("candidate_id", candidateIds),
     ]);
