@@ -49,9 +49,20 @@ serve(async (req) => {
     const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#222;line-height:1.6;white-space:pre-wrap">${finalBody.replace(/</g, "&lt;")}</div>`;
 
     const resend = new Resend(RESEND_API_KEY);
+    const resend = new Resend(RESEND_API_KEY);
     const fromName = (hrName ? `${hrName} via Gradia HR` : "Gradia HR").slice(0, 100);
     const result = await resend.emails.send({
-      from: `${fromName} <onboarding@resend.dev>`,
+      from: `${fromName} <noreply@gradia.co.in>`,
+      to: [profile.email],
+      subject: finalSubject,
+      html,
+    });
+
+    if ((result as any)?.error) {
+      const errMsg = (result as any).error.message || JSON.stringify((result as any).error);
+      console.error("Resend send error:", errMsg);
+      throw new Error(errMsg);
+    }
       to: [profile.email],
       subject: finalSubject,
       html,
