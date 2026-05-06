@@ -478,9 +478,9 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           <div className="space-y-4">
             <Card>
             <CardHeader className="space-y-3">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <CardTitle className="text-base">Real Applicants</CardTitle>
-                <div className="relative w-full sm:w-64 sm:mx-auto">
+              <div className="flex items-center gap-3 flex-wrap">
+                <CardTitle className="text-base shrink-0">Real Applicants</CardTitle>
+                <div className="relative flex-1 max-w-md mx-auto">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={candidateSearch}
