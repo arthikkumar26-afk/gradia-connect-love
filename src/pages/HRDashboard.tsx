@@ -509,7 +509,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 : filtered.length === 0 ? <p className="text-sm text-muted-foreground">No candidates match "{candidateSearch}".</p>
                 : (
                   <div className="space-y-2">
-                    {candidates.map(c => (
+                    {filtered.map(c => (
                       <div key={c.id} role="button" tabIndex={0} onClick={() => setSelectedCandidateId(c.candidate_id)} onKeyDown={(e) => { if (e.key === "Enter") setSelectedCandidateId(c.candidate_id); }} className="border border-border rounded-md p-3 space-y-2 cursor-pointer hover:bg-muted/40 hover:border-primary/40 transition-colors">
 
                         <div className="flex items-start justify-between gap-3 flex-wrap">
@@ -529,6 +529,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                           <div><span className="text-muted-foreground">Date: </span><span className="font-medium">{c.applied_at ? new Date(c.applied_at).toLocaleDateString() : "—"}</span></div>
                           <div><span className="text-muted-foreground">Code: </span><span className="font-medium">{c.registration_number || "—"}</span></div>
                           <div><span className="text-muted-foreground">Mobile: </span><span className="font-medium">{c.mobile || "—"}</span></div>
+                          <div><span className="text-muted-foreground">Email: </span><span className="font-medium truncate">{c.candidate_email || "—"}</span></div>
                           <div><span className="text-muted-foreground">Sector: </span><span className="font-medium">{c.category || "—"}</span></div>
                           <div><span className="text-muted-foreground">Segment: </span><span className="font-medium">{c.segment || "—"}</span></div>
                           <div><span className="text-muted-foreground">Pref State: </span><span className="font-medium">{c.preferred_state || "—"}</span></div>
@@ -539,7 +540,8 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                       </div>
                     ))}
                   </div>
-                )}
+                );
+              })()}
             </CardContent>
           </Card>
 
