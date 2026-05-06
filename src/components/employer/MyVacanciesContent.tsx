@@ -17,7 +17,9 @@ import {
   Download,
   Eye,
   Wallet,
+  Plus,
 } from "lucide-react";
+import { InlineJobCreationForm } from "./InlineJobCreationForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -60,9 +62,11 @@ interface MyVacanciesContentProps {
   employerIdOverride?: string;
   /** Hide the wallet badge and unlock-pricing copy when in HR mode. */
   hideWallet?: boolean;
+  /** Employer organisation name shown when HR creates a vacancy on behalf of an employer. */
+  employerNameOverride?: string;
 }
 
-export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: MyVacanciesContentProps = {}) => {
+export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false, employerNameOverride }: MyVacanciesContentProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const effectiveEmployerId = employerIdOverride || user?.id;
@@ -75,6 +79,7 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: M
   const [unlocking, setUnlocking] = useState(false);
   const [walletPoints, setWalletPoints] = useState<number>(0);
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const loadVacancies = async () => {
     if (!effectiveEmployerId) return;
@@ -502,13 +507,40 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: M
             {!hideWallet && <> • {UNLOCK_COST} pts per CV unlock</>}
           </p>
         </div>
-        {!hideWallet && (
-          <Badge variant="secondary" className="text-sm px-3 py-1.5">
-            <Wallet className="h-3.5 w-3.5 mr-1.5" />
-            {walletPoints} pts
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {!hideWallet && (
+            <Badge variant="secondary" className="text-sm px-3 py-1.5">
+              <Wallet className="h-3.5 w-3.5 mr-1.5" />
+              {walletPoints} pts
+            </Badge>
+          )}
+          <Button
+            variant={showCreateForm ? "outline" : "default"}
+            size="sm"
+            onClick={() => setShowCreateForm((s) => !s)}
+            className="gap-1"
+          >
+            <Plus className="h-4 w-4" />
+            {showCreateForm ? "Close" : "Create Vacancy"}
+          </Button>
+        </div>
       </div>
+
+      {showCreateForm && (
+        <Card>
+          <CardContent className="p-4">
+            <InlineJobCreationForm
+              employerIdOverride={employerIdOverride}
+              employerNameOverride={employerNameOverride}
+              onJobCreated={() => {
+                setShowCreateForm(false);
+                loadVacancies();
+              }}
+              onCancel={() => setShowCreateForm(false)}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
