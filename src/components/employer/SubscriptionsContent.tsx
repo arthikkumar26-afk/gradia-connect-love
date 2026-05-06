@@ -254,34 +254,66 @@ export const SubscriptionsContent = () => {
 
         {/* Tariffs/Plans Tab */}
         <TabsContent value="tariffs" className="space-y-6">
-          {/* Billing Toggle */}
+          {/* Wallet balance banner */}
           <div className="flex justify-center">
-            <div className="inline-flex items-center gap-3 bg-muted/50 rounded-full p-1">
-              <button
-                onClick={() => setBillingCycle("monthly")}
-                className={`px-6 py-2 rounded-full transition-all ${
-                  billingCycle === "monthly"
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle("annual")}
-                className={`px-6 py-2 rounded-full transition-all ${
-                  billingCycle === "annual"
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Annual
-                <span className="ml-2 text-xs font-semibold text-success">
-                  (Save 2 months)
-                </span>
-              </button>
+            <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-full px-4 py-1.5 text-sm">
+              <Wallet className="h-4 w-4" />
+              Wallet balance: <span className="font-semibold">{walletPoints.toLocaleString()} pts</span>
+              <span className="text-xs text-muted-foreground ml-1">(₹5 = 1 pt)</span>
             </div>
           </div>
+
+          {/* Plans Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {pricingPlans.map((plan) => {
+              const isCurrentPlan = currentSubscription?.plan_id === plan.id;
+
+              return (
+                <Card
+                  key={plan.id}
+                  className={`relative transition-all hover:shadow-lg ${
+                    plan.popular ? "ring-2 ring-primary shadow-xl" : ""
+                  } ${isCurrentPlan ? "border-success border-2" : ""}`}
+                >
+                  {plan.popular && (
+                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary">
+                      Most Popular
+                    </Badge>
+                  )}
+                  {isCurrentPlan && (
+                    <Badge className="absolute -top-3 right-4 bg-success">
+                      Current Plan
+                    </Badge>
+                  )}
+
+                  <CardHeader className="text-center pb-2">
+                    <div className="mx-auto mb-2 p-3 rounded-full bg-primary/10 w-fit">
+                      {getPlanIcon(plan.id)}
+                    </div>
+                    <CardTitle className="text-xl">{plan.name}</CardTitle>
+                    <CardDescription>{plan.subtitle}</CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    {/* Price (wallet points) */}
+                    <div className="text-center">
+                      {plan.points === 0 ? (
+                        <span className="text-4xl font-bold text-primary">Free</span>
+                      ) : (
+                        <>
+                          <div className="flex items-baseline justify-center gap-1.5">
+                            <Coins className="h-5 w-5 text-amber-500" />
+                            <span className="text-4xl font-bold text-primary">
+                              {plan.points.toLocaleString()}
+                            </span>
+                            <span className="text-muted-foreground">pts / mo</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ≈ ₹{plan.priceInr.toLocaleString()}
+                          </p>
+                        </>
+                      )}
+                    </div>
 
           {/* Plans Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
