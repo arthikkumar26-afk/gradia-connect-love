@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Sparkles, Download, Image as ImageIcon, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import FlyerManualEditor from "./FlyerManualEditor";
 
 interface Props {
   job_title: string;
@@ -95,6 +96,7 @@ const FlyerGenerator = ({ job_title, company_name, location, experience, salary,
           <div className="text-xs text-muted-foreground flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Click "Generate AI Flyer" to create a social-media post</div>
         )}
       </div>
+      <FlyerManualEditor defaults={{ job_title, company_name, location, experience, salary, skills, highlights }} />
     </div>
   );
 };
