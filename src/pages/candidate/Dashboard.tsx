@@ -80,6 +80,7 @@ import { MockInterviewTab } from "@/components/candidate/MockInterviewTab";
 import AIJobApplyTab from "@/components/candidate/AIJobApplyTab";
 import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 import { CouponInput } from "@/components/shared/CouponInput";
+import { CandidateNotifications } from "@/components/candidate/CandidateNotifications";
 import ExternalJobListings from "@/components/candidate/ExternalJobListings";
 import AILearningRecommendations from "@/components/candidate/AILearningRecommendations";
 import GraphicDesignChallenge from "@/components/candidate/GraphicDesignChallenge";
@@ -2287,6 +2288,7 @@ const CandidateDashboard = () => {
             <h1 className="text-2xl font-bold text-foreground">
               {getPageTitle()}
             </h1>
+            {profile?.id && <CandidateNotifications candidateId={profile.id} />}
           </div>
 
           {activeMenu === "dashboard" && (

@@ -392,6 +392,48 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_notifications: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          employer_name: string | null
+          id: string
+          is_read: boolean
+          job_id: string | null
+          job_title: string | null
+          link: string | null
+          message: string
+          title: string
+          type: string
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          employer_name?: string | null
+          id?: string
+          is_read?: boolean
+          job_id?: string | null
+          job_title?: string | null
+          link?: string | null
+          message: string
+          title: string
+          type?: string
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          employer_name?: string | null
+          id?: string
+          is_read?: boolean
+          job_id?: string | null
+          job_title?: string | null
+          link?: string | null
+          message?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       candidate_resumes: {
         Row: {
           created_at: string
