@@ -519,6 +519,12 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
         ) : (
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
         );
+      case "vacancies-list":
+        return parentEmployerId ? (
+          <MyVacanciesContent employerIdOverride={parentEmployerId} hideWallet />
+        ) : (
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
+        );
       case "smm":
         return <HRSMMSection />;
       case "candidates":
