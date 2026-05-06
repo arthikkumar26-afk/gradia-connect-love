@@ -113,6 +113,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [scanEmployer, setScanEmployer] = useState<{ id: string; name: string; email: string } | null>(null);
   const [viewEmployer, setViewEmployer] = useState<{ id: string; name: string } | null>(null);
   const [employerStats, setEmployerStats] = useState<Record<string, { vacancies: number; finished: number }>>({});
+  const [allEmployerIds, setAllEmployerIds] = useState<string[]>([]);
 
   const reloadJobs = useCallback(async (employerId: string) => {
     const { data: jobsData, error } = await supabase
