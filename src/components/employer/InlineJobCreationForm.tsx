@@ -38,9 +38,12 @@ type JobFormValues = z.infer<typeof jobFormSchema>;
 interface InlineJobCreationFormProps {
   onJobCreated: () => void;
   onCancel: () => void;
+  /** When set, the job is posted on behalf of this employer (HR mode) and wallet deduction is skipped. */
+  employerIdOverride?: string;
+  employerNameOverride?: string;
 }
 
-export const InlineJobCreationForm = ({ onJobCreated, onCancel }: InlineJobCreationFormProps) => {
+export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverride, employerNameOverride }: InlineJobCreationFormProps) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
