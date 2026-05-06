@@ -1,12 +1,18 @@
 // Mock API utilities for pricing plans and demo requests
 // For production: Replace localStorage with actual backend API calls
 
+// NOTE: All employer plans are wallet-points based (₹5 = 1 pt).
+// Razorpay is only used for *loading* points into the wallet, never for direct
+// subscription charges. UI must show points; INR shown as a reference only.
+
 export interface PricingPlan {
   id: 'starter' | 'growth' | 'professional' | 'enterprise';
   name: string;
   subtitle?: string;
-  monthlyPrice: number;
-  annualPrice: number;
+  /** Wallet points cost for 1 month of this plan. 0 = free tier. */
+  points: number;
+  /** Reference INR equivalent (points × 5). Display-only. */
+  priceInr: number;
   features: string[];
   limits: {
     jobPosts: string;
