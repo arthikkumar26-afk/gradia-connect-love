@@ -12,6 +12,7 @@ import {
   Sparkles, Send, Trash2, Save, Wand2, Loader2, Target, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { openResume, downloadResume } from "@/utils/resumeUrl";
 
 interface Props {
   open: boolean;
@@ -293,15 +294,19 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
               </div>
               {(resumeUrl || profile.resume_url) && (
                 <div className="flex flex-col gap-2">
-                  <Button size="sm" asChild>
-                    <a href={resumeUrl || profile.resume_url} target="_blank" rel="noopener noreferrer">
-                      <Eye className="h-3.5 w-3.5 mr-1" /> View CV
-                    </a>
+                  <Button size="sm" onClick={async () => {
+                    const url = resumeUrl || profile.resume_url;
+                    if (!url) return;
+                    try { await openResume(url); } catch { toast.error("Failed to open CV"); }
+                  }}>
+                    <Eye className="h-3.5 w-3.5 mr-1" /> View CV
                   </Button>
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={resumeUrl || profile.resume_url} download>
-                      <Download className="h-3.5 w-3.5 mr-1" /> Download
-                    </a>
+                  <Button size="sm" variant="outline" onClick={async () => {
+                    const url = resumeUrl || profile.resume_url;
+                    if (!url) return;
+                    try { await downloadResume(url, `${profile.full_name || "resume"}.pdf`); } catch { toast.error("Failed to download CV"); }
+                  }}>
+                    <Download className="h-3.5 w-3.5 mr-1" /> Download
                   </Button>
                 </div>
               )}
