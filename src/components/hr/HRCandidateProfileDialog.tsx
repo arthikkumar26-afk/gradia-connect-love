@@ -45,6 +45,7 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
   const [tplBody, setTplBody] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [matchJobId, setMatchJobId] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<{ state: "idle" | "sending" | "sent" | "failed"; message?: string; to?: string; at?: string }>({ state: "idle" });
