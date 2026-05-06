@@ -45,6 +45,7 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
   const [tplBody, setTplBody] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [matchJobId, setMatchJobId] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendStatus, setSendStatus] = useState<{ state: "idle" | "sending" | "sent" | "failed"; message?: string; to?: string; at?: string }>({ state: "idle" });
@@ -173,6 +174,51 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
     } catch (e: any) {
       toast.error(e.message || "AI generation failed");
     } finally { setAiLoading(false); }
+  };
+
+  const handleBuildMatchEmail = () => {
+    const job = matchedJobs.find((j) => j.id === matchJobId) || matchedJobs[0];
+    if (!job) { toast.error("No matched job available"); return; }
+    if (!profile) return;
+
+    const jobTitle = job.job_title || job.designation || "the role";
+    const jobLoc = job.location || "";
+    const candName = profile.full_name || "Candidate";
+
+    const expLines = experience.slice(0, 4).map((w: any) => {
+      const role = w.designation || "—";
+      const org = [w.organization, w.place].filter(Boolean).join(", ");
+      const from = w.from_date ? String(w.from_date).slice(0, 4) : "?";
+      const to = w.to_date ? String(w.to_date).slice(0, 4) : "present";
+      return `${role}\n${org}, ${from} - ${to}`;
+    }).join("\n\n");
+
+    const eduLines = education.slice(0, 3).map((e: any) => {
+      const parts = [e.education_level, e.specialization, e.school_college_name, e.board_university].filter(Boolean);
+      return parts.join(", ");
+    }).join("\n");
+
+    const reviewUrl = `${window.location.origin}/hr/dashboard/candidate?id=${profile.id}`;
+
+    const subject = `Connect with candidates matching ${jobTitle}${jobLoc ? `, ${jobLoc}` : ""}`;
+    const body =
+`Connect with candidates matching ${jobTitle}${jobLoc ? `, ${jobLoc}` : ""}
+
+${jobTitle}
+
+${expLines || "Experience details not available."}
+
+Education
+${eduLines || "Education details not available."}
+
+Review matched candidate: ${reviewUrl}
+
+— Sent via Gradia HR for ${candName}`;
+
+    setTplSubject(subject);
+    setTplBody(body);
+    setTplName(tplName || `Match — ${jobTitle}`);
+    toast.success("Email drafted from matched job");
   };
 
   const handleSaveTemplate = async () => {
@@ -466,8 +512,37 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
                   <Button size="sm" variant="outline" onClick={handleNewTemplate}>New</Button>
                 </div>
 
+                <div className="space-y-2 p-3 border border-primary/30 rounded-md bg-gradient-to-br from-primary/5 to-transparent">
+                  <p className="text-xs font-medium text-foreground flex items-center gap-1">
+                    <Target className="h-3.5 w-3.5 text-primary" /> Build email from a high-match job
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <select
+                      value={matchJobId}
+                      onChange={(e) => setMatchJobId(e.target.value)}
+                      className="border border-border rounded-md px-2 py-1.5 text-sm bg-background flex-1 min-w-[200px]"
+                      disabled={matchedJobs.length === 0}
+                    >
+                      <option value="">
+                        {matchedJobs.length === 0 ? "No matched jobs" : "— Choose a matched job —"}
+                      </option>
+                      {matchedJobs.map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {(j.job_title || j.designation)} {j.location ? `· ${j.location}` : ""} ({Math.min(j._score, 100)}%)
+                        </option>
+                      ))}
+                    </select>
+                    <Button size="sm" onClick={handleBuildMatchEmail} disabled={matchedJobs.length === 0}>
+                      <Wand2 className="h-3.5 w-3.5 mr-1" /> Build match email
+                    </Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Generates a "Connect with candidates matching {`{role}`}" email using the candidate's experience and education — same format as outreach templates.
+                  </p>
+                </div>
+
                 <div className="space-y-2 p-3 border border-dashed border-primary/30 rounded-md bg-primary/5">
-                  <p className="text-xs font-medium text-foreground">Ask AI to draft an email</p>
+                  <p className="text-xs font-medium text-foreground">Or ask AI to draft an email</p>
                   <Textarea
                     rows={2}
                     placeholder="e.g. Write an interview shortlist email inviting the candidate for round 2 next Monday at 10 AM."
