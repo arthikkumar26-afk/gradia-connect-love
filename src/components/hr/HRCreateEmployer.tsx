@@ -48,7 +48,6 @@ const HRCreateEmployer = ({ onCreated }: Props) => {
     setCreating(true);
     try {
       const plan = PLANS.find(p => p.id === planId)!;
-      const price = billingCycle === "yearly" ? Math.round(plan.price * 12 * 0.85) : plan.price;
       const { data, error } = await supabase.functions.invoke("create-employer-account", {
         body: {
           email: email.trim(),
@@ -61,17 +60,18 @@ const HRCreateEmployer = ({ onCreated }: Props) => {
           location: location.trim() || null,
           plan_id: plan.id,
           plan_name: plan.name,
-          plan_price: price,
-          billing_cycle: billingCycle,
+          plan_points: plan.points,
+          plan_price: plan.points * 5,
+          billing_cycle: "points",
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success(`Employer ${companyName} created${data?.email_sent ? " — credentials emailed" : ""}.`);
+      toast.success(`Employer ${companyName} created (${plan.points} pts deducted on activation)${data?.email_sent ? " — credentials emailed" : ""}.`);
       // Reset
       setCompanyName(""); setFullName(""); setEmail(""); setPassword("");
       setPhone(""); setWebsite(""); setIndustry(""); setLocation("");
-      setPlanId("starter"); setBillingCycle("monthly");
+      setPlanId("starter");
       onCreated?.();
     } catch (e: any) {
       toast.error(e.message || "Failed to create employer");
