@@ -895,6 +895,16 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           employerName={transferEmployer.name}
         />
       )}
+      {scanEmployer && user && (
+        <EmployerAIScanDialog
+          open={!!scanEmployer}
+          onClose={() => setScanEmployer(null)}
+          employerId={scanEmployer.id}
+          employerName={scanEmployer.name}
+          employerEmail={scanEmployer.email}
+          hrUserId={user.id}
+        />
+      )}
     </div>
   );
 };
