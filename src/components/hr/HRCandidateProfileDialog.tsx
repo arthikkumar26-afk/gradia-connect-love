@@ -478,7 +478,7 @@ Review matched candidate: ${reviewUrl}
                               {Math.min(j._score, 100)}% match
                             </Badge>
                             <Button size="sm" variant="ghost" className="h-6 text-[11px]" asChild>
-                              <a href={`/jobs/${j.id}`} target="_blank" rel="noopener noreferrer">
+                              <a href={`/job/${j.id}/apply`} target="_blank" rel="noopener noreferrer">
                                 <ExternalLink className="h-3 w-3 mr-1" /> View
                               </a>
                             </Button>
