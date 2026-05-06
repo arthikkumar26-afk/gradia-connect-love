@@ -559,6 +559,42 @@ Review matched candidate: ${reviewUrl}
                 <Input placeholder="Subject (supports {{candidate_name}}, {{job_title}}…)" value={tplSubject} onChange={(e) => setTplSubject(e.target.value)} />
                 <Textarea rows={8} placeholder="Email body…" value={tplBody} onChange={(e) => setTplBody(e.target.value)} />
 
+                {(tplSubject || tplBody) && (() => {
+                  const repl: Record<string, string> = {
+                    candidate_name: profile?.full_name || "Candidate",
+                    job_title: profile?.preferred_role || "the role",
+                    company_name: "Gradia",
+                    hr_name: "HR Team",
+                    date: new Date().toLocaleDateString(),
+                    time: new Date().toLocaleTimeString(),
+                  };
+                  const fill = (s: string) =>
+                    s.replace(/\{\{\s*(\w+)\s*\}\}/g, (_m, k) => repl[k] ?? `{{${k}}}`);
+                  const finalSubject = fill(tplSubject || "(no subject)");
+                  const finalBody = fill(tplBody || "");
+                  return (
+                    <div className="border border-border rounded-md overflow-hidden bg-card">
+                      <div className="flex items-center justify-between gap-2 px-3 py-2 bg-muted/40 border-b border-border">
+                        <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                          <Eye className="h-3.5 w-3.5 text-primary" /> Email Preview — exactly as it will be sent
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">Placeholders auto-filled</span>
+                      </div>
+                      <div className="px-3 py-2 border-b border-border bg-background space-y-0.5">
+                        <div className="text-[11px] text-muted-foreground"><span className="font-medium text-foreground">From:</span> Gradia HR &lt;noreply@gradia.co.in&gt;</div>
+                        <div className="text-[11px] text-muted-foreground"><span className="font-medium text-foreground">To:</span> {profile?.email || "candidate"}</div>
+                        <div className="text-[11px] text-muted-foreground"><span className="font-medium text-foreground">Subject:</span> <span className="text-foreground">{finalSubject}</span></div>
+                      </div>
+                      <div
+                        className="p-4 bg-white text-[#222] text-sm leading-relaxed max-h-80 overflow-y-auto"
+                        style={{ fontFamily: "Arial, sans-serif", whiteSpace: "pre-wrap" }}
+                      >
+                        {finalBody || <span className="text-muted-foreground italic">Body is empty…</span>}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={handleSaveTemplate} disabled={saving}>
                     {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1" />}
