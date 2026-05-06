@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
+import { InlineJobCreationForm } from "@/components/employer/InlineJobCreationForm";
 import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
 import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
