@@ -606,6 +606,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
             </CardContent>
           </Card>
         );
+      case "invite-employer":
+        return (
+          <HRInviteEmployer
+            hrName={profile?.full_name || "HR Team"}
+            companyName={parentEmployerName || "Gradia"}
+            hrEmail={user?.email || "info@gradiaa.com"}
+          />
+        );
       case "candidates-data":
         return parentEmployerId && user ? (
           <HRCandidatesData
