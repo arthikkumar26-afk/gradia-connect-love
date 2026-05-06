@@ -62,9 +62,11 @@ interface MyVacanciesContentProps {
   employerIdOverride?: string;
   /** Hide the wallet badge and unlock-pricing copy when in HR mode. */
   hideWallet?: boolean;
+  /** Employer organisation name shown when HR creates a vacancy on behalf of an employer. */
+  employerNameOverride?: string;
 }
 
-export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: MyVacanciesContentProps = {}) => {
+export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false, employerNameOverride }: MyVacanciesContentProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const effectiveEmployerId = employerIdOverride || user?.id;
@@ -77,6 +79,7 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: M
   const [unlocking, setUnlocking] = useState(false);
   const [walletPoints, setWalletPoints] = useState<number>(0);
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const loadVacancies = async () => {
     if (!effectiveEmployerId) return;
