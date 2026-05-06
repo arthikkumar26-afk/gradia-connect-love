@@ -200,6 +200,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
               ...c,
               current_stage: c.current_stage?.name || null,
               candidate_name: p.full_name || "Candidate",
+              candidate_email: p.email || null,
               job_title: titleMap[c.job_id] || "—",
               mobile: p.mobile,
               registration_number: p.registration_number,
