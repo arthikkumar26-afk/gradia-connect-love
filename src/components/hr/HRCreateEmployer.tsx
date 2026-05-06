@@ -5,14 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Building2, UserPlus, Loader2, Check } from "lucide-react";
+import { Building2, UserPlus, Loader2, Check, Coins } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Wallet-points pricing (₹5 = 1 pt). Mirrors employer plans in src/config/plans.ts
 const PLANS = [
-  { id: "starter", name: "Starter", duration: "Free", price: 0, features: ["3 job posts", "1 team seat", "Basic ATS", "Email support"] },
-  { id: "growth", name: "Growth", duration: "1 Month", price: 5000, popular: true, features: ["15 job posts", "5 team seats", "Screening tests", "Analytics"] },
-  { id: "professional", name: "Professional", duration: "1 Month", price: 15000, features: ["50 job posts", "15 seats", "AI interviews", "Advanced analytics"] },
-  { id: "enterprise", name: "Enterprise", duration: "1 Month", price: 29000, features: ["Unlimited posts", "Unlimited seats", "Custom integrations", "SLA"] },
+  { id: "starter", name: "Starter", points: 1000, features: ["3 job posts", "1 team seat", "Basic ATS", "Email support"] },
+  { id: "growth", name: "Growth", points: 3000, popular: true, features: ["15 job posts", "5 team seats", "Screening tests", "Analytics"] },
+  { id: "professional", name: "Professional", points: 5800, features: ["50 job posts", "15 seats", "AI interviews", "Advanced analytics"] },
+  { id: "enterprise", name: "Enterprise", points: 12000, features: ["Unlimited posts", "Unlimited seats", "Custom integrations", "SLA"] },
 ];
 
 interface Props {
