@@ -133,7 +133,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
   useEffect(() => {
     loadVacancies();
     loadWallet();
-  }, [effectiveEmployerId]);
+  }, [effectiveEmployerId, (employerIdsOverride || []).join(",")]);
 
   const openJob = async (job: VacancyRow) => {
     setSelectedJob(job);
