@@ -113,6 +113,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [scanEmployer, setScanEmployer] = useState<{ id: string; name: string; email: string } | null>(null);
   const [viewEmployer, setViewEmployer] = useState<{ id: string; name: string } | null>(null);
   const [employerStats, setEmployerStats] = useState<Record<string, { vacancies: number; finished: number }>>({});
+  const [allEmployerIds, setAllEmployerIds] = useState<string[]>([]);
 
   const reloadJobs = useCallback(async (employerId: string) => {
     const { data: jobsData, error } = await supabase
@@ -139,6 +140,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           .select("id, full_name, company_name, email")
           .eq("role", "employer");
         employerIdsForJobs = (empProfiles ?? []).map((p: any) => p.id);
+        setAllEmployerIds(employerIdsForJobs);
         setParentEmployerId(null);
         setParentEmployerName(`HR Manager — ${empProfiles?.length ?? 0} Employers`);
         setParentEmployerEmail("");
@@ -520,11 +522,13 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
         );
       case "vacancies-list":
-        return parentEmployerId ? (
-          <MyVacanciesContent employerIdOverride={parentEmployerId} employerNameOverride={parentEmployerName} hideWallet />
-        ) : (
-          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
-        );
+        if (parentEmployerId) {
+          return <MyVacanciesContent employerIdOverride={parentEmployerId} employerNameOverride={parentEmployerName} hideWallet />;
+        }
+        if (allEmployerIds.length > 0) {
+          return <MyVacanciesContent employerIdsOverride={allEmployerIds} hideWallet />;
+        }
+        return <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>;
       case "smm":
         return <HRSMMSection />;
       case "candidates":
