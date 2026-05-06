@@ -496,15 +496,18 @@ export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: M
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">My Vacancies</h2>
+          <h2 className="text-2xl font-bold text-foreground">Vacancies List</h2>
           <p className="text-sm text-muted-foreground">
-            Click a vacancy to view received resumes • {UNLOCK_COST} pts per CV unlock
+            Click a vacancy to view received resumes
+            {!hideWallet && <> • {UNLOCK_COST} pts per CV unlock</>}
           </p>
         </div>
-        <Badge variant="secondary" className="text-sm px-3 py-1.5">
-          <Wallet className="h-3.5 w-3.5 mr-1.5" />
-          {walletPoints} pts
-        </Badge>
+        {!hideWallet && (
+          <Badge variant="secondary" className="text-sm px-3 py-1.5">
+            <Wallet className="h-3.5 w-3.5 mr-1.5" />
+            {walletPoints} pts
+          </Badge>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
