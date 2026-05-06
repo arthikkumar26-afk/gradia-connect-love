@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
 import { InlineJobCreationForm } from "@/components/employer/InlineJobCreationForm";
+import { MyVacanciesContent } from "@/components/employer/MyVacanciesContent";
 import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
 import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
