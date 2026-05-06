@@ -287,6 +287,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   };
 
   const employerMenu = [
+    { id: "invite-employer", label: "Invite Employer", icon: Building },
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
