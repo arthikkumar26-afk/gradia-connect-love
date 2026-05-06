@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
+import { InlineJobCreationForm } from "@/components/employer/InlineJobCreationForm";
 import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
 import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
@@ -504,10 +505,10 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
       }
       case "post":
         return parentEmployerId ? (
-          <HRJobPostingWizard
-            parentEmployerId={parentEmployerId}
-            parentEmployerName={parentEmployerName}
-            onPosted={async () => {
+          <InlineJobCreationForm
+            employerIdOverride={parentEmployerId}
+            employerNameOverride={parentEmployerName}
+            onJobCreated={async () => {
               if (parentEmployerId) await reloadJobs(parentEmployerId);
               setActiveTab("jobs");
             }}
