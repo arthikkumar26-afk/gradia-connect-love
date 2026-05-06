@@ -22,6 +22,8 @@ import HRCandidateProfileDialog from "@/components/hr/HRCandidateProfileDialog";
 import HREmailStatus from "@/components/hr/HREmailStatus";
 import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
 import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
+import HRCreateEmployer from "@/components/hr/HRCreateEmployer";
+import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
 import { Send } from "lucide-react";
 
 interface JobRow {
