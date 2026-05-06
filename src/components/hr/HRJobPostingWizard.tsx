@@ -109,7 +109,7 @@ export const HRJobPostingWizard = ({ parentEmployerId, parentEmployerName, onPos
       const v = form.getValues();
       const skillsArray = (v.skills || "").split(",").map((s) => s.trim()).filter(Boolean);
 
-      const { error } = await supabase.from("jobs").insert([{
+      const { data: inserted, error } = await supabase.from("jobs").insert([{
         employer_id: parentEmployerId,
         job_title: v.job_title,
         department: v.department || null,
@@ -122,9 +122,14 @@ export const HRJobPostingWizard = ({ parentEmployerId, parentEmployerName, onPos
         skills: skillsArray.length ? skillsArray : null,
         closing_date: v.closing_date || null,
         status: "active",
-      } as any]);
+      } as any]).select("id").single();
 
       if (error) throw error;
+      if (inserted?.id) {
+        supabase.functions.invoke("notify-job-event", {
+          body: { event: "job_posted", jobId: inserted.id },
+        }).catch((e) => console.warn("notify-job-event failed", e));
+      }
       toast.success(`Job posted on behalf of ${parentEmployerName}.`);
       setConfirmOpen(false);
       onPosted();
