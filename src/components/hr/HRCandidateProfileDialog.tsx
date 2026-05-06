@@ -176,6 +176,51 @@ export const HRCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl
     } finally { setAiLoading(false); }
   };
 
+  const handleBuildMatchEmail = () => {
+    const job = matchedJobs.find((j) => j.id === matchJobId) || matchedJobs[0];
+    if (!job) { toast.error("No matched job available"); return; }
+    if (!profile) return;
+
+    const jobTitle = job.job_title || job.designation || "the role";
+    const jobLoc = job.location || "";
+    const candName = profile.full_name || "Candidate";
+
+    const expLines = experience.slice(0, 4).map((w: any) => {
+      const role = w.designation || "—";
+      const org = [w.organization, w.place].filter(Boolean).join(", ");
+      const from = w.from_date ? String(w.from_date).slice(0, 4) : "?";
+      const to = w.to_date ? String(w.to_date).slice(0, 4) : "present";
+      return `${role}\n${org}, ${from} - ${to}`;
+    }).join("\n\n");
+
+    const eduLines = education.slice(0, 3).map((e: any) => {
+      const parts = [e.education_level, e.specialization, e.school_college_name, e.board_university].filter(Boolean);
+      return parts.join(", ");
+    }).join("\n");
+
+    const reviewUrl = `${window.location.origin}/hr/dashboard/candidate?id=${profile.id}`;
+
+    const subject = `Connect with candidates matching ${jobTitle}${jobLoc ? `, ${jobLoc}` : ""}`;
+    const body =
+`Connect with candidates matching ${jobTitle}${jobLoc ? `, ${jobLoc}` : ""}
+
+${jobTitle}
+
+${expLines || "Experience details not available."}
+
+Education
+${eduLines || "Education details not available."}
+
+Review matched candidate: ${reviewUrl}
+
+— Sent via Gradia HR for ${candName}`;
+
+    setTplSubject(subject);
+    setTplBody(body);
+    setTplName(tplName || `Match — ${jobTitle}`);
+    toast.success("Email drafted from matched job");
+  };
+
   const handleSaveTemplate = async () => {
     if (!tplName.trim() || !tplSubject.trim() || !tplBody.trim()) {
       toast.error("Name, subject and body are required"); return;
