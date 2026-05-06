@@ -281,6 +281,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
       } else {
         setEmployerStats({});
       }
+    } catch (error) {
       console.error("Failed to refresh HR dashboard", error);
       if (!options?.silent) toast.error("Couldn't refresh HR dashboard data.");
     } finally {
