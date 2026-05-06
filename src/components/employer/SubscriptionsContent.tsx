@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  CreditCard, 
-  Check, 
-  X, 
-  Download, 
+import {
+  CreditCard,
+  Check,
+  X,
+  Download,
   Calendar,
   CheckCircle,
   Clock,
@@ -18,7 +18,9 @@ import {
   Crown,
   Star,
   Zap,
-  Phone
+  Phone,
+  Coins,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { pricingPlans, featureComparison } from "@/utils/pricingApi";
