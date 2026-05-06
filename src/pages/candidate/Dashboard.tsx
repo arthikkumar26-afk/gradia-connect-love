@@ -2288,6 +2288,7 @@ const CandidateDashboard = () => {
             <h1 className="text-2xl font-bold text-foreground">
               {getPageTitle()}
             </h1>
+            {profile?.id && <CandidateNotifications candidateId={profile.id} />}
           </div>
 
           {activeMenu === "dashboard" && (
