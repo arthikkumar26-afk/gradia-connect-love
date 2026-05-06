@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  CreditCard, 
-  Check, 
-  X, 
-  Download, 
+import {
+  CreditCard,
+  Check,
+  X,
+  Download,
   Calendar,
   CheckCircle,
   Clock,
@@ -18,7 +18,9 @@ import {
   Crown,
   Star,
   Zap,
-  Phone
+  Phone,
+  Coins,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { pricingPlans, featureComparison } from "@/utils/pricingApi";
@@ -48,38 +50,27 @@ interface Receipt {
 export const SubscriptionsContent = () => {
   const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState("tariffs");
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
+  
   const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [walletPoints, setWalletPoints] = useState<number>(0);
+  const [walletId, setWalletId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    if ((window as any).Razorpay) {
-      setScriptLoaded(true);
-      return;
-    }
-
-    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
-    if (existing) {
-      existing.addEventListener("load", () => setScriptLoaded(true));
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => setScriptLoaded(true);
-    script.onerror = () => toast.error("Failed to load payment gateway");
-    document.body.appendChild(script);
-  }, []);
+  const loadWallet = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("wallets").select("id, points_balance").eq("user_id", user.id).maybeSingle();
+    setWalletId(data?.id ?? null);
+    setWalletPoints(data?.points_balance ?? 0);
+  };
 
   useEffect(() => {
     if (user?.id) {
       fetchSubscription();
       generateMockReceipts();
+      loadWallet();
     }
   }, [user?.id]);
 
@@ -131,98 +122,78 @@ export const SubscriptionsContent = () => {
       toast.info("Our sales team will contact you shortly");
       return;
     }
-
     if (currentSubscription?.plan_id === planId) {
       toast.info("You are already subscribed to this plan");
       return;
     }
-
     setProcessingPlan(planId);
     try {
       const plan = pricingPlans.find((p) => p.id === planId);
       if (!plan) throw new Error("Plan not found");
 
-      const amount = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
-
-      if (amount <= 0) {
-        toast.info("Free plan does not require payment");
-        return;
-      }
-
-      if (!scriptLoaded || !(window as any).Razorpay) {
-        toast.error("Razorpay is still loading. Please try again in a moment.");
-        return;
-      }
-
-      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
-        body: {
-          amount,
-          currency: "INR",
-          plan_id: planId,
-          plan_name: `${plan.name} Plan`,
+      // Free / Starter plan — activate without wallet deduction
+      if (plan.points <= 0) {
+        await supabase.from("subscriptions").insert({
           employer_id: user?.id,
-          receipt: `sub_${planId}_${Date.now()}`,
-        },
-      });
-
-      if (orderError || !orderData?.order_id) {
-        throw new Error(orderError?.message || "Failed to create payment order");
+          plan_id: plan.id,
+          plan_name: plan.name,
+          status: "active",
+          billing_cycle: "points",
+          amount: 0,
+          currency: "PTS",
+          started_at: new Date().toISOString(),
+          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          auto_renew: false,
+        });
+        await fetchSubscription();
+        toast.success(`${plan.name} plan activated`);
+        setActiveTab("confirmation");
+        return;
       }
 
-      const razorpay = new (window as any).Razorpay({
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "Gradia",
-        description: `${plan.name} Plan Subscription`,
-        order_id: orderData.order_id,
-        prefill: {
-          name: profile?.full_name || "",
-          email: user?.email || "",
-          contact: profile?.mobile || "",
-        },
-        theme: { color: "#6366f1" },
-        modal: {
-          ondismiss: () => setProcessingPlan(null),
-        },
-        handler: async (response: any) => {
-          try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                plan_id: planId,
-                plan_name: plan.name,
-                amount,
-                billing_cycle: billingCycle,
-                employer_id: user?.id,
-              },
-            });
-
-            if (verifyError || !verifyData?.success) {
-              throw new Error(verifyError?.message || verifyData?.error || "Payment verification failed");
-            }
-
-            await fetchSubscription();
-            toast.success(`Payment successful. ${plan.name} plan activated!`);
-            setActiveTab("confirmation");
-          } catch (error: any) {
-            toast.error(error.message || "Payment verification failed. Please contact support.");
-          } finally {
-            setProcessingPlan(null);
-          }
-        },
+      // Paid plan via wallet points
+      let wId = walletId;
+      let bal = walletPoints;
+      if (!wId) {
+        const { data } = await supabase
+          .from("wallets").select("id, points_balance").eq("user_id", user?.id).maybeSingle();
+        wId = data?.id ?? null;
+        bal = data?.points_balance ?? 0;
+      }
+      if (!wId || bal < plan.points) {
+        toast.error(`Insufficient points. Need ${plan.points} pts, balance: ${bal} pts. Top up your wallet.`);
+        return;
+      }
+      const newBal = bal - plan.points;
+      const { error: updErr } = await supabase
+        .from("wallets").update({ points_balance: newBal }).eq("id", wId);
+      if (updErr) throw updErr;
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wId,
+        transaction_type: "debit",
+        category: "subscription",
+        points: plan.points,
+        description: `${plan.name} Plan (1 month) — wallet points`,
       });
-
-      razorpay.on("payment.failed", (response: any) => {
-        toast.error(response.error?.description || "Payment failed. Please try again.");
-        setProcessingPlan(null);
+      await supabase.from("subscriptions").insert({
+        employer_id: user?.id,
+        plan_id: plan.id,
+        plan_name: plan.name,
+        status: "active",
+        billing_cycle: "points",
+        amount: plan.points,
+        currency: "PTS",
+        started_at: new Date().toISOString(),
+        ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        auto_renew: false,
       });
-
-      razorpay.open();
+      setWalletPoints(newBal);
+      await fetchSubscription();
+      toast.success(`${plan.points} pts deducted. ${plan.name} plan activated. New balance: ${newBal} pts.`);
+      setActiveTab("confirmation");
     } catch (error: any) {
-      toast.error(error.message || "Failed to process subscription");
+      toast.error(error.message || "Failed to activate plan");
+    } finally {
       setProcessingPlan(null);
     }
   };
@@ -283,32 +254,12 @@ export const SubscriptionsContent = () => {
 
         {/* Tariffs/Plans Tab */}
         <TabsContent value="tariffs" className="space-y-6">
-          {/* Billing Toggle */}
+          {/* Wallet balance banner */}
           <div className="flex justify-center">
-            <div className="inline-flex items-center gap-3 bg-muted/50 rounded-full p-1">
-              <button
-                onClick={() => setBillingCycle("monthly")}
-                className={`px-6 py-2 rounded-full transition-all ${
-                  billingCycle === "monthly"
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle("annual")}
-                className={`px-6 py-2 rounded-full transition-all ${
-                  billingCycle === "annual"
-                    ? "bg-primary text-primary-foreground shadow-md"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Annual
-                <span className="ml-2 text-xs font-semibold text-success">
-                  (Save 2 months)
-                </span>
-              </button>
+            <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-full px-4 py-1.5 text-sm">
+              <Wallet className="h-4 w-4" />
+              Wallet balance: <span className="font-semibold">{walletPoints.toLocaleString()} pts</span>
+              <span className="text-xs text-muted-foreground ml-1">(₹5 = 1 pt)</span>
             </div>
           </div>
 
@@ -316,7 +267,6 @@ export const SubscriptionsContent = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {pricingPlans.map((plan) => {
               const isCurrentPlan = currentSubscription?.plan_id === plan.id;
-              const price = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
 
               return (
                 <Card
@@ -345,18 +295,23 @@ export const SubscriptionsContent = () => {
                   </CardHeader>
 
                   <CardContent className="space-y-4">
-                    {/* Price */}
+                    {/* Price (wallet points) */}
                     <div className="text-center">
-                      <span className="text-4xl font-bold text-primary">
-                        ₹{price.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground">
-                        /{billingCycle === "monthly" ? "month" : "year"}
-                      </span>
-                      {billingCycle === "annual" && price > 0 && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          ₹{(price / 12).toFixed(0)}/month billed annually
-                        </p>
+                      {plan.points === 0 ? (
+                        <span className="text-4xl font-bold text-primary">Free</span>
+                      ) : (
+                        <>
+                          <div className="flex items-baseline justify-center gap-1.5">
+                            <Coins className="h-5 w-5 text-amber-500" />
+                            <span className="text-4xl font-bold text-primary">
+                              {plan.points.toLocaleString()}
+                            </span>
+                            <span className="text-muted-foreground">pts / mo</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ≈ ₹{plan.priceInr.toLocaleString()}
+                          </p>
+                        </>
                       )}
                     </div>
 
@@ -384,21 +339,15 @@ export const SubscriptionsContent = () => {
                       variant={isCurrentPlan ? "outline" : plan.popular ? "default" : "outline"}
                     >
                       {processingPlan === plan.id ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Processing...
-                        </>
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Processing...</>
                       ) : isCurrentPlan ? (
                         "Current Plan"
                       ) : plan.cta === "contact" ? (
-                        <>
-                          <Phone className="h-4 w-4 mr-2" />
-                          Contact Sales
-                        </>
-                      ) : plan.cta === "free" ? (
+                        <><Phone className="h-4 w-4 mr-2" />Contact Sales</>
+                      ) : plan.points === 0 ? (
                         "Get Started Free"
                       ) : (
-                        "Subscribe Now"
+                        <><Coins className="h-4 w-4 mr-2" />Pay {plan.points.toLocaleString()} pts</>
                       )}
                     </Button>
                   </CardContent>

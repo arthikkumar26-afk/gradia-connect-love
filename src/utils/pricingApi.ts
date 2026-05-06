@@ -1,12 +1,18 @@
 // Mock API utilities for pricing plans and demo requests
 // For production: Replace localStorage with actual backend API calls
 
+// NOTE: All employer plans are wallet-points based (₹5 = 1 pt).
+// Razorpay is only used for *loading* points into the wallet, never for direct
+// subscription charges. UI must show points; INR shown as a reference only.
+
 export interface PricingPlan {
   id: 'starter' | 'growth' | 'professional' | 'enterprise';
   name: string;
   subtitle?: string;
-  monthlyPrice: number;
-  annualPrice: number;
+  /** Wallet points cost for 1 month of this plan. 0 = free tier. */
+  points: number;
+  /** Reference INR equivalent (points × 5). Display-only. */
+  priceInr: number;
   features: string[];
   limits: {
     jobPosts: string;
@@ -45,8 +51,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'starter',
     name: 'Starter',
     subtitle: 'For small teams getting started',
-    monthlyPrice: 0,
-    annualPrice: 0,
+    points: 0,
+    priceInr: 0,
     limits: {
       jobPosts: 'Up to 3 active job posts',
       seats: '1 user seat',
@@ -64,8 +70,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'growth',
     name: 'Growth',
     subtitle: 'Scale your hiring pipeline',
-    monthlyPrice: 4999,
-    annualPrice: 49990,
+    points: 1000,
+    priceInr: 5000,
     popular: true,
     limits: {
       jobPosts: 'Up to 25 active job posts',
@@ -88,8 +94,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'professional',
     name: 'Professional',
     subtitle: 'Full AI-powered recruitment',
-    monthlyPrice: 14999,
-    annualPrice: 149990,
+    points: 3000,
+    priceInr: 15000,
     limits: {
       jobPosts: 'Up to 100 active job posts',
       seats: '20 user seats',
@@ -114,8 +120,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'enterprise',
     name: 'Enterprise',
     subtitle: 'Custom solutions at scale',
-    monthlyPrice: 29000,
-    annualPrice: 290000,
+    points: 5800,
+    priceInr: 29000,
     limits: {
       jobPosts: 'Unlimited job posts',
       seats: 'Unlimited seats',
@@ -164,20 +170,20 @@ export const featureComparison = [
   { feature: 'Custom onboarding', starter: false, growth: false, professional: false, enterprise: true },
 ];
 
-// Mock subscription storage
-export const mockSubscribe = async (planId: string, billingCycle: 'monthly' | 'annual', userId: string) => {
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
+// Mock subscription storage (kept for legacy callers; real flow uses wallet deduction)
+export const mockSubscribe = async (planId: string, userId: string) => {
+  await new Promise(resolve => setTimeout(resolve, 800));
+
   const subscription = {
     id: `sub_${Date.now()}`,
     userId,
     planId,
-    billingCycle,
+    billingCycle: 'points' as const,
     status: 'active',
     startDate: new Date().toISOString(),
-    nextBillingDate: new Date(Date.now() + (billingCycle === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString(),
+    nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   };
-  
+
   localStorage.setItem(`subscription_${userId}`, JSON.stringify(subscription));
   
   return { success: true, subscription };
