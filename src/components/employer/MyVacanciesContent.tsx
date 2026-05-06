@@ -55,9 +55,17 @@ interface ApplicantRow {
   unlocked: boolean;
 }
 
-export const MyVacanciesContent = () => {
+interface MyVacanciesContentProps {
+  /** Override the employer whose vacancies are loaded (used for HR posting on behalf of an employer). */
+  employerIdOverride?: string;
+  /** Hide the wallet badge and unlock-pricing copy when in HR mode. */
+  hideWallet?: boolean;
+}
+
+export const MyVacanciesContent = ({ employerIdOverride, hideWallet = false }: MyVacanciesContentProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const effectiveEmployerId = employerIdOverride || user?.id;
   const [vacancies, setVacancies] = useState<VacancyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<VacancyRow | null>(null);
@@ -69,12 +77,12 @@ export const MyVacanciesContent = () => {
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
 
   const loadVacancies = async () => {
-    if (!user?.id) return;
+    if (!effectiveEmployerId) return;
     setLoading(true);
     const { data: jobs } = await supabase
       .from("jobs")
       .select("id, job_title, location, status, job_type, created_at")
-      .eq("employer_id", user.id)
+      .eq("employer_id", effectiveEmployerId)
       .order("created_at", { ascending: false });
 
     if (!jobs) {
@@ -112,7 +120,7 @@ export const MyVacanciesContent = () => {
   useEffect(() => {
     loadVacancies();
     loadWallet();
-  }, [user?.id]);
+  }, [effectiveEmployerId]);
 
   const openJob = async (job: VacancyRow) => {
     setSelectedJob(job);
@@ -142,7 +150,7 @@ export const MyVacanciesContent = () => {
       supabase
         .from("cv_unlocks")
         .select("application_id, candidate_id")
-        .eq("employer_id", user!.id)
+        .eq("employer_id", effectiveEmployerId!)
         .eq("job_id", job.id)
         .in("candidate_id", candidateIds),
     ]);
@@ -306,15 +314,17 @@ export const MyVacanciesContent = () => {
             <div>
               <h2 className="text-xl font-bold text-foreground">{selectedJob.job_title}</h2>
               <p className="text-xs text-muted-foreground">
-                {applicants.length} applicant{applicants.length !== 1 ? "s" : ""} • Unlock cost:{" "}
-                {UNLOCK_COST} pts per CV
+                {applicants.length} applicant{applicants.length !== 1 ? "s" : ""}
+                {!hideWallet && <> • Unlock cost: {UNLOCK_COST} pts per CV</>}
               </p>
             </div>
           </div>
-          <Badge variant="secondary" className="text-sm px-3 py-1.5">
-            <Wallet className="h-3.5 w-3.5 mr-1.5" />
-            {walletPoints} pts
-          </Badge>
+          {!hideWallet && (
+            <Badge variant="secondary" className="text-sm px-3 py-1.5">
+              <Wallet className="h-3.5 w-3.5 mr-1.5" />
+              {walletPoints} pts
+            </Badge>
+          )}
         </div>
 
         <Card>
@@ -486,15 +496,18 @@ export const MyVacanciesContent = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">My Vacancies</h2>
+          <h2 className="text-2xl font-bold text-foreground">Vacancies List</h2>
           <p className="text-sm text-muted-foreground">
-            Click a vacancy to view received resumes • {UNLOCK_COST} pts per CV unlock
+            Click a vacancy to view received resumes
+            {!hideWallet && <> • {UNLOCK_COST} pts per CV unlock</>}
           </p>
         </div>
-        <Badge variant="secondary" className="text-sm px-3 py-1.5">
-          <Wallet className="h-3.5 w-3.5 mr-1.5" />
-          {walletPoints} pts
-        </Badge>
+        {!hideWallet && (
+          <Badge variant="secondary" className="text-sm px-3 py-1.5">
+            <Wallet className="h-3.5 w-3.5 mr-1.5" />
+            {walletPoints} pts
+          </Badge>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

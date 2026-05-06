@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import gradiaLogo from "@/assets/gradia-logo.png";
 import HRJobPostingWizard from "@/components/hr/HRJobPostingWizard";
 import { InlineJobCreationForm } from "@/components/employer/InlineJobCreationForm";
+import { MyVacanciesContent } from "@/components/employer/MyVacanciesContent";
 import SampleCandidateDemo from "@/components/hr/SampleCandidateDemo";
 import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 
@@ -339,6 +340,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
     { id: "post", label: "Post Job", icon: Plus },
+    { id: "vacancies-list", label: "Vacancies List", icon: FileText },
     { id: "smm", label: "SMM (AI Flyers)", icon: Share2 },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
   ];
@@ -516,6 +518,12 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           />
         ) : (
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
+        );
+      case "vacancies-list":
+        return parentEmployerId ? (
+          <MyVacanciesContent employerIdOverride={parentEmployerId} hideWallet />
+        ) : (
+          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found.</CardContent></Card>
         );
       case "smm":
         return <HRSMMSection />;
