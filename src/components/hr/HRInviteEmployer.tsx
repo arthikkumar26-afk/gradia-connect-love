@@ -154,7 +154,7 @@ const HRInviteEmployer = ({ hrName, companyName, hrEmail }: Props) => {
   }, [tpl, companyNameInput, contactName, companyName, hrName, hrEmail, notes]);
 
   const finalHtml = editedHtml ?? generatedHtml;
-  const finalSubject = (subject || tpl.subject).replaceAll("{{company}}", companyNameInput || "your company");
+  const finalSubject = (subject || tpl.subject).replace(/\{\{company\}\}/g, companyNameInput || "your company");
 
   const handleTemplateChange = (k: TemplateKey) => {
     setTemplateKey(k);
