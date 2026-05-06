@@ -96,6 +96,7 @@ const FlyerGenerator = ({ job_title, company_name, location, experience, salary,
           <div className="text-xs text-muted-foreground flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Click "Generate AI Flyer" to create a social-media post</div>
         )}
       </div>
+      <FlyerManualEditor defaults={{ job_title, company_name, location, experience, salary, skills, highlights }} />
     </div>
   );
 };
