@@ -122,98 +122,78 @@ export const SubscriptionsContent = () => {
       toast.info("Our sales team will contact you shortly");
       return;
     }
-
     if (currentSubscription?.plan_id === planId) {
       toast.info("You are already subscribed to this plan");
       return;
     }
-
     setProcessingPlan(planId);
     try {
       const plan = pricingPlans.find((p) => p.id === planId);
       if (!plan) throw new Error("Plan not found");
 
-      const amount = billingCycle === "monthly" ? plan.monthlyPrice : plan.annualPrice;
-
-      if (amount <= 0) {
-        toast.info("Free plan does not require payment");
-        return;
-      }
-
-      if (!scriptLoaded || !(window as any).Razorpay) {
-        toast.error("Razorpay is still loading. Please try again in a moment.");
-        return;
-      }
-
-      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
-        body: {
-          amount,
-          currency: "INR",
-          plan_id: planId,
-          plan_name: `${plan.name} Plan`,
+      // Free / Starter plan — activate without wallet deduction
+      if (plan.points <= 0) {
+        await supabase.from("subscriptions").insert({
           employer_id: user?.id,
-          receipt: `sub_${planId}_${Date.now()}`,
-        },
-      });
-
-      if (orderError || !orderData?.order_id) {
-        throw new Error(orderError?.message || "Failed to create payment order");
+          plan_id: plan.id,
+          plan_name: plan.name,
+          status: "active",
+          billing_cycle: "points",
+          amount: 0,
+          currency: "PTS",
+          started_at: new Date().toISOString(),
+          ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          auto_renew: false,
+        });
+        await fetchSubscription();
+        toast.success(`${plan.name} plan activated`);
+        setActiveTab("confirmation");
+        return;
       }
 
-      const razorpay = new (window as any).Razorpay({
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: "Gradia",
-        description: `${plan.name} Plan Subscription`,
-        order_id: orderData.order_id,
-        prefill: {
-          name: profile?.full_name || "",
-          email: user?.email || "",
-          contact: profile?.mobile || "",
-        },
-        theme: { color: "#6366f1" },
-        modal: {
-          ondismiss: () => setProcessingPlan(null),
-        },
-        handler: async (response: any) => {
-          try {
-            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
-              body: {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                plan_id: planId,
-                plan_name: plan.name,
-                amount,
-                billing_cycle: billingCycle,
-                employer_id: user?.id,
-              },
-            });
-
-            if (verifyError || !verifyData?.success) {
-              throw new Error(verifyError?.message || verifyData?.error || "Payment verification failed");
-            }
-
-            await fetchSubscription();
-            toast.success(`Payment successful. ${plan.name} plan activated!`);
-            setActiveTab("confirmation");
-          } catch (error: any) {
-            toast.error(error.message || "Payment verification failed. Please contact support.");
-          } finally {
-            setProcessingPlan(null);
-          }
-        },
+      // Paid plan via wallet points
+      let wId = walletId;
+      let bal = walletPoints;
+      if (!wId) {
+        const { data } = await supabase
+          .from("wallets").select("id, points_balance").eq("user_id", user?.id).maybeSingle();
+        wId = data?.id ?? null;
+        bal = data?.points_balance ?? 0;
+      }
+      if (!wId || bal < plan.points) {
+        toast.error(`Insufficient points. Need ${plan.points} pts, balance: ${bal} pts. Top up your wallet.`);
+        return;
+      }
+      const newBal = bal - plan.points;
+      const { error: updErr } = await supabase
+        .from("wallets").update({ points_balance: newBal }).eq("id", wId);
+      if (updErr) throw updErr;
+      await supabase.from("wallet_transactions").insert({
+        wallet_id: wId,
+        transaction_type: "debit",
+        category: "subscription",
+        points: plan.points,
+        description: `${plan.name} Plan (1 month) — wallet points`,
       });
-
-      razorpay.on("payment.failed", (response: any) => {
-        toast.error(response.error?.description || "Payment failed. Please try again.");
-        setProcessingPlan(null);
+      await supabase.from("subscriptions").insert({
+        employer_id: user?.id,
+        plan_id: plan.id,
+        plan_name: plan.name,
+        status: "active",
+        billing_cycle: "points",
+        amount: plan.points,
+        currency: "PTS",
+        started_at: new Date().toISOString(),
+        ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        auto_renew: false,
       });
-
-      razorpay.open();
+      setWalletPoints(newBal);
+      await fetchSubscription();
+      toast.success(`${plan.points} pts deducted. ${plan.name} plan activated. New balance: ${newBal} pts.`);
+      setActiveTab("confirmation");
     } catch (error: any) {
-      toast.error(error.message || "Failed to process subscription");
+      toast.error(error.message || "Failed to activate plan");
+    } finally {
       setProcessingPlan(null);
     }
   };
