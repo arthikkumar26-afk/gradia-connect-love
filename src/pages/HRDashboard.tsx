@@ -16,6 +16,7 @@ import HRCandidateInfoSheet from "@/components/hr/HRCandidateInfoSheet";
 import HRCVScrutiny from "@/components/hr/HRCVScrutiny";
 import HRCandidatesData from "@/components/hr/HRCandidatesData";
 import HRInviteCandidate from "@/components/hr/HRInviteCandidate";
+import HRInviteEmployer from "@/components/hr/HRInviteEmployer";
 import HRCandidateProfileDialog from "@/components/hr/HRCandidateProfileDialog";
 import HREmailStatus from "@/components/hr/HREmailStatus";
 import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
@@ -286,6 +287,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   };
 
   const employerMenu = [
+    { id: "invite-employer", label: "Invite Employer", icon: Building },
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
@@ -603,6 +605,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 )}
             </CardContent>
           </Card>
+        );
+      case "invite-employer":
+        return (
+          <HRInviteEmployer
+            hrName={profile?.full_name || "HR Team"}
+            companyName={parentEmployerName || "Gradia"}
+            hrEmail={user?.email || "info@gradiaa.com"}
+          />
         );
       case "candidates-data":
         return parentEmployerId && user ? (
