@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, ArrowRight, ArrowLeft, Sparkles, Eye, CheckCircle2, Building2, Briefcase, FileText, Send } from "lucide-react";
+import { Loader2, ArrowRight, ArrowLeft, Sparkles, Eye, CheckCircle2, Building2, Briefcase, FileText, Send, Image as ImageIcon } from "lucide-react";
+import FlyerGenerator from "@/components/hr/FlyerGenerator";
 import { toast } from "sonner";
 
 const schema = z.object({
@@ -249,6 +250,23 @@ export const HRJobPostingWizard = ({ parentEmployerId, parentEmployerName, onPos
               <Label>Requirements *</Label>
               <Textarea rows={6} {...form.register("requirements")} placeholder="Qualifications, certifications, must-have skills..." />
               {form.formState.errors.requirements && <p className="text-xs text-destructive mt-1">{form.formState.errors.requirements.message}</p>}
+            </div>
+            <div className="border border-border rounded-lg p-3 bg-muted/20">
+              <div className="flex items-center gap-2 mb-2">
+                <ImageIcon className="h-4 w-4 text-primary" />
+                <h4 className="text-sm font-semibold">AI Social-Media Flyer</h4>
+                <Badge variant="outline" className="text-[10px]">Optional</Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-2">Generate a hiring flyer for Instagram / LinkedIn / WhatsApp from this job's details.</p>
+              <FlyerGenerator
+                job_title={values.job_title}
+                company_name={parentEmployerName}
+                location={values.location}
+                experience={values.experience_required}
+                salary={values.salary_range}
+                skills={values.skills}
+                compact
+              />
             </div>
           </div>
         )}

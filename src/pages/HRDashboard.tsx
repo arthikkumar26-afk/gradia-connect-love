@@ -24,6 +24,7 @@ import TransferCandidateDialog from "@/components/hr/TransferCandidateDialog";
 import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
 import HRCreateEmployer from "@/components/hr/HRCreateEmployer";
 import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
+import HRSMMSection from "@/components/hr/HRSMMSection";
 import { Send } from "lucide-react";
 
 interface JobRow {
@@ -335,6 +336,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
     { id: "post", label: "Post Job", icon: Plus },
+    { id: "smm", label: "SMM (AI Flyers)", icon: Share2 },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
   ];
   const candidateMenu = [
@@ -512,6 +514,8 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
         ) : (
           <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
         );
+      case "smm":
+        return <HRSMMSection />;
       case "candidates":
         return (
           <div className="space-y-4">
