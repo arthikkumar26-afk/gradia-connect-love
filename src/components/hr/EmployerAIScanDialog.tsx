@@ -72,10 +72,10 @@ const EmployerAIScanDialog = ({ open, onClose, employerId, employerName, employe
       setLoading(true);
       const { data } = await supabase
         .from("jobs")
-        .select("id, job_title, location, status, preferred_role, experience_required, skills, category")
+        .select("id, job_title, location, status, experience_required, skills, category")
         .eq("employer_id", employerId)
         .order("created_at", { ascending: false });
-      setJobs((data as JobLite[]) || []);
+      setJobs(((data as any[]) || []) as JobLite[]);
       setLoading(false);
       setSelectedJob(null);
       setMatches([]);
