@@ -130,19 +130,17 @@ const HRCreateEmployer = ({ onCreated }: Props) => {
           </div>
         </div>
 
-        {/* Plan selection */}
+        {/* Plan selection — wallet points based (₹5 = 1 pt) */}
         <div className="space-y-2">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <Label className="text-sm font-semibold">Select Plan</Label>
-            <div className="flex items-center gap-1 bg-muted rounded-md p-0.5">
-              <button type="button" onClick={() => setBillingCycle("monthly")} className={cn("px-3 py-1 text-xs rounded", billingCycle === "monthly" ? "bg-background shadow font-medium" : "text-muted-foreground")}>Monthly</button>
-              <button type="button" onClick={() => setBillingCycle("yearly")} className={cn("px-3 py-1 text-xs rounded", billingCycle === "yearly" ? "bg-background shadow font-medium" : "text-muted-foreground")}>Yearly · Save 15%</button>
-            </div>
+            <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <Coins className="h-3 w-3 text-amber-500" /> Paid via wallet points · ₹5 = 1 pt
+            </span>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
             {PLANS.map(p => {
               const active = planId === p.id;
-              const price = billingCycle === "yearly" ? Math.round(p.price * 12 * 0.85) : p.price;
               return (
                 <button
                   key={p.id}
@@ -158,10 +156,12 @@ const HRCreateEmployer = ({ onCreated }: Props) => {
                     <span className="text-sm font-semibold">{p.name}</span>
                     {active && <Check className="h-3.5 w-3.5 text-primary" />}
                   </div>
-                  <div className="text-lg font-bold">
-                    {p.price === 0 ? "Free" : `₹${price.toLocaleString()}`}
-                    {p.price > 0 && <span className="text-[10px] text-muted-foreground font-normal">/{billingCycle === "yearly" ? "yr" : "mo"}</span>}
+                  <div className="text-lg font-bold flex items-center gap-1">
+                    <Coins className="h-3.5 w-3.5 text-amber-500" />
+                    {p.points.toLocaleString()}
+                    <span className="text-[10px] text-muted-foreground font-normal">pts</span>
                   </div>
+                  <div className="text-[10px] text-muted-foreground">≈ ₹{(p.points * 5).toLocaleString()}</div>
                   <ul className="mt-2 space-y-0.5">
                     {p.features.slice(0, 3).map(f => (
                       <li key={f} className="text-[10px] text-muted-foreground flex items-start gap-1">
