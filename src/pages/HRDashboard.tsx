@@ -914,6 +914,14 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           hrUserId={user.id}
         />
       )}
+      {viewEmployer && (
+        <HREmployerVacanciesDialog
+          open={!!viewEmployer}
+          onClose={() => setViewEmployer(null)}
+          employerId={viewEmployer.id}
+          employerName={viewEmployer.name}
+        />
+      )}
     </div>
   );
 };
