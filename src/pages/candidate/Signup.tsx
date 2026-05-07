@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import SignupGuidedTour, { TourStep } from "@/components/signup/SignupGuidedTour";
 import { useSearchParams } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
