@@ -827,6 +827,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                     key={item.id}
                     onClick={() => {
                       setSelectedCandidateId(null);
+                      setProfileEmployerId(null);
                       setActiveTab(item.id);
                       if (window.innerWidth < 768) setSidebarOpen(false);
                     }}
