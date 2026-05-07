@@ -560,13 +560,6 @@ export const UpgradePlanContent = () => {
                     ? "Processing..."
                     : isCurrent
                     ? "Current Plan"
-                    : plan.cta === "contact"
-                    ? <>
-                        <Phone className="w-4 h-4 mr-1" />
-                        Contact Sales
-                      </>
-                    : plan.cta === "free"
-                    ? "Get Started Free"
                     : isUpgrade
                     ? `Upgrade – Pay ₹${(plan.points * 5 + addonRupees).toLocaleString("en-IN")}${addonRupees ? ` (+${addonPoints} pts add-ons)` : ''}`
                     : `Switch – Pay ₹${(plan.points * 5 + addonRupees).toLocaleString("en-IN")}${addonRupees ? ` (+${addonPoints} pts add-ons)` : ''}`}
