@@ -625,9 +625,9 @@ const SignupPortal = () => {
 
   // Plans data for payment step (points-based)
   const employerPlans = [
-    { id: 'growth', name: 'Growth', duration: '1 Month', price: 5000, points: 58000, popular: true, features: ['15 job posts', '5 team seats', 'Screening tests', 'Analytics dashboard', 'Priority support'] },
-    { id: 'professional', name: 'Professional', duration: '1 Month', price: 15000, points: 3000, features: ['50 job posts', '15 team seats', 'AI interview automation', 'Advanced analytics', 'Dedicated account manager', 'API access'] },
-    { id: 'enterprise', name: 'Enterprise', duration: '1 Month', price: 29000, points: 5800, features: ['Unlimited job posts', 'Unlimited seats', 'Custom integrations', 'SLA guarantee', 'White-label options', 'Dedicated support team'] },
+    { id: 'growth', name: 'Growth', duration: '1 Month', price: 5000, points: 1000, popular: true, features: ['15 job posts', '5 team seats', 'Screening tests', 'Analytics dashboard', 'Priority support'] },
+    { id: 'professional', name: 'Professional', duration: '1 Month', price: 10000, points: 2000, features: ['50 job posts', '15 team seats', 'AI interview automation', 'Advanced analytics', 'Dedicated account manager', 'API access'] },
+    { id: 'enterprise', name: 'Enterprise', duration: '1 Month', price: 20000, points: 4000, features: ['Unlimited job posts', 'Unlimited seats', 'Custom integrations', 'SLA guarantee', 'White-label options', 'Dedicated support team'] },
   ];
 
   const [planLoading, setPlanLoading] = useState<string | null>(null);

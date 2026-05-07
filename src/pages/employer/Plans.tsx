@@ -16,17 +16,11 @@ declare global {
 
 const plans = [
   {
-    id: 'starter',
-    name: 'Starter',
-    duration: 'Free',
-    price: 0,
-    features: ['3 job posts', '1 team seat', 'Basic applicant tracker', 'Email support'],
-  },
-  {
     id: 'growth',
     name: 'Growth',
     duration: '1 Month',
-    price: 58000,
+    price: 5000,
+    points: 1000,
     popular: true,
     features: ['15 job posts', '5 team seats', 'Screening tests', 'Analytics dashboard', 'Priority support'],
   },
@@ -34,14 +28,16 @@ const plans = [
     id: 'professional',
     name: 'Professional',
     duration: '1 Month',
-    price: 15000,
+    price: 10000,
+    points: 2000,
     features: ['50 job posts', '15 team seats', 'AI interview automation', 'Advanced analytics', 'Dedicated account manager', 'API access'],
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
     duration: '1 Month',
-    price: 29000,
+    price: 20000,
+    points: 4000,
     features: ['Unlimited job posts', 'Unlimited seats', 'Custom integrations', 'SLA guarantee', 'White-label options', 'Dedicated support team'],
   },
 ];
