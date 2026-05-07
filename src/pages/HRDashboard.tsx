@@ -343,7 +343,6 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
     { id: "create-employer", label: "Create Employer Account", icon: Plus },
     { id: "jobs", label: "Jobs", icon: Briefcase },
     { id: "employers", label: "Employers Data", icon: Building },
-    { id: "post", label: "Post Job", icon: Plus },
     { id: "vacancies-list", label: "Vacancies List", icon: FileText },
     { id: "smm", label: "SMM (AI Flyers)", icon: Share2 },
     { id: "vacancies", label: "Vacancies", icon: Briefcase },
@@ -509,20 +508,6 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           </Card>
         );
       }
-      case "post":
-        return parentEmployerId ? (
-          <InlineJobCreationForm
-            employerIdOverride={parentEmployerId}
-            employerNameOverride={parentEmployerName}
-            onJobCreated={async () => {
-              if (parentEmployerId) await reloadJobs(parentEmployerId);
-              setActiveTab("jobs");
-            }}
-            onCancel={() => setActiveTab("jobs")}
-          />
-        ) : (
-          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
-        );
       case "vacancies-list":
         if (parentEmployerId) {
           return <MyVacanciesContent employerIdOverride={parentEmployerId} employerNameOverride={parentEmployerName} hideWallet />;
