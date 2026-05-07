@@ -327,6 +327,9 @@ export default function SubscriptionTab() {
         </div>
       </div>
 
+      {/* Skillory Voucher promo */}
+      <SkilloryVoucherCard />
+
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5 text-primary" />
         Secure payments via Razorpay · UPI, Cards, Net Banking & Wallets supported · Plan activates instantly
