@@ -2323,6 +2323,11 @@ const CandidateSignup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-4 py-12">
+      <SignupGuidedTour
+        storageKey={`gradia.candidate.signup.step.${currentStep}`}
+        runKey={stepTourKey}
+        steps={stepTourSteps}
+      />
       {currentStep === 'signup' && renderSignupStep()}
       {currentStep === 'resume' && renderResumeStep()}
       {currentStep === 'benefits' && renderBenefitsStep()}
