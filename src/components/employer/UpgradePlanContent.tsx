@@ -31,7 +31,7 @@ const plans = [
     id: "growth",
     name: "Growth",
     subtitle: "Scale your hiring pipeline",
-    points: 1000,
+    points: 58000,
     icon: Star,
     popular: true,
     features: [
