@@ -61,6 +61,7 @@ const EmployerLogin = lazyWithRetry(() => import("./pages/EmployerLogin"));
 const EmployerDashboard = lazyWithRetry(() => import("./pages/EmployerDashboard"));
 const HRLogin = lazyWithRetry(() => import("./pages/HRLogin"));
 const HRDashboard = lazyWithRetry(() => import("./pages/HRDashboard"));
+const HREmployerProfile = lazyWithRetry(() => import("./pages/hr/EmployerProfile"));
 const HRPortalChoice = lazyWithRetry(() => import("./pages/HRPortalChoice"));
 const CandidateLogin = lazyWithRetry(() => import("./pages/CandidateLogin"));
 const ForgotPassword = lazyWithRetry(() => import("./pages/ForgotPassword"));
