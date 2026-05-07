@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 // Wallet-points pricing (₹5 = 1 pt). Mirrors employer plans in src/config/plans.ts
 const PLANS = [
   { id: "starter", name: "Starter", points: 1000, features: ["3 job posts", "1 team seat", "Basic ATS", "Email support"] },
-  { id: "growth", name: "Growth", points: 3000, popular: true, features: ["15 job posts", "5 team seats", "Screening tests", "Analytics"] },
+  { id: "growth", name: "Growth", points: 58000, popular: true, features: ["15 job posts", "5 team seats", "Screening tests", "Analytics"] },
   { id: "professional", name: "Professional", points: 5800, features: ["50 job posts", "15 seats", "AI interviews", "Advanced analytics"] },
   { id: "enterprise", name: "Enterprise", points: 12000, features: ["Unlimited posts", "Unlimited seats", "Custom integrations", "SLA"] },
 ];
