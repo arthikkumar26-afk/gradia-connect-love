@@ -12,26 +12,10 @@ import { CouponInput } from "@/components/shared/CouponInput";
 // Points-based pricing (₹5 = 1 point)
 const plans = [
   {
-    id: "starter",
-    name: "Starter",
-    subtitle: "For small teams getting started",
-    points: 0,
-    icon: Zap,
-    features: [
-      "Up to 3 active job posts",
-      "Basic candidate tracker",
-      "Email notifications",
-      "Standard job templates",
-      "Email support (48h response)",
-      "1 user seat",
-    ],
-    cta: "free" as const,
-  },
-  {
     id: "growth",
     name: "Growth",
     subtitle: "Scale your hiring pipeline",
-    points: 58000,
+    points: 1000,
     icon: Star,
     popular: true,
     features: [
@@ -52,7 +36,7 @@ const plans = [
     id: "professional",
     name: "Professional",
     subtitle: "Full AI-powered recruitment",
-    points: 3000,
+    points: 2000,
     icon: Rocket,
     badge: "Best Value",
     features: [
@@ -75,7 +59,7 @@ const plans = [
     id: "enterprise",
     name: "Enterprise",
     subtitle: "Custom solutions at scale",
-    points: 5800,
+    points: 4000,
     icon: Building2,
     features: [
       "Unlimited job posts & seats",
@@ -91,7 +75,7 @@ const plans = [
       "Custom integrations & API",
       "Advanced ROI & conversion reports",
     ],
-    cta: "contact" as const,
+    cta: "subscribe" as const,
   },
 ];
 
