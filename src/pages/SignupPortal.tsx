@@ -1139,7 +1139,7 @@ const SignupPortal = () => {
           )}
 
           {selectedRole === "employer" && activeSection === "become-employer" && (
-            <div>
+            <div data-tour-section="become-employer">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-white">Become an Employer</h1>
                 <p className="text-slate-400">Join us as a strategic partner and unlock exclusive opportunities</p>
