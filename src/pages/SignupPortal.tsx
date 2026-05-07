@@ -909,9 +909,32 @@ const SignupPortal = () => {
     );
   }
 
-  // Dashboard Layout with Sidebar
+  // Build dashboard tour steps from sidebar items
+  const dashboardTourSteps: TourStep[] = [
+    ...sidebarItems.map((item) => {
+      const descriptions: Record<string, string> = {
+        "become-employer": "Learn the benefits of partnering with Gradia — AI screening, branded company page, and dedicated support.",
+        "registration": "Fill in your details here to create an account. All fields with errors are highlighted as you go.",
+        "login": "Already have an account? This takes you straight to the login page.",
+        "job-alert": "Manage vacancies, payments, advertisements, CVs, interviews, feedback and offer letters — all in one place.",
+        "dashboard": "Preview your dashboard to see what you'll get after registration.",
+      };
+      return {
+        selector: `[data-tour="menu-${item.id}"]`,
+        title: item.label,
+        description: descriptions[item.id] || "Open this section to explore.",
+        placement: "right" as const,
+      };
+    }),
+  ];
+
   return (
     <div className="min-h-screen flex bg-slate-900">
+      <SignupGuidedTour
+        storageKey={`gradia.signup.tour.${selectedRole}`}
+        runKey={tourRunKey}
+        steps={dashboardTourSteps}
+      />
       {/* Sidebar */}
       <aside className={cn(
         "bg-slate-800 border-r border-slate-700 transition-all duration-300 flex flex-col sticky top-0 h-screen",
