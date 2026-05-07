@@ -586,13 +586,25 @@ export default function WalletTab({ userId }: { userId: string }) {
       </div>
 
       <Tabs defaultValue="pricing" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="pricing" className="gap-1 text-xs"><Coins className="h-3 w-3" /> Points Guide</TabsTrigger>
           <TabsTrigger value="load" className="gap-1 text-xs"><Plus className="h-3 w-3" /> Load Points</TabsTrigger>
+          <TabsTrigger value="voucher" className="gap-1 text-xs"><Gift className="h-3 w-3" /> Skillory Voucher</TabsTrigger>
           <TabsTrigger value="usage" className="gap-1 text-xs"><PieChart className="h-3 w-3" /> Usage</TabsTrigger>
           <TabsTrigger value="invoices" className="gap-1 text-xs"><Receipt className="h-3 w-3" /> Invoices</TabsTrigger>
           <TabsTrigger value="history" className="gap-1 text-xs"><Clock className="h-3 w-3" /> History</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="voucher" className="mt-4">
+          <SkilloryVoucherWalletSection
+            walletId={wallet?.id || null}
+            currentPoints={wallet?.points_balance || 0}
+            onRedeemed={(newBal) => {
+              setWallet((prev) => prev ? { ...prev, points_balance: newBal } : prev);
+              fetchWallet();
+            }}
+          />
+        </TabsContent>
 
         {/* Pricing & Pipeline (per-feature deduction breakdown) */}
         <TabsContent value="pricing" className="mt-4">
