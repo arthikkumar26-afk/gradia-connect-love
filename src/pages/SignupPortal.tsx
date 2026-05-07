@@ -763,6 +763,24 @@ const SignupPortal = () => {
   if (!selectedRole) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <SignupGuidedTour
+          storageKey="gradia.signup.tour.role"
+          runKey={tourRunKey}
+          steps={[
+            {
+              selector: '[data-tour="role-candidate"]',
+              title: "Candidate Portal",
+              description: "Pick this if you're looking for jobs. You'll get access to job search, AI resume builder, mock interviews, and application tracking.",
+              placement: "right",
+            },
+            {
+              selector: '[data-tour="role-employer"]',
+              title: "Employer Portal",
+              description: "Pick this if you want to hire. Post jobs, browse verified talent, run AI screening, and manage your hiring pipeline.",
+              placement: "left",
+            },
+          ]}
+        />
         <div className="w-full max-w-4xl">
           <Link 
             to="/" 
