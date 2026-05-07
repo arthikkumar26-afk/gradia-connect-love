@@ -2093,6 +2093,12 @@ const CandidateSignup = () => {
                 <span className="text-foreground">₹{servicesTotal.toLocaleString('en-IN')}</span>
               </div>
             )}
+            {includeSkilloryVoucher && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Skillory Voucher</span>
+                <span className="text-foreground">₹{SKILLORY_VOUCHER_PRICE.toLocaleString('en-IN')}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between pt-2 mt-2 border-t">
               <div>
                 <p className="text-sm text-muted-foreground">Amount due</p>
