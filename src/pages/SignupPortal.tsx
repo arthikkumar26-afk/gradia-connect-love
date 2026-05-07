@@ -460,6 +460,20 @@ const SignupPortal = () => {
       }
 
       if (authData.user) {
+        // Ensure we have an active session (signUp may not auto-create one if email confirmation is on)
+        if (!authData.session) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) {
+            console.error("Auto sign-in after signup failed:", signInError);
+            toast({
+              title: "Please sign in",
+              description: "Account created. Please log in to continue.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+
         const { error: profileError } = await supabase
           .from("profiles")
           .upsert({
