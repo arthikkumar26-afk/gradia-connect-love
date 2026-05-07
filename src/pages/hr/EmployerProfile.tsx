@@ -66,8 +66,15 @@ const stageBadgeClass = (s: string | null) => {
   }
 };
 
-const HREmployerProfile = () => {
-  const { employerId = "" } = useParams();
+interface EmployerProfileProps {
+  employerId?: string;
+  onBack?: () => void;
+  embedded?: boolean;
+}
+
+const HREmployerProfile = ({ employerId: employerIdProp, onBack, embedded }: EmployerProfileProps = {}) => {
+  const params = useParams();
+  const employerId = employerIdProp || params.employerId || "";
   const navigate = useNavigate();
   const { user } = useAuth();
   const [emp, setEmp] = useState<Employer | null>(null);
