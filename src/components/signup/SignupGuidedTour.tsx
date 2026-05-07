@@ -63,6 +63,13 @@ const SignupGuidedTour = ({ steps, storageKey, runKey, onClose }: SignupGuidedTo
     }
   }, [step]);
 
+  useEffect(() => {
+    if (active && step?.onEnter) {
+      step.onEnter();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, index]);
+
   useLayoutEffect(() => {
     measure();
   }, [measure, index, active]);
