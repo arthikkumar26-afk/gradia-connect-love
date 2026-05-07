@@ -2203,10 +2203,6 @@ const CandidateSignup = () => {
         </Card>
         </div>
 
-        {/* Skillory Voucher promo */}
-        <div className="mt-6">
-          <SkilloryVoucherCard />
-        </div>
       </div>
     );
   };
