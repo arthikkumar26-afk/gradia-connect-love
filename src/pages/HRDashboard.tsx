@@ -27,6 +27,7 @@ import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
 import HRCreateEmployer from "@/components/hr/HRCreateEmployer";
 import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
 import HREmployerVacanciesDialog from "@/components/hr/HREmployerVacanciesDialog";
+import HREmployerProfile from "@/pages/hr/EmployerProfile";
 import HRSMMSection from "@/components/hr/HRSMMSection";
 import { Send } from "lucide-react";
 
@@ -112,6 +113,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [candidateSearch, setCandidateSearch] = useState("");
   const [scanEmployer, setScanEmployer] = useState<{ id: string; name: string; email: string } | null>(null);
   const [viewEmployer, setViewEmployer] = useState<{ id: string; name: string } | null>(null);
+  const [profileEmployerId, setProfileEmployerId] = useState<string | null>(null);
   const [employerStats, setEmployerStats] = useState<Record<string, { vacancies: number; finished: number }>>({});
   const [allEmployerIds, setAllEmployerIds] = useState<string[]>([]);
 
@@ -674,7 +676,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                     {employers.map(e => {
                       const stats = employerStats[e.id] || { vacancies: 0, finished: 0 };
                       return (
-                        <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap hover:bg-muted/40 cursor-pointer transition" onClick={() => navigate(`/hr/employer/${e.id}`)}>
+                        <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap hover:bg-muted/40 cursor-pointer transition" onClick={() => setProfileEmployerId(e.id)}>
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                               <Building className="h-4 w-4 text-primary" />
@@ -692,7 +694,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                               {stats.finished} interviews finished
                             </Badge>
                             <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
-                            <Button size="sm" variant="secondary" onClick={() => navigate(`/hr/employer/${e.id}`)}>
+                            <Button size="sm" variant="secondary" onClick={() => setProfileEmployerId(e.id)}>
                               <Briefcase className="h-3.5 w-3.5 mr-1" /> View Profile
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => setScanEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer", email: e.email || "" })}>
@@ -825,6 +827,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                     key={item.id}
                     onClick={() => {
                       setSelectedCandidateId(null);
+                      setProfileEmployerId(null);
                       setActiveTab(item.id);
                       if (window.innerWidth < 768) setSidebarOpen(false);
                     }}
@@ -885,7 +888,13 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 </Button>
               </div>
             </div>
-            {selectedCandidateId ? (
+            {profileEmployerId ? (
+              <HREmployerProfile
+                employerId={profileEmployerId}
+                onBack={() => setProfileEmployerId(null)}
+                embedded
+              />
+            ) : selectedCandidateId ? (
               <HRCandidateProfileDialog
                 open={true}
                 onClose={() => setSelectedCandidateId(null)}

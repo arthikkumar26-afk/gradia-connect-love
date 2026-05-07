@@ -66,8 +66,15 @@ const stageBadgeClass = (s: string | null) => {
   }
 };
 
-const HREmployerProfile = () => {
-  const { employerId = "" } = useParams();
+interface EmployerProfileProps {
+  employerId?: string;
+  onBack?: () => void;
+  embedded?: boolean;
+}
+
+const HREmployerProfile = ({ employerId: employerIdProp, onBack, embedded }: EmployerProfileProps = {}) => {
+  const params = useParams();
+  const employerId = employerIdProp || params.employerId || "";
   const navigate = useNavigate();
   const { user } = useAuth();
   const [emp, setEmp] = useState<Employer | null>(null);
@@ -154,9 +161,14 @@ const HREmployerProfile = () => {
     return { total, hired, rejected, withdrawn, inProgress, attended, avgScore };
   }, [rows]);
 
+  const goBack = () => {
+    if (onBack) onBack();
+    else navigate("/hr/dashboard/employer");
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex items-center justify-center py-16">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
@@ -164,9 +176,9 @@ const HREmployerProfile = () => {
 
   if (!emp) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 py-16">
         <p className="text-sm text-muted-foreground">Employer not found.</p>
-        <Button variant="outline" onClick={() => navigate(-1)}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>
+        <Button variant="outline" onClick={goBack}><ArrowLeft className="h-4 w-4 mr-1" /> Back</Button>
       </div>
     );
   }
@@ -174,10 +186,10 @@ const HREmployerProfile = () => {
   const empName = emp.company_name || emp.full_name || "Employer";
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <div className="border-b bg-background sticky top-0 z-20">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/hr/dashboard/employer")}>
+    <div className={embedded ? "" : "min-h-screen bg-muted/20"}>
+      <div className={embedded ? "flex items-center justify-between gap-3 flex-wrap mb-4" : "border-b bg-background sticky top-0 z-20"}>
+        <div className={embedded ? "flex items-center justify-between gap-3 flex-wrap w-full" : "container mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap"}>
+          <Button variant="ghost" size="sm" onClick={goBack}>
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to Employers
           </Button>
           <div className="flex items-center gap-2">
@@ -191,7 +203,7 @@ const HREmployerProfile = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6 space-y-5">
+      <div className={embedded ? "space-y-5" : "container mx-auto px-4 py-6 space-y-5"}>
         {/* Profile header */}
         <Card>
           <CardContent className="p-5 flex items-start gap-4 flex-wrap">
