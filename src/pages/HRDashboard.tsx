@@ -27,6 +27,7 @@ import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
 import HRCreateEmployer from "@/components/hr/HRCreateEmployer";
 import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
 import HREmployerVacanciesDialog from "@/components/hr/HREmployerVacanciesDialog";
+import HREmployerProfile from "@/pages/hr/EmployerProfile";
 import HRSMMSection from "@/components/hr/HRSMMSection";
 import { Send } from "lucide-react";
 
