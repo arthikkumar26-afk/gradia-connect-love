@@ -245,7 +245,7 @@ export default function Plans() {
         {retryError && <div className="mb-8 p-4 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive text-center max-w-md mx-auto">{retryError}</div>}
 
         {/* Plans selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {plans.map((plan) => {
             const isSelected = selectedPlanId === plan.id;
             return (
@@ -268,8 +268,10 @@ export default function Plans() {
                   <h3 className="text-2xl font-bold text-foreground mb-1">{plan.name} Plan</h3>
                   <p className="text-sm text-muted-foreground mb-4">Duration: {plan.duration}</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-primary">{plan.price === 0 ? 'Free' : `₹${plan.price.toLocaleString("en-IN")}`}</span>
+                    <span className="text-3xl font-bold text-primary">{plan.points.toLocaleString('en-IN')} pts</span>
+                    <span className="text-sm text-muted-foreground">/ {plan.duration.toLowerCase()}</span>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">≈ ₹{plan.price.toLocaleString('en-IN')}</p>
                 </div>
                 <ul className="space-y-3 mb-2 flex-grow">
                   {plan.features.map((feature, index) => (
