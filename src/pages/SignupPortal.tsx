@@ -996,6 +996,22 @@ const SignupPortal = () => {
           ))}
         </nav>
 
+        {/* Help / Tour */}
+        <div className="p-4 border-t border-slate-700">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-cyan-300 hover:text-white hover:bg-cyan-500/10"
+            onClick={() => {
+              localStorage.removeItem(`gradia.signup.tour.${selectedRole}`);
+              setTourRunKey((k) => k + 1);
+            }}
+          >
+            <HelpCircle className="h-4 w-4" />
+            {!sidebarCollapsed && <span className="ml-2">Take a tour</span>}
+          </Button>
+        </div>
+
         {/* Sidebar Toggle */}
         <div className="p-4 border-t border-slate-700">
           <Button 
