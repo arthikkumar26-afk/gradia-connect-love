@@ -363,10 +363,11 @@ const HREmployerProfile = () => {
           hrUserId={user.id}
         />
       )}
-      {transferOpen && (
+      {transferOpen && user && (
         <TransferEmployerDialog
           open={transferOpen}
-          onClose={() => setTransferOpen(false)}
+          onOpenChange={setTransferOpen}
+          hrUserId={user.id}
           employerId={emp.id}
           employerName={empName}
         />
