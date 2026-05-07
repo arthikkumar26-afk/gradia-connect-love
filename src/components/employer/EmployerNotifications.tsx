@@ -103,6 +103,39 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
     }
   };
 
+  const sectionForType = (type: string): string | null => {
+    switch (type) {
+      case "candidate_suggestion":
+        return "suggested-candidates";
+      case "slot_booking":
+        return "interview-pipeline";
+      case "application":
+        return "talent-pool";
+      default:
+        return null;
+    }
+  };
+
+  const handleOpen = async (notif: Notification) => {
+    if (!notif.is_read) {
+      await supabase
+        .from("employer_notifications")
+        .update({ is_read: true })
+        .eq("id", notif.id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notif.id ? { ...n, is_read: true } : n))
+      );
+      setUnreadCount((c) => Math.max(0, c - 1));
+    }
+    const section = sectionForType(notif.type);
+    if (section) {
+      window.dispatchEvent(
+        new CustomEvent("employer:navigate", { detail: { menu: section } })
+      );
+    }
+    setOpen(false);
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
