@@ -26,7 +26,7 @@ const plans = [
     id: 'growth',
     name: 'Growth',
     duration: '1 Month',
-    price: 5000,
+    price: 58000,
     popular: true,
     features: ['15 job posts', '5 team seats', 'Screening tests', 'Analytics dashboard', 'Priority support'],
   },
