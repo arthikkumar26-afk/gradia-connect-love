@@ -676,7 +676,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                     {employers.map(e => {
                       const stats = employerStats[e.id] || { vacancies: 0, finished: 0 };
                       return (
-                        <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap hover:bg-muted/40 cursor-pointer transition" onClick={() => navigate(`/hr/employer/${e.id}`)}>
+                        <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap hover:bg-muted/40 cursor-pointer transition" onClick={() => setProfileEmployerId(e.id)}>
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                               <Building className="h-4 w-4 text-primary" />
