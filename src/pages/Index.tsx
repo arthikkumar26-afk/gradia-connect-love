@@ -1,6 +1,7 @@
 import Hero from "@/components/sections/Hero";
 import ExternalJobsSection from "@/components/sections/ExternalJobsSection";
 import SalesChatbot from "@/components/SalesChatbot";
+import SignupGuidedTour from "@/components/signup/SignupGuidedTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
