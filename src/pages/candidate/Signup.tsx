@@ -1979,6 +1979,24 @@ const CandidateSignup = () => {
             if (error || !data?.activated) {
               console.warn('[registration] activation flag not set:', error?.message || data?.message);
             }
+            // Create Skillory voucher if included
+            if (includeSkilloryVoucher) {
+              try {
+                const code = 'SKL-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Date.now().toString(36).toUpperCase().slice(-4);
+                await supabase.from('skillory_vouchers').insert({
+                  user_id: user.id,
+                  voucher_code: code,
+                  amount_paid: SKILLORY_VOUCHER_PRICE,
+                  points_value: SKILLORY_VOUCHER_POINTS,
+                  status: 'purchased',
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                });
+                toast({ title: '🎁 Skillory Voucher added', description: `Code: ${code} — Redeem from your Wallet.` });
+              } catch (e) {
+                console.warn('[voucher] insert failed', e);
+              }
+            }
             toast({
               title: '🎉 Registration Successful!',
               description: 'Welcome to Gradia. Your candidate account is now active.',
