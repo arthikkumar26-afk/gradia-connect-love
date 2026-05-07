@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import SignupGuidedTour, { TourStep } from "@/components/signup/SignupGuidedTour";
 import { useSearchParams } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -312,6 +313,56 @@ const CandidateSignup = () => {
   // The single source of truth for "is this user already onboarded?" is the backend
   // session returned by Supabase auth.
   const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
+  const [stepTourKey, setStepTourKey] = useState(0);
+  const isFirstStepRef = useRef(true);
+
+  // When user clicks Continue and lands on a new step, fire a one-step tour
+  useEffect(() => {
+    if (isFirstStepRef.current) {
+      isFirstStepRef.current = false;
+      return;
+    }
+    setStepTourKey((k) => k + 1);
+  }, [currentStep]);
+
+  const stepTourSteps: TourStep[] = useMemo(() => {
+    const map: Record<WizardStep, { title: string; description: string }> = {
+      signup: {
+        title: "Create Your Account",
+        description: "Fill in your name, email, mobile and password. Errors highlight inline.",
+      },
+      resume: {
+        title: "AI Resume Scan",
+        description: "Upload your resume (PDF/DOC). Our AI parses skills, experience and education automatically.",
+      },
+      benefits: {
+        title: "Your Benefits",
+        description: "Review what you unlock as a Gradia candidate, then click Continue to proceed.",
+      },
+      agreement: {
+        title: "Candidate Agreement",
+        description: "Read the agreement carefully. Tick the checkbox and click Continue when ready.",
+      },
+      terms: {
+        title: "Terms & Conditions",
+        description: "Scroll all the way down to enable the checkbox, then accept and continue.",
+      },
+      plan: {
+        title: "Choose Your Plan",
+        description: "Select a plan that fits your goals. You can also unlock individual features later.",
+      },
+    };
+    const detail = map[currentStep];
+    return [
+      {
+        selector: `[data-step="${currentStep}"]`,
+        title: detail.title,
+        description: detail.description,
+        placement: "top",
+      },
+    ];
+  }, [currentStep]);
+
 
   // Track if user just signed up in THIS tab session (to allow wizard flow to complete
   // without the auth-listener bouncing them to dashboard mid-flow).
@@ -979,7 +1030,7 @@ const CandidateSignup = () => {
 
   // Render signup form step
   const renderSignupStep = () => (
-    <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-start">
+    <div data-step="signup" className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-start">
       {/* Left Side - Benefits */}
       <div className="hidden md:block space-y-6 animate-fade-in sticky top-8">
         <Link 
@@ -1587,7 +1638,7 @@ const CandidateSignup = () => {
 
   // Render benefits step
   const renderBenefitsStep = () => (
-    <div className="w-full max-w-4xl">
+    <div data-step="benefits" className="w-full max-w-4xl">
       <ProgressIndicator />
       <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-8">
@@ -1632,7 +1683,7 @@ const CandidateSignup = () => {
 
   // Render agreement step
   const renderAgreementStep = () => (
-    <div className="w-full max-w-4xl">
+    <div data-step="agreement" className="w-full max-w-4xl">
       <ProgressIndicator />
       <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-8">
@@ -1708,7 +1759,7 @@ const CandidateSignup = () => {
 
   // Render terms step
   const renderTermsStep = () => (
-    <div className="w-full max-w-4xl">
+    <div data-step="terms" className="w-full max-w-4xl">
       <ProgressIndicator />
       <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-8">
@@ -1787,7 +1838,7 @@ const CandidateSignup = () => {
 
   // Render resume scan step
   const renderResumeStep = () => (
-    <div className="w-full max-w-3xl">
+    <div data-step="resume" className="w-full max-w-3xl">
       <ProgressIndicator />
       <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-6">
@@ -2035,7 +2086,7 @@ const CandidateSignup = () => {
 
   const renderPlanStep = () => {
     return (
-      <div className="w-full max-w-6xl">
+      <div data-step="plan" className="w-full max-w-6xl">
         <ProgressIndicator />
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-foreground mb-2">Registration Fee</h2>
@@ -2272,6 +2323,11 @@ const CandidateSignup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-4 py-12">
+      <SignupGuidedTour
+        storageKey={`gradia.candidate.signup.step.${currentStep}`}
+        runKey={stepTourKey}
+        steps={stepTourSteps}
+      />
       {currentStep === 'signup' && renderSignupStep()}
       {currentStep === 'resume' && renderResumeStep()}
       {currentStep === 'benefits' && renderBenefitsStep()}
