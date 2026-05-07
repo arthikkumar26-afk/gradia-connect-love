@@ -694,7 +694,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                               {stats.finished} interviews finished
                             </Badge>
                             <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
-                            <Button size="sm" variant="secondary" onClick={() => navigate(`/hr/employer/${e.id}`)}>
+                            <Button size="sm" variant="secondary" onClick={() => setProfileEmployerId(e.id)}>
                               <Briefcase className="h-3.5 w-3.5 mr-1" /> View Profile
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => setScanEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer", email: e.email || "" })}>
