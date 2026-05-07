@@ -1,6 +1,7 @@
 import Hero from "@/components/sections/Hero";
 import ExternalJobsSection from "@/components/sections/ExternalJobsSection";
 import SalesChatbot from "@/components/SalesChatbot";
+import SignupGuidedTour from "@/components/signup/SignupGuidedTour";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -94,6 +95,23 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <SignupGuidedTour
+        storageKey="gradia.home.tour.v1"
+        steps={[
+          {
+            selector: '[data-tour="header-signup"]',
+            title: "Sign Up",
+            description: "New here? Click Sign Up to create your account as a Candidate or Employer.",
+            placement: "bottom",
+          },
+          {
+            selector: '[data-tour="header-login"]',
+            title: "Login",
+            description: "Already have an account? Use Login to access your dashboard. Choose your role from the dropdown.",
+            placement: "bottom",
+          },
+        ]}
+      />
       {/* Hero Section with Trending Jobs */}
       <Hero />
 
