@@ -887,7 +887,13 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 </Button>
               </div>
             </div>
-            {selectedCandidateId ? (
+            {profileEmployerId ? (
+              <HREmployerProfile
+                employerId={profileEmployerId}
+                onBack={() => setProfileEmployerId(null)}
+                embedded
+              />
+            ) : selectedCandidateId ? (
               <HRCandidateProfileDialog
                 open={true}
                 onClose={() => setSelectedCandidateId(null)}
