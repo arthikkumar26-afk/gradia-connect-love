@@ -29,7 +29,8 @@ import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 // Re-announces on every submit attempt (even with unchanged errors) so
 // screen-reader users get consistent feedback per submit.
 import { FormErrorAnnouncer } from "@/components/auth/FormErrorAnnouncer";
-import SkilloryVoucherCard from "@/components/candidate/SkilloryVoucherCard";
+import { SKILLORY_VOUCHER_PRICE, SKILLORY_VOUCHER_POINTS } from "@/components/candidate/SkilloryVoucherCard";
+import { Gift } from "lucide-react";
 
 interface FormErrors {
   fullName?: string;
