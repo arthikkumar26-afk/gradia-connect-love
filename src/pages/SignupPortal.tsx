@@ -7,8 +7,9 @@ import {
   CreditCard, Megaphone, Database, Monitor, MessageSquare, 
   Award, Sparkles, Receipt, CheckCircle, Video, Download,
   Plus, Table, Bot, Activity, Calendar, Clock, UserCheck, XCircle,
-  HeadphonesIcon, Wallet, Building2, Check, GraduationCap
+  HeadphonesIcon, Wallet, Building2, Check, GraduationCap, HelpCircle
 } from "lucide-react";
+import SignupGuidedTour, { TourStep } from "@/components/signup/SignupGuidedTour";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
