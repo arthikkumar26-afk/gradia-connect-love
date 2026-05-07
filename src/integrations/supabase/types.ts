@@ -3547,6 +3547,48 @@ export type Database = {
         }
         Relationships: []
       }
+      skillory_vouchers: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          id: string
+          points_value: number
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          redeemed_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          voucher_code: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          id?: string
+          points_value?: number
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          redeemed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          voucher_code: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          id?: string
+          points_value?: number
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          redeemed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          voucher_code?: string
+        }
+        Relationships: []
+      }
       slot_bookings: {
         Row: {
           booking_date: string

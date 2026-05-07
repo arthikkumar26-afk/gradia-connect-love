@@ -29,6 +29,7 @@ import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 // Re-announces on every submit attempt (even with unchanged errors) so
 // screen-reader users get consistent feedback per submit.
 import { FormErrorAnnouncer } from "@/components/auth/FormErrorAnnouncer";
+import SkilloryVoucherCard from "@/components/candidate/SkilloryVoucherCard";
 
 interface FormErrors {
   fullName?: string;
@@ -2197,6 +2198,11 @@ const CandidateSignup = () => {
             </div>
           )}
         </Card>
+        </div>
+
+        {/* Skillory Voucher promo */}
+        <div className="mt-6">
+          <SkilloryVoucherCard />
         </div>
       </div>
     );

@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
+import SkilloryVoucherCard from "@/components/candidate/SkilloryVoucherCard";
 import {
   CANDIDATE_PLANS,
   FEATURE_LABELS,
@@ -325,6 +326,9 @@ export default function SubscriptionTab() {
           })}
         </div>
       </div>
+
+      {/* Skillory Voucher promo */}
+      <SkilloryVoucherCard />
 
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5 text-primary" />
