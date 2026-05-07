@@ -593,6 +593,50 @@ export const UpgradePlanContent = () => {
             </Card>
           );
         })}
+
+        {/* Contact Sales Card */}
+        <Card className="relative overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col border-border">
+          <CardHeader className="text-center pb-2 pt-8">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Phone className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-lg">Contact Sales</CardTitle>
+            <p className="text-xs text-muted-foreground">Custom enterprise solutions</p>
+            <div className="mt-3">
+              <span className="text-2xl font-bold text-foreground">Custom</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">Tailored to your needs</p>
+          </CardHeader>
+
+          <CardContent className="space-y-4 flex-1 flex flex-col">
+            <ul className="space-y-2 flex-1">
+              {[
+                "Custom pricing & volume discounts",
+                "Dedicated account manager",
+                "Tailored onboarding & training",
+                "Custom integrations",
+                "Priority SLA support",
+                "Bulk hiring solutions",
+              ].map((feature, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs">
+                  <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">{feature}</span>
+                </li>
+              ))}
+            </ul>
+
+            <Button
+              className="w-full"
+              variant="default"
+              onClick={() => {
+                window.location.href = "mailto:info@gradiaa.com?subject=Sales%20Inquiry%20-%20Custom%20Plan&body=Hi%20Gradia%20Sales%20Team%2C%0A%0AI%27m%20interested%20in%20discussing%20a%20custom%20plan%20for%20my%20company.%0A%0AThanks%2C";
+              }}
+            >
+              <Phone className="h-4 w-4 mr-2" />
+              Contact Sales
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Add-on Services */}
