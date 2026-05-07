@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
+import SkilloryVoucherCard from "@/components/candidate/SkilloryVoucherCard";
 import {
   CANDIDATE_PLANS,
   FEATURE_LABELS,
