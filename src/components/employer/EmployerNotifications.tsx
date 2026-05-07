@@ -61,6 +61,11 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
           const newNotif = payload.new as Notification;
           setNotifications((prev) => [newNotif, ...prev].slice(0, 20));
           setUnreadCount((prev) => prev + 1);
+          // Pop a toast in the bottom-right so the employer sees it immediately
+          toast.message(newNotif.title, {
+            description: newNotif.message,
+            duration: 8000,
+          });
         }
       )
       .subscribe();
