@@ -125,6 +125,19 @@ const EmployerDashboard = () => {
     return () => { cancelled = true; supabase.removeChannel(channel); };
   }, [user?.id]);
 
+  // Listen for navigation events from notifications
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.menu) {
+        setActiveMenu(detail.menu);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+    window.addEventListener("employer:navigate", handler);
+    return () => window.removeEventListener("employer:navigate", handler);
+  }, []);
+
   // Role-based access control - wait for auth to finish loading
   useEffect(() => {
     if (isLoading) return;
