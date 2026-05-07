@@ -7,8 +7,9 @@ import {
   CreditCard, Megaphone, Database, Monitor, MessageSquare, 
   Award, Sparkles, Receipt, CheckCircle, Video, Download,
   Plus, Table, Bot, Activity, Calendar, Clock, UserCheck, XCircle,
-  HeadphonesIcon, Wallet, Building2, Check, GraduationCap
+  HeadphonesIcon, Wallet, Building2, Check, GraduationCap, HelpCircle
 } from "lucide-react";
+import SignupGuidedTour, { TourStep } from "@/components/signup/SignupGuidedTour";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,7 @@ const SignupPortal = () => {
   
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [activeSection, setActiveSection] = useState<SidebarOption>("registration");
+  const [tourRunKey, setTourRunKey] = useState(0);
 
   // Read URL query parameters on mount
   useEffect(() => {
@@ -761,14 +763,46 @@ const SignupPortal = () => {
   if (!selectedRole) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <SignupGuidedTour
+          storageKey="gradia.signup.tour.role"
+          runKey={tourRunKey}
+          steps={[
+            {
+              selector: '[data-tour="role-candidate"]',
+              title: "Candidate Portal",
+              description: "Pick this if you're looking for jobs. You'll get access to job search, AI resume builder, mock interviews, and application tracking.",
+              placement: "right",
+            },
+            {
+              selector: '[data-tour="role-employer"]',
+              title: "Employer Portal",
+              description: "Pick this if you want to hire. Post jobs, browse verified talent, run AI screening, and manage your hiring pipeline.",
+              placement: "left",
+            },
+          ]}
+        />
         <div className="w-full max-w-4xl">
-          <Link 
-            to="/" 
-            className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors mb-8"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Link>
+          <div className="flex items-center justify-between mb-8">
+            <Link 
+              to="/" 
+              className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                localStorage.removeItem("gradia.signup.tour.role");
+                setTourRunKey((k) => k + 1);
+              }}
+              className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+            >
+              <HelpCircle className="h-4 w-4 mr-1.5" />
+              Take a tour
+            </Button>
+          </div>
 
           <div className="text-center mb-12">
             <img 
@@ -785,6 +819,7 @@ const SignupPortal = () => {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Candidate Option */}
             <Card 
+              data-tour="role-candidate"
               className="bg-slate-800/50 border-slate-700 hover:border-blue-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10"
               onClick={() => navigate("/candidate/signup")}
             >
@@ -808,6 +843,7 @@ const SignupPortal = () => {
 
             {/* Employer Option */}
             <Card 
+              data-tour="role-employer"
               className="bg-slate-800/50 border-slate-700 hover:border-green-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-green-500/10"
               onClick={() => {
                 setSelectedRole("employer");
@@ -873,9 +909,32 @@ const SignupPortal = () => {
     );
   }
 
-  // Dashboard Layout with Sidebar
+  // Build dashboard tour steps from sidebar items
+  const dashboardTourSteps: TourStep[] = [
+    ...sidebarItems.map((item) => {
+      const descriptions: Record<string, string> = {
+        "become-employer": "Learn the benefits of partnering with Gradia — AI screening, branded company page, and dedicated support.",
+        "registration": "Fill in your details here to create an account. All fields with errors are highlighted as you go.",
+        "login": "Already have an account? This takes you straight to the login page.",
+        "job-alert": "Manage vacancies, payments, advertisements, CVs, interviews, feedback and offer letters — all in one place.",
+        "dashboard": "Preview your dashboard to see what you'll get after registration.",
+      };
+      return {
+        selector: `[data-tour="menu-${item.id}"]`,
+        title: item.label,
+        description: descriptions[item.id] || "Open this section to explore.",
+        placement: "right" as const,
+      };
+    }),
+  ];
+
   return (
     <div className="min-h-screen flex bg-slate-900">
+      <SignupGuidedTour
+        storageKey={`gradia.signup.tour.${selectedRole}`}
+        runKey={tourRunKey}
+        steps={dashboardTourSteps}
+      />
       {/* Sidebar */}
       <aside className={cn(
         "bg-slate-800 border-r border-slate-700 transition-all duration-300 flex flex-col sticky top-0 h-screen",
@@ -916,6 +975,7 @@ const SignupPortal = () => {
           {sidebarItems.map((item) => (
             <button
               key={item.id}
+              data-tour={`menu-${item.id}`}
               onClick={() => {
                 if (item.id === "login") {
                   navigate(selectedRole === "employer" ? "/employer/login" : "/candidate/login");
@@ -935,6 +995,22 @@ const SignupPortal = () => {
             </button>
           ))}
         </nav>
+
+        {/* Help / Tour */}
+        <div className="p-4 border-t border-slate-700">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-cyan-300 hover:text-white hover:bg-cyan-500/10"
+            onClick={() => {
+              localStorage.removeItem(`gradia.signup.tour.${selectedRole}`);
+              setTourRunKey((k) => k + 1);
+            }}
+          >
+            <HelpCircle className="h-4 w-4" />
+            {!sidebarCollapsed && <span className="ml-2">Take a tour</span>}
+          </Button>
+        </div>
 
         {/* Sidebar Toggle */}
         <div className="p-4 border-t border-slate-700">
