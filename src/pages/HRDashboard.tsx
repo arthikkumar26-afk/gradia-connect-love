@@ -674,7 +674,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                     {employers.map(e => {
                       const stats = employerStats[e.id] || { vacancies: 0, finished: 0 };
                       return (
-                        <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap">
+                        <div key={e.id} className="border border-border rounded-md p-3 flex items-center justify-between gap-3 flex-wrap hover:bg-muted/40 cursor-pointer transition" onClick={() => navigate(`/hr/employer/${e.id}`)}>
                           <div className="flex items-center gap-3 min-w-0 flex-1">
                             <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                               <Building className="h-4 w-4 text-primary" />
@@ -684,7 +684,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                               <p className="text-xs text-muted-foreground truncate">{e.email || "—"}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-wrap" onClick={(ev) => ev.stopPropagation()}>
                             <Badge variant="secondary" className="text-[11px]">
                               <Briefcase className="h-3 w-3 mr-1" />{stats.vacancies} vacancies
                             </Badge>
@@ -692,8 +692,8 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                               {stats.finished} interviews finished
                             </Badge>
                             <span className="text-xs text-muted-foreground">{e.created_at ? new Date(e.created_at).toLocaleDateString() : ""}</span>
-                            <Button size="sm" variant="secondary" onClick={() => setViewEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer" })}>
-                              <Briefcase className="h-3.5 w-3.5 mr-1" /> View Vacancies
+                            <Button size="sm" variant="secondary" onClick={() => navigate(`/hr/employer/${e.id}`)}>
+                              <Briefcase className="h-3.5 w-3.5 mr-1" /> View Profile
                             </Button>
                             <Button size="sm" variant="outline" onClick={() => setScanEmployer({ id: e.id, name: e.company_name || e.full_name || "Employer", email: e.email || "" })}>
                               <ScanSearch className="h-3.5 w-3.5 mr-1" /> AI Scan
