@@ -979,7 +979,7 @@ const CandidateSignup = () => {
 
   // Render signup form step
   const renderSignupStep = () => (
-    <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-start">
+    <div data-step="signup" className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-start">
       {/* Left Side - Benefits */}
       <div className="hidden md:block space-y-6 animate-fade-in sticky top-8">
         <Link 
@@ -1587,7 +1587,7 @@ const CandidateSignup = () => {
 
   // Render benefits step
   const renderBenefitsStep = () => (
-    <div className="w-full max-w-4xl">
+    <div data-step="benefits" className="w-full max-w-4xl">
       <ProgressIndicator />
       <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-8">
@@ -1632,7 +1632,7 @@ const CandidateSignup = () => {
 
   // Render agreement step
   const renderAgreementStep = () => (
-    <div className="w-full max-w-4xl">
+    <div data-step="agreement" className="w-full max-w-4xl">
       <ProgressIndicator />
       <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-8">
@@ -1708,7 +1708,7 @@ const CandidateSignup = () => {
 
   // Render terms step
   const renderTermsStep = () => (
-    <div className="w-full max-w-4xl">
+    <div data-step="terms" className="w-full max-w-4xl">
       <ProgressIndicator />
       <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-8">
@@ -1787,7 +1787,7 @@ const CandidateSignup = () => {
 
   // Render resume scan step
   const renderResumeStep = () => (
-    <div className="w-full max-w-3xl">
+    <div data-step="resume" className="w-full max-w-3xl">
       <ProgressIndicator />
       <Card className="w-full p-8 shadow-lg">
         <div className="text-center mb-6">
@@ -2035,7 +2035,7 @@ const CandidateSignup = () => {
 
   const renderPlanStep = () => {
     return (
-      <div className="w-full max-w-6xl">
+      <div data-step="plan" className="w-full max-w-6xl">
         <ProgressIndicator />
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-foreground mb-2">Registration Fee</h2>
