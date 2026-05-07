@@ -787,6 +787,7 @@ const SignupPortal = () => {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Candidate Option */}
             <Card 
+              data-tour="role-candidate"
               className="bg-slate-800/50 border-slate-700 hover:border-blue-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10"
               onClick={() => navigate("/candidate/signup")}
             >
