@@ -45,6 +45,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import PointsPricingPanel from "./PointsPricingPanel";
 import TransactionHistoryPanel from "./TransactionHistoryPanel";
+import SkilloryVoucherWalletSection from "./SkilloryVoucherWalletSection";
 
 // ₹5000 = 1000 points → ₹5 = 1 point
 const RUPEE_PER_POINT = 5;
