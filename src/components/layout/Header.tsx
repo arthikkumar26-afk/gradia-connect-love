@@ -206,7 +206,7 @@ const Header = () => {
             </div>
 
             {/* Sign Up Button */}
-            {!isAuthenticated && <Button variant="outline" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 px-2 sm:px-3" asChild>
+            {!isAuthenticated && <Button data-tour="header-signup" variant="outline" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 px-2 sm:px-3" asChild>
                 <Link to="/signup">
                   <User className="h-3.5 w-3.5" />
                   Sign Up
@@ -216,7 +216,7 @@ const Header = () => {
             {/* Login Dropdown */}
             {!isAuthenticated && <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="default" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 px-2 sm:px-3">
+                    <Button data-tour="header-login" variant="default" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 px-2 sm:px-3">
                       Login
                       <ChevronDown className="h-3 w-3" />
                     </Button>
