@@ -119,6 +119,7 @@ const SignupPortal = () => {
   
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [activeSection, setActiveSection] = useState<SidebarOption>("registration");
+  const [tourRunKey, setTourRunKey] = useState(0);
 
   // Read URL query parameters on mount
   useEffect(() => {
