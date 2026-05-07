@@ -16,17 +16,11 @@ declare global {
 
 const plans = [
   {
-    id: 'starter',
-    name: 'Starter',
-    duration: 'Free',
-    price: 0,
-    features: ['3 job posts', '1 team seat', 'Basic applicant tracker', 'Email support'],
-  },
-  {
     id: 'growth',
     name: 'Growth',
     duration: '1 Month',
-    price: 58000,
+    price: 5000,
+    points: 1000,
     popular: true,
     features: ['15 job posts', '5 team seats', 'Screening tests', 'Analytics dashboard', 'Priority support'],
   },
@@ -34,14 +28,16 @@ const plans = [
     id: 'professional',
     name: 'Professional',
     duration: '1 Month',
-    price: 15000,
+    price: 10000,
+    points: 2000,
     features: ['50 job posts', '15 team seats', 'AI interview automation', 'Advanced analytics', 'Dedicated account manager', 'API access'],
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
     duration: '1 Month',
-    price: 29000,
+    price: 20000,
+    points: 4000,
     features: ['Unlimited job posts', 'Unlimited seats', 'Custom integrations', 'SLA guarantee', 'White-label options', 'Dedicated support team'],
   },
 ];
@@ -249,7 +245,7 @@ export default function Plans() {
         {retryError && <div className="mb-8 p-4 bg-destructive/10 border border-destructive/30 rounded-md text-sm text-destructive text-center max-w-md mx-auto">{retryError}</div>}
 
         {/* Plans selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {plans.map((plan) => {
             const isSelected = selectedPlanId === plan.id;
             return (
@@ -272,8 +268,10 @@ export default function Plans() {
                   <h3 className="text-2xl font-bold text-foreground mb-1">{plan.name} Plan</h3>
                   <p className="text-sm text-muted-foreground mb-4">Duration: {plan.duration}</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-primary">{plan.price === 0 ? 'Free' : `₹${plan.price.toLocaleString("en-IN")}`}</span>
+                    <span className="text-3xl font-bold text-primary">{plan.points.toLocaleString('en-IN')} pts</span>
+                    <span className="text-sm text-muted-foreground">/ {plan.duration.toLowerCase()}</span>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">≈ ₹{plan.price.toLocaleString('en-IN')}</p>
                 </div>
                 <ul className="space-y-3 mb-2 flex-grow">
                   {plan.features.map((feature, index) => (
