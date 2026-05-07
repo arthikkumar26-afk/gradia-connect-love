@@ -313,6 +313,56 @@ const CandidateSignup = () => {
   // The single source of truth for "is this user already onboarded?" is the backend
   // session returned by Supabase auth.
   const [currentStep, setCurrentStep] = useState<WizardStep>('signup');
+  const [stepTourKey, setStepTourKey] = useState(0);
+  const isFirstStepRef = useRef(true);
+
+  // When user clicks Continue and lands on a new step, fire a one-step tour
+  useEffect(() => {
+    if (isFirstStepRef.current) {
+      isFirstStepRef.current = false;
+      return;
+    }
+    setStepTourKey((k) => k + 1);
+  }, [currentStep]);
+
+  const stepTourSteps: TourStep[] = useMemo(() => {
+    const map: Record<WizardStep, { title: string; description: string }> = {
+      signup: {
+        title: "Create Your Account",
+        description: "Fill in your name, email, mobile and password. Errors highlight inline.",
+      },
+      resume: {
+        title: "AI Resume Scan",
+        description: "Upload your resume (PDF/DOC). Our AI parses skills, experience and education automatically.",
+      },
+      benefits: {
+        title: "Your Benefits",
+        description: "Review what you unlock as a Gradia candidate, then click Continue to proceed.",
+      },
+      agreement: {
+        title: "Candidate Agreement",
+        description: "Read the agreement carefully. Tick the checkbox and click Continue when ready.",
+      },
+      terms: {
+        title: "Terms & Conditions",
+        description: "Scroll all the way down to enable the checkbox, then accept and continue.",
+      },
+      plan: {
+        title: "Choose Your Plan",
+        description: "Select a plan that fits your goals. You can also unlock individual features later.",
+      },
+    };
+    const detail = map[currentStep];
+    return [
+      {
+        selector: `[data-step="${currentStep}"]`,
+        title: detail.title,
+        description: detail.description,
+        placement: "top",
+      },
+    ];
+  }, [currentStep]);
+
 
   // Track if user just signed up in THIS tab session (to allow wizard flow to complete
   // without the auth-listener bouncing them to dashboard mid-flow).
