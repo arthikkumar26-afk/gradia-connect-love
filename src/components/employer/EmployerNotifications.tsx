@@ -164,9 +164,11 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
             </div>
           ) : (
             notifications.map((notif) => (
-              <div
+              <button
                 key={notif.id}
-                className={`px-4 py-3 border-b border-border last:border-0 transition-colors ${
+                type="button"
+                onClick={() => handleOpen(notif)}
+                className={`w-full text-left px-4 py-3 border-b border-border last:border-0 transition-colors hover:bg-muted/50 ${
                   !notif.is_read ? "bg-primary/5" : ""
                 }`}
               >
@@ -190,7 +192,7 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
                     <span className="h-2 w-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                   )}
                 </div>
-              </div>
+              </button>
             ))
           )}
         </ScrollArea>
