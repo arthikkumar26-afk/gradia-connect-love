@@ -29,7 +29,8 @@ import { useResendConfirmation } from "@/hooks/useResendConfirmation";
 // Re-announces on every submit attempt (even with unchanged errors) so
 // screen-reader users get consistent feedback per submit.
 import { FormErrorAnnouncer } from "@/components/auth/FormErrorAnnouncer";
-import SkilloryVoucherCard from "@/components/candidate/SkilloryVoucherCard";
+import { SKILLORY_VOUCHER_PRICE, SKILLORY_VOUCHER_POINTS } from "@/components/candidate/SkilloryVoucherCard";
+import { Gift } from "lucide-react";
 
 interface FormErrors {
   fullName?: string;
@@ -399,6 +400,7 @@ const CandidateSignup = () => {
   const [selectedServiceTiers, setSelectedServiceTiers] = useState<Record<string, 0 | 1 | 2>>({});
   // Registration tier (Basic / Standard / Premium)
   const [selectedRegistrationTier, setSelectedRegistrationTier] = useState<0 | 1 | 2>(0);
+  const [includeSkilloryVoucher, setIncludeSkilloryVoucher] = useState(false);
 
   useEffect(() => {
     if ((window as any).Razorpay) { setRazorpayLoaded(true); return; }
@@ -1907,7 +1909,8 @@ const CandidateSignup = () => {
     return item ? sum + item.tiers[tier] : sum;
   }, 0);
 
-  const grandTotal = REGISTRATION_FEE + addonsTotal + servicesTotal;
+  const voucherTotal = includeSkilloryVoucher ? SKILLORY_VOUCHER_PRICE : 0;
+  const grandTotal = REGISTRATION_FEE + addonsTotal + servicesTotal + voucherTotal;
   const toggleAddon = (id: UnlockFeature) =>
     setSelectedAddons((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
@@ -1976,6 +1979,24 @@ const CandidateSignup = () => {
             if (error || !data?.activated) {
               console.warn('[registration] activation flag not set:', error?.message || data?.message);
             }
+            // Create Skillory voucher if included
+            if (includeSkilloryVoucher) {
+              try {
+                const code = 'SKL-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase() + '-' + Date.now().toString(36).toUpperCase().slice(-4);
+                await supabase.from('skillory_vouchers').insert({
+                  user_id: user.id,
+                  voucher_code: code,
+                  amount_paid: SKILLORY_VOUCHER_PRICE,
+                  points_value: SKILLORY_VOUCHER_POINTS,
+                  status: 'purchased',
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                });
+                toast({ title: '🎁 Skillory Voucher added', description: `Code: ${code} — Redeem from your Wallet.` });
+              } catch (e) {
+                console.warn('[voucher] insert failed', e);
+              }
+            }
             toast({
               title: '🎉 Registration Successful!',
               description: 'Welcome to Gradia. Your candidate account is now active.',
@@ -2025,6 +2046,7 @@ const CandidateSignup = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-start">
+        <div className="space-y-4">
         <Card className="p-8 mb-0 text-center border-2 border-primary/30 shadow-xl">
           <Badge className="mb-4 gap-1 mx-auto w-fit">
             <Star className="h-3 w-3" /> One-Time Registration
@@ -2090,6 +2112,12 @@ const CandidateSignup = () => {
                 <span className="text-foreground">₹{servicesTotal.toLocaleString('en-IN')}</span>
               </div>
             )}
+            {includeSkilloryVoucher && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Skillory Voucher</span>
+                <span className="text-foreground">₹{SKILLORY_VOUCHER_PRICE.toLocaleString('en-IN')}</span>
+              </div>
+            )}
             <div className="flex items-center justify-between pt-2 mt-2 border-t">
               <div>
                 <p className="text-sm text-muted-foreground">Amount due</p>
@@ -2116,6 +2144,44 @@ const CandidateSignup = () => {
             </p>
           </div>
         </Card>
+
+        {/* Skillory Voucher add-on */}
+        <Card className={`p-4 border-2 transition-all ${includeSkilloryVoucher ? 'border-purple-500 bg-purple-500/5' : 'border-purple-400/40 bg-gradient-to-br from-purple-500/5 via-card to-pink-500/5'}`}>
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-purple-500/15 flex items-center justify-center shrink-0">
+              <Gift className="h-5 w-5 text-purple-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <h4 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                    Skillory Voucher
+                    <Badge variant="secondary" className="bg-purple-500/15 text-purple-700 dark:text-purple-300 text-[10px]">
+                      <Sparkles className="h-3 w-3 mr-1" /> Special
+                    </Badge>
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Add ₹{SKILLORY_VOUCHER_PRICE.toLocaleString('en-IN')} · Worth <strong className="text-foreground">{SKILLORY_VOUCHER_POINTS.toLocaleString('en-IN')} wallet points</strong> on Skillory.in
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIncludeSkilloryVoucher((v) => !v)}
+                  className={`flex items-center gap-1 h-9 px-3 rounded-md border text-xs font-semibold transition-all ${
+                    includeSkilloryVoucher
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-background text-foreground border-border hover:border-purple-500/60'
+                  }`}
+                  title={includeSkilloryVoucher ? 'Remove voucher' : 'Add voucher'}
+                >
+                  {includeSkilloryVoucher ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                  ₹{SKILLORY_VOUCHER_PRICE.toLocaleString('en-IN')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Card>
+        </div>
 
         {/* Detailed Service Add-ons (from pricing sheet) */}
         <Card className="p-5 mb-0">
@@ -2200,10 +2266,6 @@ const CandidateSignup = () => {
         </Card>
         </div>
 
-        {/* Skillory Voucher promo */}
-        <div className="mt-6">
-          <SkilloryVoucherCard />
-        </div>
       </div>
     );
   };
