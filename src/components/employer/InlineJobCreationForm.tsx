@@ -1836,9 +1836,11 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                   <>
                     <Briefcase className="h-4 w-4" />
                     <span>Post Job</span>
-                    <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 font-semibold">
-                      1000 pts
-                    </Badge>
+                    {!employerIdOverride && (
+                      <Badge variant="secondary" className="ml-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 font-semibold">
+                        1000 pts
+                      </Badge>
+                    )}
                   </>
                 )}
               </Button>
