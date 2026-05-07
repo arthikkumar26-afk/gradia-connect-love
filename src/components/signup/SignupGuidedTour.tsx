@@ -8,6 +8,7 @@ export interface TourStep {
   title: string;
   description: string;
   placement?: "top" | "bottom" | "left" | "right";
+  onEnter?: () => void;
 }
 
 interface SignupGuidedTourProps {
