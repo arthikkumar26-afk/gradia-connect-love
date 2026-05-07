@@ -508,20 +508,6 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           </Card>
         );
       }
-      case "post":
-        return parentEmployerId ? (
-          <InlineJobCreationForm
-            employerIdOverride={parentEmployerId}
-            employerNameOverride={parentEmployerName}
-            onJobCreated={async () => {
-              if (parentEmployerId) await reloadJobs(parentEmployerId);
-              setActiveTab("jobs");
-            }}
-            onCancel={() => setActiveTab("jobs")}
-          />
-        ) : (
-          <Card><CardContent className="p-6 text-sm text-muted-foreground">Linked employer not found. Contact your admin.</CardContent></Card>
-        );
       case "vacancies-list":
         if (parentEmployerId) {
           return <MyVacanciesContent employerIdOverride={parentEmployerId} employerNameOverride={parentEmployerName} hideWallet />;
