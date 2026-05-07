@@ -1892,7 +1892,6 @@ const CandidateSignup = () => {
     { id: 'cv_resume_builder', label: 'CV / Resume Builder', tiers: [5000, 6000, 7000], perks: ['ATS-friendly templates', 'Unlimited edits & downloads', 'Role-specific resume tips'] },
     { id: 'suitable_jobs', label: 'Suitable Jobs', tiers: [3000, 4000, 5000], perks: ['AI-matched job feed', 'Profile-based filtering', 'Daily refreshed openings'] },
     { id: 'ai_jobs_apply', label: 'AI - JOBs Apply', tiers: [5000, 6000, 7000], perks: ['Auto-apply to multiple jobs', 'Tailored cover notes', 'Hands-free job hunting'] },
-    { id: 'interview_guidance', label: 'Interview Guidance & Techniques', tiers: [3000, 4000, 5000], perks: ['1:1 expert guidance', 'Role-wise prep material', 'Confidence & etiquette tips'] },
     { id: 'mock_interviews', label: 'Mock Interviews', tiers: [3000, 4000, 4000], perks: ['Realistic AI interviews', 'Detailed performance feedback', 'Score & improvement reports'] },
     { id: 'pipeline_cv_discussion', label: 'CV Discussions', group: 'Interview Pipeline', tiers: [1000, 1500, 2000], perks: ['Walk-through of your CV', 'Strength & gap analysis', 'Interview-ready talking points'] },
     { id: 'pipeline_written_test', label: 'Written Test', group: 'Interview Pipeline', tiers: [2000, 2000, 2500], perks: ['Job-relevant test prep', 'Practice papers + answers', 'Performance scoring'] },
