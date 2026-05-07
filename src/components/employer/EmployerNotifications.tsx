@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 interface Notification {
   id: string;
@@ -60,6 +61,11 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
           const newNotif = payload.new as Notification;
           setNotifications((prev) => [newNotif, ...prev].slice(0, 20));
           setUnreadCount((prev) => prev + 1);
+          // Pop a toast in the bottom-right so the employer sees it immediately
+          toast.message(newNotif.title, {
+            description: newNotif.message,
+            duration: 8000,
+          });
         }
       )
       .subscribe();
@@ -86,6 +92,8 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
         return "📅";
       case "application":
         return "📋";
+      case "candidate_suggestion":
+        return "✨";
       default:
         return "🔔";
     }
