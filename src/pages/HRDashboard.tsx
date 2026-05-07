@@ -112,6 +112,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   const [candidateSearch, setCandidateSearch] = useState("");
   const [scanEmployer, setScanEmployer] = useState<{ id: string; name: string; email: string } | null>(null);
   const [viewEmployer, setViewEmployer] = useState<{ id: string; name: string } | null>(null);
+  const [profileEmployerId, setProfileEmployerId] = useState<string | null>(null);
   const [employerStats, setEmployerStats] = useState<Record<string, { vacancies: number; finished: number }>>({});
   const [allEmployerIds, setAllEmployerIds] = useState<string[]>([]);
 
