@@ -65,6 +65,10 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
           toast.message(newNotif.title, {
             description: newNotif.message,
             duration: 8000,
+            action: {
+              label: "Open",
+              onClick: () => handleOpen(newNotif),
+            },
           });
         }
       )
