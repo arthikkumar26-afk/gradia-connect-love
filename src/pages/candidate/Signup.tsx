@@ -1909,7 +1909,8 @@ const CandidateSignup = () => {
     return item ? sum + item.tiers[tier] : sum;
   }, 0);
 
-  const grandTotal = REGISTRATION_FEE + addonsTotal + servicesTotal;
+  const voucherTotal = includeSkilloryVoucher ? SKILLORY_VOUCHER_PRICE : 0;
+  const grandTotal = REGISTRATION_FEE + addonsTotal + servicesTotal + voucherTotal;
   const toggleAddon = (id: UnlockFeature) =>
     setSelectedAddons((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
