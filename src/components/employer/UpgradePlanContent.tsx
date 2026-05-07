@@ -468,7 +468,7 @@ export const UpgradePlanContent = () => {
       setLoading(null);
     }
   };
-  const planOrder = ["starter", "growth", "professional", "enterprise"];
+  const planOrder = ["growth", "professional", "enterprise"];
   const currentIndex = currentPlan ? planOrder.indexOf(currentPlan) : -1;
 
   return (
