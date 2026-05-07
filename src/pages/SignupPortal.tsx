@@ -811,6 +811,7 @@ const SignupPortal = () => {
 
             {/* Employer Option */}
             <Card 
+              data-tour="role-employer"
               className="bg-slate-800/50 border-slate-700 hover:border-green-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-green-500/10"
               onClick={() => {
                 setSelectedRole("employer");
