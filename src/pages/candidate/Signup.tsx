@@ -2127,6 +2127,44 @@ const CandidateSignup = () => {
           </div>
         </Card>
 
+        {/* Skillory Voucher add-on */}
+        <Card className={`p-4 border-2 transition-all ${includeSkilloryVoucher ? 'border-purple-500 bg-purple-500/5' : 'border-purple-400/40 bg-gradient-to-br from-purple-500/5 via-card to-pink-500/5'}`}>
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-full bg-purple-500/15 flex items-center justify-center shrink-0">
+              <Gift className="h-5 w-5 text-purple-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <h4 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                    Skillory Voucher
+                    <Badge variant="secondary" className="bg-purple-500/15 text-purple-700 dark:text-purple-300 text-[10px]">
+                      <Sparkles className="h-3 w-3 mr-1" /> Special
+                    </Badge>
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    Add ₹{SKILLORY_VOUCHER_PRICE.toLocaleString('en-IN')} · Worth <strong className="text-foreground">{SKILLORY_VOUCHER_POINTS.toLocaleString('en-IN')} wallet points</strong> on Skillory.in
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIncludeSkilloryVoucher((v) => !v)}
+                  className={`flex items-center gap-1 h-9 px-3 rounded-md border text-xs font-semibold transition-all ${
+                    includeSkilloryVoucher
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-background text-foreground border-border hover:border-purple-500/60'
+                  }`}
+                  title={includeSkilloryVoucher ? 'Remove voucher' : 'Add voucher'}
+                >
+                  {includeSkilloryVoucher ? <Minus className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                  ₹{SKILLORY_VOUCHER_PRICE.toLocaleString('en-IN')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Card>
+        </div>
+
         {/* Detailed Service Add-ons (from pricing sheet) */}
         <Card className="p-5 mb-0">
           <div className="mb-4">
