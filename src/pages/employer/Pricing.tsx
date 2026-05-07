@@ -172,7 +172,6 @@ export default function Pricing() {
                 variant={plan.popular ? 'default' : 'outline'}
               >
                 {loading === plan.id ? 'Processing…' :
-                  plan.cta === 'free' ? 'Get Started Free' :
                   plan.cta === 'contact' ? (<><Phone className="w-4 h-4 mr-2" />Contact Sales</>) :
                   (<><Coins className="w-4 h-4 mr-2" />Pay {plan.points.toLocaleString()} pts</>)}
               </Button>

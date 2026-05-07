@@ -6,10 +6,10 @@
 // subscription charges. UI must show points; INR shown as a reference only.
 
 export interface PricingPlan {
-  id: 'starter' | 'growth' | 'professional' | 'enterprise';
+  id: 'growth' | 'professional' | 'enterprise';
   name: string;
   subtitle?: string;
-  /** Wallet points cost for 1 month of this plan. 0 = free tier. */
+  /** Wallet points cost for 1 month of this plan. */
   points: number;
   /** Reference INR equivalent (points × 5). Display-only. */
   priceInr: number;
@@ -19,7 +19,7 @@ export interface PricingPlan {
     seats: string;
   };
   popular?: boolean;
-  cta: 'free' | 'subscribe' | 'contact';
+  cta: 'subscribe' | 'contact';
   badge?: string;
 }
 
@@ -48,25 +48,6 @@ export interface DemoRequest {
 // Pricing plans configuration
 export const pricingPlans: PricingPlan[] = [
   {
-    id: 'starter',
-    name: 'Starter',
-    subtitle: 'For small teams getting started',
-    points: 0,
-    priceInr: 0,
-    limits: {
-      jobPosts: 'Up to 3 active job posts',
-      seats: '1 user seat',
-    },
-    features: [
-      'Up to 3 active job posts',
-      'Basic candidate tracker',
-      'Email notifications',
-      'Standard job templates',
-      'Email support (48h response)',
-    ],
-    cta: 'free',
-  },
-  {
     id: 'growth',
     name: 'Growth',
     subtitle: 'Scale your hiring pipeline',
@@ -94,8 +75,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'professional',
     name: 'Professional',
     subtitle: 'Full AI-powered recruitment',
-    points: 3000,
-    priceInr: 15000,
+    points: 2000,
+    priceInr: 10000,
     limits: {
       jobPosts: 'Up to 100 active job posts',
       seats: '20 user seats',
@@ -120,8 +101,8 @@ export const pricingPlans: PricingPlan[] = [
     id: 'enterprise',
     name: 'Enterprise',
     subtitle: 'Custom solutions at scale',
-    points: 5800,
-    priceInr: 29000,
+    points: 4000,
+    priceInr: 20000,
     limits: {
       jobPosts: 'Unlimited job posts',
       seats: 'Unlimited seats',
@@ -140,7 +121,7 @@ export const pricingPlans: PricingPlan[] = [
       'Custom integrations & API',
       'Advanced ROI & conversion reports',
     ],
-    cta: 'contact',
+    cta: 'subscribe',
   },
 ];
 
