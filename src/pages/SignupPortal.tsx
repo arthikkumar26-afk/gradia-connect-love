@@ -638,101 +638,94 @@ const SignupPortal = () => {
 
     setPlanLoading(planId);
     setRetryError(null);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setEmployerOnboardingStep('form'); return; }
 
-      // For free/basic plan (0 pts), activate directly
-      if (selectedPlan.points === 0) {
-        const { error } = await supabase.from("subscriptions").insert({
+      const activatePlan = async (paymentMethod: string, paymentRef?: string) => {
+        await supabase.from("subscriptions").insert({
           employer_id: user.id,
           plan_id: planId,
           plan_name: selectedPlan.name,
           billing_cycle: 'monthly',
-          amount: 0,
+          amount: selectedPlan.price,
           currency: "INR",
           status: "active",
-          payment_method: null,
+          payment_method: paymentMethod,
         });
-        if (error) throw error;
-        toast({ title: 'Plan Activated!', description: `${selectedPlan.name} plan activated` });
+        toast({ title: 'Plan Activated!', description: `${selectedPlan.name} plan activated successfully.` });
         setEmployerOnboardingStep('job-alert-onboarding');
-        return;
-      }
+      };
 
-      // For paid plans, use wallet points
-      const { data: wallet } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (!wallet) {
-        // Auto-create wallet
-        const { data: newWallet, error: createErr } = await supabase
-          .from('wallets')
-          .insert({ user_id: user.id, cash_balance: 0, points_balance: 100, rewards_balance: 10 })
-          .select()
-          .single();
-
-        if (createErr || !newWallet) {
-          throw new Error('Could not create wallet. Please try again.');
-        }
-
-        if ((newWallet.points_balance || 0) < selectedPlan.points) {
-          toast({
-            title: 'Insufficient Points',
-            description: `You need ${selectedPlan.points} pts but have ${newWallet.points_balance || 0} pts. Load points from your Wallet first.`,
-            variant: 'destructive',
-          });
-          setPlanLoading(null);
-          return;
-        }
-      }
-
-      const walletData = wallet || (await supabase.from('wallets').select('*').eq('user_id', user.id).single()).data;
-      if (!walletData || (walletData.points_balance || 0) < selectedPlan.points) {
-        toast({
-          title: 'Insufficient Points',
-          description: `You need ${selectedPlan.points} pts but have ${walletData?.points_balance || 0} pts. Load points from your Wallet.`,
-          variant: 'destructive',
-        });
+      // Free plan
+      if (!selectedPlan.price || selectedPlan.price === 0) {
+        await activatePlan('free');
         setPlanLoading(null);
         return;
       }
 
-      // Deduct points
-      const newBalance = (walletData.points_balance || 0) - selectedPlan.points;
-      await supabase.from('wallets').update({ points_balance: newBalance }).eq('id', walletData.id);
-
-      // Record transaction
-      await supabase.from('wallet_transactions').insert({
-        wallet_id: walletData.id,
-        transaction_type: 'debit',
-        category: 'subscription',
-        points: selectedPlan.points,
-        description: `Employer ${selectedPlan.name} Plan - ${selectedPlan.duration}`,
+      // Paid plan - use Razorpay
+      const { data: orderData, error: orderError } = await supabase.functions.invoke("create-razorpay-order", {
+        body: {
+          amount: selectedPlan.price,
+          currency: "INR",
+          receipt: `emp_${user.id.slice(0, 8)}_${planId}`,
+        },
       });
 
-      // Create subscription
-      await supabase.from("subscriptions").insert({
-        employer_id: user.id,
-        plan_id: planId,
-        plan_name: selectedPlan.name,
-        billing_cycle: 'monthly',
-        amount: selectedPlan.points,
-        currency: "PTS",
-        status: "active",
-        payment_method: "wallet",
-      });
+      if (orderError || !orderData?.order_id) {
+        throw new Error(orderError?.message || orderData?.error || "Failed to create payment order");
+      }
 
-      toast({ title: 'Plan Activated!', description: `${selectedPlan.name} plan activated. ${selectedPlan.points} pts deducted.` });
-      setEmployerOnboardingStep('job-alert-onboarding');
+      if (!(window as any).Razorpay) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error("Failed to load payment gateway"));
+          document.body.appendChild(script);
+        });
+      }
+
+      const options = {
+        key: orderData.key_id,
+        amount: selectedPlan.price * 100,
+        currency: "INR",
+        name: "Gradia",
+        description: `${selectedPlan.name} Plan - ${selectedPlan.duration}`,
+        order_id: orderData.order_id,
+        handler: async (response: any) => {
+          try {
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke("verify-razorpay-payment", {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+            if (verifyError || !verifyData?.verified) {
+              throw new Error("Payment verification failed");
+            }
+            await activatePlan('razorpay', response.razorpay_payment_id);
+          } catch (err: any) {
+            toast({ title: 'Error', description: err.message || 'Payment processing failed', variant: 'destructive' });
+          } finally {
+            setPlanLoading(null);
+          }
+        },
+        prefill: { email, name: contactPerson, contact: contactNumber },
+        theme: { color: "#10b981" },
+        modal: {
+          ondismiss: () => setPlanLoading(null),
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (error: any) {
       setRetryError('Failed to process. Please try again.');
       toast({ title: 'Error', description: error.message || 'Failed to process plan selection', variant: 'destructive' });
-    } finally {
       setPlanLoading(null);
     }
   };
