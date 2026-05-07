@@ -910,23 +910,57 @@ const SignupPortal = () => {
   }
 
   // Build dashboard tour steps from sidebar items
-  const dashboardTourSteps: TourStep[] = [
-    ...sidebarItems.map((item) => {
-      const descriptions: Record<string, string> = {
-        "become-employer": "Learn the benefits of partnering with Gradia — AI screening, branded company page, and dedicated support.",
-        "registration": "Fill in your details here to create an account. All fields with errors are highlighted as you go.",
-        "login": "Already have an account? This takes you straight to the login page.",
-        "job-alert": "Manage vacancies, payments, advertisements, CVs, interviews, feedback and offer letters — all in one place.",
-        "dashboard": "Preview your dashboard to see what you'll get after registration.",
-      };
-      return {
-        selector: `[data-tour="menu-${item.id}"]`,
-        title: item.label,
-        description: descriptions[item.id] || "Open this section to explore.",
-        placement: "right" as const,
-      };
-    }),
-  ];
+  const sectionDetails: Record<string, { menuDesc: string; sectionTitle: string; sectionDesc: string }> = {
+    "become-employer": {
+      menuDesc: "Start here to learn the benefits of partnering with Gradia.",
+      sectionTitle: "Benefits Overview",
+      sectionDesc: "Read through the benefits — AI screening, qualified candidates, analytics, branding and dedicated support.",
+    },
+    "registration": {
+      menuDesc: "Open the registration form to create your account.",
+      sectionTitle: "Registration Form",
+      sectionDesc: "Fill in company details, contact info, location and password. Errors highlight inline as you type.",
+    },
+    "login": {
+      menuDesc: "If you already have an account, jump straight to the login page from here.",
+      sectionTitle: "Login",
+      sectionDesc: "Use your existing credentials to sign in.",
+    },
+    "job-alert": {
+      menuDesc: "Manage vacancies, payments, ads, CVs, interviews and offer letters — all from this hub.",
+      sectionTitle: "Job Alert Workspace",
+      sectionDesc: "Select a category in Step 1, then a method in Step 2. You can post manual or AI-generated jobs.",
+    },
+    "dashboard": {
+      menuDesc: "Preview the dashboard you'll get after registration.",
+      sectionTitle: "Dashboard Preview",
+      sectionDesc: "This shows what your post-signup workspace looks like — analytics, candidates and quick actions.",
+    },
+  };
+
+  const dashboardTourSteps: TourStep[] = sidebarItems.flatMap((item) => {
+    const detail = sectionDetails[item.id];
+    const menuStep: TourStep = {
+      selector: `[data-tour="menu-${item.id}"]`,
+      title: item.label,
+      description: detail?.menuDesc || "Open this section to explore.",
+      placement: "right",
+      onEnter:
+        item.id === "login"
+          ? undefined
+          : () => setActiveSection(item.id as SidebarOption),
+    };
+    if (item.id === "login" || !detail) return [menuStep];
+    return [
+      menuStep,
+      {
+        selector: `[data-tour-section="${item.id}"]`,
+        title: detail.sectionTitle,
+        description: detail.sectionDesc,
+        placement: "left",
+      },
+    ];
+  });
 
   return (
     <div className="min-h-screen flex bg-slate-900">
