@@ -400,6 +400,7 @@ const CandidateSignup = () => {
   const [selectedServiceTiers, setSelectedServiceTiers] = useState<Record<string, 0 | 1 | 2>>({});
   // Registration tier (Basic / Standard / Premium)
   const [selectedRegistrationTier, setSelectedRegistrationTier] = useState<0 | 1 | 2>(0);
+  const [includeSkilloryVoucher, setIncludeSkilloryVoucher] = useState(false);
 
   useEffect(() => {
     if ((window as any).Razorpay) { setRazorpayLoaded(true); return; }
