@@ -81,7 +81,7 @@ export const PLANS: Record<PlanRole, PlanDefinition[]> = {
       "Basic applicant tracker",
       "Email support",
     ], cta: "/employer/signup" },
-    { id: "growth", name: "Growth", points: 1000, popular: true, features: [
+    { id: "growth", name: "Growth", points: 58000, popular: true, features: [
       "15 job posts",
       "5 team seats",
       "Screening tests",
