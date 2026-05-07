@@ -92,6 +92,8 @@ export function EmployerNotifications({ employerId }: { employerId: string }) {
         return "📅";
       case "application":
         return "📋";
+      case "candidate_suggestion":
+        return "✨";
       default:
         return "🔔";
     }
