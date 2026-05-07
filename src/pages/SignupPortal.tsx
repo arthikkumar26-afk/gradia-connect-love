@@ -910,23 +910,57 @@ const SignupPortal = () => {
   }
 
   // Build dashboard tour steps from sidebar items
-  const dashboardTourSteps: TourStep[] = [
-    ...sidebarItems.map((item) => {
-      const descriptions: Record<string, string> = {
-        "become-employer": "Learn the benefits of partnering with Gradia — AI screening, branded company page, and dedicated support.",
-        "registration": "Fill in your details here to create an account. All fields with errors are highlighted as you go.",
-        "login": "Already have an account? This takes you straight to the login page.",
-        "job-alert": "Manage vacancies, payments, advertisements, CVs, interviews, feedback and offer letters — all in one place.",
-        "dashboard": "Preview your dashboard to see what you'll get after registration.",
-      };
-      return {
-        selector: `[data-tour="menu-${item.id}"]`,
-        title: item.label,
-        description: descriptions[item.id] || "Open this section to explore.",
-        placement: "right" as const,
-      };
-    }),
-  ];
+  const sectionDetails: Record<string, { menuDesc: string; sectionTitle: string; sectionDesc: string }> = {
+    "become-employer": {
+      menuDesc: "Start here to learn the benefits of partnering with Gradia.",
+      sectionTitle: "Benefits Overview",
+      sectionDesc: "Read through the benefits — AI screening, qualified candidates, analytics, branding and dedicated support.",
+    },
+    "registration": {
+      menuDesc: "Open the registration form to create your account.",
+      sectionTitle: "Registration Form",
+      sectionDesc: "Fill in company details, contact info, location and password. Errors highlight inline as you type.",
+    },
+    "login": {
+      menuDesc: "If you already have an account, jump straight to the login page from here.",
+      sectionTitle: "Login",
+      sectionDesc: "Use your existing credentials to sign in.",
+    },
+    "job-alert": {
+      menuDesc: "Manage vacancies, payments, ads, CVs, interviews and offer letters — all from this hub.",
+      sectionTitle: "Job Alert Workspace",
+      sectionDesc: "Select a category in Step 1, then a method in Step 2. You can post manual or AI-generated jobs.",
+    },
+    "dashboard": {
+      menuDesc: "Preview the dashboard you'll get after registration.",
+      sectionTitle: "Dashboard Preview",
+      sectionDesc: "This shows what your post-signup workspace looks like — analytics, candidates and quick actions.",
+    },
+  };
+
+  const dashboardTourSteps: TourStep[] = sidebarItems.flatMap((item) => {
+    const detail = sectionDetails[item.id];
+    const menuStep: TourStep = {
+      selector: `[data-tour="menu-${item.id}"]`,
+      title: item.label,
+      description: detail?.menuDesc || "Open this section to explore.",
+      placement: "right",
+      onEnter:
+        item.id === "login"
+          ? undefined
+          : () => setActiveSection(item.id as SidebarOption),
+    };
+    if (item.id === "login" || !detail) return [menuStep];
+    return [
+      menuStep,
+      {
+        selector: `[data-tour-section="${item.id}"]`,
+        title: detail.sectionTitle,
+        description: detail.sectionDesc,
+        placement: "left",
+      },
+    ];
+  });
 
   return (
     <div className="min-h-screen flex bg-slate-900">
@@ -1094,7 +1128,7 @@ const SignupPortal = () => {
         {/* Content Area */}
         <div className="p-6">
           {selectedRole === "candidate" && activeSection === "registration" && (
-            <div>
+            <div data-tour-section="registration">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-white">Become a Candidate</h1>
                 <p className="text-slate-400">Join us and find your dream job opportunity</p>
@@ -1139,7 +1173,7 @@ const SignupPortal = () => {
           )}
 
           {selectedRole === "employer" && activeSection === "become-employer" && (
-            <div>
+            <div data-tour-section="become-employer">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-white">Become an Employer</h1>
                 <p className="text-slate-400">Join us as a strategic partner and unlock exclusive opportunities</p>
@@ -1262,7 +1296,7 @@ const SignupPortal = () => {
           )}
 
           {selectedRole === "employer" && activeSection === "registration" && (
-            <div>
+            <div data-tour-section="registration">
               {/* Onboarding Progress Indicator - Always Visible */}
               <div className="w-full max-w-4xl mx-auto mb-8">
                 <div className="flex items-center justify-between">
@@ -2017,7 +2051,7 @@ const SignupPortal = () => {
 
           {/* Job Alert Section for Employers */}
           {selectedRole === "employer" && activeSection === "job-alert" && (
-            <div>
+            <div data-tour-section="job-alert">
               <div className="mb-6">
                 <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                   <Bell className="h-6 w-6 text-yellow-400" />
@@ -2669,7 +2703,7 @@ const SignupPortal = () => {
 
           {/* Client Dashboard Content */}
           {selectedRole === "employer" && activeSection === "dashboard" && (
-            <div className="flex items-center justify-center min-h-[60vh]">
+            <div data-tour-section="dashboard" className="flex items-center justify-center min-h-[60vh]">
               <Card className="bg-slate-800 border-slate-700 w-full max-w-md">
                 <CardContent className="p-8">
                   <div className="text-center mb-6">

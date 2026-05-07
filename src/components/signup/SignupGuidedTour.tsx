@@ -8,6 +8,7 @@ export interface TourStep {
   title: string;
   description: string;
   placement?: "top" | "bottom" | "left" | "right";
+  onEnter?: () => void;
 }
 
 interface SignupGuidedTourProps {
@@ -61,6 +62,13 @@ const SignupGuidedTour = ({ steps, storageKey, runKey, onClose }: SignupGuidedTo
       setRect(null);
     }
   }, [step]);
+
+  useEffect(() => {
+    if (active && step?.onEnter) {
+      step.onEnter();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, index]);
 
   useLayoutEffect(() => {
     measure();
