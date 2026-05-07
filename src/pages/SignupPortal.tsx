@@ -782,13 +782,27 @@ const SignupPortal = () => {
           ]}
         />
         <div className="w-full max-w-4xl">
-          <Link 
-            to="/" 
-            className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors mb-8"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Link>
+          <div className="flex items-center justify-between mb-8">
+            <Link 
+              to="/" 
+              className="inline-flex items-center text-sm text-slate-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                localStorage.removeItem("gradia.signup.tour.role");
+                setTourRunKey((k) => k + 1);
+              }}
+              className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+            >
+              <HelpCircle className="h-4 w-4 mr-1.5" />
+              Take a tour
+            </Button>
+          </div>
 
           <div className="text-center mb-12">
             <img 
