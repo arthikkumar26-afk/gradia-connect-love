@@ -952,6 +952,7 @@ const SignupPortal = () => {
           {sidebarItems.map((item) => (
             <button
               key={item.id}
+              data-tour={`menu-${item.id}`}
               onClick={() => {
                 if (item.id === "login") {
                   navigate(selectedRole === "employer" ? "/employer/login" : "/candidate/login");
