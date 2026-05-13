@@ -305,6 +305,7 @@ const Companies = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

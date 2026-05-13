@@ -194,6 +194,7 @@ const PricingPage = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

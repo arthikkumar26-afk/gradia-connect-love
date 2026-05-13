@@ -292,6 +292,7 @@ const Contact = () => {
       </section>
       <SalesChatbot externalOpen={chatOpen} onExternalClose={() => setChatOpen(false)} />
     </div>
+    </>
   );
 };
 
