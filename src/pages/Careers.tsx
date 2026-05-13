@@ -142,7 +142,13 @@ const Careers = () => {
   }, [user]);
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Open Positions - Gradia Careers</title>
+        <meta name="description" content="Explore open positions at Gradia and join our mission to transform hiring. Find roles matched to your skills and experience." />
+        <link rel="canonical" href="https://gradiaa.com/careers" />
+      </Helmet>
+      <div className="min-h-screen">
       <section className="py-20 bg-gradient-hero text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">

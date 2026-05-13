@@ -51,7 +51,13 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Contact Us - Gradia</title>
+        <meta name="description" content="Get in touch with Gradia for career support, hiring solutions, partnerships, or general inquiries. Our team is here to help." />
+        <link rel="canonical" href="https://gradiaa.com/contact" />
+      </Helmet>
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 bg-gradient-hero">
         <div className="container mx-auto px-4 text-center">

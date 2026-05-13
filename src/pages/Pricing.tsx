@@ -84,7 +84,13 @@ const PricingPage = () => {
   );
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Pricing - Gradia</title>
+        <meta name="description" content="Transparent pricing for candidates and employers. One-time registration for candidates, flexible plans for employers and sponsors." />
+        <link rel="canonical" href="https://gradiaa.com/pricing" />
+      </Helmet>
+      <div className="min-h-screen">
       {/* Hero */}
       <section className="py-16 md:py-24 bg-gradient-hero text-white text-center">
         <div className="container mx-auto px-4">

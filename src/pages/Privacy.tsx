@@ -162,7 +162,13 @@ const sections = [
 
 const Privacy = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>Privacy Policy - Gradia</title>
+        <meta name="description" content="Gradia's privacy policy explains how we collect, use, and protect your personal information across our recruitment platform." />
+        <link rel="canonical" href="https://gradiaa.com/privacy" />
+      </Helmet>
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Privacy Policy</h1>

@@ -13,7 +13,13 @@ import WhyPriceFAQ from "@/components/shared/WhyPriceFAQ";
 
 const About = () => {
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>About Us - Gradia</title>
+        <meta name="description" content="Learn about Gradia's mission to transform hiring. AI-powered recruitment connecting talent with opportunity across software and education sectors." />
+        <link rel="canonical" href="https://gradiaa.com/about" />
+      </Helmet>
+      <div className="min-h-screen">
       <AboutHero />
       <WhoWeAre />
       <MissionVision />
