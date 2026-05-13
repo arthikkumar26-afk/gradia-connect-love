@@ -639,6 +639,7 @@ const JobsResults = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
