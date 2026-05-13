@@ -358,6 +358,7 @@ const Index = () => {
       {/* AI Sales Chatbot */}
       <SalesChatbot />
     </div>
+    </>
   );
 };
 
