@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Helmet } from "react-helmet-async";
 import { Search, Users, Building2, HelpCircle, MessageCircle } from "lucide-react";
 
 const FAQ = () => {

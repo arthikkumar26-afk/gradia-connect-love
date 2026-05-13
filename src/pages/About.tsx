@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import AboutHero from "@/components/about/AboutHero";
 import WhoWeAre from "@/components/about/WhoWeAre";
 import MissionVision from "@/components/about/MissionVision";

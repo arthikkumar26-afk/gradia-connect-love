@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Search, Calendar, User, ArrowRight, Clock } from "lucide-react";
 
 const Blog = () => {
