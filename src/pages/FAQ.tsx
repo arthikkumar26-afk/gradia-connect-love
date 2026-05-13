@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Helmet } from "react-helmet-async";
 import { Search, Users, Building2, HelpCircle, MessageCircle } from "lucide-react";
 
 const FAQ = () => {
@@ -72,7 +73,13 @@ const FAQ = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>FAQ - Gradia</title>
+        <meta name="description" content="Find answers about Gradia's job matching, hiring process, pricing, and platform features for candidates and employers." />
+        <link rel="canonical" href="https://gradiaa.com/faq" />
+      </Helmet>
+      <div className="min-h-screen">
       <section className="py-20 bg-gradient-hero text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -201,6 +208,7 @@ const FAQ = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

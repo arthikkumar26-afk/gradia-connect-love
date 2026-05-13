@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -148,7 +149,13 @@ const Companies = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Partner Companies - Gradia</title>
+        <meta name="description" content="Discover 500+ partner companies hiring on Gradia. Browse top employers across technology, education, finance, and healthcare." />
+        <link rel="canonical" href="https://gradiaa.com/companies" />
+      </Helmet>
+      <div className="min-h-screen">
       {/* Hero Section */}
       <section className="py-20 bg-gradient-hero">
         <div className="container mx-auto px-4 text-center">
@@ -298,6 +305,7 @@ const Companies = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { Search, Calendar, User, ArrowRight, Clock } from "lucide-react";
 
 const Blog = () => {
@@ -39,7 +40,13 @@ const Blog = () => {
   const categories = ["All", "Career Advice", "Hiring Trends", "Education", "Technology", "Industry Insights"];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Career Blog - Gradia</title>
+        <meta name="description" content="Career insights, hiring trends, and industry expertise to help candidates and employers succeed in the modern job market." />
+        <link rel="canonical" href="https://gradiaa.com/blog" />
+      </Helmet>
+      <div className="min-h-screen">
       <section className="py-20 bg-gradient-hero text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">Gradia Blog</h1>
@@ -127,6 +134,7 @@ const Blog = () => {
         </div>
       </section>
     </div>
+    </>
   );
 };
 

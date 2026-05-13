@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 
@@ -176,7 +177,13 @@ const sections = [
 
 const TermsOfService = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>Terms & Conditions - Gradia</title>
+        <meta name="description" content="Read Gradia's terms and conditions covering candidate, employer, freelancer, and sponsor usage of our recruitment platform." />
+        <link rel="canonical" href="https://gradiaa.com/terms" />
+      </Helmet>
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Terms & Conditions</h1>
@@ -216,6 +223,7 @@ const TermsOfService = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

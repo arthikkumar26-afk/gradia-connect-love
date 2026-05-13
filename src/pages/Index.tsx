@@ -2,6 +2,7 @@ import Hero from "@/components/sections/Hero";
 import ExternalJobsSection from "@/components/sections/ExternalJobsSection";
 import SalesChatbot from "@/components/SalesChatbot";
 import SignupGuidedTour from "@/components/signup/SignupGuidedTour";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -94,7 +95,13 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Gradia - Your Next Step</title>
+        <meta name="description" content="Gradia connects talented candidates with their dream careers. AI-powered job matching for software and education sectors." />
+        <link rel="canonical" href="https://gradiaa.com/" />
+      </Helmet>
+      <div className="min-h-screen">
       <SignupGuidedTour
         storageKey="gradia.home.tour.v1"
         steps={[
@@ -351,6 +358,7 @@ const Index = () => {
       {/* AI Sales Chatbot */}
       <SalesChatbot />
     </div>
+    </>
   );
 };
 
