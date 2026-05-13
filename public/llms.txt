@@ -1,0 +1,33 @@
+# Gradia
+
+> Gradia is a next-generation hiring and career platform connecting talented candidates with employers across IT, Banking, Education, Civil Engineering, Film & Media, and other industries. Features AI-powered resume analysis, mock interviews, skill assessments, mentorship, and end-to-end recruitment pipelines.
+
+## Pages
+
+- [Home](/): Discover your next career move with AI-powered job matching and resume tools.
+- [Jobs](/jobs): Browse and apply to curated job openings across multiple industries.
+- [Companies](/companies): Explore partner companies hiring through Gradia.
+- [About](/about): Learn about Gradia's mission to transform hiring and career growth.
+- [Contact](/contact): Reach out to the Gradia team for support or partnerships.
+- [Pricing](/pricing): View wallet-based pricing for resume analysis, mock interviews, and premium features.
+- [FAQ](/faq): Find answers to common questions about hiring, assessments, and platform usage.
+- [Careers](/careers): Explore open positions at Gradia itself.
+- [Blog](/blog): Read career tips, industry insights, and hiring best practices.
+- [Privacy Policy](/privacy): Understand how Gradia handles user data and privacy.
+- [Terms & Conditions](/terms-of-service): Review the terms of service for using Gradia.
+
+## Candidate Features
+
+- [Candidate Signup](/candidate/signup): Register as a job seeker to access jobs, AI resume analysis, and mock interviews.
+- [Candidate Dashboard](/candidate/dashboard): Manage applications, track interview progress, and view job matches.
+
+## Employer Features
+
+- [Employer Signup](/employer/signup): Register as an employer to post jobs and manage hiring pipelines.
+- [Employer Dashboard](/employer/dashboard): Post vacancies, manage applicants, and configure multi-stage interview pipelines.
+
+## Optional
+
+- [Freelancer Portal](/freelancer): Access mentorship, portfolio tools, and freelance project listings (requires login).
+- [EduTech Portal](/edutech): Educational tools and training programs for upskilling (requires login).
+- [Admin Portal](/admin): Platform administration and management tools (restricted access).
