@@ -95,7 +95,13 @@ const Index = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <Helmet>
+        <title>Gradia - Your Next Step</title>
+        <meta name="description" content="Gradia connects talented candidates with their dream careers. AI-powered job matching for software and education sectors." />
+        <link rel="canonical" href="https://gradiaa.com/" />
+      </Helmet>
+      <div className="min-h-screen">
       <SignupGuidedTour
         storageKey="gradia.home.tour.v1"
         steps={[
