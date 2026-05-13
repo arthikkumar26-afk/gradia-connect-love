@@ -227,7 +227,13 @@ const JobsResults = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>Find Jobs - Gradia</title>
+        <meta name="description" content="Browse thousands of active job openings across software and education. Filter by location, skills, and experience to find your perfect role." />
+        <link rel="canonical" href="https://gradiaa.com/jobs-results" />
+      </Helmet>
+      <div className="min-h-screen bg-background">
       {/* Header with Search */}
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="container mx-auto px-4 py-4">
