@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Helmet } from "react-helmet-async";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -102,13 +101,7 @@ export default function Pricing() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Employer Pricing - Gradia</title>
-        <meta name="description" content="Transparent hiring plans for employers on Gradia with flexible wallet point-based pricing." />
-        <link rel="canonical" href="https://gradiaa.com/employer/pricing" />
-      </Helmet>
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background py-12">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
@@ -254,6 +247,5 @@ export default function Pricing() {
         </div>
       </div>
     </div>
-    </>
   );
 }

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,12 +88,6 @@ const ForgotPassword = () => {
 
   if (emailSent) {
     return (
-      <>
-      <Helmet>
-        <title>Forgot Password - Gradia</title>
-        <meta name="description" content="Reset your Gradia account password securely with a one-time link sent to your email." />
-        <link rel="canonical" href="https://gradiaa.com/forgot-password" />
-      </Helmet>
       <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
         <div className="w-full max-w-md">
           <Card className="p-8 text-center animate-scale-in">
@@ -200,7 +193,6 @@ const ForgotPassword = () => {
         </Card>
       </div>
     </div>
-    </>
   );
 };
 

@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -274,12 +273,6 @@ const CompanyJobs = () => {
 
   if (isLoading) {
     return (
-      <>
-      <Helmet>
-        <title>Company Jobs - Gradia</title>
-        <meta name="description" content="Explore active openings at this employer and apply directly through Gradia." />
-        <link rel="canonical" href="https://gradiaa.com/company/jobs" />
-      </Helmet>
       <div className="min-h-screen bg-subtle">
         <div className="container mx-auto px-4 py-12">
           <Skeleton className="h-48 w-full mb-8 rounded-xl" />
@@ -709,7 +702,6 @@ const CompanyJobs = () => {
         </DialogContent>
       </Dialog>
     </div>
-    </>
   );
 };
 

@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Helmet } from "react-helmet-async";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,13 +42,7 @@ const allCategories = {
 
 export default function AllCategories() {
   return (
-    <>
-      <Helmet>
-        <title>All Learning Categories - Gradia</title>
-        <meta name="description" content="Browse every Gradia learning category — tech, non-tech, education, languages, and more." />
-        <link rel="canonical" href="https://gradiaa.com/learning/all-categories" />
-      </Helmet>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <div className="bg-gradient-card border-b">
         <div className="container mx-auto px-4 py-12">
           <Button variant="ghost" size="sm" asChild className="mb-4">
@@ -199,6 +192,5 @@ export default function AllCategories() {
         </Tabs>
       </div>
     </div>
-    </>
   );
 }

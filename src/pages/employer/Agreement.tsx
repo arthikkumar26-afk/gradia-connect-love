@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Helmet } from "react-helmet-async";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -117,13 +116,7 @@ export default function Agreement() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Employer Agreement - Gradia</title>
-        <meta name="description" content="Review the Gradia employer service agreement before posting jobs and managing candidates." />
-        <link rel="canonical" href="https://gradiaa.com/employer/agreement" />
-      </Helmet>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="w-full max-w-4xl">
         <OnboardingProgress currentStep="agreement" />
         <Card className="w-full p-8 shadow-lg">
@@ -215,6 +208,5 @@ export default function Agreement() {
         </Card>
       </div>
     </div>
-    </>
   );
 }

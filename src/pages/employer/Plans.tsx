@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Helmet } from "react-helmet-async";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -235,13 +234,7 @@ export default function Plans() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Employer Plans - Gradia</title>
-        <meta name="description" content="Compare Gradia hiring plans for startups, growing companies, and enterprises and pick the right tier." />
-        <link rel="canonical" href="https://gradiaa.com/employer/plans" />
-      </Helmet>
-      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="max-w-6xl mx-auto">
         <OnboardingProgress currentStep="payment" />
         <div className="text-center mb-10">
@@ -415,6 +408,5 @@ export default function Plans() {
         </div>
       </div>
     </div>
-    </>
   );
 }

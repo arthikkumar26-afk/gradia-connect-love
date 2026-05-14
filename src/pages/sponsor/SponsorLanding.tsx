@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { Helmet } from "react-helmet-async";
 import { SponsorHero } from "@/components/sponsor-landing/SponsorHero";
 import { SponsorshipPackages } from "@/components/sponsor-landing/SponsorshipPackages";
 import { StallReservation } from "@/components/sponsor-landing/StallReservation";
@@ -24,13 +23,7 @@ export default function SponsorLanding() {
   };
 
   return (
-    <>
-      <Helmet>
-        <title>Become a Sponsor - Gradia</title>
-        <meta name="description" content="Partner with Gradia to sponsor job melas, reach top talent, and grow your brand visibility." />
-        <link rel="canonical" href="https://gradiaa.com/sponsor" />
-      </Helmet>
-      <div className="min-h-screen">
+    <div className="min-h-screen">
       <SponsorHero onReserveStall={scrollToStalls} onViewPackages={scrollToPackages} />
       <div ref={packagesRef}>
         <SponsorshipPackages />
@@ -46,6 +39,5 @@ export default function SponsorLanding() {
       <TrustedSponsors />
       <FinalCTA onReserveStall={scrollToStalls} />
     </div>
-    </>
   );
 }

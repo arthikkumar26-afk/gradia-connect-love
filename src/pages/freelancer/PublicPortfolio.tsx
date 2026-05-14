@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,13 +47,7 @@ const PublicPortfolio = () => {
   }, [userId]);
 
   if (loading) return (
-    <>
-      <Helmet>
-        <title>Freelancer Portfolio - Gradia</title>
-        <meta name="description" content="View this freelancer's public portfolio, projects, and skills on Gradia." />
-        <link rel="canonical" href="https://gradiaa.com/portfolio" />
-      </Helmet>
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background">
       <Loader2 className="h-8 w-8 animate-spin text-accent" />
     </div>
   );
@@ -165,7 +158,6 @@ const PublicPortfolio = () => {
         </p>
       </div>
     </div>
-    </>
   );
 };
 

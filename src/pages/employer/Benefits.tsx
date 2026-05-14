@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Helmet } from "react-helmet-async";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -54,13 +53,7 @@ export default function Benefits() {
   const navigate = useNavigate();
 
   return (
-    <>
-      <Helmet>
-        <title>Employer Benefits - Gradia</title>
-        <meta name="description" content="Discover the benefits of hiring with Gradia: vetted candidates, AI screening, and faster pipelines." />
-        <link rel="canonical" href="https://gradiaa.com/employer/benefits" />
-      </Helmet>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="w-full max-w-4xl">
         <OnboardingProgress currentStep="benefits" />
         <Card className="w-full p-8 shadow-lg">
@@ -103,6 +96,5 @@ export default function Benefits() {
         </Card>
       </div>
     </div>
-    </>
   );
 }
