@@ -32,6 +32,7 @@ const PlaceholderPage = ({ title, description = "This page is being built and wi
         </Button>
       </div>
     </div>
+    </>
   );
 };
 
