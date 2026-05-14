@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -129,6 +130,12 @@ export default function SponsorLogin() {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>Sponsor Login - Gradia</title>
+        <meta name="description" content="Sign in to the Gradia sponsor portal to manage your stalls, leads, and event analytics." />
+        <link rel="canonical" href="https://gradiaa.com/sponsor/login" />
+      </Helmet>
     <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4">
       <div className="container mx-auto max-w-md">
         <div className="text-center mb-8">
@@ -223,5 +230,6 @@ export default function SponsorLogin() {
         </div>
       </div>
     </div>
+    </>
   );
 }

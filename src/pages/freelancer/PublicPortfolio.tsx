@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,12 @@ const PublicPortfolio = () => {
   );
 
   return (
+    <>
+      <Helmet>
+        <title>Freelancer Portfolio - Gradia</title>
+        <meta name="description" content="View this freelancer's public portfolio, projects, and skills on Gradia." />
+        <link rel="canonical" href="https://gradiaa.com/portfolio" />
+      </Helmet>
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto py-12 px-4">
         {/* Header */}
@@ -158,6 +165,7 @@ const PublicPortfolio = () => {
         </p>
       </div>
     </div>
+    </>
   );
 };
 

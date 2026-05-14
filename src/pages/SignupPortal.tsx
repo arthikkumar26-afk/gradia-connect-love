@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { 
   User, Briefcase, UserPlus, LogIn, Bell, LayoutDashboard, 
@@ -963,6 +964,12 @@ const SignupPortal = () => {
   });
 
   return (
+    <>
+      <Helmet>
+        <title>Sign Up - Gradia</title>
+        <meta name="description" content="Create a Gradia account as a candidate, employer, freelancer, or partner to get started." />
+        <link rel="canonical" href="https://gradiaa.com/signup" />
+      </Helmet>
     <div className="min-h-screen flex bg-slate-900">
       <SignupGuidedTour
         storageKey={`gradia.signup.tour.${selectedRole}`}
@@ -2742,6 +2749,7 @@ const SignupPortal = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -267,6 +268,12 @@ const JobApply = () => {
   const companyDisplayName = company?.company_name || company?.full_name || "Company";
 
   return (
+    <>
+      <Helmet>
+        <title>Apply for this Job - Gradia</title>
+        <meta name="description" content="Submit your application for this opportunity and track your hiring pipeline on Gradia." />
+        <link rel="canonical" href="https://gradiaa.com/job/apply" />
+      </Helmet>
     <div className="min-h-screen bg-subtle">
       {/* Company & Job Header */}
       <section className="bg-gradient-hero text-primary-foreground py-12">
@@ -561,6 +568,7 @@ const JobApply = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 

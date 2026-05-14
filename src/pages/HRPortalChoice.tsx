@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,12 @@ const HRPortalChoice = () => {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>HR Portal - Gradia</title>
+        <meta name="description" content="Choose between the employer-side and candidate-side HR dashboards on Gradia." />
+        <link rel="canonical" href="https://gradiaa.com/hr/dashboard" />
+      </Helmet>
     <div className="min-h-screen bg-subtle">
       <header className="h-14 bg-card border-b border-border flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
@@ -89,6 +96,7 @@ const HRPortalChoice = () => {
         </div>
       </main>
     </div>
+    </>
   );
 };
 

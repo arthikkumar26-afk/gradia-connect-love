@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +64,12 @@ const HRLogin = () => {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>HR Login - Gradia</title>
+        <meta name="description" content="Sign in to the Gradia HR portal to manage employer accounts, candidates, and outreach." />
+        <link rel="canonical" href="https://gradiaa.com/hr/login" />
+      </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-6">
       <div className="w-full max-w-md">
         <Link to="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-accent transition-colors mb-4">
@@ -101,6 +108,7 @@ const HRLogin = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 
