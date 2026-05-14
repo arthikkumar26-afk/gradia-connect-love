@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Helmet } from "react-helmet-async";
 import { useSearchParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -167,7 +168,13 @@ export default function LearningPlatform() {
   const getCourseUrl = (slug: string) => `${SKILLORY_BASE}/courses/${slug}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>Learning Platform - Gradia</title>
+        <meta name="description" content="Skillory-powered learning platform integrated with Gradia for upskilling candidates and teams." />
+        <link rel="canonical" href="https://gradiaa.com/learning-platform" />
+      </Helmet>
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Header */}
         <div className="mb-8">
@@ -305,5 +312,6 @@ export default function LearningPlatform() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

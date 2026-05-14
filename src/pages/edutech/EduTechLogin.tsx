@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +60,13 @@ export default function EduTechLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
+    <>
+      <Helmet>
+        <title>EduTech Login - Gradia</title>
+        <meta name="description" content="Sign in to the Gradia EduTech portal to manage students, campaigns, and placements." />
+        <link rel="canonical" href="https://gradiaa.com/edutech/login" />
+      </Helmet>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Button variant="ghost" size="sm" asChild className="mb-6">
           <Link to="/" className="flex items-center gap-2 text-muted-foreground">
@@ -146,5 +153,6 @@ export default function EduTechLogin() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

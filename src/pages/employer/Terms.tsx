@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Helmet } from "react-helmet-async";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -80,7 +81,13 @@ export default function Terms() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
+    <>
+      <Helmet>
+        <title>Employer Terms - Gradia</title>
+        <meta name="description" content="Terms and conditions for employers using Gradia's hiring platform and related services." />
+        <link rel="canonical" href="https://gradiaa.com/employer/terms" />
+      </Helmet>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="w-full max-w-4xl">
         <OnboardingProgress currentStep="terms" />
         <Card className="w-full p-8 shadow-lg">
@@ -144,5 +151,6 @@ export default function Terms() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

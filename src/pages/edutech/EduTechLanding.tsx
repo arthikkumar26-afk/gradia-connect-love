@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -157,7 +158,13 @@ export default function EduTechLanding() {
   const [isAnnual, setIsAnnual] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>EduTech Portal - Gradia</title>
+        <meta name="description" content="Placement and student management portal for colleges and training institutes powered by Gradia." />
+        <link rel="canonical" href="https://gradiaa.com/edutech" />
+      </Helmet>
+      <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10 border-b">
         <div className="container mx-auto px-4 py-16 md:py-24">
@@ -393,5 +400,6 @@ export default function EduTechLanding() {
         </div>
       </section>
     </div>
+    </>
   );
 }
