@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Helmet } from "react-helmet-async";
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -128,6 +129,12 @@ export default function RequestDemo() {
   }
 
   return (
+    <>
+      <Helmet>
+        <title>Request a Demo - Gradia</title>
+        <meta name="description" content="Book a personalized walkthrough of Gradia's hiring platform for your team." />
+        <link rel="canonical" href="https://gradiaa.com/employer/demo" />
+      </Helmet>
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
@@ -494,5 +501,6 @@ export default function RequestDemo() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

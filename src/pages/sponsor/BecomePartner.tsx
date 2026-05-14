@@ -1,9 +1,16 @@
 import { Button } from "@/components/ui/button";
+import { Helmet } from "react-helmet-async";
 import { Card } from "@/components/ui/card";
 import { Globe, Users, Zap, TrendingUp } from "lucide-react";
 
 export default function BecomePartner() {
   return (
+    <>
+      <Helmet>
+        <title>Become a Partner - Gradia</title>
+        <meta name="description" content="Join Gradia's partner network and collaborate on hiring, training, and placement initiatives." />
+        <link rel="canonical" href="https://gradiaa.com/sponsor/become-partner" />
+      </Helmet>
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
@@ -72,5 +79,6 @@ export default function BecomePartner() {
         </div>
       </section>
     </div>
+    </>
   );
 }

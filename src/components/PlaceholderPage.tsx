@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Construction } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 interface PlaceholderPageProps {
   title: string;
@@ -8,7 +9,14 @@ interface PlaceholderPageProps {
 }
 
 const PlaceholderPage = ({ title, description = "This page is being built and will be available soon." }: PlaceholderPageProps) => {
+  const { pathname } = useLocation();
   return (
+    <>
+      <Helmet>
+        <title>{`${title} - Gradia`}</title>
+        <meta name="description" content={`${title} on Gradia. ${description}`} />
+        <link rel="canonical" href={`https://gradiaa.com${pathname}`} />
+      </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle">
       <div className="text-center max-w-md">
         <div className="w-16 h-16 bg-gradient-accent rounded-lg flex items-center justify-center mx-auto mb-6">
@@ -24,6 +32,7 @@ const PlaceholderPage = ({ title, description = "This page is being built and wi
         </Button>
       </div>
     </div>
+    </>
   );
 };
 

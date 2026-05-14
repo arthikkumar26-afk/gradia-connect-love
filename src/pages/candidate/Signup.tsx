@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { Helmet } from "react-helmet-async";
 import SignupGuidedTour, { TourStep } from "@/components/signup/SignupGuidedTour";
 import { useSearchParams } from "react-router-dom";
 import { Link, useNavigate } from "react-router-dom";
@@ -2322,6 +2323,12 @@ const CandidateSignup = () => {
 
 
   return (
+    <>
+      <Helmet>
+        <title>Candidate Sign Up - Gradia</title>
+        <meta name="description" content="Create a Gradia candidate profile, get matched with jobs, and unlock AI-powered career tools." />
+        <link rel="canonical" href="https://gradiaa.com/candidate/signup" />
+      </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-4 py-12">
       <SignupGuidedTour
         storageKey={`gradia.candidate.signup.step.${currentStep}`}
@@ -2336,6 +2343,7 @@ const CandidateSignup = () => {
       {currentStep === 'plan' && renderPlanStep()}
     </div>
 
+    </>
   );
 };
 

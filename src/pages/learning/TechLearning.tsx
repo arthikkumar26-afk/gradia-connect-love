@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,12 @@ const featuredCourses = [
 
 export default function TechLearning() {
   return (
+    <>
+      <Helmet>
+        <title>Tech Learning - Gradia</title>
+        <meta name="description" content="Curated tech upskilling tracks covering software, data, cloud, and emerging technologies." />
+        <link rel="canonical" href="https://gradiaa.com/learning/tech" />
+      </Helmet>
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-card border-b">
         <div className="container mx-auto px-4 py-12">
@@ -190,5 +197,6 @@ export default function TechLearning() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

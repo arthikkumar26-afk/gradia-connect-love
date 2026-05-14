@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { useEffect } from "react";
 
 const NotFound = () => {
@@ -9,6 +10,12 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
+    <>
+      <Helmet>
+        <title>Page Not Found - Gradia</title>
+        <meta name="description" content="The page you're looking for doesn't exist. Return to Gradia to continue exploring jobs and hiring tools." />
+        <link rel="canonical" href="https://gradiaa.com/404" />
+      </Helmet>
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="text-center">
         <h1 className="mb-4 text-4xl font-bold">404</h1>
@@ -18,6 +25,7 @@ const NotFound = () => {
         </a>
       </div>
     </div>
+    </>
   );
 };
 
