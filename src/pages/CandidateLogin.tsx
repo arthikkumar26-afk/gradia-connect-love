@@ -203,6 +203,12 @@ const CandidateLogin = () => {
   };
 
   return (
+    <>
+      <Helmet>
+        <title>Candidate Login - Gradia</title>
+        <meta name="description" content="Sign in to your Gradia candidate account to access jobs, mock interviews, and your application pipeline." />
+        <link rel="canonical" href="https://gradiaa.com/candidate/login" />
+      </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-6">
       <div className="w-full max-w-md">
         {/* Back to Home Link */}
