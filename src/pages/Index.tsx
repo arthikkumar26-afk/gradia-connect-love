@@ -100,6 +100,27 @@ const Index = () => {
         <title>Gradia - Your Next Step</title>
         <meta name="description" content="Gradia connects talented candidates with their dream careers. AI-powered job matching for software and education sectors." />
         <link rel="canonical" href="https://gradiaa.com/" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Gradia",
+          url: "https://gradiaa.com/",
+          description: "Gradia connects talented candidates with their dream careers. AI-powered job matching for software and education sectors.",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://gradiaa.com/jobs-results?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Gradia",
+          url: "https://gradiaa.com/",
+          logo: "https://gradiaa.com/gradia-logo.png",
+          description: "Next-gen hiring platform connecting candidates with employers across IT, Banking, Education, and more.",
+          sameAs: ["https://twitter.com/gradia"]
+        })}</script>
       </Helmet>
       <div className="min-h-screen">
       <SignupGuidedTour
