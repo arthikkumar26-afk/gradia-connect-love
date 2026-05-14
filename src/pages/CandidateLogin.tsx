@@ -397,7 +397,8 @@ const CandidateLogin = () => {
           </p>
         </div>
       </div>
-    </div>);
+    </div>
+    </>);
 
 };
 
