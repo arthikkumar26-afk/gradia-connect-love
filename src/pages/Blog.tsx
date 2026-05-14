@@ -45,6 +45,21 @@ const Blog = () => {
         <title>Career Blog - Gradia</title>
         <meta name="description" content="Career insights, hiring trends, and industry expertise to help candidates and employers succeed in the modern job market." />
         <link rel="canonical" href="https://gradiaa.com/blog" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          name: "Gradia Career Blog",
+          url: "https://gradiaa.com/blog",
+          description: "Career insights, hiring trends, and industry expertise from Gradia.",
+          blogPost: posts.map((p) => ({
+            "@type": "BlogPosting",
+            headline: p.title,
+            description: p.excerpt,
+            author: { "@type": "Person", name: p.author },
+            datePublished: p.date,
+            articleSection: p.category
+          }))
+        })}</script>
       </Helmet>
       <div className="min-h-screen">
       <section className="py-20 bg-gradient-hero text-primary-foreground">
