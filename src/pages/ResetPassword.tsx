@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -133,6 +134,12 @@ const ResetPassword = () => {
   // Show loading while checking session
   if (isValidSession === null) {
     return (
+      <>
+      <Helmet>
+        <title>Reset Password - Gradia</title>
+        <meta name="description" content="Choose a new password for your Gradia account and regain access to your dashboard." />
+        <link rel="canonical" href="https://gradiaa.com/reset-password" />
+      </Helmet>
       <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
         <div className="w-full max-w-md">
           <Card className="p-8 text-center animate-scale-in">
@@ -279,6 +286,7 @@ const ResetPassword = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 

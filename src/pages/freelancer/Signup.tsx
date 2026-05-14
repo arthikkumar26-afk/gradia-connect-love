@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -150,7 +151,13 @@ const FreelancerSignup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+    <>
+      <Helmet>
+        <title>Freelancer Sign Up - Gradia</title>
+        <meta name="description" content="Join Gradia as a freelancer to access portfolio tools, mentorship, and outsource project work." />
+        <link rel="canonical" href="https://gradiaa.com/freelancer/signup" />
+      </Helmet>
+      <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <Link to="/signup" className="inline-flex items-center text-sm text-muted-foreground hover:text-accent mb-6">
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Sign Up
@@ -250,6 +257,7 @@ const FreelancerSignup = () => {
         </Card>
       </div>
     </div>
+    </>
   );
 };
 
