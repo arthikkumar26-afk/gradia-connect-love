@@ -72,12 +72,23 @@ const FAQ = () => {
     }
   ];
 
+  const allFAQs = [...candidateFAQs, ...employerFAQs, ...generalFAQs];
+
   return (
     <>
       <Helmet>
         <title>FAQ - Gradia</title>
         <meta name="description" content="Find answers about Gradia's job matching, hiring process, pricing, and platform features for candidates and employers." />
         <link rel="canonical" href="https://gradiaa.com/faq" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: allFAQs.map((f) => ({
+            "@type": "Question",
+            name: f.question,
+            acceptedAnswer: { "@type": "Answer", text: f.answer }
+          }))
+        })}</script>
       </Helmet>
       <div className="min-h-screen">
       <section className="py-20 bg-gradient-hero text-primary-foreground">
