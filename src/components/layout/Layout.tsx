@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
+import HRChatBubble from "@/components/candidate/HRChatBubble";
 
 
 interface LayoutProps {
@@ -41,7 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
       {!hideFooter && <Footer />}
-      
+      <HRChatBubble />
     </div>
   );
 };
