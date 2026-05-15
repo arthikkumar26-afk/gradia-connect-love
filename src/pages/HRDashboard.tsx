@@ -778,7 +778,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
             <Users className="h-3 w-3" /> HR
           </Badge>
         </div>
-        <HRNotifications />
+        <div className="flex items-center gap-1"><HRChatPanel /><HRNotifications /></div>
       </header>
 
       <div className="flex pt-14 md:pt-0">
