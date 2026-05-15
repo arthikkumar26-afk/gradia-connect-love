@@ -30,6 +30,7 @@ import HREmployerVacanciesDialog from "@/components/hr/HREmployerVacanciesDialog
 import HREmployerProfile from "@/pages/hr/EmployerProfile";
 import HRSMMSection from "@/components/hr/HRSMMSection";
 import HRNotifications from "@/components/hr/HRNotifications";
+import HRChatPanel from "@/components/hr/HRChatPanel";
 import { Send } from "lucide-react";
 
 interface JobRow {
