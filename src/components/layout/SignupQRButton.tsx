@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { QrCode } from "lucide-react";
+import { useState, useRef } from "react";
+import { QrCode, Download } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
