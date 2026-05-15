@@ -42,7 +42,7 @@ const Layout = ({ children }: LayoutProps) => {
         {children}
       </main>
       {!hideFooter && <Footer />}
-      
+      <HRChatBubble />
     </div>
   );
 };
