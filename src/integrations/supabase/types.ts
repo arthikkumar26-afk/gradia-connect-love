@@ -1311,6 +1311,36 @@ export type Database = {
         }
         Relationships: []
       }
+      hr_chat_messages: {
+        Row: {
+          candidate_id: string
+          content: string
+          created_at: string
+          hr_id: string | null
+          id: string
+          read_at: string | null
+          sender_role: string
+        }
+        Insert: {
+          candidate_id: string
+          content: string
+          created_at?: string
+          hr_id?: string | null
+          id?: string
+          read_at?: string | null
+          sender_role: string
+        }
+        Update: {
+          candidate_id?: string
+          content?: string
+          created_at?: string
+          hr_id?: string | null
+          id?: string
+          read_at?: string | null
+          sender_role?: string
+        }
+        Relationships: []
+      }
       hr_employer_links: {
         Row: {
           created_at: string
