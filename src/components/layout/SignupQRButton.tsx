@@ -88,7 +88,7 @@ const SignupQRButton = ({ variant = "icon", className }: SignupQRButtonProps) =>
         </DialogHeader>
         
         <div className="flex flex-col items-center py-6">
-          <div className="bg-white p-4 rounded-xl shadow-lg border-2 border-primary/20">
+          <div ref={qrWrapperRef} className="bg-white p-4 rounded-xl shadow-lg border-2 border-primary/20">
             <QRCodeSVG
               value={qrUrl}
               size={200}
@@ -102,6 +102,16 @@ const SignupQRButton = ({ variant = "icon", className }: SignupQRButtonProps) =>
               }}
             />
           </div>
+
+          <Button
+            size="sm"
+            variant="default"
+            className="mt-4 gap-2"
+            onClick={handleDownload}
+          >
+            <Download className="h-4 w-4" />
+            Download QR
+          </Button>
           
           <div className="mt-4 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
