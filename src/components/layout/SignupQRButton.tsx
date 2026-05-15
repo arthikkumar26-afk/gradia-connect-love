@@ -20,6 +20,37 @@ interface SignupQRButtonProps {
 
 const SignupQRButton = ({ variant = "icon", className }: SignupQRButtonProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const qrWrapperRef = useRef<HTMLDivElement>(null);
+
+  const handleDownload = () => {
+    const svg = qrWrapperRef.current?.querySelector("svg");
+    if (!svg) {
+      toast.error("QR code not ready");
+      return;
+    }
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.onload = () => {
+      const size = 1024;
+      canvas.width = size;
+      canvas.height = size;
+      if (ctx) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, size, size);
+        ctx.drawImage(img, 0, 0, size, size);
+      }
+      const pngFile = canvas.toDataURL("image/png");
+      const link = document.createElement("a");
+      link.download = "gradia-quick-register-qr.png";
+      link.href = pngFile;
+      link.click();
+      toast.success("QR code downloaded!");
+    };
+    img.onerror = () => toast.error("Failed to generate QR image");
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)));
+  };
   
   // Generate QR code URL for quick registration
   const qrUrl = `${window.location.origin}/candidate/quick-register`;
