@@ -862,7 +862,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 {menuItems.find(m => m.id === activeTab)?.label || "Dashboard"}
               </h1>
               <div className="flex items-center gap-2">
-                {view !== "all" && (
+                <div className="hidden md:block"><HRNotifications /></div>
                   <Button variant="outline" size="sm" onClick={() => navigate("/hr/dashboard")} className="gap-2">
                     <LayoutDashboard className="h-4 w-4" />
                     Change Workspace
