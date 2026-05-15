@@ -29,6 +29,7 @@ import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
 import HREmployerVacanciesDialog from "@/components/hr/HREmployerVacanciesDialog";
 import HREmployerProfile from "@/pages/hr/EmployerProfile";
 import HRSMMSection from "@/components/hr/HRSMMSection";
+import HRNotifications from "@/components/hr/HRNotifications";
 import { Send } from "lucide-react";
 
 interface JobRow {
@@ -776,7 +777,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
             <Users className="h-3 w-3" /> HR
           </Badge>
         </div>
-        <div className="w-10" />
+        <HRNotifications />
       </header>
 
       <div className="flex pt-14 md:pt-0">
@@ -861,6 +862,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
                 {menuItems.find(m => m.id === activeTab)?.label || "Dashboard"}
               </h1>
               <div className="flex items-center gap-2">
+                <div className="hidden md:block"><HRNotifications /></div>
                 {view !== "all" && (
                   <Button variant="outline" size="sm" onClick={() => navigate("/hr/dashboard")} className="gap-2">
                     <LayoutDashboard className="h-4 w-4" />
