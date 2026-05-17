@@ -303,6 +303,19 @@ const HREmployerProfile = ({ employerId: employerIdProp, onBack, embedded }: Emp
                 <Stat label="Avg Score" value={`${summary.avgScore}%`} icon={<TrendingUp className="h-3.5 w-3.5" />} tone="info" />
               </div>
 
+              {user && (
+                <MatchableProfilesSection
+                  hrId={user.id}
+                  employerId={emp.id}
+                  employerName={empName}
+                  jobId={selectedJob.id}
+                  jobTitle={selectedJob.job_title}
+                  jobCategory={selectedJob.category}
+                  jobSegment={selectedJob.segment}
+                  jobSkills={selectedJob.skills}
+                />
+              )}
+
               {jobLoading ? (
                 <div className="flex items-center justify-center py-10">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
