@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
 import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
+import MatchableProfilesSection from "@/components/hr/MatchableProfilesSection";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Employer {
@@ -36,6 +37,9 @@ interface Job {
   job_type: string | null;
   department: string | null;
   salary_range: string | null;
+  category?: string | null;
+  segment?: string | null;
+  skills?: string[] | null;
 }
 
 interface CandidateRow {
@@ -100,7 +104,7 @@ const HREmployerProfile = ({ employerId: employerIdProp, onBack, embedded }: Emp
 
       const { data: js } = await supabase
         .from("jobs")
-        .select("id, job_title, location, status, created_at, closing_date, experience_required, job_type, department, salary_range")
+        .select("id, job_title, location, status, created_at, closing_date, experience_required, job_type, department, salary_range, category, segment, skills")
         .eq("employer_id", employerId)
         .order("created_at", { ascending: false });
       const list = ((js as any[]) || []) as Job[];
@@ -298,6 +302,19 @@ const HREmployerProfile = ({ employerId: employerIdProp, onBack, embedded }: Emp
                 <Stat label="Withdrawn" value={summary.withdrawn} icon={<XCircle className="h-3.5 w-3.5" />} />
                 <Stat label="Avg Score" value={`${summary.avgScore}%`} icon={<TrendingUp className="h-3.5 w-3.5" />} tone="info" />
               </div>
+
+              {user && (
+                <MatchableProfilesSection
+                  hrId={user.id}
+                  employerId={emp.id}
+                  employerName={empName}
+                  jobId={selectedJob.id}
+                  jobTitle={selectedJob.job_title}
+                  jobCategory={selectedJob.category}
+                  jobSegment={selectedJob.segment}
+                  jobSkills={selectedJob.skills}
+                />
+              )}
 
               {jobLoading ? (
                 <div className="flex items-center justify-center py-10">

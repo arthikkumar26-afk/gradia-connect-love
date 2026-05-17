@@ -351,6 +351,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
   ];
   const candidateMenu = [
     { id: "candidates", label: "Candidates", icon: Users },
+    { id: "employers", label: "Employers Data", icon: Building },
     { id: "candidates-data", label: "Candidates Data", icon: UserSquare2 },
     { id: "invite-candidate", label: "Invite a Candidate", icon: Mail },
     { id: "email-status", label: "Email Status", icon: Mail },
