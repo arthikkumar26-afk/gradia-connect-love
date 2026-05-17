@@ -36,6 +36,9 @@ interface Job {
   job_type: string | null;
   department: string | null;
   salary_range: string | null;
+  category?: string | null;
+  segment?: string | null;
+  skills?: string[] | null;
 }
 
 interface CandidateRow {
