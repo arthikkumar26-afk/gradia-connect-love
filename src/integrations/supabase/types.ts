@@ -1543,6 +1543,36 @@ export type Database = {
           },
         ]
       }
+      hr_recommended_candidates: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          employer_id: string
+          hr_id: string
+          id: string
+          job_id: string | null
+          note: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          employer_id: string
+          hr_id: string
+          id?: string
+          job_id?: string | null
+          note?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          employer_id?: string
+          hr_id?: string
+          id?: string
+          job_id?: string | null
+          note?: string | null
+        }
+        Relationships: []
+      }
       interview_answer_keys: {
         Row: {
           answer_text: string
