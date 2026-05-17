@@ -103,7 +103,7 @@ const HREmployerProfile = ({ employerId: employerIdProp, onBack, embedded }: Emp
 
       const { data: js } = await supabase
         .from("jobs")
-        .select("id, job_title, location, status, created_at, closing_date, experience_required, job_type, department, salary_range")
+        .select("id, job_title, location, status, created_at, closing_date, experience_required, job_type, department, salary_range, category, segment, skills")
         .eq("employer_id", employerId)
         .order("created_at", { ascending: false });
       const list = ((js as any[]) || []) as Job[];
