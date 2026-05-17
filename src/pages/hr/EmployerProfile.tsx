@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import EmployerAIScanDialog from "@/components/hr/EmployerAIScanDialog";
 import TransferEmployerDialog from "@/components/hr/TransferEmployerDialog";
+import MatchableProfilesSection from "@/components/hr/MatchableProfilesSection";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Employer {
