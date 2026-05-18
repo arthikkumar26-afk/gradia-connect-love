@@ -25,10 +25,10 @@ const HRChatBubble = () => {
   const [unread, setUnread] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Only render for candidates
-  if (!user || profile?.role !== "candidate") return null;
+  const isCandidate = !!user && profile?.role === "candidate";
 
   const loadMessages = async () => {
+    if (!user) return;
     setLoading(true);
     const { data } = await supabase
       .from("hr_chat_messages")
@@ -41,6 +41,7 @@ const HRChatBubble = () => {
   };
 
   useEffect(() => {
+    if (!isCandidate || !user) return;
     loadMessages();
     const channel = supabase
       .channel(`hr_chat_${user.id}`)
@@ -56,7 +57,7 @@ const HRChatBubble = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id]);
+  }, [isCandidate, user?.id]);
 
   useEffect(() => {
     if (open) {
@@ -64,6 +65,8 @@ const HRChatBubble = () => {
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [open, messages]);
+
+  if (!isCandidate || !user) return null;
 
   const send = async () => {
     const text = input.trim();
