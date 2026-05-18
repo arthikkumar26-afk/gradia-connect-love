@@ -768,9 +768,20 @@ const CandidateSignup = () => {
   const goBack = () => {
     const stepOrder: WizardStep[] = ['signup', 'resume', 'benefits', 'agreement', 'terms', 'plan'];
     const currentIndex = stepOrder.indexOf(currentStep);
-    if (currentIndex > 0) {
-      setCurrentStep(stepOrder[currentIndex - 1]);
+    if (currentIndex <= 0) return;
+    let prev = stepOrder[currentIndex - 1];
+    // Once the account exists (user is authenticated), going back to the
+    // 'signup' step would trigger the auth-gating effect and bounce the
+    // user into the dashboard, skipping the plan/payment step.
+    // Skip the signup step in that case so Back stays inside the wizard.
+    if (prev === 'signup' && (isAuthenticated || justSignedUp || justSignedUpRef.current)) {
+      if (currentIndex - 2 >= 0) {
+        prev = stepOrder[currentIndex - 2];
+      } else {
+        return;
+      }
     }
+    setCurrentStep(prev);
   };
 
   // (Wallet activation step removed — onboarding finishes after Terms & Conditions.)
