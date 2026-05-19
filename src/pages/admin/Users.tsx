@@ -591,9 +591,11 @@ const Users = () => {
         },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast({ title: "Alert Sent", description: `Payment reminder emailed to ${user.email}.` });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to send alert", variant: "destructive" });
+      const msg = err?.context?.error || err?.message || "Failed to send alert";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setAlertingUserId(null);
     }
