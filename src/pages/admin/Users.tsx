@@ -562,7 +562,36 @@ const Users = () => {
     }
   };
 
-  if (isLoading) {
+  const sendPaymentAlert = async (user: User) => {
+    setAlertingUserId(user.id);
+    try {
+      const { error } = await supabase.functions.invoke("send-notification-email", {
+        body: {
+          to: user.email,
+          subject: "Complete your Gradia subscription",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #ea580c;">Payment Pending</h2>
+              <p>Dear ${user.full_name},</p>
+              <p>We noticed that you haven't completed your Gradia subscription payment yet.</p>
+              <p>To unlock the full set of features for your account, please complete your payment at your earliest convenience.</p>
+              <p style="margin: 24px 0;">
+                <a href="https://gradiaa.com/pricing" style="background:#ea580c;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;">Complete Payment</a>
+              </p>
+              <p>If you've already paid or need assistance, contact us at <a href="mailto:info@gradiaa.com">info@gradiaa.com</a>.</p>
+              <p style="color:#6b7280;margin-top:24px;">— Gradia Team</p>
+            </div>
+          `,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Alert Sent", description: `Payment reminder emailed to ${user.email}.` });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to send alert", variant: "destructive" });
+    } finally {
+      setAlertingUserId(null);
+    }
+  };
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
