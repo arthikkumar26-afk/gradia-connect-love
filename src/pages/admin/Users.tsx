@@ -133,6 +133,8 @@ const Users = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [paymentMap, setPaymentMap] = useState<Record<string, { paid: boolean; plan?: string }>>({});
+  const [alertingUserId, setAlertingUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -401,6 +403,35 @@ const Users = () => {
       if (data?.error) throw new Error(data.error);
 
       setUsers(data?.users || []);
+
+      // Load payment/subscription status in parallel
+      const [{ data: candSubs }, { data: empSubs }] = await Promise.all([
+        supabase
+          .from("candidate_subscriptions")
+          .select("candidate_id, plan, status, ends_at"),
+        supabase
+          .from("subscriptions")
+          .select("employer_id, plan_name, status, ends_at"),
+      ]);
+      const map: Record<string, { paid: boolean; plan?: string }> = {};
+      const now = Date.now();
+      (candSubs || []).forEach((s: any) => {
+        const active =
+          s.status === "active" &&
+          (!s.ends_at || new Date(s.ends_at).getTime() > now);
+        // 'basic' is the free default — treat only pro/premium as paid
+        const paid = active && s.plan && s.plan !== "basic";
+        const prev = map[s.candidate_id];
+        if (paid || !prev) map[s.candidate_id] = { paid: !!paid, plan: s.plan };
+      });
+      (empSubs || []).forEach((s: any) => {
+        const active =
+          s.status === "active" &&
+          (!s.ends_at || new Date(s.ends_at).getTime() > now);
+        const prev = map[s.employer_id];
+        if (active || !prev) map[s.employer_id] = { paid: !!active, plan: s.plan_name };
+      });
+      setPaymentMap(map);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -528,6 +559,37 @@ const Users = () => {
       setBlockDialogOpen(false);
       setSelectedUser(null);
       setBlockReason("");
+    }
+  };
+
+  const sendPaymentAlert = async (user: User) => {
+    setAlertingUserId(user.id);
+    try {
+      const { error } = await supabase.functions.invoke("send-notification-email", {
+        body: {
+          to: user.email,
+          subject: "Complete your Gradia subscription",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #ea580c;">Payment Pending</h2>
+              <p>Dear ${user.full_name},</p>
+              <p>We noticed that you haven't completed your Gradia subscription payment yet.</p>
+              <p>To unlock the full set of features for your account, please complete your payment at your earliest convenience.</p>
+              <p style="margin: 24px 0;">
+                <a href="https://gradiaa.com/pricing" style="background:#ea580c;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;">Complete Payment</a>
+              </p>
+              <p>If you've already paid or need assistance, contact us at <a href="mailto:info@gradiaa.com">info@gradiaa.com</a>.</p>
+              <p style="color:#6b7280;margin-top:24px;">— Gradia Team</p>
+            </div>
+          `,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Alert Sent", description: `Payment reminder emailed to ${user.email}.` });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to send alert", variant: "destructive" });
+    } finally {
+      setAlertingUserId(null);
     }
   };
 
@@ -790,6 +852,7 @@ const Users = () => {
                           <TableHead>Password</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Joined</TableHead>
+                          <TableHead>Payment</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -857,6 +920,44 @@ const Users = () => {
                                   ? format(new Date(user.created_at), 'MMM d, yyyy')
                                   : 'Unknown'}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              {(() => {
+                                if (user.role !== "candidate" && user.role !== "employer") {
+                                  return <span className="text-xs text-muted-foreground">—</span>;
+                                }
+                                const info = paymentMap[user.id];
+                                if (info?.paid) {
+                                  return (
+                                    <Badge className="bg-green-500/10 text-green-600 border-green-200">
+                                      Paid{info.plan ? ` · ${info.plan}` : ""}
+                                    </Badge>
+                                  );
+                                }
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <Badge className="bg-amber-500/10 text-amber-700 border-amber-200">
+                                      Unpaid
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 px-2 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                                      onClick={() => sendPaymentAlert(user)}
+                                      disabled={alertingUserId === user.id}
+                                    >
+                                      {alertingUserId === user.id ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <Send className="h-3 w-3 mr-1" />
+                                          Alert
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                );
+                              })()}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-1">
