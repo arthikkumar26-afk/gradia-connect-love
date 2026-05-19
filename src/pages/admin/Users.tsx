@@ -921,6 +921,44 @@ const Users = () => {
                                   : 'Unknown'}
                               </div>
                             </TableCell>
+                            <TableCell>
+                              {(() => {
+                                if (user.role !== "candidate" && user.role !== "employer") {
+                                  return <span className="text-xs text-muted-foreground">—</span>;
+                                }
+                                const info = paymentMap[user.id];
+                                if (info?.paid) {
+                                  return (
+                                    <Badge className="bg-green-500/10 text-green-600 border-green-200">
+                                      Paid{info.plan ? ` · ${info.plan}` : ""}
+                                    </Badge>
+                                  );
+                                }
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <Badge className="bg-amber-500/10 text-amber-700 border-amber-200">
+                                      Unpaid
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 px-2 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                                      onClick={() => sendPaymentAlert(user)}
+                                      disabled={alertingUserId === user.id}
+                                    >
+                                      {alertingUserId === user.id ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        <>
+                                          <Send className="h-3 w-3 mr-1" />
+                                          Alert
+                                        </>
+                                      )}
+                                    </Button>
+                                  </div>
+                                );
+                              })()}
+                            </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-1">
                                 <Button
