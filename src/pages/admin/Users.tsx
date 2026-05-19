@@ -563,11 +563,17 @@ const Users = () => {
   };
 
   const sendPaymentAlert = async (user: User) => {
+    if (!user.email) {
+      toast({ title: "No email", description: "This user has no email address on file.", variant: "destructive" });
+      return;
+    }
     setAlertingUserId(user.id);
     try {
-      const { error } = await supabase.functions.invoke("send-notification-email", {
+      const { data, error } = await supabase.functions.invoke("send-notification-email", {
         body: {
+          type: "direct",
           to: user.email,
+          recipientEmail: user.email,
           subject: "Complete your Gradia subscription",
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -585,9 +591,11 @@ const Users = () => {
         },
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       toast({ title: "Alert Sent", description: `Payment reminder emailed to ${user.email}.` });
     } catch (err: any) {
-      toast({ title: "Error", description: err.message || "Failed to send alert", variant: "destructive" });
+      const msg = err?.context?.error || err?.message || "Failed to send alert";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setAlertingUserId(null);
     }
