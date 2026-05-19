@@ -133,6 +133,8 @@ const Users = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(true);
+  const [paymentMap, setPaymentMap] = useState<Record<string, { paid: boolean; plan?: string }>>({});
+  const [alertingUserId, setAlertingUserId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
