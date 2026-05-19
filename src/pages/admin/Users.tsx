@@ -403,6 +403,35 @@ const Users = () => {
       if (data?.error) throw new Error(data.error);
 
       setUsers(data?.users || []);
+
+      // Load payment/subscription status in parallel
+      const [{ data: candSubs }, { data: empSubs }] = await Promise.all([
+        supabase
+          .from("candidate_subscriptions")
+          .select("candidate_id, plan, status, ends_at"),
+        supabase
+          .from("subscriptions")
+          .select("employer_id, plan_name, status, ends_at"),
+      ]);
+      const map: Record<string, { paid: boolean; plan?: string }> = {};
+      const now = Date.now();
+      (candSubs || []).forEach((s: any) => {
+        const active =
+          s.status === "active" &&
+          (!s.ends_at || new Date(s.ends_at).getTime() > now);
+        // 'basic' is the free default — treat only pro/premium as paid
+        const paid = active && s.plan && s.plan !== "basic";
+        const prev = map[s.candidate_id];
+        if (paid || !prev) map[s.candidate_id] = { paid: !!paid, plan: s.plan };
+      });
+      (empSubs || []).forEach((s: any) => {
+        const active =
+          s.status === "active" &&
+          (!s.ends_at || new Date(s.ends_at).getTime() > now);
+        const prev = map[s.employer_id];
+        if (active || !prev) map[s.employer_id] = { paid: !!active, plan: s.plan_name };
+      });
+      setPaymentMap(map);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
