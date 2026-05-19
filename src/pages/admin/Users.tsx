@@ -852,6 +852,7 @@ const Users = () => {
                           <TableHead>Password</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Joined</TableHead>
+                          <TableHead>Payment</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
