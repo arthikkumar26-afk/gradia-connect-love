@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,12 +46,53 @@ interface Props {
   employerName: string;
 }
 
+interface AllResumeRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  mobile: string | null;
+  preferred_role: string | null;
+  resume_url: string | null;
+  created_at: string;
+}
+
 export default function HRCandidatesData({ hrUserId }: Props) {
   const [profiles, setProfiles] = useState<ParsedProfile[]>([]);
   const [filter, setFilter] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [creditsOut, setCreditsOut] = useState(false);
   const [openProfile, setOpenProfile] = useState<ParsedProfile | null>(null);
+
+  // All system-wide candidate resumes
+  const [allResumes, setAllResumes] = useState<AllResumeRow[]>([]);
+  const [allLoading, setAllLoading] = useState(true);
+  const [allSearch, setAllSearch] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      setAllLoading(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, mobile, preferred_role, resume_url, created_at")
+        .eq("role", "candidate")
+        .not("resume_url", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1000);
+      if (!error) setAllResumes((data || []) as AllResumeRow[]);
+      setAllLoading(false);
+    })();
+  }, []);
+
+  const filteredAll = useMemo(() => {
+    const q = allSearch.trim().toLowerCase();
+    if (!q) return allResumes;
+    return allResumes.filter(r =>
+      (r.full_name || "").toLowerCase().includes(q) ||
+      (r.email || "").toLowerCase().includes(q) ||
+      (r.preferred_role || "").toLowerCase().includes(q) ||
+      (r.mobile || "").toLowerCase().includes(q)
+    );
+  }, [allResumes, allSearch]);
 
   // Deep-parse Supabase FunctionsHttpError to surface the real backend message
   // (e.g. "AI credits exhausted") instead of the generic "non-2xx status code".
@@ -223,6 +264,86 @@ export default function HRCandidatesData({ hrUserId }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* All candidate resumes in the system */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            All Candidate Resumes
+            <Badge variant="secondary" className="text-[10px] ml-1">{allResumes.length}</Badge>
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Every candidate resume in the system. Search, view or download any resume.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Input
+            placeholder="Search by name, email, role, phone…"
+            value={allSearch}
+            onChange={(e) => setAllSearch(e.target.value)}
+            className="h-8 text-xs max-w-sm"
+          />
+          {allLoading ? (
+            <div className="text-xs text-muted-foreground flex items-center gap-2 py-4">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading resumes…
+            </div>
+          ) : filteredAll.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-4 text-center">
+              {allResumes.length === 0 ? "No candidate resumes available yet." : "No matches."}
+            </p>
+          ) : (
+            <div className="overflow-x-auto border rounded-md max-h-[420px] overflow-y-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead className="text-xs">Candidate</TableHead>
+                    <TableHead className="text-xs">Contact</TableHead>
+                    <TableHead className="text-xs">Preferred Role</TableHead>
+                    <TableHead className="text-xs text-right">Resume</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAll.map(r => (
+                    <TableRow key={r.id}>
+                      <TableCell className="text-xs">
+                        <p className="font-medium truncate max-w-[180px]" title={r.full_name || ""}>
+                          {r.full_name || "Unnamed"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {new Date(r.created_at).toLocaleDateString()}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <div className="flex flex-col gap-0.5">
+                          {r.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3 text-muted-foreground" />{r.email}</span>}
+                          {r.mobile && <span className="flex items-center gap-1"><Phone className="h-3 w-3 text-muted-foreground" />{r.mobile}</span>}
+                          {!r.email && !r.mobile && <span className="text-muted-foreground">—</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {r.preferred_role || <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {r.resume_url ? (
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => openResume(r.resume_url!)}>
+                              <ExternalLink className="h-3 w-3 mr-1" /> View
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => downloadResume(r.resume_url!, `${r.full_name || "resume"}.pdf`)}>
+                              <Download className="h-3 w-3 mr-1" /> Download
+                            </Button>
+                          </div>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
