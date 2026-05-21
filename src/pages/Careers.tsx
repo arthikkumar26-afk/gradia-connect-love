@@ -60,11 +60,11 @@ const Careers = () => {
         let query = supabase
           .from('jobs')
           .select('id, job_title, department, description, location, job_type, salary_range, experience_required, skills, employer_id, interview_type')
-          .eq('moderation_status', 'approved')
-          .eq('status', 'active')
+          .or('status.eq.active,moderation_status.eq.approved')
           .order('created_at', { ascending: false });
 
-        const { data: allJobs, error } = await query.limit(50);
+        const { data: allJobs, error } = await query.limit(500);
+
         if (error) throw error;
 
         if (!allJobs || allJobs.length === 0) {
