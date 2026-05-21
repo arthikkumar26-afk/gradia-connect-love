@@ -93,8 +93,10 @@ const JobsResults = () => {
             employer_id,
             employer:profiles!jobs_employer_id_fkey(company_name)
           `)
-          .eq('status', 'active')
-          .order('posted_date', { ascending: false });
+          .or('status.eq.active,moderation_status.eq.approved')
+          .order('posted_date', { ascending: false })
+          .limit(2000);
+
 
         if (error) {
           console.error('Error fetching jobs:', error);
