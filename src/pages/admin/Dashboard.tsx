@@ -31,6 +31,7 @@ import {
   UserX,
   Webhook,
   Receipt,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -210,6 +211,7 @@ const AdminDashboard = () => {
 
   const menuItems = [
     { title: "Dashboard", icon: Home, path: "/admin/dashboard" },
+    { title: "Workflow Guide", icon: BookOpen, path: "/admin/workflow-guide" },
     { title: "Users", icon: Users, path: "/admin/users" },
     { title: "Subscribed Employers", icon: CreditCard, path: "/admin/subscribed-employers" },
     { title: "Subscribed Candidates", icon: UserCheck, path: "/admin/subscribed-candidates" },
