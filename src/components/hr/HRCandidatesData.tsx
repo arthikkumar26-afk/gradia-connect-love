@@ -94,14 +94,18 @@ export default function HRCandidatesData({ hrUserId }: Props) {
 
   const filteredAll = useMemo(() => {
     const q = allSearch.trim().toLowerCase();
-    if (!q) return allResumes;
-    return allResumes.filter(r =>
+    let list = allResumes;
+    if (onlyIncomplete) list = list.filter(isIncomplete);
+    if (!q) return list;
+    return list.filter(r =>
       (r.full_name || "").toLowerCase().includes(q) ||
       (r.email || "").toLowerCase().includes(q) ||
       (r.preferred_role || "").toLowerCase().includes(q) ||
       (r.mobile || "").toLowerCase().includes(q)
     );
-  }, [allResumes, allSearch]);
+  }, [allResumes, allSearch, onlyIncomplete]);
+
+  const incompleteCount = useMemo(() => allResumes.filter(isIncomplete).length, [allResumes]);
 
   // Deep-parse Supabase FunctionsHttpError to surface the real backend message
   // (e.g. "AI credits exhausted") instead of the generic "non-2xx status code".
