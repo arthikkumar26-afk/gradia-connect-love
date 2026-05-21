@@ -1,9 +1,12 @@
-import { useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, CheckCircle2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Download, CheckCircle2, Package } from "lucide-react";
 import jsPDF from "jspdf";
 
 type Step = { title: string; details: string[] };
@@ -142,6 +145,25 @@ const WORKFLOW: Section[] = [
 
 export default function WorkflowGuide() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState<string[]>(WORKFLOW.map((s) => s.id));
+  const [packName, setPackName] = useState("Custom Pack");
+  const [price, setPrice] = useState<string>("4999");
+
+  const sections = useMemo(
+    () => WORKFLOW.filter((s) => selected.includes(s.id)),
+    [selected]
+  );
+
+  const toggle = (id: string) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const totalFeatures = sections.reduce(
+    (acc, s) => acc + s.steps.reduce((a, st) => a + st.details.length, 0),
+    0
+  );
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF({ unit: "pt", format: "a4" });
@@ -159,16 +181,29 @@ export default function WorkflowGuide() {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
-    doc.text("Gradia — Complete Workflow Guide", margin, y);
+    doc.text("Gradia — Workflow Guide", margin, y);
     y += 24;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    doc.text("Step-by-step flow of how the platform works across all portals.", margin, y);
-    y += 20;
-    doc.setTextColor(0);
 
-    WORKFLOW.forEach((section, sIdx) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(30, 60, 120);
+    doc.text(`Pack: ${packName}`, margin, y);
+    y += 16;
+    doc.setTextColor(0);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text(`Price: ₹${price || "0"}`, margin, y);
+    y += 14;
+    doc.text(
+      `Included portals: ${sections.map((s) => s.name).join(", ") || "None"}`,
+      margin,
+      y
+    );
+    y += 14;
+    doc.text(`Total features: ${totalFeatures}`, margin, y);
+    y += 22;
+
+    sections.forEach((section, sIdx) => {
       addPageIfNeeded(40);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
@@ -198,14 +233,15 @@ export default function WorkflowGuide() {
       y += 10;
     });
 
-    doc.save("Gradia-Workflow-Guide.pdf");
+    const safeName = (packName || "pack").replace(/[^a-z0-9]+/gi, "-");
+    doc.save(`Gradia-Workflow-${safeName}.pdf`);
   };
 
   return (
     <AdminShell
       title="Workflow Guide"
       headerRight={
-        <Button onClick={handleDownloadPDF} size="sm" className="gap-2">
+        <Button onClick={handleDownloadPDF} size="sm" className="gap-2" disabled={sections.length === 0}>
           <Download className="h-4 w-4" /> Download PDF
         </Button>
       }
@@ -213,49 +249,121 @@ export default function WorkflowGuide() {
       <div ref={containerRef} className="max-w-5xl mx-auto space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Gradia — Complete Workflow Guide</CardTitle>
+            <CardTitle className="text-2xl">Gradia — Workflow Guide Builder</CardTitle>
             <p className="text-sm text-muted-foreground">
-              End-to-end view of how every portal in the platform works, step by step.
+              Pick portals, set a pack name & price, and generate a tailored guide PDF.
             </p>
           </CardHeader>
         </Card>
 
-        {WORKFLOW.map((section, sIdx) => (
-          <Card key={section.id} className="overflow-hidden">
-            <CardHeader className="flex flex-row items-center gap-3 space-y-0">
-              <div className={`h-10 w-10 rounded-lg ${section.color} flex items-center justify-center text-white font-bold`}>
-                {sIdx + 1}
+        {/* Builder */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Package className="h-5 w-5" /> Build Your Pack
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="pack-name">Pack Name</Label>
+                <Input
+                  id="pack-name"
+                  value={packName}
+                  onChange={(e) => setPackName(e.target.value)}
+                  placeholder="e.g. Starter Pack"
+                />
               </div>
-              <div>
-                <CardTitle className="text-lg">{section.name}</CardTitle>
-                <p className="text-xs text-muted-foreground">{section.steps.length} steps</p>
+              <div className="space-y-2">
+                <Label htmlFor="pack-price">Price (₹)</Label>
+                <Input
+                  id="pack-price"
+                  type="number"
+                  min={0}
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="e.g. 4999"
+                />
               </div>
-            </CardHeader>
-            <CardContent>
-              <ol className="relative border-l-2 border-muted ml-4 space-y-5">
-                {section.steps.map((step, idx) => (
-                  <li key={idx} className="ml-6">
-                    <span className="absolute -left-[11px] flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                      {idx + 1}
-                    </span>
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold text-sm">{step.title}</h4>
-                      <Badge variant="secondary" className="text-[10px]">Step {idx + 1}</Badge>
-                    </div>
-                    <ul className="space-y-1">
-                      {step.details.map((d, di) => (
-                        <li key={di} className="flex gap-2 text-sm text-muted-foreground">
-                          <CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
-                          <span>{d}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ol>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Select Portals to Include</Label>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {WORKFLOW.map((s) => {
+                  const checked = selected.includes(s.id);
+                  return (
+                    <label
+                      key={s.id}
+                      className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                        checked ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+                      }`}
+                    >
+                      <Checkbox checked={checked} onCheckedChange={() => toggle(s.id)} />
+                      <span className={`h-3 w-3 rounded-full ${s.color}`} />
+                      <span className="text-sm font-medium">{s.name}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 rounded-lg bg-muted/40 p-3">
+              <Badge variant="secondary">{sections.length} portals</Badge>
+              <Badge variant="secondary">{totalFeatures} features</Badge>
+              <Badge variant="secondary">₹{price || "0"}</Badge>
+              <span className="text-sm text-muted-foreground ml-auto">
+                Pack: <span className="font-medium text-foreground">{packName || "—"}</span>
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Preview */}
+        {sections.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-sm text-muted-foreground">
+              Select at least one portal to preview features.
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          sections.map((section, sIdx) => (
+            <Card key={section.id} className="overflow-hidden">
+              <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+                <div className={`h-10 w-10 rounded-lg ${section.color} flex items-center justify-center text-white font-bold`}>
+                  {sIdx + 1}
+                </div>
+                <div>
+                  <CardTitle className="text-lg">{section.name}</CardTitle>
+                  <p className="text-xs text-muted-foreground">{section.steps.length} steps</p>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ol className="relative border-l-2 border-muted ml-4 space-y-5">
+                  {section.steps.map((step, idx) => (
+                    <li key={idx} className="ml-6">
+                      <span className="absolute -left-[11px] flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">
+                        {idx + 1}
+                      </span>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-sm">{step.title}</h4>
+                        <Badge variant="secondary" className="text-[10px]">Step {idx + 1}</Badge>
+                      </div>
+                      <ul className="space-y-1">
+                        {step.details.map((d, di) => (
+                          <li key={di} className="flex gap-2 text-sm text-muted-foreground">
+                            <CheckCircle2 className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                            <span>{d}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ol>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </AdminShell>
   );
