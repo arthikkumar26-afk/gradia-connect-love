@@ -54,6 +54,9 @@ interface AllResumeRow {
   preferred_role: string | null;
   resume_url: string | null;
   created_at: string;
+  experience_level: string | null;
+  highest_qualification: string | null;
+  location: string | null;
 }
 
 export default function HRCandidatesData({ hrUserId }: Props) {
@@ -63,17 +66,20 @@ export default function HRCandidatesData({ hrUserId }: Props) {
   const [creditsOut, setCreditsOut] = useState(false);
   const [openProfile, setOpenProfile] = useState<ParsedProfile | null>(null);
 
-  // All system-wide candidate resumes
+  // All system-wide candidate resumes (includes incomplete signups)
   const [allResumes, setAllResumes] = useState<AllResumeRow[]>([]);
   const [allLoading, setAllLoading] = useState(true);
   const [allSearch, setAllSearch] = useState("");
+  const [onlyIncomplete, setOnlyIncomplete] = useState(false);
 
   useEffect(() => {
     (async () => {
       setAllLoading(true);
+      // Show every candidate who uploaded a resume — even if they didn't
+      // finish the rest of the signup wizard (benefits/agreement/plan).
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, full_name, email, mobile, preferred_role, resume_url, created_at")
+        .select("id, full_name, email, mobile, preferred_role, resume_url, created_at, experience_level, highest_qualification, location")
         .eq("role", "candidate")
         .not("resume_url", "is", null)
         .order("created_at", { ascending: false })
@@ -82,6 +88,9 @@ export default function HRCandidatesData({ hrUserId }: Props) {
       setAllLoading(false);
     })();
   }, []);
+
+  const isIncomplete = (r: AllResumeRow) =>
+    !r.preferred_role || !r.experience_level || !r.highest_qualification;
 
   const filteredAll = useMemo(() => {
     const q = allSearch.trim().toLowerCase();
