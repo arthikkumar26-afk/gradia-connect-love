@@ -284,18 +284,33 @@ export default function HRCandidatesData({ hrUserId }: Props) {
             <FileText className="h-4 w-4 text-primary" />
             All Candidate Resumes
             <Badge variant="secondary" className="text-[10px] ml-1">{allResumes.length}</Badge>
+            {incompleteCount > 0 && (
+              <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-300">
+                {incompleteCount} incomplete signup{incompleteCount === 1 ? "" : "s"}
+              </Badge>
+            )}
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Every candidate resume in the system. Search, view or download any resume.
+            Every candidate who uploaded a resume — even those who didn't finish the signup wizard. Search, view or download any resume.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Input
-            placeholder="Search by name, email, role, phone…"
-            value={allSearch}
-            onChange={(e) => setAllSearch(e.target.value)}
-            className="h-8 text-xs max-w-sm"
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <Input
+              placeholder="Search by name, email, role, phone…"
+              value={allSearch}
+              onChange={(e) => setAllSearch(e.target.value)}
+              className="h-8 text-xs max-w-sm"
+            />
+            <Button
+              size="sm"
+              variant={onlyIncomplete ? "default" : "outline"}
+              className="h-8 text-xs"
+              onClick={() => setOnlyIncomplete(v => !v)}
+            >
+              {onlyIncomplete ? "Showing incomplete only" : "Show incomplete signups"}
+            </Button>
+          </div>
           {allLoading ? (
             <div className="text-xs text-muted-foreground flex items-center gap-2 py-4">
               <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading resumes…
@@ -312,11 +327,14 @@ export default function HRCandidatesData({ hrUserId }: Props) {
                     <TableHead className="text-xs">Candidate</TableHead>
                     <TableHead className="text-xs">Contact</TableHead>
                     <TableHead className="text-xs">Preferred Role</TableHead>
+                    <TableHead className="text-xs">Signup Status</TableHead>
                     <TableHead className="text-xs text-right">Resume</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredAll.map(r => (
+                  {filteredAll.map(r => {
+                    const incomplete = isIncomplete(r);
+                    return (
                     <TableRow key={r.id}>
                       <TableCell className="text-xs">
                         <p className="font-medium truncate max-w-[180px]" title={r.full_name || ""}>
@@ -336,6 +354,15 @@ export default function HRCandidatesData({ hrUserId }: Props) {
                       <TableCell className="text-xs">
                         {r.preferred_role || <span className="text-muted-foreground">—</span>}
                       </TableCell>
+                      <TableCell className="text-xs">
+                        {incomplete ? (
+                          <Badge variant="outline" className="text-[10px] border-amber-400 text-amber-700 dark:text-amber-300">
+                            Incomplete
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-[10px]">Complete</Badge>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         {r.resume_url ? (
                           <div className="flex items-center justify-end gap-1">
@@ -349,13 +376,14 @@ export default function HRCandidatesData({ hrUserId }: Props) {
                         ) : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                     </TableRow>
-                  ))}
+                  );})}
                 </TableBody>
               </Table>
             </div>
           )}
         </CardContent>
       </Card>
+
 
       <Card>
         <CardHeader className="pb-3">
