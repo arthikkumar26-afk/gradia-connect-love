@@ -123,6 +123,7 @@ const AdminReports = lazyWithRetry(() => import("./pages/admin/Reports"));
 const AdminAuditLogs = lazyWithRetry(() => import("./pages/admin/AuditLogs"));
 const AdminResumeAnalysisAudit = lazyWithRetry(() => import("./pages/admin/ResumeAnalysisAudit"));
 const AdminSettings = lazyWithRetry(() => import("./pages/admin/AdminSettings"));
+const AdminWorkflowGuide = lazyWithRetry(() => import("./pages/admin/WorkflowGuide"));
 const SubscribedEmployers = lazyWithRetry(() => import("./pages/admin/SubscribedEmployers"));
 const SubscribedCandidates = lazyWithRetry(() => import("./pages/admin/SubscribedCandidates"));
 const OwnerLogin = lazyWithRetry(() => import("./pages/owner/Login"));
@@ -321,6 +322,7 @@ const MainRoutes = () => (
         <Route path="/admin/plan-control" element={<PlanControl accessRole="admin" />} />
         <Route path="/owner/plan-control" element={<PlanControl accessRole="owner" />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
+        <Route path="/admin/workflow-guide" element={<AdminWorkflowGuide />} />
         <Route path="/admin/mock-interview-pipeline" element={<MockInterviewPipeline />} />
         <Route path="/admin/management" element={<AdminManagement />} />
         <Route path="/admin/feedback" element={<ManagementFeedback />} />

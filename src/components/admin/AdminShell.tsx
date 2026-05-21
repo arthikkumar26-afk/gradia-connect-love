@@ -17,11 +17,12 @@ import {
 import {
   ShieldCheck, LogOut, Menu, Home, Users as UsersIcon, CreditCard, UserCheck,
   UserX, Briefcase, Building2, ClipboardList, UserCog, MessageSquare, Ticket,
-  BarChart3, FileText, Settings, Receipt,
+  BarChart3, FileText, Settings, Receipt, BookOpen,
 } from "lucide-react";
 
 const menuItems = [
   { title: "Dashboard", icon: Home, path: "/admin/dashboard" },
+  { title: "Workflow Guide", icon: BookOpen, path: "/admin/workflow-guide" },
   { title: "Users", icon: UsersIcon, path: "/admin/users" },
   { title: "Plan Control", icon: Receipt, path: "/admin/plan-control" },
   { title: "Subscribed Employers", icon: CreditCard, path: "/admin/subscribed-employers" },
