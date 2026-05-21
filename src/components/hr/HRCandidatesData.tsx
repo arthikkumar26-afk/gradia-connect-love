@@ -75,19 +75,21 @@ export default function HRCandidatesData({ hrUserId }: Props) {
   useEffect(() => {
     (async () => {
       setAllLoading(true);
-      // Show every candidate who uploaded a resume — even if they didn't
-      // finish the rest of the signup wizard (benefits/agreement/plan).
+      // Show EVERY profile that has uploaded a resume — regardless of role
+      // assignment or whether they finished the signup wizard. This ensures
+      // HR never misses a CV (even drop-offs, edutech, freelancer cross-ups, etc.).
       const { data, error } = await supabase
         .from("profiles")
         .select("id, full_name, email, mobile, preferred_role, resume_url, created_at, experience_level, highest_qualification, location")
-        .eq("role", "candidate")
         .not("resume_url", "is", null)
+        .neq("resume_url", "")
         .order("created_at", { ascending: false })
-        .limit(1000);
+        .limit(5000);
       if (!error) setAllResumes((data || []) as AllResumeRow[]);
       setAllLoading(false);
     })();
   }, []);
+
 
   const isIncomplete = (r: AllResumeRow) =>
     !r.preferred_role || !r.experience_level || !r.highest_qualification;
