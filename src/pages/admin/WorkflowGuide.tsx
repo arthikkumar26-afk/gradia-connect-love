@@ -172,6 +172,19 @@ export default function WorkflowGuide() {
     const margin = 40;
     let y = margin;
 
+    // jsPDF's built-in helvetica only supports WinAnsi. Strip/replace unsupported chars
+    // (e.g. ₹, — , • , smart quotes) so we don't get garbled "&P&r&i&c&e" output.
+    const sanitize = (s: string) =>
+      String(s ?? "")
+        .replace(/\u20B9/g, "Rs. ") // ₹
+        .replace(/[\u2013\u2014]/g, "-") // – —
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"')
+        .replace(/\u2022/g, "-") // •
+        .replace(/[^\x00-\x7F]/g, ""); // drop any remaining non-ASCII
+
+    const text = (s: string, x: number, yy: number) => doc.text(sanitize(s), x, yy);
+
     const addPageIfNeeded = (needed: number) => {
       if (y + needed > pageH - margin) {
         doc.addPage();
@@ -181,26 +194,26 @@ export default function WorkflowGuide() {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
-    doc.text("Gradia — Workflow Guide", margin, y);
+    text("Gradia - Workflow Guide", margin, y);
     y += 24;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(30, 60, 120);
-    doc.text(`Pack: ${packName}`, margin, y);
+    text(`Pack: ${packName}`, margin, y);
     y += 16;
     doc.setTextColor(0);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
-    doc.text(`Price: ₹${price || "0"}`, margin, y);
+    text(`Price: Rs. ${price || "0"}`, margin, y);
     y += 14;
-    doc.text(
+    text(
       `Included portals: ${sections.map((s) => s.name).join(", ") || "None"}`,
       margin,
       y
     );
     y += 14;
-    doc.text(`Total features: ${totalFeatures}`, margin, y);
+    text(`Total features: ${totalFeatures}`, margin, y);
     y += 22;
 
     sections.forEach((section, sIdx) => {
@@ -208,7 +221,7 @@ export default function WorkflowGuide() {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.setTextColor(30, 60, 120);
-      doc.text(`${sIdx + 1}. ${section.name}`, margin, y);
+      text(`${sIdx + 1}. ${section.name}`, margin, y);
       y += 18;
       doc.setTextColor(0);
 
@@ -216,12 +229,12 @@ export default function WorkflowGuide() {
         addPageIfNeeded(40);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(11);
-        doc.text(`Step ${idx + 1}: ${step.title}`, margin + 10, y);
+        text(`Step ${idx + 1}: ${step.title}`, margin + 10, y);
         y += 14;
         doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         step.details.forEach((d) => {
-          const lines = doc.splitTextToSize(`• ${d}`, pageW - margin * 2 - 20);
+          const lines = doc.splitTextToSize(sanitize(`- ${d}`), pageW - margin * 2 - 20);
           lines.forEach((ln: string) => {
             addPageIfNeeded(14);
             doc.text(ln, margin + 20, y);
@@ -232,6 +245,7 @@ export default function WorkflowGuide() {
       });
       y += 10;
     });
+
 
     const safeName = (packName || "pack").replace(/[^a-z0-9]+/gi, "-");
     doc.save(`Gradia-Workflow-${safeName}.pdf`);
