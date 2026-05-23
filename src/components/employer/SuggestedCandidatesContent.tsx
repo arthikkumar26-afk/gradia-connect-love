@@ -190,15 +190,12 @@ export const SuggestedCandidatesContent = () => {
 
   const matched: ScoredCandidate[] = useMemo(() => {
     if (!selectedJob) return [];
-    // Only HR-transferred candidates are eligible
-    const allowed = candidates.filter((c) => !!transferMap[c.id]);
-    const scored = allowed
+    const scored = candidates
       .map((c) => scoreCandidate(c, selectedJob))
       .sort((a, b) => b.score - a.score);
     const withScore = scored.filter((c) => c.score > 0);
-    // Fallback: if no scored matches, still surface top transferred candidates
     return (withScore.length > 0 ? withScore : scored).slice(0, 50);
-  }, [candidates, selectedJob, transferMap]);
+  }, [candidates, selectedJob]);
 
   return (
     <div className="space-y-4">
