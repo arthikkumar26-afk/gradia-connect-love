@@ -276,7 +276,7 @@ export function AllCandidatesContent() {
       </div>
 
       {/* Candidates List */}
-      {loading || transferLoading ? (
+      {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i} className="border-border">
