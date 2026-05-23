@@ -244,17 +244,7 @@ const Header = () => {
                         </div>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/hr/login" className="flex items-center gap-3 py-2">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-pink-100 dark:bg-pink-900">
-                          <Users className="h-4 w-4 text-pink-600 dark:text-pink-400" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-foreground">HR Login</div>
-                          <div className="text-xs text-muted-foreground">Manage candidates & interviews</div>
-                        </div>
-                      </Link>
-                    </DropdownMenuItem>
+                    {/* HR Login removed — employer ↔ candidate now connects directly */}
                     {/* Freelancer & EduTech logins temporarily hidden */}
 
                     <DropdownMenuSeparator />
@@ -286,11 +276,10 @@ const Header = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="default" size="sm" className="gap-1.5 text-xs sm:text-sm h-8 px-2 sm:px-3">
                       <User className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">{userRole === 'admin' ? 'Admin' : 
-                       userRole === 'owner' ? 'Owner' : 
+                      <span className="hidden sm:inline">{userRole === 'admin' ? 'Admin' :
+                       userRole === 'owner' ? 'Owner' :
                        userRole === 'employer' ? (companyName || profile?.company_name || profile?.full_name?.split(' ')[0] || 'Account') :
                        userRole === 'freelancer' ? 'Freelancer' :
-                       (userRole === 'hr' || userRole === 'hr_manager' || userRole?.startsWith('hr_')) ? 'HR' :
                        profile?.full_name?.split(' ')[0] || 'Account'}</span>
                       <ChevronDown className="h-3 w-3" />
                     </Button>
@@ -298,10 +287,9 @@ const Header = () => {
                   <DropdownMenuContent className="w-56 bg-background z-[1100]" align="end">
                     <DropdownMenuItem asChild>
                       <Link to={
-                        userRole === 'admin' ? '/admin/dashboard' : 
-                        userRole === 'owner' ? '/owner/dashboard' : 
-                        userRole === 'employer' ? '/employer/dashboard' : 
-                        (userRole === 'hr' || userRole === 'hr_manager' || userRole?.startsWith('hr_')) ? '/hr/dashboard' :
+                        userRole === 'admin' ? '/admin/dashboard' :
+                        userRole === 'owner' ? '/owner/dashboard' :
+                        userRole === 'employer' ? '/employer/dashboard' :
                         userRole === 'freelancer' ? '/freelancer/dashboard' :
                         '/candidate/dashboard'
                       } className="flex items-center gap-3 py-2">
