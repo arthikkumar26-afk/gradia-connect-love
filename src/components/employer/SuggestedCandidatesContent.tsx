@@ -190,15 +190,12 @@ export const SuggestedCandidatesContent = () => {
 
   const matched: ScoredCandidate[] = useMemo(() => {
     if (!selectedJob) return [];
-    // Only HR-transferred candidates are eligible
-    const allowed = candidates.filter((c) => !!transferMap[c.id]);
-    const scored = allowed
+    const scored = candidates
       .map((c) => scoreCandidate(c, selectedJob))
       .sort((a, b) => b.score - a.score);
     const withScore = scored.filter((c) => c.score > 0);
-    // Fallback: if no scored matches, still surface top transferred candidates
     return (withScore.length > 0 ? withScore : scored).slice(0, 50);
-  }, [candidates, selectedJob, transferMap]);
+  }, [candidates, selectedJob]);
 
   return (
     <div className="space-y-4">
@@ -249,7 +246,7 @@ export const SuggestedCandidatesContent = () => {
       )}
 
       <Card className="overflow-hidden">
-        {loading || transferLoading ? (
+        {loading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Loading suggestions…</div>
         ) : !selectedJob ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
@@ -258,9 +255,9 @@ export const SuggestedCandidatesContent = () => {
         ) : matched.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center gap-2">
             <Users className="h-8 w-8 opacity-40" />
-            <p className="font-medium text-foreground">No transferred candidates yet</p>
+            <p className="font-medium text-foreground">No matching candidates yet</p>
             <p className="text-xs max-w-sm">
-              Suggestions appear once an HR Recruiter or HR Manager transfers candidates to your account.
+              No candidates match this vacancy yet.
             </p>
           </div>
         ) : (
