@@ -245,7 +245,29 @@ const Header = () => {
                       </Link>
                     </DropdownMenuItem>
                     {/* HR Login removed — employer ↔ candidate now connects directly */}
-                    {/* Freelancer & EduTech logins temporarily hidden */}
+                    <DropdownMenuItem asChild>
+                      <Link to="/freelancer/login" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900">
+                          <Palette className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-foreground">Freelancer Login</div>
+                          <div className="text-xs text-muted-foreground">Showcase portfolio & take gigs</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/edutech/login" className="flex items-center gap-3 py-2">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-900">
+                          <GraduationCap className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                        </div>
+                        <div>
+                          <div className="font-medium text-foreground">EduTech Login</div>
+                          <div className="text-xs text-muted-foreground">Institutes & training partners</div>
+                        </div>
+                      </Link>
+                    </DropdownMenuItem>
+
 
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
