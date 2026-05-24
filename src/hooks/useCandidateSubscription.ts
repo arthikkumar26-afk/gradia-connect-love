@@ -20,7 +20,7 @@ const periodStart = () => {
 export const useCandidateSubscription = () => {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [plan, setPlan] = useState<CandidatePlan>("basic");
+  const [plan, setPlan] = useState<CandidatePlan>("free");
   const [usage, setUsage] = useState<UsageMap>({});
 
   const planDef: PlanDefinition = CANDIDATE_PLANS[plan];
@@ -31,7 +31,7 @@ export const useCandidateSubscription = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         setUserId(null);
-        setPlan("basic");
+        setPlan("free");
         setUsage({});
         return;
       }
@@ -47,8 +47,8 @@ export const useCandidateSubscription = () => {
       const active =
         sub && (sub.ends_at == null || new Date(sub.ends_at) > new Date());
       const resolvedPlan: CandidatePlan = active
-        ? ((sub!.plan as CandidatePlan) ?? "basic")
-        : "basic";
+        ? ((sub!.plan as CandidatePlan) ?? "free")
+        : "free";
       setPlan(resolvedPlan);
 
       const { data: usageRows } = await supabase

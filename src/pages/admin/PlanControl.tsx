@@ -79,7 +79,7 @@ interface ActivationLog {
   created_at: string;
 }
 
-const CANDIDATE_PLANS = ["basic", "pro", "premium"] as const;
+const CANDIDATE_PLANS = ["free", "starter", "advance", "pro_accelerator", "elite"] as const;
 const EMPLOYER_PLANS = ["starter", "growth", "enterprise"] as const;
 
 const PlanControl = ({ accessRole }: Props) => {
@@ -652,8 +652,10 @@ const Stat = ({ label, value }: { label: string; value: number }) => (
 
 const planBadge = (plan: string) => {
   const p = plan.toLowerCase();
-  if (p === "premium" || p === "enterprise") return <Badge className="bg-purple-500/10 text-purple-700 border-purple-200"><Crown className="h-3 w-3 mr-1" />{plan}</Badge>;
-  if (p === "pro" || p === "growth") return <Badge className="bg-orange-500/10 text-orange-700 border-orange-200"><Zap className="h-3 w-3 mr-1" />{plan}</Badge>;
+  if (p === "elite" || p === "enterprise") return <Badge className="bg-amber-500/10 text-amber-700 border-amber-200"><Crown className="h-3 w-3 mr-1" />{plan}</Badge>;
+  if (p === "pro_accelerator" || p === "growth") return <Badge className="bg-purple-500/10 text-purple-700 border-purple-200"><Crown className="h-3 w-3 mr-1" />{plan}</Badge>;
+  if (p === "advance") return <Badge className="bg-blue-500/10 text-blue-700 border-blue-200"><Zap className="h-3 w-3 mr-1" />{plan}</Badge>;
+  if (p === "starter") return <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200"><Zap className="h-3 w-3 mr-1" />{plan}</Badge>;
   return <Badge variant="secondary">{plan}</Badge>;
 };
 
