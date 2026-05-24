@@ -27,11 +27,13 @@ const FEATURE_ORDER: CandidateFeature[] = [
   "resume_download",
 ];
 
-// Annual plan prices in INR (must mirror the priceLabel in candidatePlans.ts).
+// Plan prices in INR (must mirror priceInr in candidatePlans.ts).
 const PLAN_PRICES: Record<CandidatePlan, number> = {
-  basic: 4999,
-  pro: 14999,
-  premium: 24999,
+  free: 0,
+  starter: 999,
+  advance: 2999,
+  pro_accelerator: 7999,
+  elite: 34999,
 };
 
 declare global {
@@ -69,8 +71,8 @@ export default function SubscriptionTab() {
       toast.error("Please sign in to purchase a plan");
       return;
     }
-    if (planId === "basic") {
-      toast.info("Basic plan is the starter tier — no payment needed.");
+    if (planId === "free") {
+      toast.info("Free Access is the starter tier — no payment needed.");
       return;
     }
     const amount = PLAN_PRICES[planId];
@@ -250,7 +252,7 @@ export default function SubscriptionTab() {
             const p = CANDIDATE_PLANS[id];
             const isCurrent = sub.plan === id;
             const isProcessing = purchasing === id;
-            const isPaidPlan = id !== "basic";
+            const isPaidPlan = id !== "free";
             return (
               <Card
                 key={id}

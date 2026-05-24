@@ -61,7 +61,7 @@ export default function ResumeBuilderTab() {
   const [newSkill, setNewSkill] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isPremiumUser, setIsPremiumUser] = useState(false);
-  const [userPlan, setUserPlan] = useState<"basic" | "pro" | "premium">("basic");
+  const [userPlan, setUserPlan] = useState<"free" | "starter" | "advance" | "pro_accelerator" | "elite">("free");
 
   const [formData, setFormData] = useState<ResumeData>({
     fullName: "",
@@ -103,7 +103,7 @@ export default function ResumeBuilderTab() {
         .select('id, plan, status, ends_at')
         .eq('candidate_id', user.id)
         .eq('status', 'active')
-        .in('plan', ['premium', 'pro'])
+        .in('plan', ['elite', 'pro_accelerator', 'advance', 'starter'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -117,9 +117,9 @@ export default function ResumeBuilderTab() {
 
       setIsPremiumUser(!!isValid);
       if (isValid) {
-        setUserPlan(activeSub.plan as "pro" | "premium");
+        setUserPlan(activeSub.plan as "starter" | "advance" | "pro_accelerator" | "elite");
       } else {
-        setUserPlan("basic");
+        setUserPlan("free");
       }
     } catch (err) {
       console.error('Error checking premium status:', err);
@@ -600,7 +600,7 @@ export default function ResumeBuilderTab() {
         .select('id, plan')
         .eq('candidate_id', user.id)
         .eq('status', 'active')
-        .in('plan', ['premium', 'pro'])
+        .in('plan', ['elite', 'pro_accelerator', 'advance', 'starter'])
         .maybeSingle();
 
       if (activeSub) {
@@ -798,9 +798,9 @@ export default function ResumeBuilderTab() {
       {/* Plan limit info */}
       <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2">
         <div className="flex items-center gap-2">
-          {userPlan === "premium" ? (
+          {userPlan === "elite" ? (
             <Crown className="h-3.5 w-3.5 text-yellow-500" />
-          ) : userPlan === "pro" ? (
+          ) : userPlan === "pro_accelerator" || userPlan === "advance" ? (
             <Zap className="h-3.5 w-3.5 text-blue-500" />
           ) : (
             <Lock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -810,19 +810,29 @@ export default function ResumeBuilderTab() {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {userPlan === "premium" ? (
+          {userPlan === "elite" ? (
             <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 text-[10px] px-2">
               <Crown className="h-2.5 w-2.5 mr-1" />
-              Premium — Unlimited
+              Elite — Unlimited
             </Badge>
-          ) : userPlan === "pro" ? (
+          ) : userPlan === "pro_accelerator" ? (
+            <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-[10px] px-2">
+              <Crown className="h-2.5 w-2.5 mr-1" />
+              Pro Accelerator — Unlimited
+            </Badge>
+          ) : userPlan === "advance" ? (
             <Badge className="bg-blue-100 text-blue-700 border-blue-200 text-[10px] px-2">
               <Zap className="h-2.5 w-2.5 mr-1" />
-              Pro — 5 Resumes
+              Advance — 20 Exports
+            </Badge>
+          ) : userPlan === "starter" ? (
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-[10px] px-2">
+              <Zap className="h-2.5 w-2.5 mr-1" />
+              Starter — 5 Exports
             </Badge>
           ) : (
             <Badge variant="outline" className="text-[10px] px-2 text-muted-foreground">
-              Basic — Upgrade to build more
+              Free — Upgrade to build more
             </Badge>
           )}
         </div>

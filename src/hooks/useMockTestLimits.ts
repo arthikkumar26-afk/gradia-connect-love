@@ -11,13 +11,15 @@ interface MockTestLimits {
 }
 
 const PLAN_LIMITS: Record<string, number> = {
-  basic: 2,
-  pro: 5,
-  premium: Infinity,
+  free: 1,
+  starter: 2,
+  advance: 5,
+  pro_accelerator: 15,
+  elite: Infinity,
 };
 
 export const useMockTestLimits = (userId: string | undefined): MockTestLimits => {
-  const [plan, setPlan] = useState("basic");
+  const [plan, setPlan] = useState("free");
   const [usedTests, setUsedTests] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +32,6 @@ export const useMockTestLimits = (userId: string | undefined): MockTestLimits =>
     const fetchLimits = async () => {
       setIsLoading(true);
       try {
-        // Get candidate subscription
         const { data: sub } = await supabase
           .from("candidate_subscriptions")
           .select("plan, status, ends_at")
@@ -40,19 +41,17 @@ export const useMockTestLimits = (userId: string | undefined): MockTestLimits =>
           .limit(1)
           .maybeSingle();
 
-        let activePlan = "basic";
+        let activePlan = "free";
         if (sub) {
-          // Check if subscription is still valid
           if (!sub.ends_at || new Date(sub.ends_at) > new Date()) {
             activePlan = sub.plan;
           }
         }
         setPlan(activePlan);
 
-        // Count mock tests this month
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-        
+
         const { count } = await supabase
           .from("mock_interview_sessions")
           .select("id", { count: "exact", head: true })
@@ -70,9 +69,9 @@ export const useMockTestLimits = (userId: string | undefined): MockTestLimits =>
     fetchLimits();
   }, [userId]);
 
-  const maxTests = PLAN_LIMITS[plan] || 2;
+  const maxTests = PLAN_LIMITS[plan] ?? 1;
   const remainingTests = Math.max(0, maxTests - usedTests);
-  const canStart = plan === "premium" || usedTests < maxTests;
+  const canStart = plan === "elite" || usedTests < maxTests;
 
   return { plan, maxTests, usedTests, remainingTests, canStart, isLoading };
 };

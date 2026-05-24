@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, Star, Zap, Crown, Rocket, Building2, User, Award, GraduationCap, Handshake } from "lucide-react";
+import { Check, Lock, Star, Crown, Sparkles, Building2, User, Award, GraduationCap, Handshake, Rocket, Zap } from "lucide-react";
 import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
 import { PLANS } from "@/config/plans";
+import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
 
 const PricingPage = () => {
   const candidatePlans = PLANS.candidate;
@@ -127,46 +127,146 @@ const PricingPage = () => {
           </TabsList>
 
           <TabsContent value="candidates">
-            <div className="max-w-2xl mx-auto">
-              <Card className="relative border-primary shadow-lg">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground gap-1 px-3 py-1">
-                    <Star className="h-3 w-3" /> One-Time Registration
-                  </Badge>
-                </div>
-                <CardHeader className="text-center pb-2 pt-8">
-                  <CardTitle className="text-2xl">Candidate Registration</CardTitle>
-                  <div className="mt-4">
-                    <span className="text-5xl font-bold text-foreground">₹5,000</span>
-                    <span className="text-muted-foreground text-sm ml-2">one-time</span>
-                  </div>
-                  <CardDescription className="text-sm text-muted-foreground mt-2">
-                    Pay once at signup to activate your candidate dashboard
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col">
-                  <ul className="space-y-3 mb-6">
-                    {[
-                      "Full access to your candidate dashboard",
-                      "Browse all jobs across India",
-                      "Build & manage your professional profile",
-                      "Apply to jobs and track applications",
-                      "Unlock premium features anytime from the dashboard",
-                    ].map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="w-full" size="lg" asChild>
-                    <Link to="/candidate/signup">Sign Up & Pay ₹5,000</Link>
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center mt-3">
-                    Secure payment via Razorpay. Dashboard unlocks instantly after payment.
-                  </p>
-                </CardContent>
-              </Card>
+            <div className="text-center max-w-2xl mx-auto mb-10">
+              <p className="text-sm uppercase tracking-wider text-primary font-semibold mb-2">
+                Unlock Interview Intelligence
+              </p>
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                Know your gaps. Fix them. Get selected.
+              </h2>
+              <p className="text-muted-foreground">
+                Built for serious career growth — candidates with AI reports perform better.
+              </p>
+            </div>
+            <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {CANDIDATE_PLAN_ORDER.map((id) => {
+                const p = CANDIDATE_PLANS[id];
+                const isElite = p.tier === "elite";
+                const isPro = p.tier === "pro";
+                const isAdvance = p.tier === "advance";
+                const isFree = p.tier === "free";
+                const monthlyEquivalent = p.priceInr > 0
+                  ? Math.round(p.priceInr / p.durationMonths)
+                  : 0;
+
+                const cardClass = isElite
+                  ? "border-2 border-amber-400/60 bg-gradient-to-b from-amber-50/80 via-yellow-50/40 to-background dark:from-amber-950/30 dark:via-amber-900/10 shadow-[0_0_40px_-12px_rgba(245,158,11,0.45)]"
+                  : isPro
+                    ? "border-2 border-purple-400/60 bg-gradient-to-b from-purple-50/80 via-indigo-50/40 to-background dark:from-purple-950/30 dark:via-indigo-900/10 shadow-[0_0_40px_-12px_rgba(168,85,247,0.45)] lg:scale-[1.03]"
+                    : isAdvance
+                      ? "border-2 border-blue-400/50"
+                      : "border border-border";
+
+                const ctaClass = isElite
+                  ? "bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white hover:opacity-90 border-0"
+                  : isPro
+                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 border-0"
+                    : "";
+
+                return (
+                  <Card key={id} className={`relative flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${cardClass}`}>
+                    {p.badge && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap z-10">
+                        <Badge className={`gap-1 px-3 py-1 text-[11px] font-semibold ${
+                          isElite ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0" :
+                          isPro ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-0" :
+                          "bg-blue-600 text-white border-0"
+                        }`}>
+                          {isElite ? <Crown className="h-3 w-3" /> : isPro ? <Sparkles className="h-3 w-3" /> : <Star className="h-3 w-3" />}
+                          {p.badge}
+                        </Badge>
+                      </div>
+                    )}
+
+                    <CardHeader className="text-center pb-3 pt-6">
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        {isElite && <Crown className="h-4 w-4 text-amber-500" />}
+                        {isPro && <Rocket className="h-4 w-4 text-purple-600" />}
+                        {isAdvance && <Zap className="h-4 w-4 text-blue-600" />}
+                        <CardTitle className="text-lg font-bold">{p.name}</CardTitle>
+                      </div>
+                      <div className="mt-2">
+                        <span className={`text-3xl font-extrabold ${isElite ? "bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent" : isPro ? "bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent" : "text-foreground"}`}>
+                          ₹{p.priceInr.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                      <CardDescription className="text-[11px] text-muted-foreground mt-1">
+                        {p.durationMonths === 1 ? (isFree ? "Forever" : "/ month") : `${p.durationMonths} months`}
+                      </CardDescription>
+                      {monthlyEquivalent > 0 && p.durationMonths > 1 && (
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                          ≈ ₹{monthlyEquivalent.toLocaleString("en-IN")}/month
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-2 italic">
+                        For: {p.bestFor}
+                      </p>
+                    </CardHeader>
+
+                    <CardContent className="flex-1 flex flex-col px-4">
+                      <ul className="space-y-1.5 flex-1 mb-3">
+                        {p.perks.map((f) => (
+                          <li key={f} className="flex items-start gap-1.5 text-xs text-foreground/90">
+                            <Check className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${isElite ? "text-amber-600" : isPro ? "text-purple-600" : isAdvance ? "text-blue-600" : "text-primary"}`} />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {p.lockedPerks && p.lockedPerks.length > 0 && (
+                        <div className="mb-3 rounded-md border border-dashed border-border bg-muted/40 p-2.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 flex items-center gap-1">
+                            <Lock className="h-3 w-3" /> Locked Features
+                          </p>
+                          <ul className="space-y-1">
+                            {p.lockedPerks.map((f) => (
+                              <li key={f} className="flex items-start gap-1.5 text-[11px] text-muted-foreground blur-[0.3px] opacity-80">
+                                <Lock className="h-3 w-3 mt-0.5 shrink-0" />
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {p.mentoring && (
+                        <div className="mb-3 rounded-md border border-amber-400/40 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 p-2.5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400 mb-1.5 flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" /> 1-to-1 Mentoring Program
+                          </p>
+                          <ul className="space-y-1">
+                            {p.mentoring.map((f) => (
+                              <li key={f} className="flex items-start gap-1.5 text-[11px] text-foreground/80">
+                                <Check className="h-3 w-3 mt-0.5 shrink-0 text-amber-600" />
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      <Button asChild className={`w-full mt-auto ${ctaClass}`} variant={isPro || isElite ? "default" : isAdvance ? "default" : isFree ? "outline" : "default"}>
+                        <Link to="/candidate/signup">{p.ctaLabel}</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <div className="mt-10 grid gap-3 md:grid-cols-3 max-w-4xl mx-auto text-center">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <p className="text-sm font-semibold text-foreground">Improve Your Selection Chances</p>
+                <p className="text-xs text-muted-foreground mt-1">Get AI-driven feedback that matters.</p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <p className="text-sm font-semibold text-foreground">Track Your Career Growth</p>
+                <p className="text-xs text-muted-foreground mt-1">Skill gaps, readiness, and progress in one place.</p>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <p className="text-sm font-semibold text-foreground">Built for serious career growth</p>
+                <p className="text-xs text-muted-foreground mt-1">Trusted by candidates who get selected.</p>
+              </div>
             </div>
           </TabsContent>
           <TabsContent value="employers">{renderPlans(employerPlans)}</TabsContent>

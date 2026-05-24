@@ -54,7 +54,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const [appliedCount, setAppliedCount] = useState(0);
   const [totalToApply, setTotalToApply] = useState(0);
   const [existingApplicationJobIds, setExistingApplicationJobIds] = useState<Set<string>>(new Set());
-  const [candidatePlan, setCandidatePlan] = useState<string>("basic");
+  const [candidatePlan, setCandidatePlan] = useState<string>("free");
   const [isPlanLoading, setIsPlanLoading] = useState(true);
   const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [localResumeAnalysis, setLocalResumeAnalysis] = useState<any>(resumeAnalysis);
@@ -75,7 +75,7 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
   const aiApplyRemaining = sub.remainingFor("ai_job_apply");
 
   // Day-pass is only honoured for paid plans — basic users can never bypass the gate.
-  const isPaidPlan = candidatePlan === "pro" || candidatePlan === "premium";
+  const isPaidPlan = candidatePlan === "pro_accelerator" || candidatePlan === "elite" || candidatePlan === "advance";
   const hasActiveDayPass = isPaidPlan && !!dayPassExpiresAt && dayPassExpiresAt > Date.now();
   const hasAccess = isPaidPlan || hasActiveDayPass;
 
@@ -170,9 +170,9 @@ export default function AIJobApplyTab({ profile, resumeAnalysis, onNavigateToRes
         .maybeSingle();
 
       const active = sub && (sub.ends_at == null || new Date(sub.ends_at) > new Date());
-      const plan = active ? (sub!.plan as string) : "basic";
+      const plan = active ? (sub!.plan as string) : "free";
 
-      if (plan === "basic") {
+      if (plan === "free") {
         toast({
           title: "Upgrade required",
           description: "AI Job Apply is available on the Pro and Premium plans.",

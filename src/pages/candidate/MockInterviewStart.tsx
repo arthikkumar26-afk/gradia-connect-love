@@ -199,7 +199,7 @@ const MockInterviewStart = () => {
             {!mockTestLimits.isLoading && (
               <div className="flex items-center justify-center gap-3 pb-2">
                 <Badge variant={mockTestLimits.canStart ? "secondary" : "destructive"} className="gap-1 text-xs">
-                  {mockTestLimits.plan === 'premium' ? (
+                  {mockTestLimits.plan === 'elite' ? (
                     <><Crown className="h-3 w-3" /> Unlimited</>
                   ) : (
                     <>{mockTestLimits.usedTests}/{mockTestLimits.maxTests} used this month</>
