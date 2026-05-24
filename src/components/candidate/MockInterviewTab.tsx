@@ -1640,7 +1640,7 @@ export const MockInterviewTab = () => {
           {!mockTestLimits.isLoading && (
             <div className="mt-4 flex items-center justify-center gap-3">
               <Badge variant={mockTestLimits.canStart ? "secondary" : "destructive"} className="gap-1 text-xs">
-                {mockTestLimits.plan === 'premium' ? (
+                {mockTestLimits.plan === 'elite' ? (
                   <>
                     <Crown className="h-3 w-3" />
                     Unlimited Tests
@@ -1687,7 +1687,7 @@ export const MockInterviewTab = () => {
                 </p>
               </div>
               <div className="grid gap-2">
-                {mockTestLimits.plan === 'basic' && (
+                {mockTestLimits.plan === 'free' && (
                   <>
                     <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
                       <Crown className="h-4 w-4" />
@@ -1699,7 +1699,7 @@ export const MockInterviewTab = () => {
                     </Button>
                   </>
                 )}
-                {mockTestLimits.plan === 'pro' && (
+                {mockTestLimits.plan === 'pro_accelerator' && (
                   <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
                     <Crown className="h-4 w-4" />
                     Upgrade to Premium — Unlimited tests (₹30,000/mo)
@@ -2022,7 +2022,7 @@ export const MockInterviewTab = () => {
                   .maybeSingle();
 
                 const active = subRow && (subRow.ends_at == null || new Date(subRow.ends_at) > new Date());
-                const plan = active ? (subRow!.plan as string) : 'basic';
+                const plan = active ? (subRow!.plan as string) : 'free';
 
                 // Plan limits for mock_interview (mirrors src/config/candidatePlans.ts)
                 const monthlyLimit: Record<string, number> = { basic: 1, pro: 10, premium: Infinity };
@@ -2045,7 +2045,7 @@ export const MockInterviewTab = () => {
                 const used = usageRow?.used_count ?? 0;
                 if (limit !== Infinity && used >= limit) {
                   toast.error(
-                    plan === 'basic'
+                    plan === 'free'
                       ? 'Free plan includes 1 mock interview per month. Upgrade to Pro or Premium for more.'
                       : 'Monthly mock interview quota reached. Upgrade your plan for more.',
                   );

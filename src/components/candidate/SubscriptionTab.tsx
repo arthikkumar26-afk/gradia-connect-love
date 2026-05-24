@@ -252,7 +252,7 @@ export default function SubscriptionTab() {
             const p = CANDIDATE_PLANS[id];
             const isCurrent = sub.plan === id;
             const isProcessing = purchasing === id;
-            const isPaidPlan = id !== "basic";
+            const isPaidPlan = id !== "free";
             return (
               <Card
                 key={id}
