@@ -5,12 +5,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PLAN_IDS = new Set(["basic", "pro", "premium"]);
+const PLAN_ALIASES: Record<string, string> = {
+  basic: "free",
+  pro: "advance",
+  premium: "elite",
+  proaccelerator: "pro_accelerator",
+};
+const PLAN_IDS = new Set(["free", "starter", "advance", "pro_accelerator", "elite"]);
 
 const normalizePlan = (value: unknown) => {
   const raw = String(value || "").toLowerCase().trim();
-  const cleaned = raw.replace(/\s+plan$/i, "").replace(/[^a-z]/g, "");
-  return PLAN_IDS.has(cleaned) ? cleaned : null;
+  const cleaned = raw.replace(/\s+plan$/i, "").replace(/[^a-z_]/g, "");
+  const normalized = PLAN_ALIASES[cleaned] || cleaned;
+  return PLAN_IDS.has(normalized) ? normalized : null;
 };
 
 serve(async (req) => {

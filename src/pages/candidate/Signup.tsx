@@ -23,6 +23,7 @@ import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndic
 import { Badge } from "@/components/ui/badge";
 import { CouponInput } from "@/components/shared/CouponInput";
 import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
+import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER, type CandidatePlan } from "@/config/candidatePlans";
 // Shared resend-confirmation helpers + hook so the candidate signup uses
 // the exact same cooldown / rate-limit semantics as the candidate login,
 // employer signup, and freelancer login flows.
@@ -450,8 +451,7 @@ const CandidateSignup = () => {
   const [selectedAddons, setSelectedAddons] = useState<UnlockFeature[]>([]);
   // Detailed service add-ons (from pricing sheet). Each item has 3 tier prices; user picks one tier per item.
   const [selectedServiceTiers, setSelectedServiceTiers] = useState<Record<string, 0 | 1 | 2>>({});
-  // Registration tier (Basic / Standard / Premium)
-  const [selectedRegistrationTier, setSelectedRegistrationTier] = useState<0 | 1 | 2>(0);
+  const [selectedCandidatePlan, setSelectedCandidatePlan] = useState<CandidatePlan>("free");
   const [includeSkilloryVoucher, setIncludeSkilloryVoucher] = useState(false);
 
   useEffect(() => {
@@ -1939,14 +1939,9 @@ const CandidateSignup = () => {
     </div>
   );
 
-  // ---------- Registration fee step ----------
-  // One-time registration fee — three tiers
-  const REGISTRATION_TIERS: { label: string; price: number; tagline: string }[] = [
-    { label: 'Basic', price: 4999, tagline: 'Essential candidate access' },
-    { label: 'Standard', price: 7999, tagline: 'Most popular — extra perks' },
-    { label: 'Premium', price: 9999, tagline: 'Full white-glove onboarding' },
-  ];
-  const REGISTRATION_FEE = REGISTRATION_TIERS[selectedRegistrationTier].price;
+  // ---------- Candidate plan step ----------
+  const selectedPlan = CANDIDATE_PLANS[selectedCandidatePlan];
+  const REGISTRATION_FEE = selectedPlan.priceInr;
   const addonsTotal = selectedAddons.reduce((s, id) => s + FEATURE_UNLOCKS[id].price, 0);
 
   // Detailed service add-ons (from pricing reference sheet)
@@ -1964,7 +1959,7 @@ const CandidateSignup = () => {
     { id: 'pipeline_stage_4', label: 'Stage-4', group: 'Interview Pipeline', tiers: [2000, 2500, 3000], perks: ['Final round preparation', 'Negotiation guidance', 'Offer-stage support'] },
     { id: 'consolidated_feedback', label: 'Consolidated Feedback', tiers: [5000, 6000, 7000], perks: ['Full pipeline performance review', 'Strengths & weaknesses summary', 'Personalised next-step plan'] },
   ];
-  const TIER_LABELS = ['Basic', 'Standard', 'Premium'] as const;
+  const TIER_LABELS = ['Starter', 'Advance', 'Pro'] as const;
 
   const servicesTotal = Object.entries(selectedServiceTiers).reduce((sum, [id, tier]) => {
     const item = SERVICE_ADDONS.find((s) => s.id === id);
@@ -1985,6 +1980,12 @@ const CandidateSignup = () => {
     });
 
   const handlePayPlan = async () => {
+    if (grandTotal <= 0) {
+      toast({ title: 'Free plan activated', description: 'Your candidate account is ready.' });
+      await refreshProfile();
+      navigate('/candidate/dashboard', { replace: true });
+      return;
+    }
     if (!razorpayLoaded) {
       toast({ title: 'Payment gateway loading…', description: 'Please try again in a moment.' });
       return;
@@ -1998,11 +1999,11 @@ const CandidateSignup = () => {
         return;
       }
       const user = sessionData.session.user;
-      const planSlug = 'registration';
+      const planSlug = selectedCandidatePlan;
       const addonLabels = selectedAddons.map((id) => FEATURE_UNLOCKS[id].shortLabel);
       const planLabel = addonLabels.length
-        ? `Candidate Registration + ${addonLabels.join(', ')}`
-        : 'Candidate Registration Fee';
+        ? `${selectedPlan.name} + ${addonLabels.join(', ')}`
+        : `${selectedPlan.name} Candidate Plan`;
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
@@ -2101,9 +2102,9 @@ const CandidateSignup = () => {
       <div data-step="plan" className="w-full max-w-6xl">
         <ProgressIndicator />
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-foreground mb-2">Registration Fee</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Choose Candidate Plan</h2>
           <p className="text-muted-foreground text-sm">
-            Pay the one-time registration fee to activate your candidate account.
+            Select the candidate access tier that matches your career growth needs.
           </p>
         </div>
 
@@ -2111,22 +2112,23 @@ const CandidateSignup = () => {
         <div className="space-y-4">
         <Card className="p-8 mb-0 text-center border-2 border-primary/30 shadow-xl">
           <Badge className="mb-4 gap-1 mx-auto w-fit">
-            <Star className="h-3 w-3" /> One-Time Registration
+            <Star className="h-3 w-3" /> Candidate Plans
           </Badge>
-          <h3 className="text-xl font-bold text-foreground mb-2">Candidate Registration</h3>
+          <h3 className="text-xl font-bold text-foreground mb-2">{selectedPlan.name}</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Unlock your Gradia candidate dashboard and start applying to jobs, taking mock interviews, and building your career.
+            {selectedPlan.bestFor}
           </p>
 
           {/* Tier selector */}
-          <div className="grid grid-cols-3 gap-2 mb-5">
-            {REGISTRATION_TIERS.map((tier, idx) => {
-              const active = selectedRegistrationTier === idx;
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-5">
+            {CANDIDATE_PLAN_ORDER.map((planId) => {
+              const tier = CANDIDATE_PLANS[planId];
+              const active = selectedCandidatePlan === planId;
               return (
                 <button
                   type="button"
-                  key={tier.label}
-                  onClick={() => setSelectedRegistrationTier(idx as 0 | 1 | 2)}
+                  key={tier.id}
+                  onClick={() => setSelectedCandidatePlan(planId)}
                   className={`rounded-lg border-2 p-3 text-center transition-all ${
                     active
                       ? 'border-primary bg-primary/5 shadow-md'
@@ -2134,13 +2136,13 @@ const CandidateSignup = () => {
                   }`}
                 >
                   <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                    {tier.label}
+                    {tier.name}
                   </div>
                   <div className={`text-lg font-bold ${active ? 'text-primary' : 'text-foreground'}`}>
-                    ₹{tier.price.toLocaleString('en-IN')}
+                    ₹{tier.priceInr.toLocaleString('en-IN')}
                   </div>
                   <div className="text-[10px] text-muted-foreground leading-tight mt-1">
-                    {tier.tagline}
+                    {tier.durationMonths === 1 ? (tier.priceInr === 0 ? 'Forever' : '/ month') : `${tier.durationMonths} months`}
                   </div>
                 </button>
               );
@@ -2152,14 +2154,14 @@ const CandidateSignup = () => {
               ₹{REGISTRATION_FEE.toLocaleString('en-IN')}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              one-time payment · {REGISTRATION_TIERS[selectedRegistrationTier].label} tier
+              {selectedPlan.priceLabel} · {selectedPlan.tagline}
             </p>
           </div>
 
           {/* Inline summary + pay */}
           <div className="text-left border-t pt-4 mt-2 space-y-1.5">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Registration Fee</span>
+                <span className="text-muted-foreground">Candidate Plan</span>
               <span className="text-foreground">₹{REGISTRATION_FEE.toLocaleString('en-IN')}</span>
             </div>
             {selectedAddons.length > 0 && (
@@ -2193,9 +2195,11 @@ const CandidateSignup = () => {
               <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
-              <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
+              <Button onClick={handlePayPlan} disabled={paying || (grandTotal > 0 && !razorpayLoaded)} className="flex-1">
                 {paying ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+                ) : grandTotal <= 0 ? (
+                  <><CheckCircle className="h-4 w-4 mr-2" /> Start Free</>
                 ) : (
                   <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{grandTotal.toLocaleString('en-IN')}</>
                 )}
@@ -2245,87 +2249,6 @@ const CandidateSignup = () => {
         </Card>
         </div>
 
-        {/* Detailed Service Add-ons (from pricing sheet) */}
-        <Card className="p-5 mb-0">
-          <div className="mb-4">
-            <h4 className="text-base font-bold text-foreground">Boost Your Account with Add-ons</h4>
-            <p className="text-xs text-muted-foreground">
-              Pick a tier (Basic / Standard / Premium) for any service. Tap <span className="font-semibold">+</span> to add, tap again to remove.
-            </p>
-          </div>
-
-          {/* Header row */}
-          <div className="hidden sm:grid grid-cols-[1fr_repeat(3,minmax(0,90px))] gap-2 px-2 pb-2 mb-2 border-b text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <span>Service</span>
-            <span className="text-center">Basic</span>
-            <span className="text-center">Standard</span>
-            <span className="text-center">Premium</span>
-          </div>
-
-          <div className="space-y-1.5">
-            {SERVICE_ADDONS.map((s, idx) => {
-              const prev = SERVICE_ADDONS[idx - 1];
-              const showGroupHeader = s.group && (!prev || prev.group !== s.group);
-              const selectedTier = selectedServiceTiers[s.id];
-              return (
-                <div key={s.id}>
-                  {showGroupHeader && (
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-primary mt-3 mb-1 px-2">
-                      {s.group}
-                    </div>
-                  )}
-                  <div className={`grid grid-cols-[1fr_repeat(3,minmax(0,90px))] gap-2 items-start px-2 py-1.5 rounded-md ${
-                    selectedTier !== undefined ? 'bg-primary/5' : 'hover:bg-muted/50'
-                  }`}>
-                    <div className="min-w-0">
-                      <span className={`text-sm block ${s.group ? 'pl-3' : 'font-medium'} text-foreground`}>
-                        {s.label}
-                      </span>
-                      <ul className={`${s.group ? 'pl-3' : ''} mt-1 space-y-0.5`}>
-                        {s.perks.map((p) => (
-                          <li key={p} className="flex items-start gap-1 text-[11px] text-muted-foreground leading-snug">
-                            <Check className="h-3 w-3 text-primary mt-[2px] shrink-0" />
-                            <span>{p}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    {([0, 1, 2] as const).map((tier) => {
-                      const active = selectedTier === tier;
-                      return (
-                        <button
-                          type="button"
-                          key={tier}
-                          onClick={() => toggleServiceTier(s.id, tier)}
-                          className={`flex items-center justify-center gap-1 h-8 rounded-md border text-xs font-medium transition-all ${
-                            active
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-background text-foreground border-border hover:border-primary/50'
-                          }`}
-                          title={`${TIER_LABELS[tier]} – ₹${s.tiers[tier].toLocaleString('en-IN')}`}
-                        >
-                          {active ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                          ₹{s.tiers[tier].toLocaleString('en-IN')}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {servicesTotal > 0 && (
-            <div className="mt-4 pt-3 border-t flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">
-                Services Total ({Object.keys(selectedServiceTiers).length} selected)
-              </span>
-              <span className="text-base font-bold text-primary">
-                ₹{servicesTotal.toLocaleString('en-IN')}
-              </span>
-            </div>
-          )}
-        </Card>
         </div>
 
       </div>

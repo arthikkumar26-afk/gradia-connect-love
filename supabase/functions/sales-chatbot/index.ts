@@ -20,9 +20,11 @@ FLOW:
 4. Guide them to sign up with the appropriate link.
 
 CANDIDATE PLANS:
-- **Basic (Free)**: 1 mock test, job search & apply, basic profile creation. Great for getting started!
-- **Pro (₹999/month)**: AI Resume Analysis, 5 mock tests/month, profile visibility boost. Best for active job seekers!
-- **Premium (₹1499/month)**: Unlimited mock tests, AI Mock Interview pipeline, 1-on-1 career coaching. For serious career growth!
+- **Free Access (₹0)**: 3 job applications/month, 1 AI mock interview, basic ATS score, Skillory profile. Great for exploring Gradia!
+- **Starter (₹999/month)**: 10 applications, 2 AI mock interviews, resume builder, basic interview report.
+- **Advance (₹2,999/3 months)**: 30 applications, 5 AI mock interviews, AI feedback reports, AI Job Apply automation.
+- **Pro Accelerator (₹7,999/6 months)**: 75 applications, 15 interviews, career roadmap, re-interview support, priority visibility.
+- **Elite Accelerator (₹34,999/year)**: Unlimited applications/interviews, dedicated career coach, HR mock panels, 24/7 premium support.
 
 EMPLOYER PLANS:
 - **Starter (Free)**: 3 active jobs, basic candidate tracking. Perfect for trying us out!
