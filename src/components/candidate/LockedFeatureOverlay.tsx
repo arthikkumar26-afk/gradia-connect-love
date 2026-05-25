@@ -8,9 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   FEATURE_UNLOCKS,
   FEATURE_BUNDLES,
-  bundleSavings,
   type UnlockFeature,
 } from "@/config/featureUnlocks";
+import { CANDIDATE_PLANS } from "@/config/candidatePlans";
 
 declare global {
   interface Window { Razorpay: any }
@@ -42,6 +42,7 @@ export const LockedFeatureOverlay = ({
 }: LockedFeatureOverlayProps) => {
   const def = FEATURE_UNLOCKS[feature];
   const totalPack = FEATURE_BUNDLES.find((b) => b.id === "total_value")!;
+  const elitePlan = CANDIDATE_PLANS.elite;
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -185,14 +186,11 @@ export const LockedFeatureOverlay = ({
                   className="flex-1 font-semibold border-primary/40"
                   disabled={loading}
                   onClick={() =>
-                    handleUnlock(totalPack.price, totalPack.name, "bundle_total_value")
+                    handleUnlock(elitePlan.priceInr, elitePlan.name, "bundle_total_value")
                   }
                 >
                   <Sparkles className="h-4 w-4 mr-2 text-primary" />
-                  Full Access ₹{totalPack.price.toLocaleString("en-IN")}
-                  <span className="ml-1 text-xs text-success">
-                    Save ₹{bundleSavings(totalPack).toLocaleString("en-IN")}
-                  </span>
+                  Elite ₹{elitePlan.priceInr.toLocaleString("en-IN")}
                 </Button>
               </div>
 
