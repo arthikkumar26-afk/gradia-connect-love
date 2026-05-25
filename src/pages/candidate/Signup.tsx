@@ -1939,14 +1939,9 @@ const CandidateSignup = () => {
     </div>
   );
 
-  // ---------- Registration fee step ----------
-  // One-time registration fee — three tiers
-  const REGISTRATION_TIERS: { label: string; price: number; tagline: string }[] = [
-    { label: 'Basic', price: 4999, tagline: 'Essential candidate access' },
-    { label: 'Standard', price: 7999, tagline: 'Most popular — extra perks' },
-    { label: 'Premium', price: 9999, tagline: 'Full white-glove onboarding' },
-  ];
-  const REGISTRATION_FEE = REGISTRATION_TIERS[selectedRegistrationTier].price;
+  // ---------- Candidate plan step ----------
+  const selectedPlan = CANDIDATE_PLANS[selectedCandidatePlan];
+  const REGISTRATION_FEE = selectedPlan.priceInr;
   const addonsTotal = selectedAddons.reduce((s, id) => s + FEATURE_UNLOCKS[id].price, 0);
 
   // Detailed service add-ons (from pricing reference sheet)
@@ -1964,7 +1959,7 @@ const CandidateSignup = () => {
     { id: 'pipeline_stage_4', label: 'Stage-4', group: 'Interview Pipeline', tiers: [2000, 2500, 3000], perks: ['Final round preparation', 'Negotiation guidance', 'Offer-stage support'] },
     { id: 'consolidated_feedback', label: 'Consolidated Feedback', tiers: [5000, 6000, 7000], perks: ['Full pipeline performance review', 'Strengths & weaknesses summary', 'Personalised next-step plan'] },
   ];
-  const TIER_LABELS = ['Basic', 'Standard', 'Premium'] as const;
+  const TIER_LABELS = ['Starter', 'Advance', 'Pro'] as const;
 
   const servicesTotal = Object.entries(selectedServiceTiers).reduce((sum, [id, tier]) => {
     const item = SERVICE_ADDONS.find((s) => s.id === id);
@@ -1998,11 +1993,11 @@ const CandidateSignup = () => {
         return;
       }
       const user = sessionData.session.user;
-      const planSlug = 'registration';
+      const planSlug = selectedCandidatePlan;
       const addonLabels = selectedAddons.map((id) => FEATURE_UNLOCKS[id].shortLabel);
       const planLabel = addonLabels.length
-        ? `Candidate Registration + ${addonLabels.join(', ')}`
-        : 'Candidate Registration Fee';
+        ? `${selectedPlan.name} + ${addonLabels.join(', ')}`
+        : `${selectedPlan.name} Candidate Plan`;
 
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
