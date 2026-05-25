@@ -6,7 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const PLAN_IDS = new Set(["starter", "basic", "pro", "premium"]);
+const PLAN_IDS = new Set(["starter", "advance", "pro_accelerator", "elite"]);
+const PLAN_DURATIONS: Record<string, number> = {
+  starter: 1,
+  advance: 3,
+  pro_accelerator: 6,
+  elite: 12,
+};
 
 async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   const enc = new TextEncoder();
@@ -204,7 +210,8 @@ serve(async (req) => {
       .in("status", ["active", "trial"]);
 
     const startedAt = new Date();
-    const endsAt = new Date(startedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const endsAt = new Date(startedAt);
+    endsAt.setMonth(endsAt.getMonth() + (PLAN_DURATIONS[plan] || 1));
     const { data: subscription, error: insertError } = await admin
       .from("candidate_subscriptions")
       .insert({
