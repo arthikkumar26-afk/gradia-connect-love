@@ -23,6 +23,7 @@ import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndic
 import { Badge } from "@/components/ui/badge";
 import { CouponInput } from "@/components/shared/CouponInput";
 import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
+import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER, type CandidatePlan } from "@/config/candidatePlans";
 // Shared resend-confirmation helpers + hook so the candidate signup uses
 // the exact same cooldown / rate-limit semantics as the candidate login,
 // employer signup, and freelancer login flows.
@@ -450,8 +451,7 @@ const CandidateSignup = () => {
   const [selectedAddons, setSelectedAddons] = useState<UnlockFeature[]>([]);
   // Detailed service add-ons (from pricing sheet). Each item has 3 tier prices; user picks one tier per item.
   const [selectedServiceTiers, setSelectedServiceTiers] = useState<Record<string, 0 | 1 | 2>>({});
-  // Registration tier (Basic / Standard / Premium)
-  const [selectedRegistrationTier, setSelectedRegistrationTier] = useState<0 | 1 | 2>(0);
+  const [selectedCandidatePlan, setSelectedCandidatePlan] = useState<CandidatePlan>("free");
   const [includeSkilloryVoucher, setIncludeSkilloryVoucher] = useState(false);
 
   useEffect(() => {
