@@ -1980,6 +1980,12 @@ const CandidateSignup = () => {
     });
 
   const handlePayPlan = async () => {
+    if (grandTotal <= 0) {
+      toast({ title: 'Free plan activated', description: 'Your candidate account is ready.' });
+      await refreshProfile();
+      navigate('/candidate/dashboard', { replace: true });
+      return;
+    }
     if (!razorpayLoaded) {
       toast({ title: 'Payment gateway loading…', description: 'Please try again in a moment.' });
       return;
@@ -2096,9 +2102,9 @@ const CandidateSignup = () => {
       <div data-step="plan" className="w-full max-w-6xl">
         <ProgressIndicator />
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-foreground mb-2">Registration Fee</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-2">Choose Candidate Plan</h2>
           <p className="text-muted-foreground text-sm">
-            Pay the one-time registration fee to activate your candidate account.
+            Select the candidate access tier that matches your career growth needs.
           </p>
         </div>
 
@@ -2106,22 +2112,23 @@ const CandidateSignup = () => {
         <div className="space-y-4">
         <Card className="p-8 mb-0 text-center border-2 border-primary/30 shadow-xl">
           <Badge className="mb-4 gap-1 mx-auto w-fit">
-            <Star className="h-3 w-3" /> One-Time Registration
+            <Star className="h-3 w-3" /> Candidate Plans
           </Badge>
-          <h3 className="text-xl font-bold text-foreground mb-2">Candidate Registration</h3>
+          <h3 className="text-xl font-bold text-foreground mb-2">{selectedPlan.name}</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Unlock your Gradia candidate dashboard and start applying to jobs, taking mock interviews, and building your career.
+            {selectedPlan.bestFor}
           </p>
 
           {/* Tier selector */}
-          <div className="grid grid-cols-3 gap-2 mb-5">
-            {REGISTRATION_TIERS.map((tier, idx) => {
-              const active = selectedRegistrationTier === idx;
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-5">
+            {CANDIDATE_PLAN_ORDER.map((planId) => {
+              const tier = CANDIDATE_PLANS[planId];
+              const active = selectedCandidatePlan === planId;
               return (
                 <button
                   type="button"
-                  key={tier.label}
-                  onClick={() => setSelectedRegistrationTier(idx as 0 | 1 | 2)}
+                  key={tier.id}
+                  onClick={() => setSelectedCandidatePlan(planId)}
                   className={`rounded-lg border-2 p-3 text-center transition-all ${
                     active
                       ? 'border-primary bg-primary/5 shadow-md'
@@ -2129,13 +2136,13 @@ const CandidateSignup = () => {
                   }`}
                 >
                   <div className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                    {tier.label}
+                    {tier.name}
                   </div>
                   <div className={`text-lg font-bold ${active ? 'text-primary' : 'text-foreground'}`}>
-                    ₹{tier.price.toLocaleString('en-IN')}
+                    ₹{tier.priceInr.toLocaleString('en-IN')}
                   </div>
                   <div className="text-[10px] text-muted-foreground leading-tight mt-1">
-                    {tier.tagline}
+                    {tier.durationMonths === 1 ? (tier.priceInr === 0 ? 'Forever' : '/ month') : `${tier.durationMonths} months`}
                   </div>
                 </button>
               );
@@ -2147,14 +2154,14 @@ const CandidateSignup = () => {
               ₹{REGISTRATION_FEE.toLocaleString('en-IN')}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              one-time payment · {REGISTRATION_TIERS[selectedRegistrationTier].label} tier
+              {selectedPlan.priceLabel} · {selectedPlan.tagline}
             </p>
           </div>
 
           {/* Inline summary + pay */}
           <div className="text-left border-t pt-4 mt-2 space-y-1.5">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Registration Fee</span>
+                <span className="text-muted-foreground">Candidate Plan</span>
               <span className="text-foreground">₹{REGISTRATION_FEE.toLocaleString('en-IN')}</span>
             </div>
             {selectedAddons.length > 0 && (
