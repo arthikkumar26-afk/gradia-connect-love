@@ -2,6 +2,8 @@
 // Used by the public Pricing page AND the admin Users plan dropdowns,
 // so both stay perfectly in sync.
 
+import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
+
 export type PlanRole = "candidate" | "employer" | "freelancer" | "sponsor" | "edutech";
 
 export interface PlanDefinition {
@@ -21,59 +23,18 @@ export interface PlanDefinition {
 }
 
 export const PLANS: Record<PlanRole, PlanDefinition[]> = {
-  candidate: [
-    // Per-feature unlocks (Razorpay, 1-month access)
-    { id: "resume", name: "Resume Builder", points: 0, priceInr: 4999, group: "feature", features: [
-      "ATS-optimised templates",
-      "Instant download & editing",
-      "Unlimited revisions for 1 month",
-    ], cta: "/candidate/signup" },
-    { id: "jobs", name: "Suitable Jobs (AI Matching)", points: 0, priceInr: 6999, group: "feature", features: [
-      "AI-matched job feed",
-      "Smart profile-based filtering",
-      "Daily refresh of openings",
-    ], cta: "/candidate/signup" },
-    { id: "aijobapply", name: "AI Job Apply", points: 0, priceInr: 8999, group: "feature", features: [
-      "Auto-apply to multiple jobs daily",
-      "Tailored cover notes",
-      "Hands-free job hunting",
-    ], cta: "/candidate/signup" },
-    { id: "pipeline", name: "Interview Pipeline Tracker", points: 0, priceInr: 5999, group: "feature", features: [
-      "Stage-by-stage tracking",
-      "Status & feedback timeline",
-      "Organised job journey dashboard",
-    ], cta: "/candidate/signup" },
-    { id: "mocktest", name: "Mock Tests / Interviews", points: 0, priceInr: 9999, group: "feature", features: [
-      "Realistic AI-driven interviews",
-      "Detailed performance feedback",
-      "Score & improvement reports",
-    ], cta: "/candidate/signup" },
-    { id: "upskill", name: "Upskill Yourself", points: 0, priceInr: 12999, group: "feature", features: [
-      "Skill-based learning modules",
-      "Industry certifications",
-      "Career-ready training tracks",
-    ], cta: "/candidate/signup" },
-    // Smart bundles
-    { id: "starter_pack", name: "Starter Pack", points: 0, priceInr: 9999, group: "bundle", features: [
-      "Resume Builder",
-      "Suitable Jobs",
-    ], cta: "/candidate/signup" },
-    { id: "accelerator_pack", name: "Job Accelerator Pack", points: 0, priceInr: 17999, group: "bundle", popular: true, features: [
-      "Resume Builder",
-      "AI Job Apply",
-      "Suitable Jobs",
-    ], cta: "/candidate/signup" },
-    { id: "career_pro_pack", name: "Career Pro Pack", points: 0, priceInr: 29999, group: "bundle", features: [
-      "Resume + Suitable Jobs",
-      "AI Apply + Pipeline",
-      "Mock Interviews",
-    ], cta: "/candidate/signup" },
-    { id: "total_value_pack", name: "Total Value Pack (Full Access)", points: 0, priceInr: 45000, group: "bundle", features: [
-      "Every feature unlocked",
-      "Resume + Jobs + AI Apply",
-      "Pipeline + Mock + Upskill",
-    ], cta: "/candidate/signup" },
-  ],
+  candidate: CANDIDATE_PLAN_ORDER.map((id) => {
+    const plan = CANDIDATE_PLANS[id];
+    return {
+      id: plan.id,
+      name: plan.name,
+      points: 0,
+      priceInr: plan.priceInr,
+      popular: Boolean(plan.highlight || plan.badge === "Most Chosen"),
+      features: plan.perks,
+      cta: "/candidate/signup",
+    };
+  }),
   employer: [
     { id: "starter", name: "Starter", points: 0, features: [
       "3 job posts",
