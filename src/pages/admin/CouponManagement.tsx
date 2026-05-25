@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Loader2, Plus, Ticket, Users, Tag, RefreshCw, Trash2, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
 
 interface Coupon {
   id: string;
@@ -75,7 +76,10 @@ const CouponManagement = () => {
   });
 
   // Form state
-  const candidatePackages = ["Pro (₹1499/mo)", "Premium (₹1999/mo)"];
+  const candidatePackages = CANDIDATE_PLAN_ORDER.map((id) => {
+    const plan = CANDIDATE_PLANS[id];
+    return `${plan.name} (${plan.priceLabel})`;
+  });
   const employerPackages = ["Growth (₹4,999/mo)", "Professional (₹14,999/mo)", "Enterprise (₹29,000/mo)"];
   const freelancerPackages: string[] = []; // temporarily hidden
   const walletPackages = ["200 pts", "500 pts", "1,000 pts", "2,000 pts"];
