@@ -2195,9 +2195,11 @@ const CandidateSignup = () => {
               <Button variant="ghost" onClick={() => setCurrentStep('terms')} disabled={paying} className="flex-1">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
-              <Button onClick={handlePayPlan} disabled={paying || !razorpayLoaded} className="flex-1">
+              <Button onClick={handlePayPlan} disabled={paying || (grandTotal > 0 && !razorpayLoaded)} className="flex-1">
                 {paying ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing…</>
+                ) : grandTotal <= 0 ? (
+                  <><CheckCircle className="h-4 w-4 mr-2" /> Start Free</>
                 ) : (
                   <><CreditCard className="h-4 w-4 mr-2" /> Pay ₹{grandTotal.toLocaleString('en-IN')}</>
                 )}
@@ -2247,87 +2249,6 @@ const CandidateSignup = () => {
         </Card>
         </div>
 
-        {/* Detailed Service Add-ons (from pricing sheet) */}
-        <Card className="p-5 mb-0">
-          <div className="mb-4">
-            <h4 className="text-base font-bold text-foreground">Boost Your Account with Add-ons</h4>
-            <p className="text-xs text-muted-foreground">
-              Pick a tier (Basic / Standard / Premium) for any service. Tap <span className="font-semibold">+</span> to add, tap again to remove.
-            </p>
-          </div>
-
-          {/* Header row */}
-          <div className="hidden sm:grid grid-cols-[1fr_repeat(3,minmax(0,90px))] gap-2 px-2 pb-2 mb-2 border-b text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <span>Service</span>
-            <span className="text-center">Basic</span>
-            <span className="text-center">Standard</span>
-            <span className="text-center">Premium</span>
-          </div>
-
-          <div className="space-y-1.5">
-            {SERVICE_ADDONS.map((s, idx) => {
-              const prev = SERVICE_ADDONS[idx - 1];
-              const showGroupHeader = s.group && (!prev || prev.group !== s.group);
-              const selectedTier = selectedServiceTiers[s.id];
-              return (
-                <div key={s.id}>
-                  {showGroupHeader && (
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-primary mt-3 mb-1 px-2">
-                      {s.group}
-                    </div>
-                  )}
-                  <div className={`grid grid-cols-[1fr_repeat(3,minmax(0,90px))] gap-2 items-start px-2 py-1.5 rounded-md ${
-                    selectedTier !== undefined ? 'bg-primary/5' : 'hover:bg-muted/50'
-                  }`}>
-                    <div className="min-w-0">
-                      <span className={`text-sm block ${s.group ? 'pl-3' : 'font-medium'} text-foreground`}>
-                        {s.label}
-                      </span>
-                      <ul className={`${s.group ? 'pl-3' : ''} mt-1 space-y-0.5`}>
-                        {s.perks.map((p) => (
-                          <li key={p} className="flex items-start gap-1 text-[11px] text-muted-foreground leading-snug">
-                            <Check className="h-3 w-3 text-primary mt-[2px] shrink-0" />
-                            <span>{p}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    {([0, 1, 2] as const).map((tier) => {
-                      const active = selectedTier === tier;
-                      return (
-                        <button
-                          type="button"
-                          key={tier}
-                          onClick={() => toggleServiceTier(s.id, tier)}
-                          className={`flex items-center justify-center gap-1 h-8 rounded-md border text-xs font-medium transition-all ${
-                            active
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-background text-foreground border-border hover:border-primary/50'
-                          }`}
-                          title={`${TIER_LABELS[tier]} – ₹${s.tiers[tier].toLocaleString('en-IN')}`}
-                        >
-                          {active ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                          ₹{s.tiers[tier].toLocaleString('en-IN')}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {servicesTotal > 0 && (
-            <div className="mt-4 pt-3 border-t flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">
-                Services Total ({Object.keys(selectedServiceTiers).length} selected)
-              </span>
-              <span className="text-base font-bold text-primary">
-                ₹{servicesTotal.toLocaleString('en-IN')}
-              </span>
-            </div>
-          )}
-        </Card>
         </div>
 
       </div>
