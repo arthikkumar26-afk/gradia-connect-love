@@ -12,6 +12,7 @@ import {
   type UnlockFeature,
 } from "@/config/featureUnlocks";
 import { useFeatureUnlocks } from "@/hooks/useFeatureUnlocks";
+import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
 
 const loadRazorpayScript = (): Promise<boolean> =>
   new Promise((resolve) => {
@@ -100,143 +101,28 @@ export const FeatureUnlocksPanel = () => {
 
   return (
     <div className="space-y-8">
-      {/* Hero bundle */}
-      <Card className="p-6 border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-background to-accent/5">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <Badge className="mb-2 gap-1">
-              <Sparkles className="h-3 w-3" /> Best Value
-            </Badge>
-            <h2 className="text-2xl font-bold">Total Value Pack</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Every feature unlocked. Best for serious job seekers.
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-primary">
-              ₹{(45000).toLocaleString("en-IN")}
-            </div>
-            <div className="text-xs text-success font-medium">
-              Save ₹{bundleSavings(FEATURE_BUNDLES[3]).toLocaleString("en-IN")} vs individual
-            </div>
-          </div>
-        </div>
-        <Button
-          className="mt-4 w-full sm:w-auto"
-          size="lg"
-          disabled={busy === "bundle_total_value"}
-          onClick={() =>
-            pay(45000, "Total Value Pack", "bundle_total_value", FEATURE_BUNDLES[3].features)
-          }
-        >
-          {busy === "bundle_total_value" ? (
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-          ) : (
-            <Sparkles className="h-4 w-4 mr-2" />
-          )}
-          Unlock Full Access
-        </Button>
-      </Card>
-
-      {/* Smart Combos */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3">💡 Smart Combos</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {FEATURE_BUNDLES.filter((b) => b.id !== "total_value").map((b) => {
-            const saved = bundleSavings(b);
-            return (
-              <Card
-                key={b.id}
-                className={`p-5 ${b.badge ? "border-primary/50 border-2" : ""}`}
-              >
-                {b.badge && (
-                  <Badge className="mb-2">{b.badge}</Badge>
-                )}
-                <h4 className="font-bold">{b.name}</h4>
-                <p className="text-xs text-muted-foreground mb-3">{b.description}</p>
-                <div className="text-2xl font-bold mb-1">
-                  ₹{b.price.toLocaleString("en-IN")}
-                </div>
-                {saved > 0 && (
-                  <div className="text-xs text-success mb-3">
-                    Save ₹{saved.toLocaleString("en-IN")}
-                  </div>
-                )}
-                <ul className="space-y-1 mb-4">
-                  {b.features.map((f) => (
-                    <li key={f} className="flex items-center gap-1.5 text-xs">
-                      <Check className="h-3 w-3 text-success" />
-                      {FEATURE_UNLOCKS[f].shortLabel}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  className="w-full"
-                  variant={b.badge ? "default" : "outline"}
-                  size="sm"
-                  disabled={busy === `bundle_${b.id}`}
-                  onClick={() =>
-                    pay(b.price, b.name, `bundle_${b.id}`, b.features)
-                  }
-                >
-                  {busy === `bundle_${b.id}` ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Get this Pack"
-                  )}
-                </Button>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Individual features */}
-      <div>
-        <h3 className="text-lg font-semibold mb-3">🔓 What kind of service you required</h3>
-        <div className="flex flex-col gap-3 max-w-2xl">
-          {Object.values(FEATURE_UNLOCKS).map((f) => {
-            const unlocked = isUnlocked(f.id);
-            return (
-              <Card key={f.id} className="p-4 flex flex-col">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h4 className="font-semibold text-sm">{f.label}</h4>
-                  {unlocked && (
-                    <Badge variant="secondary" className="gap-1 text-[10px]">
-                      <Check className="h-3 w-3 text-success" /> Active
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mb-2 flex-1">
-                  {f.tagline}
-                </p>
-                <div className="text-xl font-bold mb-2">
-                  ₹{f.price.toLocaleString("en-IN")}
-                </div>
-                {unlocked ? (
-                  <p className="text-[11px] text-muted-foreground">
-                    Active until {formatExpiry(expiresAt(f.id))}
-                  </p>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy === f.id}
-                    onClick={() => pay(f.price, f.label, f.id, [f.id])}
-                  >
-                    {busy === f.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Lock className="h-3.5 w-3.5 mr-1" /> Unlock
-                      </>
-                    )}
-                  </Button>
-                )}
-              </Card>
-            );
-          })}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+        {CANDIDATE_PLAN_ORDER.map((id) => {
+          const plan = CANDIDATE_PLANS[id];
+          return (
+            <Card key={id} className={`p-5 flex flex-col ${plan.highlight ? "border-primary/50 border-2 shadow-md" : ""}`}>
+              {plan.badge && <Badge className="mb-2 w-fit gap-1"><Sparkles className="h-3 w-3" /> {plan.badge}</Badge>}
+              <h4 className="font-bold text-base">{plan.name}</h4>
+              <p className="text-xs text-muted-foreground mb-3">{plan.bestFor}</p>
+              <div className="text-2xl font-bold mb-1">₹{plan.priceInr.toLocaleString("en-IN")}</div>
+              <p className="text-[11px] text-muted-foreground mb-3">{plan.priceLabel}</p>
+              <ul className="space-y-1.5 flex-1 mb-4">
+                {plan.perks.slice(0, 6).map((perk) => (
+                  <li key={perk} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                    <Check className="h-3 w-3 text-success mt-0.5 shrink-0" />
+                    <span>{perk}</span>
+                  </li>
+                ))}
+              </ul>
+              <Button className="w-full" variant={plan.highlight ? "default" : "outline"} size="sm" onClick={() => window.location.assign("/pricing")}>Compare Plan</Button>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
