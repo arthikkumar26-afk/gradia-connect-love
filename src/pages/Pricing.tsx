@@ -98,10 +98,10 @@ const PricingPage = () => {
             Simple, Transparent Pricing
           </h1>
           <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-4">
-            Candidates pay a one-time ₹5,000 registration fee. Employers & sponsors use wallet points.
+            Candidates choose Free, Starter, Advance, Pro Accelerator, or Elite. Employers & sponsors use wallet points.
           </p>
           <Badge variant="secondary" className="text-sm px-4 py-1.5">
-            ₹5,000 Registration • Instant Dashboard Access
+            Candidate plans start at ₹0 • Premium growth plans available
           </Badge>
         </div>
       </section>
