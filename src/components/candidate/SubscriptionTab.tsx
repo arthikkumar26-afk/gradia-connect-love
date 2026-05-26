@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 import SkilloryVoucherCard from "@/components/candidate/SkilloryVoucherCard";
+import FreelancerAddOnSection from "@/components/candidate/FreelancerAddOnSection";
 import {
   CANDIDATE_PLANS,
   FEATURE_LABELS,
@@ -328,6 +329,9 @@ export default function SubscriptionTab() {
           })}
         </div>
       </div>
+
+      {/* Freelance Add-ons */}
+      <FreelancerAddOnSection />
 
       {/* Skillory Voucher promo */}
       <SkilloryVoucherCard />
