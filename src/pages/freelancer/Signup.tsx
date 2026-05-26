@@ -137,6 +137,27 @@ const FreelancerSignup = () => {
         body: { email, fullName, role: 'freelancer' }
       }).catch(err => console.error("Welcome email failed:", err));
 
+      // Redeem freelance coupon (if provided) to auto-activate Basic plan.
+      if (couponCode.trim()) {
+        try {
+          const { data: redeemRes, error: redeemErr } = await supabase.functions.invoke(
+            "redeem-freelancer-coupon",
+            { body: { code: couponCode.trim().toUpperCase() } },
+          );
+          if (redeemErr || !redeemRes?.success) {
+            toast({
+              title: "Coupon not applied",
+              description: redeemRes?.error || "Could not redeem coupon. You can try again from your dashboard.",
+              variant: "destructive",
+            });
+          } else {
+            toast({ title: "Freelancer Basic activated!", description: "Your coupon was redeemed successfully." });
+          }
+        } catch (err: any) {
+          console.error("Coupon redeem error:", err);
+        }
+      }
+
       toast({ title: "Account Created!", description: "Welcome to Gradia as a Freelancer" });
       navigate('/freelancer/dashboard');
     } catch (error: any) {
@@ -246,6 +267,19 @@ const FreelancerSignup = () => {
                 aria-describedby={errors.confirmPassword ? "fl-confirmPassword-error" : undefined}
               />
               {errors.confirmPassword && <p id="fl-confirmPassword-error" className="text-xs text-destructive mt-1">{errors.confirmPassword}</p>}
+            </div>
+            <div>
+              <Label htmlFor="fl-coupon">Freelance Coupon Code <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                id="fl-coupon"
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                placeholder="FL-BASIC-XXXXXXXX"
+                className="font-mono"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Got a coupon from your candidate dashboard? Paste it here to auto-activate Freelancer Basic.
+              </p>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</> : "Create Account"}
