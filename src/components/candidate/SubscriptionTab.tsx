@@ -31,7 +31,7 @@ const FEATURE_ORDER: CandidateFeature[] = [
 const PLAN_PRICES: Record<CandidatePlan, number> = {
   free: 0,
   starter: 999,
-  advance: 2999,
+  advance: 2499,
   pro_accelerator: 7999,
   elite: 34999,
 };

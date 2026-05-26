@@ -36,7 +36,7 @@ serve(async (req) => {
     const auth = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`);
     const prices: Record<string, number> = {
       starter: 999,
-      advance: 2999,
+      advance: 2499,
       pro_accelerator: 7999,
       elite: 34999,
     };

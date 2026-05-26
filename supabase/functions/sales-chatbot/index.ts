@@ -22,7 +22,7 @@ FLOW:
 CANDIDATE PLANS:
 - **Free Access (₹0)**: 3 job applications/month, 1 AI mock interview, basic ATS score, Skillory profile. Great for exploring Gradia!
 - **Starter (₹999/month)**: 10 applications, 2 AI mock interviews, resume builder, basic interview report.
-- **Advance (₹2,999/3 months)**: 30 applications, 5 AI mock interviews, AI feedback reports, AI Job Apply automation.
+- **Advance (₹2,499/3 months)**: 30 applications, 5 AI mock interviews, AI feedback reports, AI Job Apply automation.
 - **Pro Accelerator (₹7,999/6 months)**: 75 applications, 15 interviews, career roadmap, re-interview support, priority visibility.
 - **Elite Accelerator (₹34,999/year)**: Unlimited applications/interviews, dedicated career coach, HR mock panels, 24/7 premium support.
 
