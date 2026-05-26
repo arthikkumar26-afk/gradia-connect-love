@@ -2249,6 +2249,91 @@ const CandidateSignup = () => {
         </Card>
         </div>
 
+        {/* Right column: what's included + upsell */}
+        <div className="space-y-4">
+          <Card className="p-6 border-2 border-primary/20">
+            <div className="flex items-center justify-between mb-3 gap-2">
+              <h4 className="font-bold text-foreground text-base">What's included in {selectedPlan.name}</h4>
+              <Badge variant="secondary" className="text-[10px] shrink-0">{selectedPlan.priceLabel}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">{selectedPlan.tagline}</p>
+            <ul className="space-y-2">
+              {selectedPlan.perks.map((perk) => (
+                <li key={perk} className="flex items-start gap-2 text-sm text-foreground">
+                  <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />
+                  <span>{perk}</span>
+                </li>
+              ))}
+            </ul>
+            {selectedPlan.lockedPerks && selectedPlan.lockedPerks.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">Not included</p>
+                <ul className="space-y-1.5">
+                  {selectedPlan.lockedPerks.map((perk) => (
+                    <li key={perk} className="flex items-start gap-2 text-xs text-muted-foreground line-through">
+                      <span className="mt-0.5">✕</span><span>{perk}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {selectedPlan.mentoring && selectedPlan.mentoring.length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-primary mb-2">
+                  <Sparkles className="h-3 w-3 inline mr-1" /> Premium Mentorship
+                </p>
+                <ul className="space-y-1.5">
+                  {selectedPlan.mentoring.map((m) => (
+                    <li key={m} className="flex items-start gap-2 text-xs text-foreground">
+                      <Star className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                      <span>{m}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Card>
+
+          {/* Upsell to next higher tier */}
+          {(() => {
+            const idx = CANDIDATE_PLAN_ORDER.indexOf(selectedCandidatePlan);
+            const recommendedId =
+              CANDIDATE_PLAN_ORDER.slice(idx + 1).find((p) => CANDIDATE_PLANS[p].highlight || CANDIDATE_PLANS[p].badge)
+              ?? CANDIDATE_PLAN_ORDER[idx + 1];
+            if (!recommendedId) return null;
+            const rec = CANDIDATE_PLANS[recommendedId];
+            const extraPerks = rec.perks.filter((p) => !selectedPlan.perks.includes(p)).slice(0, 5);
+            return (
+              <Card className="p-5 border-2 border-primary bg-gradient-to-br from-primary/5 via-card to-primary/10">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-primary">Recommended Upgrade</span>
+                  {rec.badge && <Badge className="text-[10px]">{rec.badge}</Badge>}
+                </div>
+                <h4 className="font-bold text-foreground text-lg mb-1">{rec.name} — {rec.priceLabel}</h4>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Get more value with {rec.tagline.toLowerCase()}. You'll also unlock:
+                </p>
+                <ul className="space-y-1.5 mb-4">
+                  {extraPerks.map((p) => (
+                    <li key={p} className="flex items-start gap-2 text-xs text-foreground">
+                      <CheckCircle className="h-3.5 w-3.5 text-success mt-0.5 shrink-0" />
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setSelectedCandidatePlan(recommendedId)}
+                >
+                  <Sparkles className="h-3.5 w-3.5 mr-2" /> Upgrade to {rec.name}
+                </Button>
+              </Card>
+            );
+          })()}
+        </div>
+
         </div>
 
       </div>
