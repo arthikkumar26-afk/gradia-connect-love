@@ -1153,6 +1153,51 @@ export type Database = {
           },
         ]
       }
+      freelancer_plan_coupons: {
+        Row: {
+          amount_paid: number | null
+          candidate_id: string
+          code: string
+          created_at: string
+          expires_at: string
+          freelancer_plan_id: string
+          id: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          redeemed_at: string | null
+          redeemed_by_user_id: string | null
+          status: string
+        }
+        Insert: {
+          amount_paid?: number | null
+          candidate_id: string
+          code: string
+          created_at?: string
+          expires_at?: string
+          freelancer_plan_id: string
+          id?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          redeemed_at?: string | null
+          redeemed_by_user_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount_paid?: number | null
+          candidate_id?: string
+          code?: string
+          created_at?: string
+          expires_at?: string
+          freelancer_plan_id?: string
+          id?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          redeemed_at?: string | null
+          redeemed_by_user_id?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       freelancer_portfolio_projects: {
         Row: {
           created_at: string
@@ -1256,6 +1301,47 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      freelancer_subscriptions: {
+        Row: {
+          created_at: string
+          ends_at: string
+          freelancer_id: string
+          id: string
+          plan: string
+          source_coupon_id: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          freelancer_id: string
+          id?: string
+          plan: string
+          source_coupon_id?: string | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          freelancer_id?: string
+          id?: string
+          plan?: string
+          source_coupon_id?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "freelancer_subscriptions_source_coupon_id_fkey"
+            columns: ["source_coupon_id"]
+            isOneToOne: false
+            referencedRelation: "freelancer_plan_coupons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hr_candidate_sheets: {
         Row: {
