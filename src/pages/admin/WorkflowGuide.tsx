@@ -151,6 +151,37 @@ export default function WorkflowGuide() {
   const [selected, setSelected] = useState<string[]>(WORKFLOW.map((s) => s.id));
   const [packName, setPackName] = useState("Custom Pack");
   const [price, setPrice] = useState<string>("4999");
+  const [includeTech, setIncludeTech] = useState(true);
+  const [includePrice, setIncludePrice] = useState(true);
+  const [genLoading, setGenLoading] = useState(false);
+  const [report, setReport] = useState<string>("");
+
+  const handleGenerateReport = async () => {
+    setGenLoading(true);
+    setReport("");
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-feature-report", {
+        body: { includeTechnology: includeTech, includePrice },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setReport(data?.report || "");
+      toast.success("Feature report generated");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate report");
+    } finally {
+      setGenLoading(false);
+    }
+  };
+
+  const copyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(report);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
 
   const sections = useMemo(
     () => WORKFLOW.filter((s) => selected.includes(s.id)),
