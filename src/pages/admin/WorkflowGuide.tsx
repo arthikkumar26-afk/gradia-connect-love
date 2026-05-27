@@ -6,7 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, CheckCircle2, Package } from "lucide-react";
+import { Download, CheckCircle2, Package, Sparkles, Loader2, Copy } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import jsPDF from "jspdf";
 
 type Step = { title: string; details: string[] };
@@ -148,6 +151,37 @@ export default function WorkflowGuide() {
   const [selected, setSelected] = useState<string[]>(WORKFLOW.map((s) => s.id));
   const [packName, setPackName] = useState("Custom Pack");
   const [price, setPrice] = useState<string>("4999");
+  const [includeTech, setIncludeTech] = useState(true);
+  const [includePrice, setIncludePrice] = useState(true);
+  const [genLoading, setGenLoading] = useState(false);
+  const [report, setReport] = useState<string>("");
+
+  const handleGenerateReport = async () => {
+    setGenLoading(true);
+    setReport("");
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-feature-report", {
+        body: { includeTechnology: includeTech, includePrice },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setReport(data?.report || "");
+      toast.success("Feature report generated");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to generate report");
+    } finally {
+      setGenLoading(false);
+    }
+  };
+
+  const copyReport = async () => {
+    try {
+      await navigator.clipboard.writeText(report);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
 
   const sections = useMemo(
     () => WORKFLOW.filter((s) => selected.includes(s.id)),
@@ -330,6 +364,59 @@ export default function WorkflowGuide() {
                 Pack: <span className="font-medium text-foreground">{packName || "—"}</span>
               </span>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* AI Generate — scan platform */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" /> Generate Feature Report
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Scan the entire platform and produce a complete list of features. Toggle whether to
+              include technology stack and pricing details.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-3">
+              <label className="flex items-center justify-between rounded-lg border p-3 cursor-pointer">
+                <div>
+                  <div className="text-sm font-medium">Technology</div>
+                  <div className="text-xs text-muted-foreground">
+                    {includeTech ? "With technology stack" : "Without technology"}
+                  </div>
+                </div>
+                <Switch checked={includeTech} onCheckedChange={setIncludeTech} />
+              </label>
+              <label className="flex items-center justify-between rounded-lg border p-3 cursor-pointer">
+                <div>
+                  <div className="text-sm font-medium">Pricing</div>
+                  <div className="text-xs text-muted-foreground">
+                    {includePrice ? "With price" : "Without price"}
+                  </div>
+                </div>
+                <Switch checked={includePrice} onCheckedChange={setIncludePrice} />
+              </label>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleGenerateReport} disabled={genLoading} className="gap-2">
+                {genLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {genLoading ? "Scanning website…" : "Generate"}
+              </Button>
+              {report && (
+                <Button variant="outline" onClick={copyReport} className="gap-2">
+                  <Copy className="h-4 w-4" /> Copy
+                </Button>
+              )}
+            </div>
+
+            {report && (
+              <div className="rounded-lg border bg-muted/30 p-4 max-h-[520px] overflow-auto">
+                <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{report}</pre>
+              </div>
+            )}
           </CardContent>
         </Card>
 
