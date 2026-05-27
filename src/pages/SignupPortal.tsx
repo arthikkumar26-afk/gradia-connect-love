@@ -817,7 +817,7 @@ const SignupPortal = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
             {/* Candidate Option */}
             <Card 
               data-tour="role-candidate"
@@ -869,8 +869,53 @@ const SignupPortal = () => {
               </CardContent>
             </Card>
 
-            {/* Freelancer & EduTech signup options temporarily hidden */}
+            {/* Freelancer Option */}
+            <Card
+              data-tour="role-freelancer"
+              className="bg-slate-800/50 border-slate-700 hover:border-purple-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10"
+              onClick={() => navigate("/freelancer/signup")}
+            >
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="h-8 w-8 text-purple-400" />
+                </div>
+                <h2 className="text-xl font-bold text-white mb-2">Freelancer</h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Build portfolio, win gigs & grow your client base
+                </p>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">Portfolio</span>
+                  <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full text-xs">Projects</span>
+                </div>
+                <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" size="sm">
+                  Continue <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
 
+            {/* EduTech Option */}
+            <Card
+              data-tour="role-edutech"
+              className="bg-slate-800/50 border-slate-700 hover:border-orange-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-orange-500/10"
+              onClick={() => navigate("/edutech/signup")}
+            >
+              <CardContent className="p-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-4">
+                  <GraduationCap className="h-8 w-8 text-orange-400" />
+                </div>
+                <h2 className="text-xl font-bold text-white mb-2">EduTech</h2>
+                <p className="text-slate-400 text-sm mb-4">
+                  Train students, run campaigns & place candidates
+                </p>
+                <div className="flex flex-wrap gap-1.5 justify-center mb-4">
+                  <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">Training</span>
+                  <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded-full text-xs">Placements</span>
+                </div>
+                <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white" size="sm">
+                  Continue <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </CardContent>
+            </Card>
 
           </div>
 
