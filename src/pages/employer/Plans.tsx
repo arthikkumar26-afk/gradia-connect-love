@@ -85,7 +85,7 @@ export default function Plans() {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/employer/signup"); return; }
-      const { data: terms } = await supabase.from("terms_acceptances").select("id").eq("employer_id", user.id).single();
+      const { data: terms } = await supabase.from("terms_acceptances").select("id").eq("employer_id", user.id).order("accepted_at", { ascending: false }).limit(1).maybeSingle();
       if (!terms) { toast({ title: 'Please accept terms first', variant: 'destructive' }); navigate("/employer/terms"); }
     };
     checkAuth();
