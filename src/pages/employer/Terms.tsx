@@ -62,14 +62,16 @@ export default function Terms() {
         return;
       }
 
-      const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).single();
-      const { error } = await supabase.from("terms_acceptances").insert({
-        employer_id: user.id,
-        admin_name: profile?.full_name || "Unknown",
-        admin_email: profile?.email || user.email || "",
-      });
-
-      if (error) throw error;
+      const { data: existing } = await supabase.from("terms_acceptances").select("id").eq("employer_id", user.id).limit(1).maybeSingle();
+      if (!existing) {
+        const { data: profile } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).single();
+        const { error } = await supabase.from("terms_acceptances").insert({
+          employer_id: user.id,
+          admin_name: profile?.full_name || "Unknown",
+          admin_email: profile?.email || user.email || "",
+        });
+        if (error) throw error;
+      }
       toast({ title: 'Terms accepted', description: 'Proceeding to plan selection' });
       navigate('/employer/plans');
     } catch (error: any) {
