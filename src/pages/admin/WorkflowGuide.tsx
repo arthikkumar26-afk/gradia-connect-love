@@ -30,9 +30,17 @@ const WORKFLOW: Section[] = [
         "Add education, experience, skills, preferred role, location.",
         "Profile visible in HR/Employer talent pool.",
       ]},
-      { title: "Wallet & Feature Unlocks", details: [
-        "Load wallet points via Razorpay (₹5 = 1 pt).",
-        "Unlock features: Resume Builder, AI Job Apply, Mock Tests, Upskill, Mentor Contact (300 pts).",
+      { title: "Subscription Plans (INR — not wallet points)", details: [
+        "Free Access — ₹0 (Explore the platform).",
+        "Starter — ₹999 / month (Quick interview prep).",
+        "Advance — ₹2,499 / 3 months (Most Chosen) + Freelancer BASIC ₹2,999 coupon FREE.",
+        "Pro Accelerator — ₹7,999 / 6 months (Most Popular) + Freelancer PLUS ₹7,999 coupon FREE.",
+        "Elite Accelerator — ₹34,999 / year + Freelancer PRO ₹14,999 coupon FREE + dedicated mentor.",
+        "Paid directly via Razorpay subscription — not deducted from wallet points.",
+      ]},
+      { title: "Per-Feature Unlocks (Razorpay, 1-month access)", details: [
+        "Resume Builder, AI Job Apply, Mock Tests, Upskill, Pipeline & Jobs unlocks.",
+        "Mentor Contact unlock — 300 pts (credited to mentor wallet).",
       ]},
       { title: "Job Discovery & Apply", details: [
         "Browse jobs; AI matching applies weighted scoring (-999 cross-sector penalty).",
