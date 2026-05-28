@@ -44,11 +44,18 @@ Technology Stack (when includeTechnology=true):
   mentorship-docs, interview-recordings, demo-videos, mock-test-recordings, campaign-attachments).
 
 Indicative pricing (when includePrice=true):
-- Wallet conversion: ₹5 = 1 point.
-- Candidate Plans: Free ₹0, Starter ~₹499, Advance ₹2,499, Pro ~₹4,999, Elite ~₹9,999.
-- Freelancer Add-Ons: Basic ₹2,999 / Plus ₹7,999 / Pro ₹14,999 / Elite ₹34,999.
-- Feature unlocks (per feature, 1-month access via Razorpay): typically ₹99–₹499.
-- Mentor contact unlock: 300 pts (₹1,500).
+- Candidate Plans (INR subscription via Razorpay — NOT wallet points):
+  Free ₹0, Starter ₹999/month, Advance ₹2,499/3 months (Most Chosen),
+  Pro Accelerator ₹7,999/6 months (Most Popular), Elite Accelerator ₹34,999/year.
+- Candidate Combo Bonus: Advance includes Freelancer BASIC coupon (₹2,999 value FREE);
+  Pro Accelerator includes Freelancer PLUS coupon (₹7,999 FREE);
+  Elite includes Freelancer PRO coupon (₹14,999 FREE).
+- Freelancer Plans: BASIC ₹2,999 / PLUS ₹7,999 / PRO ₹14,999 / ELITE ₹34,999.
+- Per-feature unlocks (Razorpay, 1-month access): Resume Builder, AI Job Apply,
+  Mock Tests, Upskill, Pipeline, Jobs — typically ₹99–₹499 each.
+- Wallet points (₹5 = 1 pt) are used for: Employer plans, Mentor Contact unlock
+  (300 pts = ₹1,500, credited to mentor wallet), and select micro-actions.
+  Candidate subscription plans are NOT paid from wallet points.
 - Employer plans: tiered by company size & job volume (wallet-points based).
 `;
 
