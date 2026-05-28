@@ -2182,6 +2182,26 @@ const CandidateSignup = () => {
                 <span className="text-foreground">₹{SKILLORY_VOUCHER_PRICE.toLocaleString('en-IN')}</span>
               </div>
             )}
+            {(() => {
+              const comboMap: Partial<Record<CandidatePlan, { name: string; value: number }>> = {
+                advance: { name: 'Freelancer Basic', value: 2999 },
+                pro_accelerator: { name: 'Freelancer Plus', value: 7999 },
+                elite: { name: 'Freelancer Pro', value: 14999 },
+              };
+              const combo = comboMap[selectedCandidatePlan];
+              if (!combo) return null;
+              return (
+                <div className="flex items-center justify-between text-sm bg-primary/5 border border-primary/20 rounded-md px-2 py-1.5">
+                  <span className="text-foreground flex items-center gap-1">
+                    🎁 <span className="font-semibold">{combo.name}</span>
+                    <span className="text-[10px] text-muted-foreground">(coupon)</span>
+                  </span>
+                  <span className="text-primary font-semibold">
+                    FREE <span className="text-[10px] text-muted-foreground line-through ml-1">₹{combo.value.toLocaleString('en-IN')}</span>
+                  </span>
+                </div>
+              );
+            })()}
             <div className="flex items-center justify-between pt-2 mt-2 border-t">
               <div>
                 <p className="text-sm text-muted-foreground">Amount due</p>
