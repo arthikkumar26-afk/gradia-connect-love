@@ -93,6 +93,13 @@ const WORKFLOW: Section[] = [
       { title: "Freelancer Signup & Verification", details: [
         "Role-specific signup; verification badge.",
       ]},
+      { title: "Freelancer Plans (INR — direct purchase or via Candidate coupon)", details: [
+        "Freelancer BASIC — ₹2,999 / 3 months.",
+        "Freelancer PLUS — ₹7,999 / 6 months (Most Chosen).",
+        "Freelancer PRO — ₹14,999.",
+        "Freelancer ELITE — ₹34,999.",
+        "Bundled FREE for Candidate Advance / Pro Accelerator / Elite via coupon.",
+      ]},
       { title: "Portfolio & AI Resume Parse", details: [
         "AI auto-populates portfolio from resume.",
       ]},
