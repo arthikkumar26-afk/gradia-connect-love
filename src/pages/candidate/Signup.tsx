@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { CouponInput } from "@/components/shared/CouponInput";
 import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
 import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER, type CandidatePlan } from "@/config/candidatePlans";
+import { CANDIDATE_FREELANCER_COMBOS, FREELANCER_PLANS } from "@/config/freelancerPlans";
 // Shared resend-confirmation helpers + hook so the candidate signup uses
 // the exact same cooldown / rate-limit semantics as the candidate login,
 // employer signup, and freelancer login flows.
@@ -1941,6 +1942,8 @@ const CandidateSignup = () => {
 
   // ---------- Candidate plan step ----------
   const selectedPlan = CANDIDATE_PLANS[selectedCandidatePlan];
+  const selectedFreelancerCombo = CANDIDATE_FREELANCER_COMBOS[selectedCandidatePlan as keyof typeof CANDIDATE_FREELANCER_COMBOS];
+  const selectedFreelancerPlan = selectedFreelancerCombo ? FREELANCER_PLANS[selectedFreelancerCombo.freelancerPlanId] : null;
   const REGISTRATION_FEE = selectedPlan.priceInr;
   const addonsTotal = selectedAddons.reduce((s, id) => s + FEATURE_UNLOCKS[id].price, 0);
 
