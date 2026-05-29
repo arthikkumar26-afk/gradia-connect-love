@@ -2350,49 +2350,27 @@ const CandidateSignup = () => {
                 </ul>
               </div>
             )}
-            {(() => {
-              const freelanceBonus: Partial<Record<CandidatePlan, { name: string; price: string; coupon: string; perks: string[] }>> = {
-                advance: {
-                  name: "Freelancer Basic",
-                  price: "₹2,999 value",
-                  coupon: "100% off coupon",
-                  perks: ["Freelancer Dashboard", "Public Portfolio", "AI Portfolio Builder", "Access to Employer Projects"],
-                },
-                pro_accelerator: {
-                  name: "Freelancer Plus",
-                  price: "₹7,999 value",
-                  coupon: "100% off coupon",
-                  perks: ["Everything in Basic", "AI Portfolio Optimization", "Priority Project Matching", "AI Bio & Proposal Writing"],
-                },
-                elite: {
-                  name: "Freelancer Pro",
-                  price: "₹14,999 value",
-                  coupon: "100% off coupon",
-                  perks: ["Everything in Plus", "Verified Freelancer Badge", "Featured Placement", "1-on-1 Freelance Guidance"],
-                },
-              };
-              const bonus = freelanceBonus[selectedCandidatePlan];
-              if (!bonus) return null;
-              return (
-                <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-primary">🎁 Freelancer Combo Bonus</span>
-                    <Badge variant="secondary" className="text-[10px]">{bonus.price}</Badge>
-                  </div>
-                  <p className="text-xs text-foreground mb-2">
-                    Includes <span className="font-semibold">{bonus.name}</span> access via {bonus.coupon} — redeem on the Freelancer platform.
-                  </p>
-                  <ul className="space-y-1.5">
-                    {bonus.perks.map((p) => (
-                      <li key={p} className="flex items-start gap-2 text-xs text-foreground">
-                        <Star className="h-3 w-3 text-primary mt-0.5 shrink-0" />
-                        <span>{p}</span>
-                      </li>
-                    ))}
-                  </ul>
+            {selectedFreelancerCombo && selectedFreelancerPlan && (
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-primary">🎁 Freelancer Combo Bonus</span>
+                  <Badge variant="secondary" className="text-[10px]">
+                    ₹{selectedFreelancerPlan.priceInr.toLocaleString('en-IN')} value FREE
+                  </Badge>
                 </div>
-              );
-            })()}
+                <p className="text-xs text-foreground mb-2">
+                  Includes <span className="font-semibold">{selectedFreelancerPlan.name}</span> via {selectedFreelancerCombo.couponLabel} — redeem on the Freelancer platform.
+                </p>
+                <ul className="space-y-1.5">
+                  {selectedFreelancerPlan.perks.slice(0, 4).map((p) => (
+                    <li key={p} className="flex items-start gap-2 text-xs text-foreground">
+                      <Star className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Card>
 
 
