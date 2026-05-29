@@ -18,6 +18,7 @@ import {
   type CandidateFeature,
   type CandidatePlan,
 } from "@/config/candidatePlans";
+import { CANDIDATE_FREELANCER_COMBOS, FREELANCER_PLANS } from "@/config/freelancerPlans";
 
 const FEATURE_ORDER: CandidateFeature[] = [
   "job_apply",
@@ -251,6 +252,8 @@ export default function SubscriptionTab() {
         <div className="grid gap-4 md:grid-cols-3">
           {(Object.keys(CANDIDATE_PLANS) as CandidatePlan[]).map((id) => {
             const p = CANDIDATE_PLANS[id];
+            const combo = CANDIDATE_FREELANCER_COMBOS[id as keyof typeof CANDIDATE_FREELANCER_COMBOS];
+            const freelancerPlan = combo ? FREELANCER_PLANS[combo.freelancerPlanId] : null;
             const isCurrent = sub.plan === id;
             const isProcessing = purchasing === id;
             const isPaidPlan = id !== "free";
@@ -277,6 +280,19 @@ export default function SubscriptionTab() {
                   </div>
                   <p className="text-2xl font-bold mt-1">{p.priceLabel}</p>
                   <p className="text-xs text-muted-foreground">{p.tagline}</p>
+                  {combo && freelancerPlan && (
+                    <div className="mt-3 rounded-md border border-primary/20 bg-primary/5 p-2">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
+                        🎁 Freelancer Combo Pack
+                      </p>
+                      <p className="text-xs font-semibold text-foreground mt-1">
+                        {freelancerPlan.name} FREE
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {combo.couponLabel} · <span className="line-through">{freelancerPlan.priceLabel}</span>
+                      </p>
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent className="flex flex-col flex-1 gap-3">
                   <ul className="space-y-1.5 flex-1">
