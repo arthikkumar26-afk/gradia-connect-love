@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { CouponInput } from "@/components/shared/CouponInput";
 import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
 import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER, type CandidatePlan } from "@/config/candidatePlans";
+import { CANDIDATE_FREELANCER_COMBOS, FREELANCER_PLANS } from "@/config/freelancerPlans";
 // Shared resend-confirmation helpers + hook so the candidate signup uses
 // the exact same cooldown / rate-limit semantics as the candidate login,
 // employer signup, and freelancer login flows.
@@ -1941,6 +1942,8 @@ const CandidateSignup = () => {
 
   // ---------- Candidate plan step ----------
   const selectedPlan = CANDIDATE_PLANS[selectedCandidatePlan];
+  const selectedFreelancerCombo = CANDIDATE_FREELANCER_COMBOS[selectedCandidatePlan as keyof typeof CANDIDATE_FREELANCER_COMBOS];
+  const selectedFreelancerPlan = selectedFreelancerCombo ? FREELANCER_PLANS[selectedFreelancerCombo.freelancerPlanId] : null;
   const REGISTRATION_FEE = selectedPlan.priceInr;
   const addonsTotal = selectedAddons.reduce((s, id) => s + FEATURE_UNLOCKS[id].price, 0);
 
@@ -2144,9 +2147,53 @@ const CandidateSignup = () => {
                   <div className="text-[10px] text-muted-foreground leading-tight mt-1">
                     {tier.durationMonths === 1 ? (tier.priceInr === 0 ? 'Forever' : '/ month') : `${tier.durationMonths} months`}
                   </div>
+                  {(() => {
+                    const combo = CANDIDATE_FREELANCER_COMBOS[planId as keyof typeof CANDIDATE_FREELANCER_COMBOS];
+                    if (!combo) return null;
+                    const freePlan = FREELANCER_PLANS[combo.freelancerPlanId];
+                    return (
+                      <div className="mt-2 rounded-md border border-primary/20 bg-primary/5 px-1.5 py-1 text-[9px] font-semibold leading-tight text-primary">
+                        + {freePlan.name} FREE
+                      </div>
+                    );
+                  })()}
                 </button>
               );
             })}
+          </div>
+
+          <div className="mb-5 rounded-lg border border-primary/20 bg-primary/5 p-3 text-left">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <Gift className="h-4 w-4 text-primary" />
+              <span className="text-xs font-bold uppercase tracking-wide text-primary">Candidate + Freelancer Combo Packs</span>
+              <Badge variant="secondary" className="text-[10px]">Advance and above</Badge>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {Object.entries(CANDIDATE_FREELANCER_COMBOS).map(([candidatePlanId, combo]) => {
+                const candidatePlan = CANDIDATE_PLANS[candidatePlanId as CandidatePlan];
+                const freePlan = FREELANCER_PLANS[combo.freelancerPlanId];
+                const active = selectedCandidatePlan === candidatePlanId;
+                return (
+                  <button
+                    key={candidatePlanId}
+                    type="button"
+                    onClick={() => setSelectedCandidatePlan(candidatePlanId as CandidatePlan)}
+                    className={`rounded-md border p-2 text-left transition-all ${
+                      active ? 'border-primary bg-background shadow-sm' : 'border-border bg-background/70 hover:border-primary/50'
+                    }`}
+                  >
+                    <p className="text-[11px] font-bold text-foreground">{candidatePlan.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{candidatePlan.priceLabel}</p>
+                    <p className="mt-1 text-[11px] font-semibold text-primary">
+                      + {freePlan.name} FREE
+                    </p>
+                    <p className="text-[10px] text-muted-foreground line-through">
+                      {freePlan.priceLabel}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="mb-4">
@@ -2182,26 +2229,17 @@ const CandidateSignup = () => {
                 <span className="text-foreground">₹{SKILLORY_VOUCHER_PRICE.toLocaleString('en-IN')}</span>
               </div>
             )}
-            {(() => {
-              const comboMap: Partial<Record<CandidatePlan, { name: string; value: number }>> = {
-                advance: { name: 'Freelancer Basic', value: 2999 },
-                pro_accelerator: { name: 'Freelancer Plus', value: 7999 },
-                elite: { name: 'Freelancer Pro', value: 14999 },
-              };
-              const combo = comboMap[selectedCandidatePlan];
-              if (!combo) return null;
-              return (
-                <div className="flex items-center justify-between text-sm bg-primary/5 border border-primary/20 rounded-md px-2 py-1.5">
-                  <span className="text-foreground flex items-center gap-1">
-                    🎁 <span className="font-semibold">{combo.name}</span>
-                    <span className="text-[10px] text-muted-foreground">(coupon)</span>
-                  </span>
-                  <span className="text-primary font-semibold">
-                    FREE <span className="text-[10px] text-muted-foreground line-through ml-1">₹{combo.value.toLocaleString('en-IN')}</span>
-                  </span>
-                </div>
-              );
-            })()}
+            {selectedFreelancerCombo && selectedFreelancerPlan && (
+              <div className="flex items-center justify-between gap-3 text-sm bg-primary/5 border border-primary/20 rounded-md px-2 py-1.5">
+                <span className="text-foreground flex items-center gap-1 min-w-0">
+                  🎁 <span className="font-semibold truncate">{selectedFreelancerPlan.name}</span>
+                  <span className="text-[10px] text-muted-foreground shrink-0">({selectedFreelancerCombo.couponLabel})</span>
+                </span>
+                <span className="text-primary font-semibold shrink-0">
+                  FREE <span className="text-[10px] text-muted-foreground line-through ml-1">₹{selectedFreelancerPlan.priceInr.toLocaleString('en-IN')}</span>
+                </span>
+              </div>
+            )}
             <div className="flex items-center justify-between pt-2 mt-2 border-t">
               <div>
                 <p className="text-sm text-muted-foreground">Amount due</p>
@@ -2312,49 +2350,27 @@ const CandidateSignup = () => {
                 </ul>
               </div>
             )}
-            {(() => {
-              const freelanceBonus: Partial<Record<CandidatePlan, { name: string; price: string; coupon: string; perks: string[] }>> = {
-                advance: {
-                  name: "Freelancer Basic",
-                  price: "₹2,999 value",
-                  coupon: "100% off coupon",
-                  perks: ["Freelancer Dashboard", "Public Portfolio", "AI Portfolio Builder", "Access to Employer Projects"],
-                },
-                pro_accelerator: {
-                  name: "Freelancer Plus",
-                  price: "₹7,999 value",
-                  coupon: "100% off coupon",
-                  perks: ["Everything in Basic", "AI Portfolio Optimization", "Priority Project Matching", "AI Bio & Proposal Writing"],
-                },
-                elite: {
-                  name: "Freelancer Pro",
-                  price: "₹14,999 value",
-                  coupon: "100% off coupon",
-                  perks: ["Everything in Plus", "Verified Freelancer Badge", "Featured Placement", "1-on-1 Freelance Guidance"],
-                },
-              };
-              const bonus = freelanceBonus[selectedCandidatePlan];
-              if (!bonus) return null;
-              return (
-                <div className="mt-4 pt-4 border-t">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-primary">🎁 Freelancer Combo Bonus</span>
-                    <Badge variant="secondary" className="text-[10px]">{bonus.price}</Badge>
-                  </div>
-                  <p className="text-xs text-foreground mb-2">
-                    Includes <span className="font-semibold">{bonus.name}</span> access via {bonus.coupon} — redeem on the Freelancer platform.
-                  </p>
-                  <ul className="space-y-1.5">
-                    {bonus.perks.map((p) => (
-                      <li key={p} className="flex items-start gap-2 text-xs text-foreground">
-                        <Star className="h-3 w-3 text-primary mt-0.5 shrink-0" />
-                        <span>{p}</span>
-                      </li>
-                    ))}
-                  </ul>
+            {selectedFreelancerCombo && selectedFreelancerPlan && (
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-primary">🎁 Freelancer Combo Bonus</span>
+                  <Badge variant="secondary" className="text-[10px]">
+                    ₹{selectedFreelancerPlan.priceInr.toLocaleString('en-IN')} value FREE
+                  </Badge>
                 </div>
-              );
-            })()}
+                <p className="text-xs text-foreground mb-2">
+                  Includes <span className="font-semibold">{selectedFreelancerPlan.name}</span> via {selectedFreelancerCombo.couponLabel} — redeem on the Freelancer platform.
+                </p>
+                <ul className="space-y-1.5">
+                  {selectedFreelancerPlan.perks.slice(0, 4).map((p) => (
+                    <li key={p} className="flex items-start gap-2 text-xs text-foreground">
+                      <Star className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Card>
 
 

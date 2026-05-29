@@ -13,6 +13,7 @@ import {
 } from "@/config/featureUnlocks";
 import { useFeatureUnlocks } from "@/hooks/useFeatureUnlocks";
 import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
+import { CANDIDATE_FREELANCER_COMBOS, FREELANCER_PLANS } from "@/config/freelancerPlans";
 
 const loadRazorpayScript = (): Promise<boolean> =>
   new Promise((resolve) => {
@@ -104,6 +105,8 @@ export const FeatureUnlocksPanel = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         {CANDIDATE_PLAN_ORDER.map((id) => {
           const plan = CANDIDATE_PLANS[id];
+          const combo = CANDIDATE_FREELANCER_COMBOS[id as keyof typeof CANDIDATE_FREELANCER_COMBOS];
+          const freelancerPlan = combo ? FREELANCER_PLANS[combo.freelancerPlanId] : null;
           return (
             <Card key={id} className={`p-5 flex flex-col ${plan.highlight ? "border-primary/50 border-2 shadow-md" : ""}`}>
               {plan.badge && <Badge className="mb-2 w-fit gap-1"><Sparkles className="h-3 w-3" /> {plan.badge}</Badge>}
@@ -119,6 +122,15 @@ export const FeatureUnlocksPanel = () => {
                   </li>
                 ))}
               </ul>
+              {combo && freelancerPlan && (
+                <div className="mb-4 rounded-md border border-primary/20 bg-primary/5 p-2.5">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-primary">🎁 Freelancer Combo Pack</p>
+                  <p className="text-xs font-semibold text-foreground mt-1">{freelancerPlan.name} FREE</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {combo.couponLabel} · <span className="line-through">{freelancerPlan.priceLabel}</span>
+                  </p>
+                </div>
+              )}
               <Button className="w-full" variant={plan.highlight ? "default" : "outline"} size="sm" onClick={() => window.location.assign("/pricing")}>Compare Plan</Button>
             </Card>
           );
