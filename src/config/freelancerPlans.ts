@@ -101,3 +101,21 @@ export const FREELANCER_PLANS: Record<FreelancerPlan, FreelancerPlanDef> = {
 };
 
 export const FREELANCER_PLAN_ORDER: FreelancerPlan[] = ["basic", "plus", "pro", "elite"];
+
+export const CANDIDATE_FREELANCER_COMBOS = {
+  advance: {
+    freelancerPlanId: "basic" as FreelancerPlan,
+    label: "Freelancer Basic Combo",
+    couponLabel: "100% FREE coupon",
+  },
+  pro_accelerator: {
+    freelancerPlanId: "plus" as FreelancerPlan,
+    label: "Freelancer Plus Combo",
+    couponLabel: "100% FREE coupon",
+  },
+  elite: {
+    freelancerPlanId: "pro" as FreelancerPlan,
+    label: "Freelancer Pro Combo",
+    couponLabel: "100% FREE coupon",
+  },
+} as const;
