@@ -150,8 +150,8 @@ export default function FreelancerAddOnSection() {
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground -mt-2">
-        Buy a freelance add-on and get a 100%-off coupon to activate <b>Freelancer Basic</b> on the
-        Freelancer platform. Redeem it on the Freelancer signup page.
+        Buy any freelance pack or get an included combo coupon from eligible Candidate upgrade plans.
+        Redeem the 100%-off coupon on the Freelancer signup page.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
