@@ -658,7 +658,14 @@ const FreelancerDashboard = () => {
                         <tbody>
                           <tr className="border-b border-border">
                             <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30 w-40">NAME</td>
-                            <td className="px-4 py-3 text-foreground font-semibold">{profile?.full_name || "—"}</td>
+                            <td className="px-4 py-3 text-foreground font-semibold">
+                              <span className="inline-flex items-center gap-1.5">
+                                {profile?.full_name || "—"}
+                                {profile?.govt_id_verified && (
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" aria-label="Identity Verified" />
+                                )}
+                              </span>
+                            </td>
                             <td className="px-4 py-3 text-muted-foreground font-medium bg-muted/30 w-40">EMAIL</td>
                             <td className="px-4 py-3 text-foreground">{profile?.email || "—"}</td>
                           </tr>
