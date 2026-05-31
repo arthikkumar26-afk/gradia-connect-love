@@ -40,6 +40,12 @@ interface Profile {
   current_salary?: number;
   expected_salary?: number;
   available_from?: string;
+  govt_id_type?: string;
+  govt_id_number?: string;
+  govt_id_url?: string;
+  govt_id_verified?: boolean;
+  govt_id_submitted_at?: string;
+  govt_id_verified_at?: string;
 }
 
 interface AuthContextType {

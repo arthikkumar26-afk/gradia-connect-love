@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Globe, Github, Linkedin, Twitter, ExternalLink, Loader2, Code, Mail, Phone, MapPin } from "lucide-react";
+import { Globe, Github, Linkedin, Twitter, ExternalLink, Loader2, Code, Mail, Phone, MapPin, BadgeCheck } from "lucide-react";
 
 const ensureUrl = (url: string) => {
   if (!url) return url;
@@ -37,7 +37,7 @@ const PublicPortfolio = () => {
 
       const [{ data: projData }, { data: profData }] = await Promise.all([
         supabase.from("freelancer_portfolio_projects").select("*").eq("portfolio_id", pData.id).order("display_order"),
-        supabase.from("profiles").select("full_name, email, mobile, location, profile_picture, experience_level, highest_qualification").eq("id", userId).maybeSingle(),
+        supabase.from("profiles").select("full_name, email, mobile, location, profile_picture, experience_level, highest_qualification, govt_id_verified").eq("id", userId).maybeSingle(),
       ]);
 
       setProjects(projData || []);
@@ -74,13 +74,25 @@ const PublicPortfolio = () => {
         {/* Header */}
         <div className="text-center mb-10">
           {profile?.profile_picture ? (
-            <img src={profile.profile_picture} alt="" className="h-28 w-28 rounded-full object-cover mx-auto mb-4 border-4 border-accent/20" />
+            <div className="relative inline-block">
+              <img src={profile.profile_picture} alt="" className="h-28 w-28 rounded-full object-cover mx-auto mb-4 border-4 border-accent/20" />
+              {profile?.govt_id_verified && (
+                <div className="absolute bottom-4 right-0 bg-green-600 rounded-full p-1.5 border-2 border-background" title="Identity Verified">
+                  <BadgeCheck className="h-5 w-5 text-white" />
+                </div>
+              )}
+            </div>
           ) : (
             <div className="h-28 w-28 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
               <Code className="h-12 w-12 text-accent" />
             </div>
           )}
-          <h1 className="text-3xl font-bold text-foreground">{profile?.full_name || "Freelancer"}</h1>
+          <h1 className="text-3xl font-bold text-foreground inline-flex items-center gap-2">
+            {profile?.full_name || "Freelancer"}
+            {profile?.govt_id_verified && (
+              <BadgeCheck className="h-6 w-6 text-green-600" aria-label="Identity Verified" />
+            )}
+          </h1>
           {portfolio.tagline && <p className="text-lg text-muted-foreground mt-2">{portfolio.tagline}</p>}
           
           {(profile?.experience_level || profile?.highest_qualification) && (
