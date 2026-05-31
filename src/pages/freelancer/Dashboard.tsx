@@ -18,6 +18,7 @@ import {
    Mail, Phone, RefreshCw,
 } from "lucide-react";
 import PortfolioTab from "@/components/freelancer/PortfolioTab";
+import IdentityVerificationCard from "@/components/freelancer/IdentityVerificationCard";
 import { Textarea } from "@/components/ui/textarea";
 
 const sampleProjects: any[] = [];
