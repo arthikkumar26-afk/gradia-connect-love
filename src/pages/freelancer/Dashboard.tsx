@@ -626,14 +626,29 @@ const FreelancerDashboard = () => {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <IdentityVerificationCard />
                 <div className="flex items-start gap-6">
                   <div className="flex flex-col items-center gap-2">
                     {profile?.profile_picture ? (
-                      <img src={profile.profile_picture} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-border" />
+                      <div className="relative">
+                        <img src={profile.profile_picture} alt="Profile" className="h-24 w-24 rounded-full object-cover border-2 border-border" />
+                        {profile?.govt_id_verified && (
+                          <div className="absolute -bottom-1 -right-1 bg-green-600 rounded-full p-1 border-2 border-background" title="Identity Verified">
+                            <CheckCircle2 className="h-4 w-4 text-white" />
+                          </div>
+                        )}
+                      </div>
                     ) : (
-                      <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center border-2 border-border">
-                        <User className="h-10 w-10 text-muted-foreground" />
+                      <div className="relative">
+                        <div className="h-24 w-24 rounded-full bg-muted flex items-center justify-center border-2 border-border">
+                          <User className="h-10 w-10 text-muted-foreground" />
+                        </div>
+                        {profile?.govt_id_verified && (
+                          <div className="absolute -bottom-1 -right-1 bg-green-600 rounded-full p-1 border-2 border-background" title="Identity Verified">
+                            <CheckCircle2 className="h-4 w-4 text-white" />
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
