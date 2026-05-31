@@ -150,6 +150,7 @@ const RazorpayWebhooks = lazyWithRetry(() => import("./pages/admin/RazorpayWebho
 const SubscriptionActivationLogs = lazyWithRetry(() => import("./pages/admin/SubscriptionActivationLogs"));
 const PlanControl = lazyWithRetry(() => import("./pages/admin/PlanControl"));
 const AdminHRManagement = lazyWithRetry(() => import("./pages/admin/HRManagement"));
+const AdminIdVerifications = lazyWithRetry(() => import("./pages/admin/IdVerifications"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -316,6 +317,8 @@ const MainRoutes = () => (
         <Route path="/admin/plan-control" element={<PlanControl accessRole="admin" />} />
         <Route path="/owner/plan-control" element={<PlanControl accessRole="owner" />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
+        <Route path="/admin/id-verifications" element={<AdminIdVerifications />} />
+        <Route path="/owner/id-verifications" element={<AdminIdVerifications />} />
         <Route path="/admin/workflow-guide" element={<AdminWorkflowGuide />} />
         <Route path="/admin/mock-interview-pipeline" element={<MockInterviewPipeline />} />
         <Route path="/admin/management" element={<AdminManagement />} />
