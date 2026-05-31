@@ -3320,6 +3320,12 @@ export type Database = {
           experience_level: string | null
           full_name: string
           gender: string | null
+          govt_id_number: string | null
+          govt_id_submitted_at: string | null
+          govt_id_type: string | null
+          govt_id_url: string | null
+          govt_id_verified: boolean
+          govt_id_verified_at: string | null
           highest_qualification: string | null
           id: string
           languages: string[] | null
@@ -3365,6 +3371,12 @@ export type Database = {
           experience_level?: string | null
           full_name: string
           gender?: string | null
+          govt_id_number?: string | null
+          govt_id_submitted_at?: string | null
+          govt_id_type?: string | null
+          govt_id_url?: string | null
+          govt_id_verified?: boolean
+          govt_id_verified_at?: string | null
           highest_qualification?: string | null
           id: string
           languages?: string[] | null
@@ -3410,6 +3422,12 @@ export type Database = {
           experience_level?: string | null
           full_name?: string
           gender?: string | null
+          govt_id_number?: string | null
+          govt_id_submitted_at?: string | null
+          govt_id_type?: string | null
+          govt_id_url?: string | null
+          govt_id_verified?: boolean
+          govt_id_verified_at?: string | null
           highest_qualification?: string | null
           id?: string
           languages?: string[] | null
