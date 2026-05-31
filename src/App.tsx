@@ -150,6 +150,7 @@ const RazorpayWebhooks = lazyWithRetry(() => import("./pages/admin/RazorpayWebho
 const SubscriptionActivationLogs = lazyWithRetry(() => import("./pages/admin/SubscriptionActivationLogs"));
 const PlanControl = lazyWithRetry(() => import("./pages/admin/PlanControl"));
 const AdminHRManagement = lazyWithRetry(() => import("./pages/admin/HRManagement"));
+const AdminIdVerifications = lazyWithRetry(() => import("./pages/admin/IdVerifications"));
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
