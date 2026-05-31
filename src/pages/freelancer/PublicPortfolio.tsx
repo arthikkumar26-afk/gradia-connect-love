@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { Globe, Github, Linkedin, Twitter, ExternalLink, Loader2, Code, Mail, Phone, MapPin } from "lucide-react";
+import { Globe, Github, Linkedin, Twitter, ExternalLink, Loader2, Code, Mail, Phone, MapPin, BadgeCheck } from "lucide-react";
 
 const ensureUrl = (url: string) => {
   if (!url) return url;
