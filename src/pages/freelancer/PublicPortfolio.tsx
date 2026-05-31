@@ -37,7 +37,7 @@ const PublicPortfolio = () => {
 
       const [{ data: projData }, { data: profData }] = await Promise.all([
         supabase.from("freelancer_portfolio_projects").select("*").eq("portfolio_id", pData.id).order("display_order"),
-        supabase.from("profiles").select("full_name, email, mobile, location, profile_picture, experience_level, highest_qualification").eq("id", userId).maybeSingle(),
+        supabase.from("profiles").select("full_name, email, mobile, location, profile_picture, experience_level, highest_qualification, govt_id_verified").eq("id", userId).maybeSingle(),
       ]);
 
       setProjects(projData || []);
