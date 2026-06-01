@@ -38,6 +38,7 @@ import {
   Crown,
   Wallet,
   Sparkles,
+  Handshake,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
