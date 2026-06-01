@@ -38,6 +38,7 @@ import {
   Crown,
   Wallet,
   Sparkles,
+  Handshake,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import EmployerQRCode from "@/components/employer/EmployerQRCode";
@@ -84,6 +85,7 @@ import { SuggestedCandidatesContent } from "@/components/employer/SuggestedCandi
 import WalletTab from "@/components/candidate/WalletTab";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
 import { BranchProjectionContent } from "@/components/employer/BranchProjectionContent";
+import { OutsourceProjectsContent } from "@/components/employer/OutsourceProjectsContent";
 import { EmployerNotifications } from "@/components/employer/EmployerNotifications";
 
 
@@ -405,6 +407,8 @@ const EmployerDashboard = () => {
     { id: "all-candidates", label: "Candidates", icon: ClipboardList, path: "/employer/candidates" },
     { id: "campaigns", label: "Campaigns", icon: Megaphone, path: "/employer/campaigns" },
     { id: "branch-projection", label: "Branch Projection", icon: GitBranch, path: "/employer/branch-projection" },
+    { id: "outsource-projects", label: "Outsource Projects", icon: Handshake, path: "/employer/outsource-projects" },
+    
     
     { id: "upgrade-plan", label: "Upgrade Plan", icon: Crown, path: "/employer/upgrade-plan" },
     { id: "settings", label: "Settings", icon: Settings, path: "/employer/settings" },
@@ -808,6 +812,7 @@ const EmployerDashboard = () => {
             {activeMenu === "all-candidates" && <AllCandidatesContent />}
             {activeMenu === "campaigns" && <EmployerCampaignContent />}
             {activeMenu === "branch-projection" && <BranchProjectionContent />}
+            {activeMenu === "outsource-projects" && <OutsourceProjectsContent />}
             
             {activeMenu === "wallet" && user?.id && <WalletTab userId={user.id} />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
