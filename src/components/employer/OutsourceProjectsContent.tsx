@@ -50,6 +50,7 @@ export const OutsourceProjectsContent = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
