@@ -84,7 +84,6 @@ import { SuggestedCandidatesContent } from "@/components/employer/SuggestedCandi
 
 import WalletTab from "@/components/candidate/WalletTab";
 import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
-import { EmployerCampaignContent } from "@/components/employer/EmployerCampaignContent";
 import { OutsourceProjectsContent } from "@/components/employer/OutsourceProjectsContent";
 import { EmployerNotifications } from "@/components/employer/EmployerNotifications";
 
