@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Briefcase, Users, IndianRupee, Clock, Trash2, CheckCircle2, XCircle, Mail, Phone, RefreshCw } from "lucide-react";
+import { Plus, Briefcase, Users, IndianRupee, Clock, Trash2, CheckCircle2, XCircle, Mail, Phone, RefreshCw, Sparkles, Loader2 } from "lucide-react";
 
 interface Project {
   id: string;
