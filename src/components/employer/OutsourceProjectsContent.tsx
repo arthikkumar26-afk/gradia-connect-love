@@ -234,6 +234,15 @@ export const OutsourceProjectsContent = () => {
               <DialogHeader>
                 <DialogTitle>Post Outsource Project</DialogTitle>
               </DialogHeader>
+              <div className="flex items-center justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+                <div className="text-xs text-muted-foreground">
+                  Enter a title (and any details you have), then let AI complete the rest.
+                </div>
+                <Button type="button" size="sm" variant="default" onClick={handleAiGenerate} disabled={aiLoading}>
+                  {aiLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                  {aiLoading ? "Generating..." : "AI Auto-fill"}
+                </Button>
+              </div>
               <div className="space-y-3">
                 <div>
                   <Label>Project Title *</Label>
