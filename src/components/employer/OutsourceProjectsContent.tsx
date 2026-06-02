@@ -112,6 +112,43 @@ export const OutsourceProjectsContent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  const handleAiGenerate = async () => {
+    if (!form.title.trim() && !form.description.trim()) {
+      toast({ title: "Add a title or description first", description: "AI needs at least one to work from.", variant: "destructive" });
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-outsource-project", {
+        body: {
+          title: form.title,
+          description: form.description,
+          skills: form.skills,
+          duration: form.duration,
+          budget_min: form.budget_min,
+          budget_max: form.budget_max,
+          deliverables: form.deliverables,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setForm({
+        title: data.title || form.title,
+        description: data.description || form.description,
+        budget_min: data.budget_min != null ? String(data.budget_min) : form.budget_min,
+        budget_max: data.budget_max != null ? String(data.budget_max) : form.budget_max,
+        duration: data.duration || form.duration,
+        skills: Array.isArray(data.skills) ? data.skills.join(", ") : (data.skills || form.skills),
+        deliverables: Array.isArray(data.deliverables) ? data.deliverables.join(", ") : (data.deliverables || form.deliverables),
+      });
+      toast({ title: "AI filled the project details", description: "Review and edit before posting." });
+    } catch (e: any) {
+      toast({ title: "AI generation failed", description: e.message || "Please try again", variant: "destructive" });
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleCreate = async () => {
     if (!user?.id) return;
     if (!form.title.trim()) {
