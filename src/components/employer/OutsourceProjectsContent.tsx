@@ -145,12 +145,15 @@ export const OutsourceProjectsContent = () => {
       setForm({
         title: data.title || form.title,
         description: data.description || form.description,
+        currency: form.currency,
+        pay_type: form.pay_type,
         budget_min: data.budget_min != null ? String(data.budget_min) : form.budget_min,
         budget_max: data.budget_max != null ? String(data.budget_max) : form.budget_max,
         duration: data.duration || form.duration,
         skills: Array.isArray(data.skills) ? data.skills.join(", ") : (data.skills || form.skills),
         deliverables: Array.isArray(data.deliverables) ? data.deliverables.join(", ") : (data.deliverables || form.deliverables),
       });
+
       toast({ title: "AI filled the project details", description: "Review and edit before posting." });
     } catch (e: any) {
       toast({ title: "AI generation failed", description: e.message || "Please try again", variant: "destructive" });
