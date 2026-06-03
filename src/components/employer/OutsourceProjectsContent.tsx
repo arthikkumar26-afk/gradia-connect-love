@@ -62,6 +62,8 @@ export const OutsourceProjectsContent = () => {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    currency: "INR",
+    pay_type: "fixed",
     budget_min: "",
     budget_max: "",
     duration: "",
@@ -70,7 +72,8 @@ export const OutsourceProjectsContent = () => {
   });
 
   const resetForm = () =>
-    setForm({ title: "", description: "", budget_min: "", budget_max: "", duration: "", skills: "", deliverables: "" });
+    setForm({ title: "", description: "", currency: "INR", pay_type: "fixed", budget_min: "", budget_max: "", duration: "", skills: "", deliverables: "" });
+
 
   const fetchData = async () => {
     if (!user?.id) return;
