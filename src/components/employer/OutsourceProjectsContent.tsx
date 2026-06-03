@@ -30,17 +30,6 @@ interface Project {
   status: string;
   created_at: string;
 }
-  id: string;
-  title: string;
-  description: string | null;
-  budget_min: number | null;
-  budget_max: number | null;
-  duration: string | null;
-  skills: string[] | null;
-  deliverables: string[] | null;
-  status: string;
-  created_at: string;
-}
 
 interface Proposal {
   id: string;
