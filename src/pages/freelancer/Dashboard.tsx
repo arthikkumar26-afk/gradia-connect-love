@@ -131,6 +131,9 @@ const FreelancerDashboard = () => {
           });
         }
 
+        const currencySymbols: Record<string, string> = { INR: "₹", USD: "$", EUR: "€", GBP: "£", AED: "AED " };
+        const payTypeSuffix: Record<string, string> = { fixed: "", hourly: " /hr", daily: " /day" };
+
         const mapped = (data || []).map((p: any) => {
           const profile = profilesMap[p.employer_id];
           const postedDate = new Date(p.created_at);
@@ -140,12 +143,18 @@ const FreelancerDashboard = () => {
           const diffDays = Math.floor(diffHours / 24);
           const posted = diffDays > 0 ? `${diffDays} day${diffDays > 1 ? 's' : ''} ago` : diffHours > 0 ? `${diffHours} hour${diffHours > 1 ? 's' : ''} ago` : "Just now";
 
+          const sym = currencySymbols[p.currency] || "₹";
+          const suffix = payTypeSuffix[p.pay_type] || "";
+          const budgetStr = `${sym}${(p.budget_min || 0).toLocaleString()} - ${sym}${(p.budget_max || 0).toLocaleString()}${suffix}`;
+
           return {
             id: p.id,
             title: p.title,
-            budget: `₹${(p.budget_min || 0).toLocaleString()} - ₹${(p.budget_max || 0).toLocaleString()}`,
+            budget: budgetStr,
             budget_min: p.budget_min || 0,
             budget_max: p.budget_max || 0,
+            currency: p.currency || "INR",
+            pay_type: p.pay_type || "fixed",
             duration: p.duration || "Flexible",
             skills: p.skills || [],
             posted,
@@ -163,6 +172,7 @@ const FreelancerDashboard = () => {
             deliverables: p.deliverables || [],
           };
         });
+
         setDbProjects(mapped);
       } catch (err: any) {
         toast({ title: "Failed to load projects", description: err.message || "Please refresh and try again.", variant: "destructive" });
