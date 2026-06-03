@@ -173,11 +173,14 @@ export const OutsourceProjectsContent = () => {
       employer_id: user.id,
       title: form.title.trim(),
       description: form.description.trim() || null,
+      currency: form.currency,
+      pay_type: form.pay_type,
       budget_min: form.budget_min ? Number(form.budget_min) : null,
       budget_max: form.budget_max ? Number(form.budget_max) : null,
       duration: form.duration.trim() || null,
       skills: form.skills ? form.skills.split(",").map((s) => s.trim()).filter(Boolean) : [],
       deliverables: form.deliverables ? form.deliverables.split(",").map((s) => s.trim()).filter(Boolean) : [],
+
       status: "active",
     });
     setSaving(false);
