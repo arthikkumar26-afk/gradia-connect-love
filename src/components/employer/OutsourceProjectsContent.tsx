@@ -8,10 +8,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Briefcase, Users, IndianRupee, Clock, Trash2, CheckCircle2, XCircle, Mail, Phone, RefreshCw, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Briefcase, Users, Clock, Trash2, CheckCircle2, XCircle, Mail, Phone, RefreshCw, Sparkles, Loader2 } from "lucide-react";
+
+const CURRENCY_SYMBOLS: Record<string, string> = { INR: "₹", USD: "$", EUR: "€", GBP: "£", AED: "AED " };
+const PAY_TYPE_SUFFIX: Record<string, string> = { fixed: "", hourly: " /hr", daily: " /day" };
+const PAY_TYPE_LABEL: Record<string, string> = { fixed: "Fixed price", hourly: "Per hour", daily: "Per day" };
 
 interface Project {
+  id: string;
+  title: string;
+  description: string | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  currency: string | null;
+  pay_type: string | null;
+  duration: string | null;
+  skills: string[] | null;
+  deliverables: string[] | null;
+  status: string;
+  created_at: string;
+}
   id: string;
   title: string;
   description: string | null;
