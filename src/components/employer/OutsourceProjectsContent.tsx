@@ -8,8 +8,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Briefcase, Users, IndianRupee, Clock, Trash2, CheckCircle2, XCircle, Mail, Phone, RefreshCw, Sparkles, Loader2 } from "lucide-react";
+import { Plus, Briefcase, Users, Clock, Trash2, CheckCircle2, XCircle, Mail, Phone, RefreshCw, Sparkles, Loader2 } from "lucide-react";
+
+const CURRENCY_SYMBOLS: Record<string, string> = { INR: "₹", USD: "$", EUR: "€", GBP: "£", AED: "AED " };
+const PAY_TYPE_SUFFIX: Record<string, string> = { fixed: "", hourly: " /hr", daily: " /day" };
+const PAY_TYPE_LABEL: Record<string, string> = { fixed: "Fixed price", hourly: "Per hour", daily: "Per day" };
 
 interface Project {
   id: string;
@@ -17,6 +22,8 @@ interface Project {
   description: string | null;
   budget_min: number | null;
   budget_max: number | null;
+  currency: string | null;
+  pay_type: string | null;
   duration: string | null;
   skills: string[] | null;
   deliverables: string[] | null;
@@ -55,6 +62,8 @@ export const OutsourceProjectsContent = () => {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    currency: "INR",
+    pay_type: "fixed",
     budget_min: "",
     budget_max: "",
     duration: "",
@@ -63,7 +72,8 @@ export const OutsourceProjectsContent = () => {
   });
 
   const resetForm = () =>
-    setForm({ title: "", description: "", budget_min: "", budget_max: "", duration: "", skills: "", deliverables: "" });
+    setForm({ title: "", description: "", currency: "INR", pay_type: "fixed", budget_min: "", budget_max: "", duration: "", skills: "", deliverables: "" });
+
 
   const fetchData = async () => {
     if (!user?.id) return;
@@ -135,12 +145,15 @@ export const OutsourceProjectsContent = () => {
       setForm({
         title: data.title || form.title,
         description: data.description || form.description,
+        currency: form.currency,
+        pay_type: form.pay_type,
         budget_min: data.budget_min != null ? String(data.budget_min) : form.budget_min,
         budget_max: data.budget_max != null ? String(data.budget_max) : form.budget_max,
         duration: data.duration || form.duration,
         skills: Array.isArray(data.skills) ? data.skills.join(", ") : (data.skills || form.skills),
         deliverables: Array.isArray(data.deliverables) ? data.deliverables.join(", ") : (data.deliverables || form.deliverables),
       });
+
       toast({ title: "AI filled the project details", description: "Review and edit before posting." });
     } catch (e: any) {
       toast({ title: "AI generation failed", description: e.message || "Please try again", variant: "destructive" });
@@ -160,11 +173,14 @@ export const OutsourceProjectsContent = () => {
       employer_id: user.id,
       title: form.title.trim(),
       description: form.description.trim() || null,
+      currency: form.currency,
+      pay_type: form.pay_type,
       budget_min: form.budget_min ? Number(form.budget_min) : null,
       budget_max: form.budget_max ? Number(form.budget_max) : null,
       duration: form.duration.trim() || null,
       skills: form.skills ? form.skills.split(",").map((s) => s.trim()).filter(Boolean) : [],
       deliverables: form.deliverables ? form.deliverables.split(",").map((s) => s.trim()).filter(Boolean) : [],
+
       status: "active",
     });
     setSaving(false);
@@ -259,14 +275,41 @@ export const OutsourceProjectsContent = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Budget Min (₹)</Label>
+                    <Label>Currency</Label>
+                    <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="INR">₹ INR (Indian Rupee)</SelectItem>
+                        <SelectItem value="USD">$ USD (US Dollar)</SelectItem>
+                        <SelectItem value="EUR">€ EUR (Euro)</SelectItem>
+                        <SelectItem value="GBP">£ GBP (British Pound)</SelectItem>
+                        <SelectItem value="AED">AED (UAE Dirham)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Pay Type</Label>
+                    <Select value={form.pay_type} onValueChange={(v) => setForm({ ...form, pay_type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fixed">Fixed price (total)</SelectItem>
+                        <SelectItem value="hourly">Per hour</SelectItem>
+                        <SelectItem value="daily">Per day</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Budget Min ({CURRENCY_SYMBOLS[form.currency]?.trim() || form.currency})</Label>
                     <Input type="number" value={form.budget_min} onChange={(e) => setForm({ ...form, budget_min: e.target.value })} />
                   </div>
                   <div>
-                    <Label>Budget Max (₹)</Label>
+                    <Label>Budget Max ({CURRENCY_SYMBOLS[form.currency]?.trim() || form.currency})</Label>
                     <Input type="number" value={form.budget_max} onChange={(e) => setForm({ ...form, budget_max: e.target.value })} />
                   </div>
                 </div>
+
                 <div>
                   <Label>Duration</Label>
                   <Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="e.g. 2 weeks" />
@@ -317,12 +360,17 @@ export const OutsourceProjectsContent = () => {
                       </div>
                       {p.description && <CardDescription className="mt-1">{p.description}</CardDescription>}
                       <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                        {(p.budget_min || p.budget_max) && (
-                          <span className="flex items-center gap-1">
-                            <IndianRupee className="h-3 w-3" />
-                            {(p.budget_min || 0).toLocaleString()} - {(p.budget_max || 0).toLocaleString()}
-                          </span>
-                        )}
+                        {(p.budget_min || p.budget_max) && (() => {
+                          const sym = CURRENCY_SYMBOLS[p.currency || "INR"] || "₹";
+                          const suffix = PAY_TYPE_SUFFIX[p.pay_type || "fixed"] || "";
+                          return (
+                            <span className="flex items-center gap-1 font-medium text-foreground">
+                              {sym}{(p.budget_min || 0).toLocaleString()} - {sym}{(p.budget_max || 0).toLocaleString()}{suffix}
+                            </span>
+                          );
+                        })()}
+                        <span className="text-[10px] uppercase tracking-wide bg-muted px-1.5 py-0.5 rounded">{PAY_TYPE_LABEL[p.pay_type || "fixed"]}</span>
+
                         {p.duration && (
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" /> {p.duration}
@@ -391,8 +439,9 @@ export const OutsourceProjectsContent = () => {
                                       <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{b.freelancer.phone}</span>
                                     )}
                                     {b.proposed_budget != null && (
-                                      <span className="flex items-center gap-1"><IndianRupee className="h-3 w-3" />{b.proposed_budget.toLocaleString()}</span>
+                                      <span className="flex items-center gap-1">{CURRENCY_SYMBOLS[p.currency || "INR"] || "₹"}{b.proposed_budget.toLocaleString()}</span>
                                     )}
+
                                     {b.proposed_duration && (
                                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{b.proposed_duration}</span>
                                     )}

@@ -3082,11 +3082,13 @@ export type Database = {
           budget_max: number | null
           budget_min: number | null
           created_at: string
+          currency: string
           deliverables: string[] | null
           description: string | null
           duration: string | null
           employer_id: string
           id: string
+          pay_type: string
           skills: string[] | null
           status: string
           title: string
@@ -3096,11 +3098,13 @@ export type Database = {
           budget_max?: number | null
           budget_min?: number | null
           created_at?: string
+          currency?: string
           deliverables?: string[] | null
           description?: string | null
           duration?: string | null
           employer_id: string
           id?: string
+          pay_type?: string
           skills?: string[] | null
           status?: string
           title: string
@@ -3110,11 +3114,13 @@ export type Database = {
           budget_max?: number | null
           budget_min?: number | null
           created_at?: string
+          currency?: string
           deliverables?: string[] | null
           description?: string | null
           duration?: string | null
           employer_id?: string
           id?: string
+          pay_type?: string
           skills?: string[] | null
           status?: string
           title?: string
