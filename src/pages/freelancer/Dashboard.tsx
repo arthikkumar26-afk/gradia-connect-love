@@ -903,7 +903,7 @@ const FreelancerDashboard = () => {
                     <div>
                       <h3 className="font-semibold text-foreground text-lg">{project.title}</h3>
                       <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" /> {project.budget}</span>
+                        <span className="font-medium text-foreground">{project.budget}</span>
                         <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {project.duration}</span>
                         <span>{project.posted}</span>
                       </div>
