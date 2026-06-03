@@ -275,14 +275,41 @@ export const OutsourceProjectsContent = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Budget Min (₹)</Label>
+                    <Label>Currency</Label>
+                    <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="INR">₹ INR (Indian Rupee)</SelectItem>
+                        <SelectItem value="USD">$ USD (US Dollar)</SelectItem>
+                        <SelectItem value="EUR">€ EUR (Euro)</SelectItem>
+                        <SelectItem value="GBP">£ GBP (British Pound)</SelectItem>
+                        <SelectItem value="AED">AED (UAE Dirham)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Pay Type</Label>
+                    <Select value={form.pay_type} onValueChange={(v) => setForm({ ...form, pay_type: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="fixed">Fixed price (total)</SelectItem>
+                        <SelectItem value="hourly">Per hour</SelectItem>
+                        <SelectItem value="daily">Per day</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Budget Min ({CURRENCY_SYMBOLS[form.currency]?.trim() || form.currency})</Label>
                     <Input type="number" value={form.budget_min} onChange={(e) => setForm({ ...form, budget_min: e.target.value })} />
                   </div>
                   <div>
-                    <Label>Budget Max (₹)</Label>
+                    <Label>Budget Max ({CURRENCY_SYMBOLS[form.currency]?.trim() || form.currency})</Label>
                     <Input type="number" value={form.budget_max} onChange={(e) => setForm({ ...form, budget_max: e.target.value })} />
                   </div>
                 </div>
+
                 <div>
                   <Label>Duration</Label>
                   <Input value={form.duration} onChange={(e) => setForm({ ...form, duration: e.target.value })} placeholder="e.g. 2 weeks" />
