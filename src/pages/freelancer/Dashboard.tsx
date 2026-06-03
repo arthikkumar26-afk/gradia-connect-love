@@ -110,15 +110,29 @@ const FreelancerDashboard = () => {
   useEffect(() => {
     const fetchProjects = async () => {
       setProjectsLoading(true);
-      const { data, error } = await supabase
-        .from("outsource_projects")
-        .select("*, profiles:employer_id(full_name, email, company_name, location)")
-        .eq("status", "active")
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("outsource_projects")
+          .select("*")
+          .eq("status", "active")
+          .order("created_at", { ascending: false });
 
-      if (!error && data) {
-        const mapped = data.map((p: any) => {
-          const profile = p.profiles;
+        if (error) throw error;
+
+        const employerIds = Array.from(new Set((data || []).map((p: any) => p.employer_id).filter(Boolean)));
+        let profilesMap: Record<string, any> = {};
+        if (employerIds.length) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("id, full_name, email, company_name, location")
+            .in("id", employerIds);
+          (profiles || []).forEach((pr: any) => {
+            profilesMap[pr.id] = pr;
+          });
+        }
+
+        const mapped = (data || []).map((p: any) => {
+          const profile = profilesMap[p.employer_id];
           const postedDate = new Date(p.created_at);
           const now = new Date();
           const diffMs = now.getTime() - postedDate.getTime();
@@ -150,11 +164,14 @@ const FreelancerDashboard = () => {
           };
         });
         setDbProjects(mapped);
+      } catch (err: any) {
+        toast({ title: "Failed to load projects", description: err.message || "Please refresh and try again.", variant: "destructive" });
+      } finally {
+        setProjectsLoading(false);
       }
-      setProjectsLoading(false);
     };
     fetchProjects();
-  }, []);
+  }, [toast]);
 
   // Fetch freelancer's existing proposals
   useEffect(() => {
