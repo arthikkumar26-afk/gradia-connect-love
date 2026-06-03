@@ -360,12 +360,17 @@ export const OutsourceProjectsContent = () => {
                       </div>
                       {p.description && <CardDescription className="mt-1">{p.description}</CardDescription>}
                       <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                        {(p.budget_min || p.budget_max) && (
-                          <span className="flex items-center gap-1">
-                            <IndianRupee className="h-3 w-3" />
-                            {(p.budget_min || 0).toLocaleString()} - {(p.budget_max || 0).toLocaleString()}
-                          </span>
-                        )}
+                        {(p.budget_min || p.budget_max) && (() => {
+                          const sym = CURRENCY_SYMBOLS[p.currency || "INR"] || "₹";
+                          const suffix = PAY_TYPE_SUFFIX[p.pay_type || "fixed"] || "";
+                          return (
+                            <span className="flex items-center gap-1 font-medium text-foreground">
+                              {sym}{(p.budget_min || 0).toLocaleString()} - {sym}{(p.budget_max || 0).toLocaleString()}{suffix}
+                            </span>
+                          );
+                        })()}
+                        <span className="text-[10px] uppercase tracking-wide bg-muted px-1.5 py-0.5 rounded">{PAY_TYPE_LABEL[p.pay_type || "fixed"]}</span>
+
                         {p.duration && (
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" /> {p.duration}
