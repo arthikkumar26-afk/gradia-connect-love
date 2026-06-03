@@ -439,11 +439,9 @@ export const OutsourceProjectsContent = () => {
                                       <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{b.freelancer.phone}</span>
                                     )}
                                     {b.proposed_budget != null && (
-                                    {b.proposed_budget != null && (
-                                      <span className="flex items-center gap-1">{CURRENCY_SYMBOLS[/* parent project currency lookup */ ""] /* fallback */ || ""}{CURRENCY_SYMBOLS[p.currency || "INR"] || "₹"}{b.proposed_budget.toLocaleString()}</span>
+                                      <span className="flex items-center gap-1">{CURRENCY_SYMBOLS[p.currency || "INR"] || "₹"}{b.proposed_budget.toLocaleString()}</span>
                                     )}
 
-                                    )}
                                     {b.proposed_duration && (
                                       <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{b.proposed_duration}</span>
                                     )}
