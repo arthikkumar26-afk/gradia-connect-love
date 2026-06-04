@@ -83,7 +83,7 @@ const PricingPage = () => {
     <>
       <Helmet>
         <title>Pricing - Gradia</title>
-        <meta name="description" content="Transparent pricing for candidates and employers. One-time registration for candidates, flexible plans for employers and sponsors." />
+        <meta name="description" content="Transparent pricing for candidates and employers. One-time registration for candidates, flexible plans for employers." />
         <link rel="canonical" href="https://gradiaa.com/pricing" />
       </Helmet>
       <div className="min-h-screen">
