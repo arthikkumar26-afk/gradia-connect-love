@@ -30,6 +30,8 @@ interface CampaignDraft {
   emailList: string[];
   attachments: AttachmentFile[];
   savedAt: string;
+  status?: "draft" | "sending" | "sent" | "failed" | "partial";
+  sendResults?: { totalSent: number; totalFailed: number };
 }
 
 const DRAFT_STORAGE_KEY = "employer_campaign_drafts";
