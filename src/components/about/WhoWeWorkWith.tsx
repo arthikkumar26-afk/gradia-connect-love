@@ -38,11 +38,6 @@ const WhoWeWorkWith = () => {
       title: "Training Partners",
       description: "Skill development organizations and certification providers"
     },
-    {
-      icon: Users,
-      title: "Training Partners",
-      description: "Skill development organizations and certification providers"
-    }
   ];
 
   // Placeholder logos
