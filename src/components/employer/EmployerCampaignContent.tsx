@@ -210,6 +210,26 @@ export function EmployerCampaignContent() {
 
   const COST_PER_EMAIL = 50;
 
+  const upsertDraft = (patch: Partial<CampaignDraft>, idOverride?: string): string => {
+    const id = idOverride || activeDraftId || `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const existing = drafts.find(d => d.id === id);
+    const draft: CampaignDraft = {
+      id,
+      campaignName,
+      subject,
+      messageBody,
+      emailList,
+      attachments: attachments.map(a => ({ name: a.name, size: a.size, type: a.type, url: a.url })),
+      savedAt: new Date().toISOString(),
+      status: "draft",
+      ...existing,
+      ...patch,
+    };
+    const others = drafts.filter(d => d.id !== id);
+    persistDrafts([draft, ...others]);
+    return id;
+  };
+
   const handleSendCampaign = async () => {
     if (emailList.length === 0) { toast.error("Add at least one recipient email"); return; }
     if (!subject.trim()) { toast.error("Subject is required"); return; }
@@ -218,10 +238,14 @@ export function EmployerCampaignContent() {
     setIsSending(true);
     setSendResults(null);
 
+    // Ensure a draft tracks this send so the UI shows status
+    const draftId = upsertDraft({ status: "sending", savedAt: new Date().toISOString() });
+    setActiveDraftId(draftId);
+
     try {
       const totalCost = emailList.length * COST_PER_EMAIL;
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Please sign in again"); setIsSending(false); return; }
+      if (!user) { toast.error("Please sign in again"); setIsSending(false); upsertDraft({ status: "failed" }, draftId); return; }
 
       const { data: wallet, error: wErr } = await supabase
         .from("wallets")
@@ -229,12 +253,13 @@ export function EmployerCampaignContent() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (wErr) throw wErr;
-      if (!wallet) { toast.error("Wallet not found. Please load points first."); setIsSending(false); return; }
+      if (!wallet) { toast.error("Wallet not found. Please load points first."); setIsSending(false); upsertDraft({ status: "failed" }, draftId); return; }
 
       const balance = wallet.points_balance ?? 0;
       if (balance < totalCost) {
         toast.error(`Insufficient points. Need ${totalCost} pts (${COST_PER_EMAIL} × ${emailList.length}), have ${balance} pts.`);
         setIsSending(false);
+        upsertDraft({ status: "failed" }, draftId);
         return;
       }
 
@@ -282,16 +307,28 @@ export function EmployerCampaignContent() {
       if (data.totalSent > 0) {
         toast.success(`Campaign sent! ${data.totalSent} email(s) delivered successfully.`);
         sentSuccessfullyRef.current = true;
-        // remove draft if this was opened from one
-        if (activeDraftId) {
-          const next = drafts.filter(d => d.id !== activeDraftId);
-          persistDrafts(next);
-        }
       }
       if (data.totalFailed > 0) toast.error(`${data.totalFailed} email(s) failed to send.`);
+
+      // Update draft based on outcome: remove if fully successful, otherwise keep with status
+      if (data.totalFailed === 0 && data.totalSent > 0) {
+        persistDrafts(drafts.filter(d => d.id !== draftId).filter(d => true));
+        // ensure removal against latest list
+        setDrafts(prev => {
+          const next = prev.filter(d => d.id !== draftId);
+          if (userId) saveDraftsToStorage(userId, next);
+          return next;
+        });
+      } else {
+        upsertDraft({
+          status: data.totalSent > 0 ? "partial" : "failed",
+          sendResults: { totalSent: data.totalSent, totalFailed: data.totalFailed },
+        }, draftId);
+      }
     } catch (err: any) {
       console.error("Campaign send error:", err);
       toast.error(err.message || "Failed to send campaign");
+      upsertDraft({ status: "failed" }, draftId);
     } finally {
       setIsSending(false);
     }
