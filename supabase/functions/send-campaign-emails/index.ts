@@ -118,13 +118,15 @@ serve(async (req) => {
     const inlineAttachments: { name: string; url: string; type: string; size: number }[] = [];
 
     if (attachments && Array.isArray(attachments)) {
+      // Resend has a ~40MB total payload limit; attach small files, link large ones
+      const ATTACH_LIMIT = 10 * 1024 * 1024; // 10MB per file
       for (const att of attachments) {
         if (att.url) {
-          // Add as downloadable attachment
-          resendAttachments.push({ filename: att.name, path: att.url });
-          // Also add to inline display list
+          if (typeof att.size === "number" && att.size <= ATTACH_LIMIT) {
+            resendAttachments.push({ filename: att.name, path: att.url });
+          }
           inlineAttachments.push({ name: att.name, url: att.url, type: att.type, size: att.size });
-          console.log(`Attachment added: ${att.name} (${att.type})`);
+          console.log(`Attachment processed: ${att.name} (${att.type}, ${att.size} bytes)`);
         }
       }
     }
