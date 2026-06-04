@@ -403,23 +403,39 @@ export function EmployerCampaignContent() {
               <h4 className="text-sm font-semibold text-foreground">Drafts ({drafts.length})</h4>
             </div>
             <div className="space-y-1.5">
-              {drafts.map(d => (
+              {drafts.map(d => {
+                const status = d.status || "draft";
+                const statusMeta: Record<string, { label: string; cls: string; icon?: JSX.Element }> = {
+                  draft: { label: "Draft", cls: "bg-muted text-muted-foreground" },
+                  sending: { label: "Sending…", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300", icon: <Loader2 className="h-3 w-3 mr-0.5 animate-spin" /> },
+                  sent: { label: "Sent", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+                  partial: { label: `Partial${d.sendResults ? ` (${d.sendResults.totalSent}/${d.emailList.length})` : ""}`, cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+                  failed: { label: "Failed", cls: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" },
+                };
+                const meta = statusMeta[status];
+                return (
                 <div key={d.id} className="flex items-center gap-2 p-2 rounded-md border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors">
                   <FileEdit className="h-4 w-4 text-primary flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {d.campaignName || d.subject || "Untitled draft"}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {d.campaignName || d.subject || "Untitled draft"}
+                      </p>
+                      <Badge variant="secondary" className={`text-[10px] ${meta.cls} flex items-center`}>
+                        {meta.icon}{meta.label}
+                      </Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">
                       {d.emailList.length} recipient(s) • saved {new Date(d.savedAt).toLocaleString()}
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDraft(d)}>Resume</Button>
-                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => deleteDraft(d.id)}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDraft(d)} disabled={status === "sending"}>Resume</Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => deleteDraft(d.id)} disabled={status === "sending"}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
