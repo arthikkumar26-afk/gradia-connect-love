@@ -30,6 +30,8 @@ interface CampaignDraft {
   emailList: string[];
   attachments: AttachmentFile[];
   savedAt: string;
+  status?: "draft" | "sending" | "sent" | "failed" | "partial";
+  sendResults?: { totalSent: number; totalFailed: number };
 }
 
 const DRAFT_STORAGE_KEY = "employer_campaign_drafts";
@@ -208,6 +210,26 @@ export function EmployerCampaignContent() {
 
   const COST_PER_EMAIL = 50;
 
+  const upsertDraft = (patch: Partial<CampaignDraft>, idOverride?: string): string => {
+    const id = idOverride || activeDraftId || `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const existing = drafts.find(d => d.id === id);
+    const draft: CampaignDraft = {
+      id,
+      campaignName,
+      subject,
+      messageBody,
+      emailList,
+      attachments: attachments.map(a => ({ name: a.name, size: a.size, type: a.type, url: a.url })),
+      savedAt: new Date().toISOString(),
+      status: "draft",
+      ...existing,
+      ...patch,
+    };
+    const others = drafts.filter(d => d.id !== id);
+    persistDrafts([draft, ...others]);
+    return id;
+  };
+
   const handleSendCampaign = async () => {
     if (emailList.length === 0) { toast.error("Add at least one recipient email"); return; }
     if (!subject.trim()) { toast.error("Subject is required"); return; }
@@ -216,10 +238,14 @@ export function EmployerCampaignContent() {
     setIsSending(true);
     setSendResults(null);
 
+    // Ensure a draft tracks this send so the UI shows status
+    const draftId = upsertDraft({ status: "sending", savedAt: new Date().toISOString() });
+    setActiveDraftId(draftId);
+
     try {
       const totalCost = emailList.length * COST_PER_EMAIL;
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { toast.error("Please sign in again"); setIsSending(false); return; }
+      if (!user) { toast.error("Please sign in again"); setIsSending(false); upsertDraft({ status: "failed" }, draftId); return; }
 
       const { data: wallet, error: wErr } = await supabase
         .from("wallets")
@@ -227,12 +253,13 @@ export function EmployerCampaignContent() {
         .eq("user_id", user.id)
         .maybeSingle();
       if (wErr) throw wErr;
-      if (!wallet) { toast.error("Wallet not found. Please load points first."); setIsSending(false); return; }
+      if (!wallet) { toast.error("Wallet not found. Please load points first."); setIsSending(false); upsertDraft({ status: "failed" }, draftId); return; }
 
       const balance = wallet.points_balance ?? 0;
       if (balance < totalCost) {
         toast.error(`Insufficient points. Need ${totalCost} pts (${COST_PER_EMAIL} × ${emailList.length}), have ${balance} pts.`);
         setIsSending(false);
+        upsertDraft({ status: "failed" }, draftId);
         return;
       }
 
@@ -280,16 +307,28 @@ export function EmployerCampaignContent() {
       if (data.totalSent > 0) {
         toast.success(`Campaign sent! ${data.totalSent} email(s) delivered successfully.`);
         sentSuccessfullyRef.current = true;
-        // remove draft if this was opened from one
-        if (activeDraftId) {
-          const next = drafts.filter(d => d.id !== activeDraftId);
-          persistDrafts(next);
-        }
       }
       if (data.totalFailed > 0) toast.error(`${data.totalFailed} email(s) failed to send.`);
+
+      // Update draft based on outcome: remove if fully successful, otherwise keep with status
+      if (data.totalFailed === 0 && data.totalSent > 0) {
+        persistDrafts(drafts.filter(d => d.id !== draftId).filter(d => true));
+        // ensure removal against latest list
+        setDrafts(prev => {
+          const next = prev.filter(d => d.id !== draftId);
+          if (userId) saveDraftsToStorage(userId, next);
+          return next;
+        });
+      } else {
+        upsertDraft({
+          status: data.totalSent > 0 ? "partial" : "failed",
+          sendResults: { totalSent: data.totalSent, totalFailed: data.totalFailed },
+        }, draftId);
+      }
     } catch (err: any) {
       console.error("Campaign send error:", err);
       toast.error(err.message || "Failed to send campaign");
+      upsertDraft({ status: "failed" }, draftId);
     } finally {
       setIsSending(false);
     }
@@ -333,8 +372,8 @@ export function EmployerCampaignContent() {
   };
 
   const handleDialogClose = () => {
-    // If the campaign was successfully sent, just clear; otherwise auto-save draft if content exists
-    if (!sentSuccessfullyRef.current && hasUnsavedContent() && userId) {
+    // Don't autosave while sending or after success; otherwise keep work as draft
+    if (!isSending && !sentSuccessfullyRef.current && hasUnsavedContent() && userId) {
       saveAsDraft();
     }
     resetForm();
@@ -364,23 +403,39 @@ export function EmployerCampaignContent() {
               <h4 className="text-sm font-semibold text-foreground">Drafts ({drafts.length})</h4>
             </div>
             <div className="space-y-1.5">
-              {drafts.map(d => (
+              {drafts.map(d => {
+                const status = d.status || "draft";
+                const statusMeta: Record<string, { label: string; cls: string; icon?: JSX.Element }> = {
+                  draft: { label: "Draft", cls: "bg-muted text-muted-foreground" },
+                  sending: { label: "Sending…", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300", icon: <Loader2 className="h-3 w-3 mr-0.5 animate-spin" /> },
+                  sent: { label: "Sent", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" },
+                  partial: { label: `Partial${d.sendResults ? ` (${d.sendResults.totalSent}/${d.emailList.length})` : ""}`, cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300" },
+                  failed: { label: "Failed", cls: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" },
+                };
+                const meta = statusMeta[status];
+                return (
                 <div key={d.id} className="flex items-center gap-2 p-2 rounded-md border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors">
                   <FileEdit className="h-4 w-4 text-primary flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {d.campaignName || d.subject || "Untitled draft"}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {d.campaignName || d.subject || "Untitled draft"}
+                      </p>
+                      <Badge variant="secondary" className={`text-[10px] ${meta.cls} flex items-center`}>
+                        {meta.icon}{meta.label}
+                      </Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">
                       {d.emailList.length} recipient(s) • saved {new Date(d.savedAt).toLocaleString()}
                     </p>
                   </div>
-                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDraft(d)}>Resume</Button>
-                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => deleteDraft(d.id)}>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDraft(d)} disabled={status === "sending"}>Resume</Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => deleteDraft(d.id)} disabled={status === "sending"}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
