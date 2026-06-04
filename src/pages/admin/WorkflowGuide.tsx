@@ -124,19 +124,6 @@ const WORKFLOW: Section[] = [
     ],
   },
   {
-    id: "sponsor",
-    name: "Sponsor Portal",
-    color: "bg-pink-500",
-    steps: [
-      { title: "Sponsor Onboarding", details: [
-        "Choose sponsorship tier, reserve stalls.",
-      ]},
-      { title: "Analytics & ROI", details: [
-        "Track lead generation, brand visibility, post-event deliverables.",
-      ]},
-    ],
-  },
-  {
     id: "admin",
     name: "Admin / Owner Operations",
     color: "bg-rose-500",

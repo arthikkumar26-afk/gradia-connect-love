@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, Lock, Star, Crown, Sparkles, Building2, User, Award, GraduationCap, Handshake, Rocket, Zap } from "lucide-react";
+import { Check, Lock, Star, Crown, Sparkles, Building2, User, Award, GraduationCap, Rocket, Zap } from "lucide-react";
 import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
 import { PLANS } from "@/config/plans";
 import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
@@ -12,15 +12,11 @@ import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
 const PricingPage = () => {
   const candidatePlans = PLANS.candidate;
   const employerPlans = PLANS.employer;
-  const freelancerPlans = PLANS.freelancer;
-  const sponsorPlans = PLANS.sponsor;
-  const edutechPlans = PLANS.edutech;
 
   const tabIcons: Record<string, React.ReactNode> = {
     candidates: <User className="h-4 w-4" />,
     employers: <Building2 className="h-4 w-4" />,
     freelancers: <Award className="h-4 w-4" />,
-    sponsors: <Handshake className="h-4 w-4" />,
     edutech: <GraduationCap className="h-4 w-4" />,
   };
 
@@ -87,7 +83,7 @@ const PricingPage = () => {
     <>
       <Helmet>
         <title>Pricing - Gradia</title>
-        <meta name="description" content="Transparent pricing for candidates and employers. One-time registration for candidates, flexible plans for employers and sponsors." />
+        <meta name="description" content="Transparent pricing for candidates and employers. One-time registration for candidates, flexible plans for employers." />
         <link rel="canonical" href="https://gradiaa.com/pricing" />
       </Helmet>
       <div className="min-h-screen">
@@ -98,7 +94,7 @@ const PricingPage = () => {
             Simple, Transparent Pricing
           </h1>
           <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-4">
-            Candidates choose Free, Starter, Advance, Pro Accelerator, or Elite. Employers & sponsors use wallet points.
+            Candidates choose Free, Starter, Advance, Pro Accelerator, or Elite. Employers use wallet points.
           </p>
           <Badge variant="secondary" className="text-sm px-4 py-1.5">
             Candidate plans start at ₹0 • Premium growth plans available
@@ -113,7 +109,6 @@ const PricingPage = () => {
             {[
               { value: "candidates", label: "Candidates" },
               { value: "employers", label: "Employers" },
-              { value: "sponsors", label: "Sponsors" },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -270,7 +265,7 @@ const PricingPage = () => {
             </div>
           </TabsContent>
           <TabsContent value="employers">{renderPlans(employerPlans)}</TabsContent>
-          <TabsContent value="sponsors">{renderPlans(sponsorPlans)}</TabsContent>
+
         </Tabs>
       </section>
 

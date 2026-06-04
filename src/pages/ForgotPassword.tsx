@@ -23,7 +23,6 @@ const ForgotPassword = () => {
   const getUserType = () => {
     if (location.pathname.includes("/candidate")) return "candidate";
     if (location.pathname.includes("/employer")) return "employer";
-    if (location.pathname.includes("/sponsor")) return "sponsor";
     return "user";
   };
 
@@ -34,8 +33,6 @@ const ForgotPassword = () => {
         return "/candidate/login";
       case "employer":
         return "/employer/login";
-      case "sponsor":
-        return "/sponsor/login";
       default:
         return "/login";
     }

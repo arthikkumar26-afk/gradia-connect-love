@@ -36,9 +36,6 @@ const Login = () => {
       case "employer":
         navigate("/employer/dashboard", { replace: true });
         break;
-      case "sponsor":
-        navigate("/sponsor/dashboard", { replace: true });
-        break;
       case "admin":
         navigate("/admin/dashboard", { replace: true });
         break;
@@ -223,10 +220,6 @@ const Login = () => {
         {/* Role-specific login links */}
         <div className="mt-6 text-center text-sm text-muted-foreground space-y-2">
           <p>
-            <Link to="/sponsor/login" className="text-accent hover:text-accent-hover transition-colors">
-              Sponsor Login
-            </Link>
-            {" · "}
             <Link to="/admin/login" className="text-accent hover:text-accent-hover transition-colors">
               Admin Login
             </Link>

@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Building2, Rocket, GraduationCap, Users, Handshake, Clapperboard, HardHat, Scale, Landmark } from "lucide-react";
+import { Building2, Rocket, GraduationCap, Users, Clapperboard, HardHat, Scale } from "lucide-react";
 
 const WhoWeWorkWith = () => {
   const partners = [
@@ -38,11 +38,6 @@ const WhoWeWorkWith = () => {
       title: "Training Partners",
       description: "Skill development organizations and certification providers"
     },
-    {
-      icon: Handshake,
-      title: "Sponsors",
-      description: "Organizations maximizing hiring ROI through strategic partnerships"
-    }
   ];
 
   // Placeholder logos

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Briefcase, CalendarDays, Handshake, GraduationCap, ArrowRight, HardHat, Clapperboard, Building, Cpu } from "lucide-react";
+import { Briefcase, CalendarDays, GraduationCap, ArrowRight, HardHat, Clapperboard, Building, Cpu } from "lucide-react";
 
 const CoreOfferings = () => {
   const offerings = [
@@ -16,15 +16,8 @@ const CoreOfferings = () => {
       icon: CalendarDays,
       title: "Job Melas & Campus Drives",
       description: "Large-scale multi-industry hiring events — from IT campuses to civil engineering firms and media houses — connecting hundreds of candidates with top employers.",
-      link: "/sponsors",
+      link: "/jobs",
       linkText: "View Events"
-    },
-    {
-      icon: Handshake,
-      title: "Sponsorship & Partnerships",
-      description: "Structured sponsorship programs with measurable ROI, dedicated relationship managers, and comprehensive post-event analytics across all sectors.",
-      link: "/sponsors",
-      linkText: "Become a Sponsor"
     },
     {
       icon: GraduationCap,

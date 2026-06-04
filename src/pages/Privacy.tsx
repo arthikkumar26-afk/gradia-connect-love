@@ -5,17 +5,16 @@ import { Link } from "react-router-dom";
 const sections = [
   {
     title: "1. About This Privacy Policy",
-    content: `This Privacy Policy explains how Gradia Consultancy Services ("Gradia," "we," "us") collects, uses, stores, and protects personal information when you use the Gradia platform. This policy applies to all users: Candidates, Employers, Freelancers, Sponsors, and Visitors.`,
+    content: `This Privacy Policy explains how Gradia Consultancy Services ("Gradia," "we," "us") collects, uses, stores, and protects personal information when you use the Gradia platform. This policy applies to all users: Candidates, Employers, Freelancers, and Visitors.`,
   },
   {
     title: "2. Information We Collect",
     subtitle: "A. Registration & Profile Data",
     points: [
-      "Full name, email address, phone number, date of birth, and gender provided during signup (Candidate, Employer, Freelancer, or Sponsor registration).",
+      "Full name, email address, phone number, date of birth, and gender provided during signup (Candidate, Employer, or Freelancer registration).",
       "Candidate profiles: educational qualifications (SSC, Intermediate, Degree, PG, PhD), work experience, family details, address information (present and permanent), and career preferences.",
       "Employer profiles: company name, company email, phone, website, industry category, state, district, pin code, and company description.",
       "Freelancer profiles: bio, tagline, skills, social links (GitHub, LinkedIn, Twitter, website), and portfolio project details.",
-      "Sponsor profiles: company details, sponsorship tier preferences, stall reservations, and branding assets.",
     ],
   },
   {
@@ -65,7 +64,6 @@ const sections = [
       "Mock Interviews: Providing AI-driven practice sessions with automated scoring, feedback, and stage-by-stage progress tracking.",
       "Employer Operations: Facilitating job posting, candidate management, application tracking, team management, and subscription billing.",
       "Freelancer Portfolios: Displaying public portfolios with project showcases, and enabling mentorship tools (homework assignment, document review, course tracking).",
-      "Sponsor Engagement: Managing sponsorship packages, stall reservations, brand visibility analytics, and event reports.",
       "Platform Improvement: Analyzing usage patterns to enhance features, fix issues, and develop new capabilities.",
       "Admin & Moderation: Job moderation, user role management, audit logging, and platform-wide analytics for the admin and owner dashboards.",
     ],
@@ -134,7 +132,7 @@ const sections = [
   {
     title: "10. Third-Party Links & Integrations",
     points: [
-      "The platform may contain links to external job listings, company websites, learning resources, and sponsor pages.",
+      "The platform may contain links to external job listings, company websites, and learning resources.",
       "External job listings aggregated on Gradia link to third-party application pages. Gradia is not responsible for the privacy practices of these external sites.",
       "Freelancer portfolios may include links to GitHub, LinkedIn, and personal websites. These are user-provided and governed by respective platform policies.",
       "Gradia is not responsible for data handling by third-party services accessed through our platform.",

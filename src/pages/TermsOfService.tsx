@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const sections = [
   {
     title: "1. About Gradia Platform",
-    content: `Gradia is a recruitment and career development platform connecting candidates with employers across the Software and Education sectors. By registering or using any feature of the Gradia platform, you agree to the following Terms and Conditions. These apply to all roles: Candidates, Employers, Freelancers, Sponsors, and Visitors.`,
+    content: `Gradia is a recruitment and career development platform connecting candidates with employers across the Software and Education sectors. By registering or using any feature of the Gradia platform, you agree to the following Terms and Conditions. These apply to all roles: Candidates, Employers, Freelancers, and Visitors.`,
   },
   {
     title: "2. Registration & Account Responsibilities",
@@ -51,15 +51,6 @@ const sections = [
       "Mentorship features allow freelancers to manage students, assign homework, review submissions, and track progress. Gradia is not a party to any mentorship agreements or payments between freelancers and students.",
       "Freelancers are independent contractors, not employees of Gradia. The platform provides tools for visibility and engagement but does not guarantee project assignments or income.",
       "AI-powered resume analysis for portfolio generation is a convenience feature. Freelancers should review and edit AI-generated content before publishing.",
-    ],
-  },
-  {
-    title: "6. Sponsor & Partner Terms",
-    points: [
-      "Sponsors can register for event sponsorship packages including stall reservations, brand visibility, and candidate access at Gradia job fairs.",
-      "Sponsorship tiers (Gold, Silver, Bronze, etc.) have defined deliverables. Gradia will make reasonable efforts to fulfill all commitments but is not liable for event-day variations.",
-      "Sponsor analytics (page views, logo impressions, link clicks, leads generated) are tracked and reported. These metrics are approximate and for informational purposes.",
-      "Branding resources and marketing toolkits provided to sponsors are for event-related use only and may not be repurposed without written consent.",
     ],
   },
   {
@@ -180,7 +171,7 @@ const TermsOfService = () => {
     <>
       <Helmet>
         <title>Terms & Conditions - Gradia</title>
-        <meta name="description" content="Read Gradia's terms and conditions covering candidate, employer, freelancer, and sponsor usage of our recruitment platform." />
+        <meta name="description" content="Read Gradia's terms and conditions covering candidate, employer, and freelancer usage of our recruitment platform." />
         <link rel="canonical" href="https://gradiaa.com/terms" />
       </Helmet>
       <div className="min-h-screen bg-background">

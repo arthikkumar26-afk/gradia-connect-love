@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Briefcase, Handshake } from "lucide-react";
+import { ArrowRight, Briefcase } from "lucide-react";
 
 const AboutHero = () => {
   return (
@@ -57,9 +57,8 @@ const AboutHero = () => {
               className="border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm"
               asChild
             >
-              <Link to="/sponsors" className="text-white">
-                <Handshake className="h-5 w-5 mr-2 text-white" />
-                Partner with Gradia
+              <Link to="/contact" className="text-white">
+                Contact Us
               </Link>
             </Button>
           </div>

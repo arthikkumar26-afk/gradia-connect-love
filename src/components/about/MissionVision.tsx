@@ -38,9 +38,8 @@ const MissionVision = () => {
                 </h2>
               </div>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                To become India's most trusted platform for career growth, institutional hiring, 
-                and talent partnerships — setting the standard for excellence in placement services 
-                and sponsor engagement.
+                To become India's most trusted platform for career growth, institutional hiring,
+                and talent partnerships — setting the standard for excellence in placement services.
               </p>
             </div>
           </div>

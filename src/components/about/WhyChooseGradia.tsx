@@ -5,7 +5,7 @@ const WhyChooseGradia = () => {
     "Vacancies across 15+ industries — IT, Civil Engineering, Film, Legal & more",
     "Verified candidates & institutions with thorough background checks",
     "Multi-industry hiring events from tech parks to construction sites",
-    "Sponsor-friendly analytics dashboards with real-time insights",
+    "Employer analytics dashboards with real-time insights",
     "Dedicated relationship managers for personalized support",
     "End-to-end support from registration to placement",
     "Transparent pricing with no hidden fees",
@@ -22,8 +22,7 @@ const WhyChooseGradia = () => {
             </h2>
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
               We're not just another placement platform. Gradia combines technology with 
-              human expertise to deliver exceptional outcomes for candidates, employers, 
-              and sponsors alike.
+              human expertise to deliver exceptional outcomes for candidates and employers alike.
             </p>
             
             <div className="grid grid-cols-1 gap-4">
@@ -64,7 +63,7 @@ const WhyChooseGradia = () => {
                     <span className="text-2xl font-bold text-accent-foreground">4.9</span>
                   </div>
                   <div>
-                    <div className="font-semibold text-foreground">Sponsor Satisfaction</div>
+                    <div className="font-semibold text-foreground">Employer Satisfaction</div>
                     <div className="text-sm text-muted-foreground">Average rating out of 5</div>
                   </div>
                 </div>
