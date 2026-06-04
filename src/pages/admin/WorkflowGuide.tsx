@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, CheckCircle2, Package, Sparkles, Loader2, Copy } from "lucide-react";
+import { Download, CheckCircle2, Package, Sparkles, Loader2, Copy, Cpu, Mic, Image as ImageIcon, FileText, MessageSquare, PenTool, BookOpen, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
