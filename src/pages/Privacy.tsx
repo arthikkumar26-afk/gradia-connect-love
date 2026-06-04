@@ -64,7 +64,6 @@ const sections = [
       "Mock Interviews: Providing AI-driven practice sessions with automated scoring, feedback, and stage-by-stage progress tracking.",
       "Employer Operations: Facilitating job posting, candidate management, application tracking, team management, and subscription billing.",
       "Freelancer Portfolios: Displaying public portfolios with project showcases, and enabling mentorship tools (homework assignment, document review, course tracking).",
-      "Sponsor Engagement: Managing sponsorship packages, stall reservations, brand visibility analytics, and event reports.",
       "Platform Improvement: Analyzing usage patterns to enhance features, fix issues, and develop new capabilities.",
       "Admin & Moderation: Job moderation, user role management, audit logging, and platform-wide analytics for the admin and owner dashboards.",
     ],
