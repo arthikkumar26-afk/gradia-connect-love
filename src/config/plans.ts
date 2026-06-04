@@ -88,29 +88,6 @@ export const PLANS: Record<PlanRole, PlanDefinition[]> = {
       "Dedicated support",
     ], cta: "/freelancer/signup" },
   ],
-  sponsor: [
-    { id: "silver", name: "Silver", points: 700, features: [
-      "Logo on event banners",
-      "1 stall reservation",
-      "Basic candidate access",
-      "Post-event report",
-    ], cta: "/sponsors" },
-    { id: "gold", name: "Gold", points: 1500, popular: true, features: [
-      "Premium banner placement",
-      "2 stall reservations",
-      "Full candidate database",
-      "Brand visibility package",
-      "Social media promotion",
-    ], cta: "/sponsors" },
-    { id: "platinum", name: "Platinum", points: 3000, features: [
-      "Title sponsorship",
-      "3 stall reservations",
-      "Exclusive candidate access",
-      "Keynote speaking slot",
-      "Full marketing toolkit",
-      "Dedicated liaison",
-    ], cta: "/sponsors" },
-  ],
   edutech: [
     { id: "starter", name: "Starter", points: 0, features: [
       "Up to 50 students",
