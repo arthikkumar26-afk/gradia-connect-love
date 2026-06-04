@@ -23,7 +23,10 @@ const ForgotPassword = () => {
   const getUserType = () => {
     if (location.pathname.includes("/candidate")) return "candidate";
     if (location.pathname.includes("/employer")) return "employer";
-    if (location.pathname.includes("/sponsor")) return "sponsor";
+    return "user";
+  };
+
+  const _unused = () => {
     return "user";
   };
 
