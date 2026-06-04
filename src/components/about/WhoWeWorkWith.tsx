@@ -39,9 +39,9 @@ const WhoWeWorkWith = () => {
       description: "Skill development organizations and certification providers"
     },
     {
-      icon: Handshake,
-      title: "Sponsors",
-      description: "Organizations maximizing hiring ROI through strategic partnerships"
+      icon: Users,
+      title: "Training Partners",
+      description: "Skill development organizations and certification providers"
     }
   ];
 
