@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const sections = [
   {
     title: "1. About This Privacy Policy",
-    content: `This Privacy Policy explains how Gradia Consultancy Services ("Gradia," "we," "us") collects, uses, stores, and protects personal information when you use the Gradia platform. This policy applies to all users: Candidates, Employers, Freelancers, Sponsors, and Visitors.`,
+    content: `This Privacy Policy explains how Gradia Consultancy Services ("Gradia," "we," "us") collects, uses, stores, and protects personal information when you use the Gradia platform. This policy applies to all users: Candidates, Employers, Freelancers, and Visitors.`,
   },
   {
     title: "2. Information We Collect",
