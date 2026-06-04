@@ -25,7 +25,7 @@ const OurJourney = () => {
     {
       year: "2026",
       title: "Innovation & Scale",
-      description: "Advanced AI interviews, enhanced sponsor tools, and industry-specific hiring pipelines driving 35,000+ placements."
+      description: "Advanced AI interviews, enhanced employer tools, and industry-specific hiring pipelines driving 35,000+ placements."
     },
     {
       year: "Now",
