@@ -26,10 +26,6 @@ const ForgotPassword = () => {
     return "user";
   };
 
-  const _unused = () => {
-    return "user";
-  };
-
   const getBackLink = () => {
     const userType = getUserType();
     switch (userType) {
@@ -37,8 +33,6 @@ const ForgotPassword = () => {
         return "/candidate/login";
       case "employer":
         return "/employer/login";
-      case "sponsor":
-        return "/sponsor/login";
       default:
         return "/login";
     }
