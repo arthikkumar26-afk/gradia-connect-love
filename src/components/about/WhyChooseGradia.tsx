@@ -22,8 +22,7 @@ const WhyChooseGradia = () => {
             </h2>
             <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
               We're not just another placement platform. Gradia combines technology with 
-              human expertise to deliver exceptional outcomes for candidates, employers, 
-              and sponsors alike.
+              human expertise to deliver exceptional outcomes for candidates and employers alike.
             </p>
             
             <div className="grid grid-cols-1 gap-4">
