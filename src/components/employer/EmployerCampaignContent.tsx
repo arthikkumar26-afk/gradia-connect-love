@@ -372,8 +372,8 @@ export function EmployerCampaignContent() {
   };
 
   const handleDialogClose = () => {
-    // If the campaign was successfully sent, just clear; otherwise auto-save draft if content exists
-    if (!sentSuccessfullyRef.current && hasUnsavedContent() && userId) {
+    // Don't autosave while sending or after success; otherwise keep work as draft
+    if (!isSending && !sentSuccessfullyRef.current && hasUnsavedContent() && userId) {
       saveAsDraft();
     }
     resetForm();
