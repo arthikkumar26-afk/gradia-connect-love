@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ArrowRight, Briefcase, Handshake } from "lucide-react";
+import { ArrowRight, Briefcase } from "lucide-react";
 
 const AboutHero = () => {
   return (
