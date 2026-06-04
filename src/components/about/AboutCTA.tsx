@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { UserPlus, Building2, Handshake, MessageCircle, GraduationCap, ArrowRight } from "lucide-react";
+import { UserPlus, Building2, MessageCircle, GraduationCap, ArrowRight } from "lucide-react";
 
 const AboutCTA = () => {
   const actions = [
