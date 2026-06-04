@@ -36,9 +36,6 @@ const Login = () => {
       case "employer":
         navigate("/employer/dashboard", { replace: true });
         break;
-      case "sponsor":
-        navigate("/sponsor/dashboard", { replace: true });
-        break;
       case "admin":
         navigate("/admin/dashboard", { replace: true });
         break;
