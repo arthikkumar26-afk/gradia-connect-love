@@ -133,7 +133,7 @@ export function EmployerCampaignContent() {
 
     for (const file of Array.from(files)) {
       if (!allowedTypes.includes(file.type)) { toast.error(`Unsupported file type: ${file.name}`); continue; }
-      if (file.size > maxSize) { toast.error(`File too large (max 20MB): ${file.name}`); continue; }
+      if (file.size > maxSize) { toast.error(`File too large (max 100MB): ${file.name}`); continue; }
 
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       const filePath = `${user.id}/${Date.now()}-${safeName}`;
