@@ -171,7 +171,7 @@ const TermsOfService = () => {
     <>
       <Helmet>
         <title>Terms & Conditions - Gradia</title>
-        <meta name="description" content="Read Gradia's terms and conditions covering candidate, employer, freelancer, and sponsor usage of our recruitment platform." />
+        <meta name="description" content="Read Gradia's terms and conditions covering candidate, employer, and freelancer usage of our recruitment platform." />
         <link rel="canonical" href="https://gradiaa.com/terms" />
       </Helmet>
       <div className="min-h-screen bg-background">
