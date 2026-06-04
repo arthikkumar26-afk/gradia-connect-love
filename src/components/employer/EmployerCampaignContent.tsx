@@ -492,7 +492,7 @@ export function EmployerCampaignContent() {
                       </button>
                     </div>
                   ))}
-                  <p className="text-xs text-muted-foreground">{attachments.length} file(s) attached • Max 20MB each</p>
+                  <p className="text-xs text-muted-foreground">{attachments.length} file(s) attached • Max 100MB each</p>
                 </div>
               )}
             </div>
