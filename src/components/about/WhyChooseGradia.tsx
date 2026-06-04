@@ -5,7 +5,7 @@ const WhyChooseGradia = () => {
     "Vacancies across 15+ industries — IT, Civil Engineering, Film, Legal & more",
     "Verified candidates & institutions with thorough background checks",
     "Multi-industry hiring events from tech parks to construction sites",
-    "Sponsor-friendly analytics dashboards with real-time insights",
+    "Employer analytics dashboards with real-time insights",
     "Dedicated relationship managers for personalized support",
     "End-to-end support from registration to placement",
     "Transparent pricing with no hidden fees",
