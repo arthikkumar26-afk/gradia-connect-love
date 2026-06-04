@@ -63,7 +63,7 @@ const WhyChooseGradia = () => {
                     <span className="text-2xl font-bold text-accent-foreground">4.9</span>
                   </div>
                   <div>
-                    <div className="font-semibold text-foreground">Sponsor Satisfaction</div>
+                    <div className="font-semibold text-foreground">Employer Satisfaction</div>
                     <div className="text-sm text-muted-foreground">Average rating out of 5</div>
                   </div>
                 </div>
