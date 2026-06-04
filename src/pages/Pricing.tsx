@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Check, Lock, Star, Crown, Sparkles, Building2, User, Award, GraduationCap, Handshake, Rocket, Zap } from "lucide-react";
+import { Check, Lock, Star, Crown, Sparkles, Building2, User, Award, GraduationCap, Rocket, Zap } from "lucide-react";
 import { WhyPriceFAQ } from "@/components/shared/WhyPriceFAQ";
 import { PLANS } from "@/config/plans";
 import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
@@ -12,15 +12,11 @@ import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
 const PricingPage = () => {
   const candidatePlans = PLANS.candidate;
   const employerPlans = PLANS.employer;
-  const freelancerPlans = PLANS.freelancer;
-  const sponsorPlans = PLANS.sponsor;
-  const edutechPlans = PLANS.edutech;
 
   const tabIcons: Record<string, React.ReactNode> = {
     candidates: <User className="h-4 w-4" />,
     employers: <Building2 className="h-4 w-4" />,
     freelancers: <Award className="h-4 w-4" />,
-    sponsors: <Handshake className="h-4 w-4" />,
     edutech: <GraduationCap className="h-4 w-4" />,
   };
 
