@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const sections = [
   {
     title: "1. About Gradia Platform",
-    content: `Gradia is a recruitment and career development platform connecting candidates with employers across the Software and Education sectors. By registering or using any feature of the Gradia platform, you agree to the following Terms and Conditions. These apply to all roles: Candidates, Employers, Freelancers, Sponsors, and Visitors.`,
+    content: `Gradia is a recruitment and career development platform connecting candidates with employers across the Software and Education sectors. By registering or using any feature of the Gradia platform, you agree to the following Terms and Conditions. These apply to all roles: Candidates, Employers, Freelancers, and Visitors.`,
   },
   {
     title: "2. Registration & Account Responsibilities",
