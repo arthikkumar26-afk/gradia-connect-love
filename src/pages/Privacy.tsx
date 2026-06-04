@@ -132,7 +132,7 @@ const sections = [
   {
     title: "10. Third-Party Links & Integrations",
     points: [
-      "The platform may contain links to external job listings, company websites, learning resources, and sponsor pages.",
+      "The platform may contain links to external job listings, company websites, and learning resources.",
       "External job listings aggregated on Gradia link to third-party application pages. Gradia is not responsible for the privacy practices of these external sites.",
       "Freelancer portfolios may include links to GitHub, LinkedIn, and personal websites. These are user-provided and governed by respective platform policies.",
       "Gradia is not responsible for data handling by third-party services accessed through our platform.",
