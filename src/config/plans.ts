@@ -4,7 +4,7 @@
 
 import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER } from "@/config/candidatePlans";
 
-export type PlanRole = "candidate" | "employer" | "freelancer" | "sponsor" | "edutech";
+export type PlanRole = "candidate" | "employer" | "freelancer" | "edutech";
 
 export interface PlanDefinition {
   /** Stable id used in DB / dropdowns (lowercase). */
