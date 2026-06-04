@@ -11,11 +11,10 @@ const sections = [
     title: "2. Information We Collect",
     subtitle: "A. Registration & Profile Data",
     points: [
-      "Full name, email address, phone number, date of birth, and gender provided during signup (Candidate, Employer, Freelancer, or Sponsor registration).",
+      "Full name, email address, phone number, date of birth, and gender provided during signup (Candidate, Employer, or Freelancer registration).",
       "Candidate profiles: educational qualifications (SSC, Intermediate, Degree, PG, PhD), work experience, family details, address information (present and permanent), and career preferences.",
       "Employer profiles: company name, company email, phone, website, industry category, state, district, pin code, and company description.",
       "Freelancer profiles: bio, tagline, skills, social links (GitHub, LinkedIn, Twitter, website), and portfolio project details.",
-      "Sponsor profiles: company details, sponsorship tier preferences, stall reservations, and branding assets.",
     ],
   },
   {
