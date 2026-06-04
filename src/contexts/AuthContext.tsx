@@ -7,7 +7,7 @@ interface Profile {
   id: string;
   full_name: string;
   email: string;
-  role: "employer" | "candidate" | "sponsor" | "admin" | "owner" | "freelancer" | "hr" | "hr_manager";
+  role: "employer" | "candidate" | "admin" | "owner" | "freelancer" | "hr" | "hr_manager";
   mobile?: string;
   location?: string;
   linkedin?: string;
