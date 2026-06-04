@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, CheckCircle2, Package, Sparkles, Loader2, Copy } from "lucide-react";
+import { Download, CheckCircle2, Package, Sparkles, Loader2, Copy, Cpu, Mic, Image as ImageIcon, FileText, MessageSquare, PenTool, BookOpen, Users } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -432,6 +432,125 @@ export default function WorkflowGuide() {
                 <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{report}</pre>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* AI Technologies Stack */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Cpu className="h-5 w-5 text-primary" /> AI Technologies Stack
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              All AI models and services powering the Gradia platform.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {/* Gateway */}
+            <div className="rounded-lg border p-4 bg-muted/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                <span className="font-semibold text-sm">Lovable AI Gateway</span>
+                <Badge variant="outline" className="text-xs">Unified Endpoint</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                All LLM calls route through <code className="bg-muted px-1 rounded">ai.gateway.lovable.dev/v1/chat/completions</code> using OpenAI-compatible API format.
+              </p>
+            </div>
+
+            {/* Models */}
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Cpu className="h-4 w-4 text-blue-500" />
+                  <span className="font-medium text-sm">Gemini 2.5 Flash</span>
+                  <Badge className="bg-blue-100 text-blue-700 text-[10px]">19 functions</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Primary workhorse — deep analysis, evaluation, structured extraction, resume parsing, interview scoring.</p>
+              </div>
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Cpu className="h-4 w-4 text-emerald-500" />
+                  <span className="font-medium text-sm">Gemini 3 Flash Preview</span>
+                  <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">13 functions</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Fast generation — emails, chatbot, content creation, document parsing, course suggestions.</p>
+              </div>
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-purple-500" />
+                  <span className="font-medium text-sm">Gemini 3 Pro Image</span>
+                  <Badge className="bg-purple-100 text-purple-700 text-[10px]">1 function</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">High-quality image generation — job flyers, marketing visuals.</p>
+              </div>
+              <div className="rounded-lg border p-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4 text-pink-500" />
+                  <span className="font-medium text-sm">Gemini 2.5 Flash Image</span>
+                  <Badge className="bg-pink-100 text-pink-700 text-[10px]">2 functions</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Image generation for questions, diagrams, and visual content.</p>
+              </div>
+            </div>
+
+            {/* Voice AI */}
+            <div className="rounded-lg border p-4 bg-muted/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Mic className="h-4 w-4 text-rose-500" />
+                <span className="font-semibold text-sm">ElevenLabs Voice AI</span>
+                <Badge variant="outline" className="text-xs">Real-time Conversational</Badge>
+              </div>
+              <div className="grid sm:grid-cols-3 gap-2 mt-2">
+                <div className="text-xs bg-background rounded p-2 border">
+                  <span className="font-medium">Conversational AI Agent</span>
+                  <p className="text-muted-foreground mt-0.5">Live AI interviewer & demo instructor</p>
+                </div>
+                <div className="text-xs bg-background rounded p-2 border">
+                  <span className="font-medium">TTS (eleven_multilingual_v2)</span>
+                  <p className="text-muted-foreground mt-0.5">Text-to-speech for interviews</p>
+                </div>
+                <div className="text-xs bg-background rounded p-2 border">
+                  <span className="font-medium">React SDK</span>
+                  <p className="text-muted-foreground mt-0.5">@elevenlabs/react v0.13.0</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Features by Category */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <PenTool className="h-4 w-4 text-primary" /> AI-Powered Features
+              </h4>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {[
+                  { icon: FileText, label: "Resume Intelligence", desc: "Parse, analyze, match score", color: "text-blue-500" },
+                  { icon: MessageSquare, label: "AI Interviews", desc: "Questions, evaluation, voice", color: "text-emerald-500" },
+                  { icon: Users, label: "Job & Recruitment", desc: "JD gen, parsing, pipeline", color: "text-amber-500" },
+                  { icon: MessageSquare, label: "Email & Content", desc: "Bulk emails, templates, chatbot", color: "text-purple-500" },
+                  { icon: ImageIcon, label: "Image & Visual", desc: "Flyers, design challenges", color: "text-pink-500" },
+                  { icon: BookOpen, label: "Education & Assess", desc: "Mock tests, Q&A, courses", color: "text-cyan-500" },
+                  { icon: PenTool, label: "Portfolio & Freelance", desc: "Auto-populate, project briefs", color: "text-indigo-500" },
+                  { icon: Mic, label: "Voice AI", desc: "ElevenLabs real-time agent", color: "text-rose-500" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-start gap-2 rounded-lg border p-2.5">
+                    <item.icon className={`h-4 w-4 mt-0.5 shrink-0 ${item.color}`} />
+                    <div>
+                      <div className="text-xs font-medium">{item.label}</div>
+                      <div className="text-[11px] text-muted-foreground">{item.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+              <Badge variant="secondary">37 AI Edge Functions</Badge>
+              <Badge variant="secondary">12+ Frontend AI Components</Badge>
+              <Badge variant="secondary">Google Gemini Family</Badge>
+              <Badge variant="secondary">ElevenLabs Voice</Badge>
+              <Badge variant="secondary">Server-side Only</Badge>
+            </div>
           </CardContent>
         </Card>
 
