@@ -54,15 +54,6 @@ const sections = [
     ],
   },
   {
-    title: "6. Sponsor & Partner Terms",
-    points: [
-      "Sponsors can register for event sponsorship packages including stall reservations, brand visibility, and candidate access at Gradia job fairs.",
-      "Sponsorship tiers (Gold, Silver, Bronze, etc.) have defined deliverables. Gradia will make reasonable efforts to fulfill all commitments but is not liable for event-day variations.",
-      "Sponsor analytics (page views, logo impressions, link clicks, leads generated) are tracked and reported. These metrics are approximate and for informational purposes.",
-      "Branding resources and marketing toolkits provided to sponsors are for event-related use only and may not be repurposed without written consent.",
-    ],
-  },
-  {
     title: "7. AI-Powered Features Disclaimer",
     points: [
       "Gradia uses AI (powered by Google Gemini and OpenAI models) for resume parsing, interview question generation, candidate evaluation, job description generation, and learning recommendations.",
