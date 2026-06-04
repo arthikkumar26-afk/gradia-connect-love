@@ -124,13 +124,21 @@ export function EmployerCampaignContent() {
     setIsUploading(true);
     const newAttachments: AttachmentFile[] = [];
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('You must be signed in to upload attachments');
+      setIsUploading(false);
+      return;
+    }
+
     for (const file of Array.from(files)) {
       if (!allowedTypes.includes(file.type)) { toast.error(`Unsupported file type: ${file.name}`); continue; }
       if (file.size > maxSize) { toast.error(`File too large (max 20MB): ${file.name}`); continue; }
 
-      const filePath = `campaigns/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const filePath = `${user.id}/${Date.now()}-${safeName}`;
       const { data, error } = await supabase.storage.from('campaign-attachments').upload(filePath, file);
-      if (error) { toast.error(`Upload failed: ${file.name}`); continue; }
+      if (error) { console.error('Upload error:', error); toast.error(`Upload failed: ${file.name} — ${error.message}`); continue; }
 
       const { data: urlData } = supabase.storage.from('campaign-attachments').getPublicUrl(data.path);
       newAttachments.push({ file, name: file.name, size: file.size, type: file.type, url: urlData.publicUrl });
