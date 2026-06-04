@@ -10,17 +10,40 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Plus, Send, Mail, Users, Megaphone,
-  Paperclip, Loader2, XCircle, RefreshCw,
+  Paperclip, Loader2, XCircle, RefreshCw, FileEdit, Trash2,
 } from "lucide-react";
 
 interface AttachmentFile {
-  file: File;
+  file?: File;
   name: string;
   size: number;
   type: string;
   uploading?: boolean;
   url?: string;
 }
+
+interface CampaignDraft {
+  id: string;
+  campaignName: string;
+  subject: string;
+  messageBody: string;
+  emailList: string[];
+  attachments: AttachmentFile[];
+  savedAt: string;
+}
+
+const DRAFT_STORAGE_KEY = "employer_campaign_drafts";
+
+const loadDrafts = (userId: string): CampaignDraft[] => {
+  try {
+    const raw = localStorage.getItem(`${DRAFT_STORAGE_KEY}_${userId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
+const saveDraftsToStorage = (userId: string, drafts: CampaignDraft[]) => {
+  try { localStorage.setItem(`${DRAFT_STORAGE_KEY}_${userId}`, JSON.stringify(drafts)); } catch {}
+};
 
 export function EmployerCampaignContent() {
   const [selectedCampaignName, setSelectedCampaignName] = useState<string | null>(null);
@@ -38,6 +61,10 @@ export function EmployerCampaignContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [campaignHistory, setCampaignHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<CampaignDraft[]>([]);
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const sentSuccessfullyRef = useRef(false);
 
   const fetchCampaignHistory = async () => {
     setLoadingHistory(true);
@@ -46,7 +73,21 @@ export function EmployerCampaignContent() {
     setLoadingHistory(false);
   };
 
-  useEffect(() => { fetchCampaignHistory(); }, []);
+  useEffect(() => {
+    fetchCampaignHistory();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+        setDrafts(loadDrafts(user.id));
+      }
+    })();
+  }, []);
+
+  const persistDrafts = (next: CampaignDraft[]) => {
+    setDrafts(next);
+    if (userId) saveDraftsToStorage(userId, next);
+  };
 
   const groupedCampaigns = campaignHistory.reduce((acc: Record<string, any[]>, row) => {
     const key = row.campaign_name || "Untitled";
@@ -176,7 +217,6 @@ export function EmployerCampaignContent() {
     setSendResults(null);
 
     try {
-      // Deduct points before sending: 50 pts per recipient
       const totalCost = emailList.length * COST_PER_EMAIL;
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("Please sign in again"); setIsSending(false); return; }
@@ -237,7 +277,15 @@ export function EmployerCampaignContent() {
       if (error) throw error;
 
       setSendResults({ totalSent: data.totalSent, totalFailed: data.totalFailed });
-      if (data.totalSent > 0) toast.success(`Campaign sent! ${data.totalSent} email(s) delivered successfully.`);
+      if (data.totalSent > 0) {
+        toast.success(`Campaign sent! ${data.totalSent} email(s) delivered successfully.`);
+        sentSuccessfullyRef.current = true;
+        // remove draft if this was opened from one
+        if (activeDraftId) {
+          const next = drafts.filter(d => d.id !== activeDraftId);
+          persistDrafts(next);
+        }
+      }
       if (data.totalFailed > 0) toast.error(`${data.totalFailed} email(s) failed to send.`);
     } catch (err: any) {
       console.error("Campaign send error:", err);
@@ -247,18 +295,96 @@ export function EmployerCampaignContent() {
     }
   };
 
+  const hasUnsavedContent = () =>
+    campaignName.trim() || subject.trim() || messageBody.trim() ||
+    emailList.length > 0 || attachments.length > 0;
+
+  const saveAsDraft = () => {
+    if (!userId) return;
+    const draft: CampaignDraft = {
+      id: activeDraftId || `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      campaignName,
+      subject,
+      messageBody,
+      emailList,
+      attachments: attachments.map(a => ({ name: a.name, size: a.size, type: a.type, url: a.url })),
+      savedAt: new Date().toISOString(),
+    };
+    const others = drafts.filter(d => d.id !== draft.id);
+    persistDrafts([draft, ...others]);
+    toast.success("Saved to drafts");
+  };
+
+  const openDraft = (d: CampaignDraft) => {
+    setCampaignName(d.campaignName);
+    setSubject(d.subject);
+    setMessageBody(d.messageBody);
+    setEmailList(d.emailList || []);
+    setAttachments(d.attachments || []);
+    setActiveDraftId(d.id);
+    setSendResults(null);
+    sentSuccessfullyRef.current = false;
+    setShowNewCampaign(true);
+  };
+
+  const deleteDraft = (id: string) => {
+    persistDrafts(drafts.filter(d => d.id !== id));
+    toast.success("Draft deleted");
+  };
+
+  const handleDialogClose = () => {
+    // If the campaign was successfully sent, just clear; otherwise auto-save draft if content exists
+    if (!sentSuccessfullyRef.current && hasUnsavedContent() && userId) {
+      saveAsDraft();
+    }
+    resetForm();
+  };
+
   const resetForm = () => {
     setEmailInput(""); setEmailList([]); setSubject(""); setMessageBody("");
     setCampaignName(""); setSendResults(null); setAttachments([]);
-    setShowNewCampaign(false); fetchCampaignHistory();
+    setActiveDraftId(null);
+    sentSuccessfullyRef.current = false;
+    setShowNewCampaign(false);
+    fetchCampaignHistory();
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-foreground">Email Campaigns</h3>
-        <Button size="sm" onClick={() => setShowNewCampaign(true)}><Plus className="h-4 w-4 mr-1" /> New Campaign</Button>
+        <Button size="sm" onClick={() => { setActiveDraftId(null); sentSuccessfullyRef.current = false; setShowNewCampaign(true); }}><Plus className="h-4 w-4 mr-1" /> New Campaign</Button>
       </div>
+
+      {drafts.length > 0 && (
+        <Card className="border-border/50">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <FileEdit className="h-4 w-4 text-muted-foreground" />
+              <h4 className="text-sm font-semibold text-foreground">Drafts ({drafts.length})</h4>
+            </div>
+            <div className="space-y-1.5">
+              {drafts.map(d => (
+                <div key={d.id} className="flex items-center gap-2 p-2 rounded-md border border-border/50 bg-muted/20 hover:bg-muted/40 transition-colors">
+                  <FileEdit className="h-4 w-4 text-primary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {d.campaignName || d.subject || "Untitled draft"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {d.emailList.length} recipient(s) • saved {new Date(d.savedAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => openDraft(d)}>Resume</Button>
+                  <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => deleteDraft(d.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="border-border/50">
         <CardContent className="p-0">
@@ -413,10 +539,13 @@ export function EmployerCampaignContent() {
       })()}
 
       {/* New Campaign Dialog */}
-      <Dialog open={showNewCampaign} onOpenChange={(open) => { if (!open) resetForm(); }}>
+      <Dialog open={showNewCampaign} onOpenChange={(open) => { if (!open) handleDialogClose(); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Send className="h-5 w-5 text-primary" /> New Email Campaign</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-primary" /> New Email Campaign
+              {activeDraftId && <Badge variant="outline" className="text-xs ml-2">Draft</Badge>}
+            </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 mt-2">
@@ -520,7 +649,10 @@ export function EmployerCampaignContent() {
               <Button onClick={handleSendCampaign} disabled={isSending || emailList.length === 0} className="flex-1">
                 {isSending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending {emailList.length} email(s)...</> : <><Send className="h-4 w-4 mr-2" /> Send Campaign ({emailList.length}) • {emailList.length * COST_PER_EMAIL} pts</>}
               </Button>
-              <Button variant="ghost" onClick={resetForm} disabled={isSending}>Cancel</Button>
+              <Button variant="outline" onClick={() => { saveAsDraft(); resetForm(); }} disabled={isSending || !hasUnsavedContent()}>
+                <FileEdit className="h-4 w-4 mr-1" /> Save Draft
+              </Button>
+              <Button variant="ghost" onClick={handleDialogClose} disabled={isSending}>Close</Button>
             </div>
           </div>
         </DialogContent>
