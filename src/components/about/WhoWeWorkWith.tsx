@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { Building2, Rocket, GraduationCap, Users, Handshake, Clapperboard, HardHat, Scale, Landmark } from "lucide-react";
+import { Building2, Rocket, GraduationCap, Users, Clapperboard, HardHat, Scale } from "lucide-react";
 
 const WhoWeWorkWith = () => {
   const partners = [
