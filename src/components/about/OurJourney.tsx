@@ -10,7 +10,7 @@ const OurJourney = () => {
     {
       year: "2025",
       title: "Platform Launch",
-      description: "Launched our digital platform with AI-powered matching, sponsor analytics, and real-time reporting dashboards."
+      description: "Launched our digital platform with AI-powered matching, employer analytics, and real-time reporting dashboards."
     },
     {
       year: "2025",
