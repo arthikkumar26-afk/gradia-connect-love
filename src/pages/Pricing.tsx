@@ -265,7 +265,7 @@ const PricingPage = () => {
             </div>
           </TabsContent>
           <TabsContent value="employers">{renderPlans(employerPlans)}</TabsContent>
-          <TabsContent value="sponsors">{renderPlans(sponsorPlans)}</TabsContent>
+
         </Tabs>
       </section>
 
