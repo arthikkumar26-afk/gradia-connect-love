@@ -119,7 +119,7 @@ export function EmployerCampaignContent() {
       'application/pdf',
       'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
-    const maxSize = 20 * 1024 * 1024;
+    const maxSize = 100 * 1024 * 1024;
 
     setIsUploading(true);
     const newAttachments: AttachmentFile[] = [];
