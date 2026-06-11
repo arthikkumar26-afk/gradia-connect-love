@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://gradiaa.com/sitemap.xml
+Sitemap: https://gradia.world/sitemap.xml

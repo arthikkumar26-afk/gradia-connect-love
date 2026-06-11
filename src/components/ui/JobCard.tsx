@@ -126,6 +126,7 @@ const JobCard = ({
               size="sm"
               onClick={handleSave}
               className="text-muted-foreground hover:text-accent h-6 w-6 p-0"
+              aria-label={isSaved ? "Remove from saved jobs" : "Save job"}
             >
               {isSaved ? (
                 <BookmarkCheck className="h-3.5 w-3.5" />

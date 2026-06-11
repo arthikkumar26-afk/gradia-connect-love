@@ -31,7 +31,7 @@ const HRPortalChoice = () => {
     <div className="min-h-screen bg-subtle">
       <header className="h-14 bg-card border-b border-border flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
-          <img src={gradiaLogo} alt="Gradia" className="h-7 w-auto" />
+          <img src={gradiaLogo} alt="Gradia logo" className="h-7 w-auto" />
           <Badge variant="secondary" className="gap-1 text-xs">
             <Users className="h-3 w-3" /> HR Portal
           </Badge>
