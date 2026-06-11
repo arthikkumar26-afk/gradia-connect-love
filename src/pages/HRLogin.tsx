@@ -78,7 +78,7 @@ const HRLogin = () => {
         </Link>
         <div className="bg-card rounded-lg shadow-large p-6 animate-scale-in">
           <div className="flex justify-center mb-4">
-            <img src={gradiaLogo} alt="Gradia" className="h-14 w-auto object-contain" />
+            <img src={gradiaLogo} alt="Gradia logo" className="h-14 w-auto object-contain" />
           </div>
           <div className="text-center mb-5">
             <div className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-pink-100 dark:bg-pink-900 mb-2">

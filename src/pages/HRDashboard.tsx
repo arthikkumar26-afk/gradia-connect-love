@@ -774,7 +774,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
         <div className="flex items-center gap-2">
-          <img src={gradiaLogo} alt="Gradia" className="h-6 w-auto" />
+          <img src={gradiaLogo} alt="Gradia logo" className="h-6 w-auto" />
           <Badge variant="secondary" className="gap-1 text-xs">
             <Users className="h-3 w-3" /> HR
           </Badge>
@@ -793,7 +793,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           <div className="flex flex-col h-full w-64">
             {/* Logo */}
             <div className="hidden md:flex items-center gap-2 p-4 border-b border-border">
-              <img src={gradiaLogo} alt="Gradia" className="h-7 w-auto flex-shrink-0" />
+              <img src={gradiaLogo} alt="Gradia logo" className="h-7 w-auto flex-shrink-0" />
               <Badge variant="secondary" className="gap-1 text-xs">
                 <Users className="h-3 w-3" /> HR Portal
               </Badge>

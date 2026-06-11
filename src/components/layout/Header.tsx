@@ -196,7 +196,7 @@ const Header = () => {
           {/* Right side - Theme toggle, Language, CTAs - Fixed width for balance */}
           <div className="flex items-center justify-end gap-1 sm:gap-2 lg:gap-4 flex-shrink-0 ml-auto">
             {/* Theme Toggle - hide on mobile */}
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hidden sm:flex h-8 w-8">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="hidden sm:flex h-8 w-8" aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}>
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
 

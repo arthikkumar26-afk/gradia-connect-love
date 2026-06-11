@@ -460,7 +460,7 @@ export default function GraphicDesignChallenge() {
             <Card>
               <CardContent className="pt-4">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Your Submission</p>
-                <img src={uploadedImage} alt="Submission" className="w-full h-auto max-h-[150px] object-contain rounded border" />
+                <img src={uploadedImage} alt="Design submission" className="w-full h-auto max-h-[150px] object-contain rounded border" />
               </CardContent>
             </Card>
           )}

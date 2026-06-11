@@ -314,6 +314,7 @@ const JobsResults = () => {
           </Card>
         ) : (
           <>
+            <h2 className="sr-only">Available job openings</h2>
             {/* Job Grid - 3 per row on desktop, responsive for mobile */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredJobs.map((job, index) => (
@@ -490,7 +491,7 @@ const JobsResults = () => {
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={closeJobDetails}>
+                    <Button variant="outline" size="sm" onClick={closeJobDetails} aria-label="Close job details">
                       <X className="h-4 w-4" />
                     </Button>
                     <Button 
