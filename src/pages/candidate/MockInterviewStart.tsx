@@ -25,6 +25,7 @@ import {
   Zap
 } from "lucide-react";
 import { useMockTestLimits } from "@/hooks/useMockTestLimits";
+import { useActionPayment } from "@/hooks/useActionPayment";
 
 const stagesList = [
   { order: 1, name: "Interview Instructions", icon: Mail },
