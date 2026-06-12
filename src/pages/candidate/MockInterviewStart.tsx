@@ -229,13 +229,6 @@ const MockInterviewStart = () => {
                   <Lock className="h-6 w-6 text-destructive" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Monthly limit reached. Upgrade to continue practicing.
-                </p>
-              <div className="space-y-3 text-center">
-                <div className="h-12 w-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-                  <Lock className="h-6 w-6 text-destructive" />
-                </div>
-                <p className="text-sm text-muted-foreground">
                   You've used your free mock test for this month. Pay ₹{mockTestLimits.extraTestPrice} to attend another one.
                 </p>
                 <Button className="w-full gap-2" onClick={handlePayForExtraTest} disabled={isPaying}>
