@@ -4737,10 +4737,6 @@ export type Database = {
       is_freelancer_profile: { Args: { _user_id: string }; Returns: boolean }
       is_hr_manager: { Args: { _user_id: string }; Returns: boolean }
       is_hr_user: { Args: { _user_id: string }; Returns: boolean }
-      start_mock_interview_session: {
-        Args: { p_interview_type?: string; p_pipeline_type?: string }
-        Returns: string
-      }
     }
     Enums: {
       app_role:

@@ -124,19 +124,18 @@ const MockInterviewStart = () => {
 
     setIsStarting(true);
     try {
-      const { data: sessionId, error } = await supabase.rpc("start_mock_interview_session", {
-        p_interview_type: null,
-        p_pipeline_type: null,
-      });
-      if (error) {
-        if ((error as any).message?.includes("limit reached")) {
-          toast.error(`Mock test limit reached. Pay ₹${mockTestLimits.extraTestPrice} to attend another.`);
-          await mockTestLimits.refetch();
-          return;
-        }
-        throw error;
-      }
-      const session = { id: sessionId as unknown as string };
+      const { data: session, error } = await supabase
+        .from("mock_interview_sessions")
+        .insert({
+          candidate_id: user.id,
+          status: "in_progress",
+          current_stage_order: 1,
+          started_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
 
       const emailSent = await sendInterviewInstructionsEmail(session.id);
 

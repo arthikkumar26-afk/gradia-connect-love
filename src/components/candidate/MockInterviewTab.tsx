@@ -640,25 +640,22 @@ export const MockInterviewTab = () => {
 
     setIsStarting(true);
     try {
-      // Create new session via server-side limit-enforcing RPC
-      const { data: sessionId, error } = await supabase.rpc('start_mock_interview_session', {
-        p_interview_type: selectedMockInterviewType || null,
-        p_pipeline_type: selectedMockPipelineType || null,
-      });
-
-      if (error) {
-        if ((error as any).message?.includes('limit reached')) {
-          toast.error(`Mock test limit reached. Pay ₹149 to attend another.`);
-          return;
-        }
-        throw error;
-      }
-
-      const { data: session } = await supabase
+      // Create new session starting at stage 1 (Interview Instructions)
+      const { data: session, error } = await supabase
         .from('mock_interview_sessions')
-        .select('*')
-        .eq('id', sessionId as unknown as string)
+        .insert({
+          candidate_id: user.id,
+          status: 'in_progress',
+          current_stage_order: 1,
+          started_at: new Date().toISOString(),
+          interview_type: selectedMockInterviewType || null,
+          pipeline_type: selectedMockPipelineType || null,
+          points_paid: false,
+        } as any)
+        .select()
         .single();
+
+      if (error) throw error;
 
       setCurrentSession(session);
       setStageResults([]);
@@ -681,23 +678,18 @@ export const MockInterviewTab = () => {
     setIsStarting(true);
     try {
       // Create new session starting at stage 1, saving pipeline selection
-      const { data: sessionId, error: rpcError } = await supabase.rpc('start_mock_interview_session', {
-        p_interview_type: selectedMockInterviewType || null,
-        p_pipeline_type: selectedMockPipelineType || null,
-      });
-
-      if (rpcError) {
-        if ((rpcError as any).message?.includes('limit reached')) {
-          toast.error(`Mock test limit reached. Pay ₹149 to attend another.`);
-          return;
-        }
-        throw rpcError;
-      }
-
       const { data: session, error } = await supabase
         .from('mock_interview_sessions')
-        .select('*')
-        .eq('id', sessionId as unknown as string)
+        .insert({
+          candidate_id: user.id,
+          status: 'in_progress',
+          current_stage_order: 1,
+          started_at: new Date().toISOString(),
+          interview_type: selectedMockInterviewType || null,
+          pipeline_type: selectedMockPipelineType || null,
+          points_paid: false,
+        } as any)
+        .select()
         .single();
 
       if (error) throw error;
