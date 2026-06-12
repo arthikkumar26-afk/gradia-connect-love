@@ -681,18 +681,23 @@ export const MockInterviewTab = () => {
     setIsStarting(true);
     try {
       // Create new session starting at stage 1, saving pipeline selection
+      const { data: sessionId, error: rpcError } = await supabase.rpc('start_mock_interview_session', {
+        p_interview_type: selectedMockInterviewType || null,
+        p_pipeline_type: selectedMockPipelineType || null,
+      });
+
+      if (rpcError) {
+        if ((rpcError as any).message?.includes('limit reached')) {
+          toast.error(`Mock test limit reached. Pay ₹149 to attend another.`);
+          return;
+        }
+        throw rpcError;
+      }
+
       const { data: session, error } = await supabase
         .from('mock_interview_sessions')
-        .insert({
-          candidate_id: user.id,
-          status: 'in_progress',
-          current_stage_order: 1,
-          started_at: new Date().toISOString(),
-          interview_type: selectedMockInterviewType || null,
-          pipeline_type: selectedMockPipelineType || null,
-          points_paid: false,
-        } as any)
-        .select()
+        .select('*')
+        .eq('id', sessionId as unknown as string)
         .single();
 
       if (error) throw error;
