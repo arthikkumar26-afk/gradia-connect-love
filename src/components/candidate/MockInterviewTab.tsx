@@ -640,22 +640,26 @@ export const MockInterviewTab = () => {
 
     setIsStarting(true);
     try {
-      // Create new session starting at stage 1 (Interview Instructions)
-      const { data: session, error } = await supabase
-        .from('mock_interview_sessions')
-        .insert({
-          candidate_id: user.id,
-          status: 'in_progress',
-          current_stage_order: 1,
-          started_at: new Date().toISOString(),
-          interview_type: selectedMockInterviewType || null,
-          pipeline_type: selectedMockPipelineType || null,
-          points_paid: false,
-        } as any)
-        .select()
-        .single();
+      // Create new session via server-side limit-enforcing RPC
+      const { data: sessionId, error } = await supabase.rpc('start_mock_interview_session', {
+        p_interview_type: selectedMockInterviewType || null,
+        p_pipeline_type: selectedMockPipelineType || null,
+      });
 
-      if (error) throw error;
+      if (error) {
+        if ((error as any).message?.includes('limit reached')) {
+          toast.error(`Mock test limit reached. Pay ₹${extraTestPrice} to attend another.`);
+          await refetchMockLimits();
+          return;
+        }
+        throw error;
+      }
+
+      const { data: session } = await supabase
+        .from('mock_interview_sessions')
+        .select('*')
+        .eq('id', sessionId as unknown as string)
+        .single();
 
       setCurrentSession(session);
       setStageResults([]);
