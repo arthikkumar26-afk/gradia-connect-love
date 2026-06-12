@@ -231,9 +231,20 @@ const MockInterviewStart = () => {
                 <p className="text-sm text-muted-foreground">
                   Monthly limit reached. Upgrade to continue practicing.
                 </p>
-                <Button className="w-full gap-2" onClick={() => navigate('/candidate/dashboard')}>
+              <div className="space-y-3 text-center">
+                <div className="h-12 w-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
+                  <Lock className="h-6 w-6 text-destructive" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  You've used your free mock test for this month. Pay ₹{mockTestLimits.extraTestPrice} to attend another one.
+                </p>
+                <Button className="w-full gap-2" onClick={handlePayForExtraTest} disabled={isPaying}>
+                  {isPaying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                  Pay ₹{mockTestLimits.extraTestPrice} & Attend Mock Test
+                </Button>
+                <Button variant="outline" className="w-full gap-2" onClick={() => navigate('/candidate/dashboard')}>
                   <Crown className="h-4 w-4" />
-                  Upgrade Plan
+                  Or Upgrade Plan
                 </Button>
               </div>
             ) : (
