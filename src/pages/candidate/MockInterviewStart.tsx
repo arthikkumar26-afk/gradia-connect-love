@@ -46,6 +46,16 @@ const MockInterviewStart = () => {
   const [profile, setProfile] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const mockTestLimits = useMockTestLimits(user?.id);
+  const { startPayment, isProcessing: isPaying } = useActionPayment();
+
+  const handlePayForExtraTest = async () => {
+    const ok = await startPayment({
+      actionKey: "extra_mock_test",
+      userName: profile?.full_name,
+      userEmail: profile?.email,
+    });
+    if (ok) await mockTestLimits.refetch();
+  };
 
   const isNewEmployee = type === "new-employee";
   const title = isNewEmployee ? "New Employee" : "Promotions";
