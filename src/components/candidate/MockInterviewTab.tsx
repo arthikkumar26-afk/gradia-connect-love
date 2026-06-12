@@ -1856,7 +1856,7 @@ export const MockInterviewTab = () => {
                 <Play className="h-5 w-5" />
               )}
               {!mockTestLimits.canStart
-                ? 'Limit Reached — Upgrade Plan'
+                ? `Pay ₹${mockTestLimits.extraTestPrice} Above to Continue`
                 : !isMockRoleSelected
                   ? 'Select All Fields to Continue'
                   : `Attend Mock Test — ${selectedMockRoleLabel}`}
