@@ -124,7 +124,10 @@ const MockInterviewStart = () => {
 
     setIsStarting(true);
     try {
-      const { data: sessionId, error } = await supabase.rpc("start_mock_interview_session");
+      const { data: sessionId, error } = await supabase.rpc("start_mock_interview_session", {
+        p_interview_type: null,
+        p_pipeline_type: null,
+      });
       if (error) {
         if ((error as any).message?.includes("limit reached")) {
           toast.error(`Mock test limit reached. Pay ₹${mockTestLimits.extraTestPrice} to attend another.`);
