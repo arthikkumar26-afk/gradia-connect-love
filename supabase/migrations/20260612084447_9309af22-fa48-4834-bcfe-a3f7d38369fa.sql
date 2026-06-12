@@ -1,0 +1,1 @@
+UPDATE public.pricing_config SET amount_inr = 149, label = 'Extra Mock Test', is_active = true WHERE action_key = 'extra_mock_test';

@@ -105,6 +105,7 @@ export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const mockTestLimits = useMockTestLimits(user?.id);
+  const { startPayment: startExtraMockPayment, isProcessing: isPayingForExtraMock } = useActionPayment();
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [currentSession, setCurrentSession] = useState<MockInterviewSession | null>(null);
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
@@ -1689,20 +1690,31 @@ export const MockInterviewTab = () => {
               <div className="grid gap-2">
                 {mockTestLimits.plan === 'free' && (
                   <>
-                    <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
-                      <Crown className="h-4 w-4" />
-                      Upgrade to Pro — 10 tests/month (₹15,000/mo)
+                    <Button
+                      className="gap-2"
+                      disabled={isPayingForExtraMock}
+                      onClick={async () => {
+                        const ok = await startExtraMockPayment({
+                          actionKey: "extra_mock_test",
+                          userName: profile?.full_name,
+                          userEmail: profile?.email,
+                        });
+                        if (ok) await mockTestLimits.refetch();
+                      }}
+                    >
+                      {isPayingForExtraMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                      Pay ₹{mockTestLimits.extraTestPrice} & Attend Another Mock Test
                     </Button>
                     <Button variant="outline" className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
-                      <Zap className="h-4 w-4" />
-                      Go Premium — Unlimited tests (₹30,000/mo)
+                      <Crown className="h-4 w-4" />
+                      Or Upgrade Plan for More Tests
                     </Button>
                   </>
                 )}
                 {mockTestLimits.plan === 'pro_accelerator' && (
                   <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
                     <Crown className="h-4 w-4" />
-                    Upgrade to Premium — Unlimited tests (₹30,000/mo)
+                    Upgrade to Premium — Unlimited tests
                   </Button>
                 )}
               </div>
@@ -1844,7 +1856,7 @@ export const MockInterviewTab = () => {
                 <Play className="h-5 w-5" />
               )}
               {!mockTestLimits.canStart
-                ? 'Limit Reached — Upgrade Plan'
+                ? `Pay ₹${mockTestLimits.extraTestPrice} Above to Continue`
                 : !isMockRoleSelected
                   ? 'Select All Fields to Continue'
                   : `Attend Mock Test — ${selectedMockRoleLabel}`}

@@ -25,6 +25,7 @@ import {
   Zap
 } from "lucide-react";
 import { useMockTestLimits } from "@/hooks/useMockTestLimits";
+import { useActionPayment } from "@/hooks/useActionPayment";
 
 const stagesList = [
   { order: 1, name: "Interview Instructions", icon: Mail },
@@ -45,6 +46,16 @@ const MockInterviewStart = () => {
   const [profile, setProfile] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const mockTestLimits = useMockTestLimits(user?.id);
+  const { startPayment, isProcessing: isPaying } = useActionPayment();
+
+  const handlePayForExtraTest = async () => {
+    const ok = await startPayment({
+      actionKey: "extra_mock_test",
+      userName: profile?.full_name,
+      userEmail: profile?.email,
+    });
+    if (ok) await mockTestLimits.refetch();
+  };
 
   const isNewEmployee = type === "new-employee";
   const title = isNewEmployee ? "New Employee" : "Promotions";
@@ -218,11 +229,15 @@ const MockInterviewStart = () => {
                   <Lock className="h-6 w-6 text-destructive" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Monthly limit reached. Upgrade to continue practicing.
+                  You've used your free mock test for this month. Pay ₹{mockTestLimits.extraTestPrice} to attend another one.
                 </p>
-                <Button className="w-full gap-2" onClick={() => navigate('/candidate/dashboard')}>
+                <Button className="w-full gap-2" onClick={handlePayForExtraTest} disabled={isPaying}>
+                  {isPaying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                  Pay ₹{mockTestLimits.extraTestPrice} & Attend Mock Test
+                </Button>
+                <Button variant="outline" className="w-full gap-2" onClick={() => navigate('/candidate/dashboard')}>
                   <Crown className="h-4 w-4" />
-                  Upgrade Plan
+                  Or Upgrade Plan
                 </Button>
               </div>
             ) : (
