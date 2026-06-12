@@ -648,8 +648,7 @@ export const MockInterviewTab = () => {
 
       if (error) {
         if ((error as any).message?.includes('limit reached')) {
-          toast.error(`Mock test limit reached. Pay ₹${extraTestPrice} to attend another.`);
-          await refetchMockLimits();
+          toast.error(`Mock test limit reached. Pay ₹149 to attend another.`);
           return;
         }
         throw error;
