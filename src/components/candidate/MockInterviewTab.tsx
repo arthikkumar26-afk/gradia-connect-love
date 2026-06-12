@@ -105,6 +105,7 @@ export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const mockTestLimits = useMockTestLimits(user?.id);
+  const { startPayment: startExtraMockPayment, isProcessing: isPayingForExtraMock } = useActionPayment();
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [currentSession, setCurrentSession] = useState<MockInterviewSession | null>(null);
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
