@@ -1397,8 +1397,6 @@ export const MockInterviewTab = () => {
     }
   }, [stageResults]);
 
-  const isCurrentSessionUnlocked = (currentSession as any)?.points_paid === true;
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -1628,29 +1626,6 @@ export const MockInterviewTab = () => {
             </div>
           )}
           
-          {/* Usage Counter */}
-          {!mockTestLimits.isLoading && (
-            <div className="mt-4 flex items-center justify-center gap-3">
-              <Badge variant={mockTestLimits.canStart ? "secondary" : "destructive"} className="gap-1 text-xs">
-                {mockTestLimits.plan === 'elite' ? (
-                  <>
-                    <Crown className="h-3 w-3" />
-                    Unlimited Tests
-                  </>
-                ) : (
-                  <>
-                    <Target className="h-3 w-3" />
-                    {mockTestLimits.usedTests}/{mockTestLimits.maxTests} tests used this month
-                  </>
-                )}
-              </Badge>
-              <Badge variant="outline" className="gap-1 text-xs capitalize">
-                <Zap className="h-3 w-3" />
-                {mockTestLimits.plan} Plan
-              </Badge>
-            </div>
-          )}
-
           <div className="mt-4">
             <Button 
               variant="outline" 
@@ -1664,57 +1639,6 @@ export const MockInterviewTab = () => {
             </Button>
           </div>
         </div>
-
-        {/* Limit Reached - Upgrade Prompt */}
-        {!mockTestLimits.isLoading && !mockTestLimits.canStart && (
-          <Card className="max-w-lg mx-auto border-destructive/50 bg-destructive/5">
-            <CardContent className="pt-6 text-center space-y-4">
-              <div className="h-14 w-14 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-                <Lock className="h-7 w-7 text-destructive" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">Monthly Limit Reached</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  You've used all {mockTestLimits.maxTests} mock tests for this month on the <span className="font-medium capitalize">{mockTestLimits.plan}</span> plan.
-                </p>
-              </div>
-              <div className="grid gap-2">
-                {mockTestLimits.plan === 'free' && (
-                  <>
-                    <Button
-                      className="gap-2"
-                      disabled={isPayingForExtraMock}
-                      onClick={async () => {
-                        const ok = await startExtraMockPayment({
-                          actionKey: "extra_mock_test",
-                          userName: profile?.full_name,
-                          userEmail: profile?.email,
-                        });
-                        if (ok) await mockTestLimits.refetch();
-                      }}
-                    >
-                      {isPayingForExtraMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                      Attend Another Mock Test
-                    </Button>
-                    <Button variant="outline" className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
-                      <Crown className="h-4 w-4" />
-                      Or Upgrade Plan for More Tests
-                    </Button>
-                  </>
-                )}
-                {mockTestLimits.plan === 'pro_accelerator' && (
-                  <Button className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
-                    <Crown className="h-4 w-4" />
-                    Upgrade to Premium — Unlimited tests
-                  </Button>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Limits reset at the start of each month
-              </p>
-            </CardContent>
-          </Card>
-        )}
 
         {/* ── Role Selector: Interview Type → Pipeline Type → Role (matches vacancy creation) ── */}
         <div className="max-w-2xl mx-auto space-y-5">
