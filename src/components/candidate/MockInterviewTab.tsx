@@ -1759,22 +1759,16 @@ export const MockInterviewTab = () => {
           <div className="space-y-2">
             <Button
               onClick={startMockTest}
-              disabled={isStarting || !mockTestLimits.canStart || !isMockRoleSelected}
+              disabled={isStarting || !isMockRoleSelected}
               className="w-full gap-2"
               size="lg"
             >
               {isStarting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
-              ) : !mockTestLimits.canStart ? (
-                <Lock className="h-5 w-5" />
               ) : (
                 <Play className="h-5 w-5" />
               )}
-              {!mockTestLimits.canStart
-                ? `Pay Above to Continue`
-                : !isMockRoleSelected
-                  ? 'Select All Fields to Continue'
-                  : `Attend Mock Test — ${selectedMockRoleLabel}`}
+              {!isMockRoleSelected ? 'Select All Fields to Continue' : `Attend Mock Test — ${selectedMockRoleLabel}`}
             </Button>
             <div className="flex justify-center">
               <Badge variant="secondary" className="text-xs gap-1">
@@ -1907,111 +1901,6 @@ export const MockInterviewTab = () => {
         </div>
       </div>
 
-      {!isCurrentSessionUnlocked ? (
-        <Card className="p-8 text-center border-dashed border-2 border-primary/30">
-          <Lock className="h-12 w-12 mx-auto mb-4 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">Premium Feature</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            AI Mock Interview Pipeline is a paid feature. Unlock the full 8-stage
-            interview simulation.
-          </p>
-          <div className="flex justify-center mb-6">
-            <Card className="p-4 border-primary/20 bg-primary/5 text-left max-w-[260px]">
-              <div className="flex items-center gap-2 mb-2">
-                <Crown className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-sm text-foreground">
-                  AI Mock Interview Pipeline
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Full pipeline access — all 8 stages
-              </p>
-            </Card>
-          </div>
-
-          <Button
-            onClick={async () => {
-              if (!user?.id) return;
-              setPayingForMock(true);
-              try {
-                // Check active subscription instead of wallet balance
-                const { data: subRow } = await supabase
-                  .from('candidate_subscriptions')
-                  .select('plan, status, ends_at')
-                  .eq('candidate_id', user.id)
-                  .eq('status', 'active')
-                  .maybeSingle();
-
-                const active = subRow && (subRow.ends_at == null || new Date(subRow.ends_at) > new Date());
-                const plan = active ? (subRow!.plan as string) : 'free';
-
-                // Plan limits for mock_interview (mirrors src/config/candidatePlans.ts)
-                const monthlyLimit: Record<string, number> = { basic: 1, pro: 10, premium: Infinity };
-                const limit = monthlyLimit[plan] ?? 0;
-
-                // Count this month's mock interviews used
-                const periodStart = new Date();
-                periodStart.setDate(1);
-                periodStart.setHours(0, 0, 0, 0);
-                const psDate = periodStart.toISOString().slice(0, 10);
-
-                const { data: usageRow } = await supabase
-                  .from('candidate_feature_usage')
-                  .select('id, used_count')
-                  .eq('candidate_id', user.id)
-                  .eq('feature', 'mock_interview')
-                  .eq('period_start', psDate)
-                  .maybeSingle();
-
-                const used = usageRow?.used_count ?? 0;
-                if (limit !== Infinity && used >= limit) {
-                  toast.error(
-                    plan === 'free'
-                      ? 'Free plan includes 1 mock interview per month. Upgrade to Pro or Premium for more.'
-                      : 'Monthly mock interview quota reached. Upgrade your plan for more.',
-                  );
-                  return;
-                }
-
-                // Increment usage
-                if (usageRow) {
-                  await supabase
-                    .from('candidate_feature_usage')
-                    .update({ used_count: used + 1 })
-                    .eq('id', usageRow.id);
-                } else {
-                  await supabase
-                    .from('candidate_feature_usage')
-                    .insert({
-                      candidate_id: user.id,
-                      feature: 'mock_interview',
-                      period_start: psDate,
-                      used_count: 1,
-                    });
-                }
-
-                await supabase
-                  .from('mock_interview_sessions')
-                  .update({ points_paid: true, points_paid_at: new Date().toISOString() } as any)
-                  .eq('id', currentSession.id);
-                setCurrentSession({ ...currentSession, ...({ points_paid: true } as any) });
-                toast.success('Pipeline unlocked using your subscription quota.');
-              } catch (e: any) {
-                console.error('Mock interview unlock error:', e);
-                toast.error(e?.message || 'Failed to unlock');
-              } finally {
-                setPayingForMock(false);
-              }
-            }}
-            disabled={payingForMock}
-            className="gap-2"
-            size="lg"
-          >
-            {payingForMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-            Unlock with my plan
-          </Button>
-        </Card>
-      ) : (
       <div className="relative">
         <div>
         <>
