@@ -4,7 +4,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Play,
@@ -19,13 +18,8 @@ import {
   FileText,
   ListChecks,
   ArrowLeft,
-  Clock,
-  Crown,
-  Lock,
-  Zap
+  Clock
 } from "lucide-react";
-import { useMockTestLimits } from "@/hooks/useMockTestLimits";
-import { useActionPayment } from "@/hooks/useActionPayment";
 
 const stagesList = [
   { order: 1, name: "Interview Instructions", icon: Mail },
@@ -45,17 +39,6 @@ const MockInterviewStart = () => {
   const [isStarting, setIsStarting] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const mockTestLimits = useMockTestLimits(user?.id);
-  const { startPayment, isProcessing: isPaying } = useActionPayment();
-
-  const handlePayForExtraTest = async () => {
-    const ok = await startPayment({
-      actionKey: "extra_mock_test",
-      userName: profile?.full_name,
-      userEmail: profile?.email,
-    });
-    if (ok) await mockTestLimits.refetch();
-  };
 
   const isNewEmployee = type === "new-employee";
   const title = isNewEmployee ? "New Employee" : "Promotions";
@@ -206,67 +189,26 @@ const MockInterviewStart = () => {
               </div>
             </div>
 
-            {/* Usage Counter */}
-            {!mockTestLimits.isLoading && (
-              <div className="flex items-center justify-center gap-3 pb-2">
-                <Badge variant={mockTestLimits.canStart ? "secondary" : "destructive"} className="gap-1 text-xs">
-                  {mockTestLimits.plan === 'elite' ? (
-                    <><Crown className="h-3 w-3" /> Unlimited</>
-                  ) : (
-                    <>{mockTestLimits.usedTests}/{mockTestLimits.maxTests} used this month</>
-                  )}
-                </Badge>
-                <Badge variant="outline" className="gap-1 text-xs capitalize">
-                  <Zap className="h-3 w-3" /> {mockTestLimits.plan}
-                </Badge>
-              </div>
-            )}
+            <div className="pt-4">
+              <Button
+                onClick={startMockTest}
+                disabled={isStarting}
+                className="w-full gap-2"
+                size="lg"
+              >
+                {isStarting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Play className="h-5 w-5" />
+                )}
+                Start Interview
+              </Button>
+            </div>
 
-            {/* Limit Reached Prompt */}
-            {!mockTestLimits.isLoading && !mockTestLimits.canStart ? (
-              <div className="space-y-3 text-center">
-                <div className="h-12 w-12 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
-                  <Lock className="h-6 w-6 text-destructive" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  You've used your free mock test for this month. Pay to attend another one.
-                </p>
-                <Button className="w-full gap-2" onClick={handlePayForExtraTest} disabled={isPaying}>
-                  {isPaying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                  Attend Mock Test
-                </Button>
-                <Button variant="outline" className="w-full gap-2" onClick={() => navigate('/candidate/dashboard')}>
-                  <Crown className="h-4 w-4" />
-                  Or Upgrade Plan
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* Start Button */}
-                <div className="pt-4">
-                  <Button
-                    onClick={startMockTest}
-                    disabled={isStarting}
-                    className="w-full gap-2"
-                    size="lg"
-                  >
-                    {isStarting ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <Play className="h-5 w-5" />
-                    )}
-                    Start Interview
-                  </Button>
-                </div>
-
-                <div className="flex justify-center">
-                  <Badge variant="secondary" className="text-xs gap-1">
-                    <Clock className="h-3 w-3" />
-                    Estimated time: 45-60 minutes
-                  </Badge>
-                </div>
-              </>
-            )}
+            <div className="flex justify-center text-xs text-muted-foreground gap-1">
+              <Clock className="h-3 w-3" />
+              Estimated time: 45-60 minutes
+            </div>
           </CardContent>
         </Card>
       </div>
