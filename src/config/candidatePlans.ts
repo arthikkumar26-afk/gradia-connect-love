@@ -163,7 +163,7 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     limits: {
       job_apply: 75,
       external_job_unlock: 15,
-      mock_interview: 15,
+      mock_interview: Infinity,
       mentor_unlock: 3,
       ai_job_apply: 10,
       resume_download: Infinity,

@@ -6,7 +6,6 @@ export type UnlockFeature =
   | "jobs"
   | "aijobapply"
   | "pipeline"
-  | "mocktest"
   | "upskill";
 
 export interface FeatureUnlockDefinition {
@@ -51,14 +50,6 @@ export const FEATURE_UNLOCKS: Record<UnlockFeature, FeatureUnlockDefinition> = {
     tagline: "Track every application & interview stage",
     perks: ["Stage-by-stage tracking", "Status & feedback timeline", "Organised job journey dashboard"],
   },
-  mocktest: {
-    id: "mocktest",
-    label: "Mock Tests / Interviews",
-    shortLabel: "Mock Interviews",
-    price: 9999,
-    tagline: "Real interview simulations + AI scoring",
-    perks: ["Realistic AI-driven interviews", "Detailed performance feedback", "Score & improvement reports"],
-  },
   upskill: {
     id: "upskill",
     label: "Upskill Yourself",
@@ -101,7 +92,7 @@ export const FEATURE_BUNDLES: BundleDefinition[] = [
     id: "career_pro",
     name: "Career Pro Pack",
     price: 29999,
-    features: ["resume", "jobs", "aijobapply", "pipeline", "mocktest"],
+    features: ["resume", "jobs", "aijobapply", "pipeline"],
     description: "All features except Upskilling",
   },
   {
@@ -109,7 +100,7 @@ export const FEATURE_BUNDLES: BundleDefinition[] = [
     name: "Total Value Pack",
     badge: "Best Value",
     price: 45000,
-    features: ["resume", "jobs", "aijobapply", "pipeline", "mocktest", "upskill"],
+    features: ["resume", "jobs", "aijobapply", "pipeline", "upskill"],
     description: "Full Access Bundle — every feature unlocked",
   },
 ];
