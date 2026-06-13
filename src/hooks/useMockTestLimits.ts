@@ -64,16 +64,7 @@ export const useMockTestLimits = (userId: string | undefined): MockTestLimits =>
 
       setUsedTests(count || 0);
 
-      // Count paid extra mock tests this month (each pays for one additional test)
-      const { count: paidCount } = await supabase
-        .from("payment_transactions")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("action_key", "extra_mock_test")
-        .eq("status", "paid")
-        .gte("created_at", monthStart);
-
-      setPaidExtras(paidCount || 0);
+      setPaidExtras(0);
     } catch (error) {
       console.error("Error fetching mock test limits:", error);
     } finally {

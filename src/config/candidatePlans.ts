@@ -181,7 +181,6 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     tier: "elite",
     perks: [
       "Unlimited Job Applications",
-      "Unlimited AI Interviews",
       "Unlimited Resume Exports",
       "Dedicated Career Coach",
       "Real HR Mock Panels",
