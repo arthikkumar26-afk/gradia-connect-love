@@ -3224,7 +3224,6 @@ export const MockInterviewTab = () => {
         </>
         </div>
       </div>
-      )}
     </div>
   );
 };
