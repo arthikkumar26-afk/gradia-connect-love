@@ -53,7 +53,6 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     tier: "free",
     perks: [
       "3 Job Applications / Month",
-      "1 AI Mock Interview",
       "Basic ATS Resume Score",
       "1 Resume PDF Download",
       "Weekly Job Alerts",
@@ -71,7 +70,7 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     limits: {
       job_apply: 3,
       external_job_unlock: 0,
-      mock_interview: 1,
+      mock_interview: Infinity,
       mentor_unlock: 0,
       ai_job_apply: 0,
       resume_download: 1,
@@ -89,7 +88,6 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     tier: "starter",
     perks: [
       "10 Job Applications",
-      "2 AI Mock Interviews",
       "Resume Builder",
       "Basic ATS Optimization",
       "Weekly Job Alerts",
@@ -100,7 +98,7 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     limits: {
       job_apply: 10,
       external_job_unlock: 0,
-      mock_interview: 2,
+      mock_interview: Infinity,
       mentor_unlock: 0,
       ai_job_apply: 0,
       resume_download: 5,
@@ -119,7 +117,6 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     tier: "advance",
     perks: [
       "30 Job Applications",
-      "5 AI Mock Interviews",
       "AI Interview Feedback Reports",
       "ATS Keyword Optimization",
       "Resume PDF Exports",
@@ -132,7 +129,7 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     limits: {
       job_apply: 30,
       external_job_unlock: 5,
-      mock_interview: 5,
+      mock_interview: Infinity,
       mentor_unlock: 1,
       ai_job_apply: 3,
       resume_download: 20,
@@ -152,7 +149,6 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     tier: "pro",
     perks: [
       "75 Job Applications",
-      "15 AI Mock Interviews",
       "Advanced AI Interview Analysis",
       "Personalized Career Roadmap",
       "Re-Interview Support",
@@ -166,7 +162,7 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     limits: {
       job_apply: 75,
       external_job_unlock: 15,
-      mock_interview: 15,
+      mock_interview: Infinity,
       mentor_unlock: 3,
       ai_job_apply: 10,
       resume_download: Infinity,
@@ -185,7 +181,6 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     tier: "elite",
     perks: [
       "Unlimited Job Applications",
-      "Unlimited AI Interviews",
       "Unlimited Resume Exports",
       "Dedicated Career Coach",
       "Real HR Mock Panels",

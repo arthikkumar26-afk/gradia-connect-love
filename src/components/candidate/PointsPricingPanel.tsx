@@ -4,13 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Coins, BookOpen, FileText, Sparkles, UserCheck, Briefcase,
+  Coins, FileText, Sparkles, UserCheck, Briefcase,
   Workflow, ChevronRight, Info, Layers,
 } from "lucide-react";
 import { interviewPipelineConfig, PipelineStage } from "@/data/interviewPipelineConfig";
 
 // Per-feature point costs (must match the values used across the codebase).
-// Mock interview = 500 (MockInterviewTab), Resume PDF = 150 (ResumeBuilderTab).
+// Mock interviews are free and are intentionally not listed as wallet deductions.
 const FEATURE_COSTS: Array<{
   key: string;
   label: string;
@@ -20,15 +20,6 @@ const FEATURE_COSTS: Array<{
   icon: any;
   color: string;
 }> = [
-  {
-    key: "mock_interview",
-    label: "AI Mock Interview",
-    cost: 500,
-    unit: "per session",
-    description: "Unlocks the full pipeline (CV → Written → Demo → HR → Final).",
-    icon: BookOpen,
-    color: "text-cyan-700 bg-cyan-100 dark:bg-cyan-950/40 dark:text-cyan-300",
-  },
   {
     key: "resume_export",
     label: "Resume PDF Export",
@@ -145,7 +136,6 @@ export default function PointsPricingPanel({ userId }: { userId: string }) {
   const { interviewType, pipelineType } = useMemo(() => resolvePipeline(profile), [profile]);
 
   const stages: PipelineStage[] = pipelineType?.stages || [];
-  const totalCost = FEATURE_COSTS.find((f) => f.key === "mock_interview")?.cost || 0;
 
   return (
     <div className="space-y-4">
@@ -199,7 +189,7 @@ export default function PointsPricingPanel({ userId }: { userId: string }) {
           <div className="mt-4 flex items-start gap-2 p-3 rounded-md bg-muted/50 border border-dashed">
             <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <p className="text-[11px] text-muted-foreground leading-snug">
-              Points are deducted only when you confirm the action (e.g. "Pay 500 pts to Unlock"). Unused points never expire.
+              Points are deducted only when you confirm paid actions. Unused points never expire.
               Refunds are issued automatically if a session fails before it starts.
             </p>
           </div>
@@ -214,7 +204,7 @@ export default function PointsPricingPanel({ userId }: { userId: string }) {
             Your AI Mock Interview Pipeline
           </CardTitle>
           <CardDescription>
-            Based on your selected department, this is exactly what the {totalCost} pts unlocks.
+            Based on your selected department, this pipeline is available without wallet deduction.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -274,11 +264,11 @@ export default function PointsPricingPanel({ userId }: { userId: string }) {
                 <div>
                   <p className="text-xs font-medium text-foreground">Total pipeline cost</p>
                   <p className="text-[10px] text-muted-foreground">
-                    Single deduction — covers all {stages.length} rounds end-to-end
+                    Covers all {stages.length} rounds end-to-end
                   </p>
                 </div>
                 <span className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
-                  {totalCost} pts
+                  Free
                 </span>
               </div>
 

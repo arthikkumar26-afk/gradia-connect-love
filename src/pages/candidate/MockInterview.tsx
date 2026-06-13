@@ -223,12 +223,6 @@ const MockInterview = () => {
 
       setSessionData(fetchedSessionData);
 
-      if ((fetchedSessionData as any).points_paid !== true) {
-        toast.error("Unlock this mock interview with 500 points before using it.");
-        navigate('/candidate/dashboard?tab=mocktest');
-        return;
-      }
-
       // Override stages from pipeline config if session has interview_type & pipeline_type
       const sessInterviewType = (fetchedSessionData as any).interview_type || localStorage.getItem('mock_interview_type') || '';
       const sessPipelineType = (fetchedSessionData as any).pipeline_type || localStorage.getItem('mock_pipeline_type') || '';

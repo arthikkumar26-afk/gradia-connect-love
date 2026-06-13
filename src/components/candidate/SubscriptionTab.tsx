@@ -23,7 +23,6 @@ import { CANDIDATE_FREELANCER_COMBOS, FREELANCER_PLANS } from "@/config/freelanc
 const FEATURE_ORDER: CandidateFeature[] = [
   "job_apply",
   "external_job_unlock",
-  "mock_interview",
   "mentor_unlock",
   "ai_job_apply",
   "resume_download",

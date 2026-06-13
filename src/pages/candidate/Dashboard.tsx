@@ -3923,17 +3923,7 @@ const CandidateDashboard = () => {
 
             {/* Attend Mock Test - Standalone Section */}
             {activeMenu === "mocktest" && (
-              featureUnlocks.isUnlocked("mocktest") ? (
-                <MockInterviewTab />
-              ) : (
-                <LockedFeatureOverlay
-                  feature="mocktest"
-                  onUnlocked={featureUnlocks.refresh}
-                  onOpenAllPlans={() => setActiveMenu("upgrade")}
-                >
-                  <MockInterviewTab />
-                </LockedFeatureOverlay>
-              )
+              <MockInterviewTab />
             )}
 
             {/* Graphic Design Challenge */}

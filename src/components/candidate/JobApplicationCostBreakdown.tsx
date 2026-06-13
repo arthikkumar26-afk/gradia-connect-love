@@ -42,13 +42,8 @@ export const JobApplicationCostBreakdown = ({ jobTitle }: Props) => {
     {
       icon: BookOpen,
       label: "AI Mock Interview rounds",
-      detail:
-        sub.limitFor("mock_interview") === 0
-          ? "Upgrade to Pro or Premium to unlock"
-          : sub.limitFor("mock_interview") === Infinity
-            ? "Unlimited mock interviews"
-            : `${sub.remainingFor("mock_interview")} of ${sub.limitFor("mock_interview")} mock interviews left`,
-      included: sub.limitFor("mock_interview") > 0,
+      detail: "Included for all candidates",
+      included: true,
     },
     {
       icon: FileText,
