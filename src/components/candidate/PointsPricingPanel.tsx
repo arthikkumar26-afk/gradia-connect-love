@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Coins, BookOpen, FileText, Sparkles, UserCheck, Briefcase,
+  Coins, FileText, Sparkles, UserCheck, Briefcase,
   Workflow, ChevronRight, Info, Layers,
 } from "lucide-react";
 import { interviewPipelineConfig, PipelineStage } from "@/data/interviewPipelineConfig";
@@ -190,7 +190,7 @@ export default function PointsPricingPanel({ userId }: { userId: string }) {
           <div className="mt-4 flex items-start gap-2 p-3 rounded-md bg-muted/50 border border-dashed">
             <Info className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <p className="text-[11px] text-muted-foreground leading-snug">
-              Points are deducted only when you confirm the action (e.g. "Pay 500 pts to Unlock"). Unused points never expire.
+              Points are deducted only when you confirm paid actions. Unused points never expire.
               Refunds are issued automatically if a session fails before it starts.
             </p>
           </div>
