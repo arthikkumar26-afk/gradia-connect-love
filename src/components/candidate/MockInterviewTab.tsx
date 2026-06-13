@@ -1703,7 +1703,7 @@ export const MockInterviewTab = () => {
                       }}
                     >
                       {isPayingForExtraMock ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                      Pay ₹{mockTestLimits.extraTestPrice} & Attend Another Mock Test
+                      Attend Another Mock Test
                     </Button>
                     <Button variant="outline" className="gap-2" onClick={() => navigate('/candidate/dashboard')}>
                       <Crown className="h-4 w-4" />
@@ -1856,7 +1856,7 @@ export const MockInterviewTab = () => {
                 <Play className="h-5 w-5" />
               )}
               {!mockTestLimits.canStart
-                ? `Pay ₹${mockTestLimits.extraTestPrice} Above to Continue`
+                ? `Pay Above to Continue`
                 : !isMockRoleSelected
                   ? 'Select All Fields to Continue'
                   : `Attend Mock Test — ${selectedMockRoleLabel}`}

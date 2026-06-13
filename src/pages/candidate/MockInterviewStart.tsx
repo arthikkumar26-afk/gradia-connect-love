@@ -229,11 +229,11 @@ const MockInterviewStart = () => {
                   <Lock className="h-6 w-6 text-destructive" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  You've used your free mock test for this month. Pay ₹{mockTestLimits.extraTestPrice} to attend another one.
+                  You've used your free mock test for this month. Pay to attend another one.
                 </p>
                 <Button className="w-full gap-2" onClick={handlePayForExtraTest} disabled={isPaying}>
                   {isPaying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                  Pay ₹{mockTestLimits.extraTestPrice} & Attend Mock Test
+                  Attend Mock Test
                 </Button>
                 <Button variant="outline" className="w-full gap-2" onClick={() => navigate('/candidate/dashboard')}>
                   <Crown className="h-4 w-4" />
