@@ -53,9 +53,6 @@ import { useNavigate } from "react-router-dom";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { indiaLocationData } from "@/data/indiaLocations";
-import { useMockTestLimits } from "@/hooks/useMockTestLimits";
-import { useActionPayment } from "@/hooks/useActionPayment";
-import { Crown, Lock, Zap } from "lucide-react";
 import { interviewPipelineConfig, pipelineRoleOptions, defaultRoleOptions } from "@/data/interviewPipelineConfig";
 
 interface InterviewStage {
@@ -104,8 +101,6 @@ interface MockInterviewSession {
 export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const mockTestLimits = useMockTestLimits(user?.id);
-  const { startPayment: startExtraMockPayment, isProcessing: isPayingForExtraMock } = useActionPayment();
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [currentSession, setCurrentSession] = useState<MockInterviewSession | null>(null);
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
@@ -399,10 +394,6 @@ export const MockInterviewTab = () => {
   // Course suggestions state
   const [courseSuggestions, setCourseSuggestions] = useState<any[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState(false);
-
-  // Wallet points gating for starting a mock interview (extra test beyond plan)
-  const MOCK_INTERVIEW_POINTS = 20;
-  const [payingForMock, setPayingForMock] = useState(false);
 
   useEffect(() => {
     if (user) {
