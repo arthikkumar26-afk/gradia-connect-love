@@ -53,7 +53,6 @@ export const CANDIDATE_PLANS: Record<CandidatePlan, PlanDefinition> = {
     tier: "free",
     perks: [
       "3 Job Applications / Month",
-      "AI Mock Interviews Included Free",
       "Basic ATS Resume Score",
       "1 Resume PDF Download",
       "Weekly Job Alerts",
