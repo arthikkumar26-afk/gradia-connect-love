@@ -136,7 +136,6 @@ export default function PointsPricingPanel({ userId }: { userId: string }) {
   const { interviewType, pipelineType } = useMemo(() => resolvePipeline(profile), [profile]);
 
   const stages: PipelineStage[] = pipelineType?.stages || [];
-  const totalCost = 0;
 
   return (
     <div className="space-y-4">
