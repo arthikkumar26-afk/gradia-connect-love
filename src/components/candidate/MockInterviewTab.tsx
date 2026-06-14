@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getSampleMockInterviewStageResults } from "@/data/sampleMockInterviewData";
@@ -48,6 +48,7 @@ import {
   Star,
   Building2,
   RotateCcw,
+  Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
@@ -118,6 +119,50 @@ export const MockInterviewTab = () => {
   const [selectedMockInterviewType, setSelectedMockInterviewType] = useState(() => localStorage.getItem('mock_interview_type') || '');
   const [selectedMockPipelineType, setSelectedMockPipelineType] = useState(() => localStorage.getItem('mock_pipeline_type') || '');
   const [selectedMockRole, setSelectedMockRole] = useState(() => localStorage.getItem('mock_role') || '');
+  const [positionQuery, setPositionQuery] = useState('');
+  const [positionFocused, setPositionFocused] = useState(false);
+
+  // Flatten all positions across interview types / pipelines / roles for search
+  const allPositions = useMemo(() => {
+    const out: { interviewType: string; interviewLabel: string; pipelineType: string; pipelineLabel: string; role: string; roleLabel: string }[] = [];
+    interviewPipelineConfig.forEach(it => {
+      it.pipelineTypes.forEach(pt => {
+        const key = `${it.value}.${pt.value}`;
+        const roles = pipelineRoleOptions[key] || defaultRoleOptions;
+        roles.forEach(r => {
+          out.push({
+            interviewType: it.value,
+            interviewLabel: it.label,
+            pipelineType: pt.value,
+            pipelineLabel: pt.label,
+            role: r.value,
+            roleLabel: r.label,
+          });
+        });
+      });
+    });
+    return out;
+  }, []);
+
+  const filteredPositions = useMemo(() => {
+    const q = positionQuery.trim().toLowerCase();
+    if (!q) return [];
+    return allPositions
+      .filter(p =>
+        p.roleLabel.toLowerCase().includes(q) ||
+        p.pipelineLabel.toLowerCase().includes(q) ||
+        p.interviewLabel.toLowerCase().includes(q)
+      )
+      .slice(0, 20);
+  }, [positionQuery, allPositions]);
+
+  const applyPosition = (p: { interviewType: string; pipelineType: string; role: string; roleLabel: string }) => {
+    setSelectedMockInterviewType(p.interviewType);
+    setSelectedMockPipelineType(p.pipelineType);
+    setSelectedMockRole(p.role);
+    setPositionQuery(p.roleLabel);
+    setPositionFocused(false);
+  };
 
   // Load admin pipeline config defaults (if no localStorage values exist)
   useEffect(() => {
@@ -1654,6 +1699,39 @@ export const MockInterviewTab = () => {
                 Select Your Interview Details
               </p>
 
+              {/* Search Position */}
+              <div className="space-y-1.5 relative">
+                <Label className="text-sm font-medium">Search Position</Label>
+                <div className="relative">
+                  <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={positionQuery}
+                    onChange={(e) => { setPositionQuery(e.target.value); setPositionFocused(true); }}
+                    onFocus={() => setPositionFocused(true)}
+                    onBlur={() => setTimeout(() => setPositionFocused(false), 150)}
+                    placeholder="Search e.g. React Developer, Math Teacher, UX Designer"
+                    className="pl-9 h-10"
+                  />
+                </div>
+                {positionFocused && positionQuery.trim() && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-md border bg-popover shadow-md">
+                    {filteredPositions.length === 0 ? (
+                      <div className="p-3 text-sm text-muted-foreground">No matching positions</div>
+                    ) : filteredPositions.map((p, i) => (
+                      <button
+                        key={`${p.interviewType}.${p.pipelineType}.${p.role}-${i}`}
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); applyPosition(p); }}
+                        className="w-full text-left px-3 py-2 hover:bg-accent border-b last:border-b-0"
+                      >
+                        <div className="text-sm font-medium">{p.roleLabel}</div>
+                        <div className="text-xs text-muted-foreground">{p.interviewLabel} · {p.pipelineLabel}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Interview Type */}
               <div className="space-y-1.5">
                 <Label className="text-sm font-medium">Interview Type <span className="text-destructive">*</span></Label>
@@ -1845,6 +1923,36 @@ export const MockInterviewTab = () => {
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
+
+          {/* Search Position (inline) */}
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={positionQuery}
+              onChange={(e) => { setPositionQuery(e.target.value); setPositionFocused(true); }}
+              onFocus={() => setPositionFocused(true)}
+              onBlur={() => setTimeout(() => setPositionFocused(false), 150)}
+              placeholder="Search position..."
+              className="pl-8 h-10 w-[220px] text-xs"
+            />
+            {positionFocused && positionQuery.trim() && (
+              <div className="absolute z-50 left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-md border bg-popover shadow-md min-w-[280px]">
+                {filteredPositions.length === 0 ? (
+                  <div className="p-3 text-sm text-muted-foreground">No matching positions</div>
+                ) : filteredPositions.map((p, i) => (
+                  <button
+                    key={`${p.interviewType}.${p.pipelineType}.${p.role}-${i}`}
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); applyPosition(p); }}
+                    className="w-full text-left px-3 py-2 hover:bg-accent border-b last:border-b-0"
+                  >
+                    <div className="text-sm font-medium">{p.roleLabel}</div>
+                    <div className="text-xs text-muted-foreground">{p.interviewLabel} · {p.pipelineLabel}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* 3 inline selectors beside refresh: Interview Type → Pipeline Type → Role (matches vacancy creation) */}
           <Select
