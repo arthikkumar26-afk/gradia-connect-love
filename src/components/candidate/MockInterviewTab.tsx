@@ -3021,9 +3021,9 @@ export const MockInterviewTab = () => {
                         variant="outline"
                         onClick={() => generateMockInterviewReportPdf({
                           candidateName: profile?.full_name || 'Candidate',
-                          interviewType: currentSession?.interview_type,
-                          pipelineType: currentSession?.pipeline_type,
-                          sessionStartedAt: currentSession?.started_at,
+                          interviewType: (currentSession as any)?.interview_type,
+                          pipelineType: (currentSession as any)?.pipeline_type,
+                          sessionStartedAt: (currentSession as any)?.started_at,
                           stageResults: stageResults as any,
                         })}
                         className="gap-2"
