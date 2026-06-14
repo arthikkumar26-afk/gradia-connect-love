@@ -3016,7 +3016,22 @@ export const MockInterviewTab = () => {
                     </div>
 
                     {/* Complete Interview Button */}
-                    <div className="flex justify-center pt-2">
+                    <div className="flex justify-center gap-3 pt-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        onClick={() => generateMockInterviewReportPdf({
+                          candidateName: profile?.full_name || 'Candidate',
+                          interviewType: currentSession?.interview_type,
+                          pipelineType: currentSession?.pipeline_type,
+                          sessionStartedAt: currentSession?.started_at,
+                          stageResults: stageResults as any,
+                        })}
+                        className="gap-2"
+                        size="lg"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download Report (PDF)
+                      </Button>
                       <Button 
                         onClick={completeFinalReview}
                         disabled={isCompletingFinalReview}
