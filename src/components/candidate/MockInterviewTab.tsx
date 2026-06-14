@@ -50,6 +50,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Download } from "lucide-react";
+import { generateMockInterviewReportPdf } from "@/utils/mockInterviewReportPdf";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { indiaLocationData } from "@/data/indiaLocations";
