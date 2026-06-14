@@ -50,6 +50,8 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Download } from "lucide-react";
+import { generateMockInterviewReportPdf } from "@/utils/mockInterviewReportPdf";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { indiaLocationData } from "@/data/indiaLocations";
@@ -3014,7 +3016,22 @@ export const MockInterviewTab = () => {
                     </div>
 
                     {/* Complete Interview Button */}
-                    <div className="flex justify-center pt-2">
+                    <div className="flex justify-center gap-3 pt-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        onClick={() => generateMockInterviewReportPdf({
+                          candidateName: profile?.full_name || 'Candidate',
+                          interviewType: (currentSession as any)?.interview_type,
+                          pipelineType: (currentSession as any)?.pipeline_type,
+                          sessionStartedAt: (currentSession as any)?.started_at,
+                          stageResults: stageResults as any,
+                        })}
+                        className="gap-2"
+                        size="lg"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download Report (PDF)
+                      </Button>
                       <Button 
                         onClick={completeFinalReview}
                         disabled={isCompletingFinalReview}
