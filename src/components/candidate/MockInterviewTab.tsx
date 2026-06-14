@@ -1534,9 +1534,10 @@ export const MockInterviewTab = () => {
 
   // Get the current pipeline's display stages
   const getDisplayStages = () => {
+    const stripOffer = <T extends { name: string }>(arr: T[]) => arr.filter(s => s.name.toLowerCase() !== 'offer stage');
     // Priority 1: Use stages from the selected pipeline dropdown (most accurate)
     if (selectedPipelineStages.length > 0) {
-      return selectedPipelineStages.map((s, idx) => ({
+      return stripOffer(selectedPipelineStages).map((s, idx) => ({
         name: s.name,
         order: idx + 1,
         description: (s as any).description || '',
@@ -1550,7 +1551,7 @@ export const MockInterviewTab = () => {
         ?.pipelineTypes.find(pt => pt.value === selectedMockPipelineType)
         ?.stages || [];
       if (configStages.length > 0) {
-        return configStages.map((s, idx) => ({
+        return stripOffer(configStages).map((s, idx) => ({
           name: s.name,
           order: idx + 1,
           description: (s as any).description || '',
@@ -1558,19 +1559,19 @@ export const MockInterviewTab = () => {
       }
     }
     // Priority 3: Derive from profile category
-    if (isITCorporate) return getITPipelineStages();
+    if (isITCorporate) return stripOffer(getITPipelineStages());
     // Priority 4: Use mock interview type from localStorage to check if it's non-education
     if (selectedMockInterviewType && selectedMockInterviewType !== 'education') {
       const configType = interviewPipelineConfig.find(t => t.value === selectedMockInterviewType);
       if (configType?.pipelineTypes?.[0]?.stages) {
-        return configType.pipelineTypes[0].stages.map((s, idx) => ({
+        return stripOffer(configType.pipelineTypes[0].stages).map((s, idx) => ({
           name: s.name,
           order: idx + 1,
           description: (s as any).description || '',
         }));
       }
     }
-    return stages.map((s, idx) => ({ name: s.name, order: idx + 1, description: '' }));
+    return stripOffer(stages).map((s, idx) => ({ name: s.name, order: idx + 1, description: '' }));
   };
   const displayStagesList = getDisplayStages();
   // Find slot booking stage orders dynamically
