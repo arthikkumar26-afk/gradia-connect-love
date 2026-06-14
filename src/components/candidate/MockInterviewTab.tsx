@@ -119,6 +119,50 @@ export const MockInterviewTab = () => {
   const [selectedMockInterviewType, setSelectedMockInterviewType] = useState(() => localStorage.getItem('mock_interview_type') || '');
   const [selectedMockPipelineType, setSelectedMockPipelineType] = useState(() => localStorage.getItem('mock_pipeline_type') || '');
   const [selectedMockRole, setSelectedMockRole] = useState(() => localStorage.getItem('mock_role') || '');
+  const [positionQuery, setPositionQuery] = useState('');
+  const [positionFocused, setPositionFocused] = useState(false);
+
+  // Flatten all positions across interview types / pipelines / roles for search
+  const allPositions = useMemo(() => {
+    const out: { interviewType: string; interviewLabel: string; pipelineType: string; pipelineLabel: string; role: string; roleLabel: string }[] = [];
+    interviewPipelineConfig.forEach(it => {
+      it.pipelineTypes.forEach(pt => {
+        const key = `${it.value}.${pt.value}`;
+        const roles = pipelineRoleOptions[key] || defaultRoleOptions;
+        roles.forEach(r => {
+          out.push({
+            interviewType: it.value,
+            interviewLabel: it.label,
+            pipelineType: pt.value,
+            pipelineLabel: pt.label,
+            role: r.value,
+            roleLabel: r.label,
+          });
+        });
+      });
+    });
+    return out;
+  }, []);
+
+  const filteredPositions = useMemo(() => {
+    const q = positionQuery.trim().toLowerCase();
+    if (!q) return [];
+    return allPositions
+      .filter(p =>
+        p.roleLabel.toLowerCase().includes(q) ||
+        p.pipelineLabel.toLowerCase().includes(q) ||
+        p.interviewLabel.toLowerCase().includes(q)
+      )
+      .slice(0, 20);
+  }, [positionQuery, allPositions]);
+
+  const applyPosition = (p: { interviewType: string; pipelineType: string; role: string; roleLabel: string }) => {
+    setSelectedMockInterviewType(p.interviewType);
+    setSelectedMockPipelineType(p.pipelineType);
+    setSelectedMockRole(p.role);
+    setPositionQuery(p.roleLabel);
+    setPositionFocused(false);
+  };
 
   // Load admin pipeline config defaults (if no localStorage values exist)
   useEffect(() => {
