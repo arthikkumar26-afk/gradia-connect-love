@@ -1924,6 +1924,36 @@ export const MockInterviewTab = () => {
             <RotateCcw className="h-4 w-4" />
           </Button>
 
+          {/* Search Position (inline) */}
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={positionQuery}
+              onChange={(e) => { setPositionQuery(e.target.value); setPositionFocused(true); }}
+              onFocus={() => setPositionFocused(true)}
+              onBlur={() => setTimeout(() => setPositionFocused(false), 150)}
+              placeholder="Search position..."
+              className="pl-8 h-10 w-[220px] text-xs"
+            />
+            {positionFocused && positionQuery.trim() && (
+              <div className="absolute z-50 left-0 right-0 mt-1 max-h-72 overflow-y-auto rounded-md border bg-popover shadow-md min-w-[280px]">
+                {filteredPositions.length === 0 ? (
+                  <div className="p-3 text-sm text-muted-foreground">No matching positions</div>
+                ) : filteredPositions.map((p, i) => (
+                  <button
+                    key={`${p.interviewType}.${p.pipelineType}.${p.role}-${i}`}
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); applyPosition(p); }}
+                    className="w-full text-left px-3 py-2 hover:bg-accent border-b last:border-b-0"
+                  >
+                    <div className="text-sm font-medium">{p.roleLabel}</div>
+                    <div className="text-xs text-muted-foreground">{p.interviewLabel} · {p.pipelineLabel}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* 3 inline selectors beside refresh: Interview Type → Pipeline Type → Role (matches vacancy creation) */}
           <Select
             value={selectedMockInterviewType}
