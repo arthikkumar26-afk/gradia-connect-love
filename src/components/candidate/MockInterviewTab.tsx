@@ -461,10 +461,10 @@ export const MockInterviewTab = () => {
       const sessPipelineType = (prioritizedSession as any)?.pipeline_type || localStorage.getItem('mock_pipeline_type') || '';
 
       if (sessInterviewType && sessPipelineType) {
-        const configStages = interviewPipelineConfig
+        const configStages = (interviewPipelineConfig
           .find(t => t.value === sessInterviewType)
           ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
-          ?.stages || [];
+          ?.stages || []).filter(s => s.name.toLowerCase() !== 'offer stage');
         if (configStages.length > 0) {
           resolvedStages = configStages.map((s, idx) => ({
             name: s.name,
