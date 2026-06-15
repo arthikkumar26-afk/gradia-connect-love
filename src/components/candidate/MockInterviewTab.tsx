@@ -101,6 +101,13 @@ interface MockInterviewSession {
   points_paid_at?: string | null;
 }
 
+// Business/consulting roles that should NOT include coding stages in mock tests
+const NON_CODING_BUSINESS_ROLES = [
+  'business_analyst', 'it_business_analyst', 'functional_consultant',
+  'erp_consultant', 'crm_consultant', 'it_consultant',
+  'solution_architect', 'pre_sales_consultant',
+];
+
 export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
