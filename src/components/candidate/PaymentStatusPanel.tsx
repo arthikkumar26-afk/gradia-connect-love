@@ -73,17 +73,24 @@ export default function PaymentStatusPanel({ userId }: Props) {
   const [mockTxns, setMockTxns] = useState<MockTxn[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     if (!userId) return;
     setRefreshing(true);
     try {
-      const { data: res, error } = await supabase.functions.invoke(
-        "get-candidate-payment-status"
-      );
-      if (error) throw error;
-      setData(res as StatusData);
+      const [statusRes, txnRes] = await Promise.all([
+        supabase.functions.invoke("get-candidate-payment-status"),
+        supabase
+          .from("payment_transactions")
+          .select("id, amount_inr, status, created_at, razorpay_payment_id, razorpay_order_id")
+          .eq("user_id", userId)
+          .eq("action_key", "extra_mock_test")
+          .order("created_at", { ascending: false })
+          .limit(50),
+      ]);
+      if (statusRes.error) throw statusRes.error;
+      setData(statusRes.data as StatusData);
+      if (!txnRes.error && txnRes.data) setMockTxns(txnRes.data as MockTxn[]);
     } catch (e) {
       console.error("[PaymentStatusPanel] load failed", e);
     } finally {
