@@ -14,14 +14,14 @@ interface MockTestLimits {
 }
 
 const PLAN_LIMITS: Record<string, number> = {
-  free: Infinity,
-  starter: Infinity,
-  advance: Infinity,
-  pro_accelerator: Infinity,
+  free: 2,
+  starter: 5,
+  advance: 15,
+  pro_accelerator: 40,
   elite: Infinity,
 };
 
-const EXTRA_TEST_PRICE = 0;
+const EXTRA_TEST_PRICE = 149;
 
 export const useMockTestLimits = (userId: string | undefined): MockTestLimits => {
   const [plan, setPlan] = useState("free");
@@ -64,7 +64,15 @@ export const useMockTestLimits = (userId: string | undefined): MockTestLimits =>
 
       setUsedTests(count || 0);
 
-      setPaidExtras(0);
+      const { count: paidCount } = await supabase
+        .from("payment_transactions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("action_key", "extra_mock_test")
+        .eq("status", "paid")
+        .gte("created_at", monthStart);
+
+      setPaidExtras(paidCount || 0);
     } catch (error) {
       console.error("Error fetching mock test limits:", error);
     } finally {

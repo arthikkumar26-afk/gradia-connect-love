@@ -53,6 +53,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
 import { generateMockInterviewReportPdf } from "@/utils/mockInterviewReportPdf";
+import { useMockTestLimits } from "@/hooks/useMockTestLimits";
+import { useActionPayment } from "@/hooks/useActionPayment";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { indiaLocationData } from "@/data/indiaLocations";
@@ -111,6 +113,8 @@ const NON_CODING_BUSINESS_ROLES = [
 export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const mockLimits = useMockTestLimits(user?.id);
+  const { startPayment, isProcessing: isPayProcessing } = useActionPayment();
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [currentSession, setCurrentSession] = useState<MockInterviewSession | null>(null);
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
@@ -686,11 +690,33 @@ export const MockInterviewTab = () => {
     }
   };
 
+  const ensureMockQuota = async (): Promise<boolean> => {
+    if (mockLimits.isLoading) {
+      toast.info("Checking your mock test quota…");
+      return false;
+    }
+    if (mockLimits.canStart) return true;
+    const confirmed = window.confirm(
+      `You've used all ${mockLimits.maxTests} mock interviews on the ${mockLimits.plan} plan this month. Pay ₹${mockLimits.extraTestPrice} to unlock one more mock interview?`,
+    );
+    if (!confirmed) return false;
+    const paid = await startPayment({
+      actionKey: "extra_mock_test",
+      userName: profile?.full_name,
+      userEmail: profile?.email,
+      userPhone: profile?.phone,
+    });
+    if (!paid) return false;
+    await mockLimits.refetch();
+    return true;
+  };
+
   const startMockTest = async () => {
     if (!user || !profile) {
       toast.error("Please complete your profile first");
       return;
     }
+    if (!(await ensureMockQuota())) return;
 
     setIsStarting(true);
     try {
@@ -714,6 +740,7 @@ export const MockInterviewTab = () => {
       setCurrentSession(session);
       setStageResults([]);
       toast.success("Mock interview started! Begin with Interview Instructions.");
+      mockLimits.refetch();
 
     } catch (error) {
       console.error('Error starting session:', error);
@@ -728,6 +755,7 @@ export const MockInterviewTab = () => {
       toast.error("Please complete your profile first");
       return;
     }
+    if (!(await ensureMockQuota())) return;
 
     setIsStarting(true);
     try {
@@ -751,6 +779,7 @@ export const MockInterviewTab = () => {
       setCurrentSession(session);
       setStageResults([]);
       toast.success("New interview started! Begin with Interview Instructions.");
+      mockLimits.refetch();
 
     } catch (error) {
       console.error('Error starting new session:', error);

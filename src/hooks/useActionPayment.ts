@@ -19,7 +19,7 @@ const loadRazorpayScript = (): Promise<boolean> =>
   });
 
 export interface ActionPaymentArgs {
-  actionKey: "mentor_contact_unlock" | "cv_unlock" | "interview_unlock";
+  actionKey: "mentor_contact_unlock" | "cv_unlock" | "interview_unlock" | "extra_mock_test";
   relatedUserId?: string;
   relatedEntityId?: string;
   metadata?: Record<string, any>;
