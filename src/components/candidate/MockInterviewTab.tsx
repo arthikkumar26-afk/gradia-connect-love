@@ -2212,61 +2212,7 @@ export const MockInterviewTab = () => {
                         {isExpanded ? 'Hide Summary' : 'View Final Summary'}
                       </Button>
                     )}
-                    {/* Resend Mail button for completed stages - sends results summary, not restart link */}
-                    {status === 'completed' && currentSession && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={resendingStage === stage.order}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (!profile?.email || !currentSession) return;
-                          setResendingStage(stage.order);
-                          try {
-                            const appUrl = window.location.origin;
-                            // For completed stages, send feedback/results email pointing to dashboard
-                            const feedbackData = result ? {
-                              score: result.ai_score || 0,
-                              passed: result.passed || false,
-                              feedback: result.ai_feedback || 'Stage completed.',
-                              strengths: (result.strengths as string[]) || [],
-                              improvements: (result.improvements as string[]) || [],
-                            } : undefined;
-                            
-                            // Determine stage name for email - use feedback variant for completed stages
-                            const completedStageName = `${stage.name} - Results`;
-                            
-                            const { error } = await supabase.functions.invoke('send-mock-interview-invitation', {
-                              body: {
-                                candidateEmail: profile.email,
-                                candidateName: profile.full_name,
-                                sessionId: currentSession.id,
-                                stageOrder: stage.order,
-                                stageName: completedStageName,
-                                stageDescription: `Your ${stage.name} results. Score: ${result?.ai_score || 0}%. View your dashboard for full details.`,
-                                appUrl,
-                                feedbackData,
-                              },
-                            });
-                            if (error) throw error;
-                            toast.success(`Results email resent for ${stage.name}`);
-                          } catch (err) {
-                            console.error('Resend mail error:', err);
-                            toast.error('Failed to resend email');
-                          } finally {
-                            setResendingStage(null);
-                          }
-                        }}
-                        className="gap-1 text-xs"
-                      >
-                        {resendingStage === stage.order ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Mail className="h-3 w-3" />
-                        )}
-                        Resend Mail
-                      </Button>
-                    )}
+                    {/* Resend Mail removed - mock test runs entirely in-app, no emails */}
                     {hasResults && (
                       <Button 
                         variant="outline" 
