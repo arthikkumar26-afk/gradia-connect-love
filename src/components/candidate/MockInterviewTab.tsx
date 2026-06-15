@@ -1579,7 +1579,15 @@ export const MockInterviewTab = () => {
 
   // Get the current pipeline's display stages
   const getDisplayStages = () => {
-    const stripOffer = <T extends { name: string }>(arr: T[]) => arr.filter(s => s.name.toLowerCase() !== 'offer stage' && !s.name.toLowerCase().includes('slot booking') && !s.name.toLowerCase().includes('cv') && !s.name.toLowerCase().includes('resume'));
+    const removeCoding = NON_CODING_BUSINESS_ROLES.includes(selectedMockRole);
+    const stripOffer = <T extends { name: string }>(arr: T[]) => arr.filter(s => {
+      const n = s.name.toLowerCase();
+      return n !== 'offer stage'
+        && !n.includes('slot booking')
+        && !n.includes('cv')
+        && !n.includes('resume')
+        && (!removeCoding || !n.includes('coding'));
+    });
     // Priority 1: Use stages from the selected pipeline dropdown (most accurate)
     if (selectedPipelineStages.length > 0) {
       return stripOffer(selectedPipelineStages).map((s, idx) => ({
