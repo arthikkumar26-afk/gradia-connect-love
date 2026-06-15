@@ -754,6 +754,7 @@ export const MockInterviewTab = () => {
       toast.error("Please complete your profile first");
       return;
     }
+    if (!(await ensureMockQuota())) return;
 
     setIsStarting(true);
     try {
