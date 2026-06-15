@@ -2109,7 +2109,7 @@ export const MockInterviewTab = () => {
 
                   {/* Action */}
                   <div className="flex-shrink-0 flex items-center gap-2">
-                    {/* For stage 1 (Interview Instructions) current - show Send & Proceed button */}
+                    {/* For stage 1 (Interview Instructions) current - show Start button that directly advances */}
                     {status === 'current' && stage.order === 1 && currentSession && (
                       <Button 
                         variant="default" 
@@ -2118,35 +2118,25 @@ export const MockInterviewTab = () => {
                         onClick={async () => {
                           setIsStarting(true);
                           try {
-                            // Send instructions email
-                            const sent = await sendInterviewInstructionsEmail(currentSession.id);
-                            if (sent) {
-                              // Complete stage 1 and move to stage 2
-                              await completeInstructionsStage(currentSession.id);
-                              await loadData();
-                              toast.success("Instructions sent! Proceed to next stage.");
-                            } else {
-                              toast.error("Failed to send instructions email.");
+                            await completeInstructionsStage(currentSession.id);
+                            await loadData();
+                            // Move directly to next stage
+                            const nextStage = stages.find(s => s.order > 1);
+                            if (nextStage) {
+                              goToStage(nextStage.order);
                             }
                           } catch (err) {
-                            console.error("Error completing instructions stage:", err);
-                            toast.error("Failed to complete stage.");
+                            console.error("Error starting test:", err);
+                            toast.error("Failed to start test.");
                           } finally {
                             setIsStarting(false);
                           }
                         }}
                         className="gap-1"
                       >
-                        {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                        {isStarting ? 'Sending...' : 'Send Instructions & Proceed'}
+                        {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                        {isStarting ? 'Starting...' : 'Start Test'}
                       </Button>
-                    )}
-                    {/* For stage 1 (Interview Instructions) completed - show email sent indicator */}
-                    {status === 'completed' && stage.order === 1 && (
-                      <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        <Mail className="h-3 w-3 mr-1" />
-                        Email Sent
-                      </Badge>
                     )}
                     {/* For Technical Assessment Slot Booking (stage 2) in progress, show Book Slot button */}
                     {status === 'current' && isFirstSlotBooking(stage.order) && (
