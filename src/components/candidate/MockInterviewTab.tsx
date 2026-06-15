@@ -2160,46 +2160,19 @@ export const MockInterviewTab = () => {
                         {isExpanded ? 'Hide Booking' : 'Book Slot'}
                       </Button>
                     )}
-                    {/* For current (in-progress) stages, show Resend Mail button */}
-                    {status === 'current' && currentSession && (
+                    {/* For current (in-progress) stages without a dedicated action, show Start button */}
+                    {status === 'current' && currentSession && stage.order !== 1 && stage.order !== 7 && stage.order !== 8 && !isSlotBookingOrder(stage.order) && (
                       <Button
-                        variant="ghost"
+                        variant="default"
                         size="sm"
-                        disabled={resendingStage === stage.order}
-                        onClick={async (e) => {
+                        onClick={(e) => {
                           e.stopPropagation();
-                          if (!profile?.email || !currentSession) return;
-                          setResendingStage(stage.order);
-                          try {
-                            const appUrl = window.location.origin;
-                            const { error } = await supabase.functions.invoke('send-mock-interview-invitation', {
-                              body: {
-                                candidateEmail: profile.email,
-                                candidateName: profile.full_name,
-                                sessionId: currentSession.id,
-                                stageOrder: stage.order,
-                                stageName: stage.name,
-                                stageDescription: stage.description || `${stage.name} stage.`,
-                                appUrl,
-                              },
-                            });
-                            if (error) throw error;
-                            toast.success(`Email resent for ${stage.name}`);
-                          } catch (err) {
-                            console.error('Resend mail error:', err);
-                            toast.error('Failed to resend email');
-                          } finally {
-                            setResendingStage(null);
-                          }
+                          goToStage(stage.order);
                         }}
-                        className="gap-1 text-xs"
+                        className="gap-1"
                       >
-                        {resendingStage === stage.order ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Mail className="h-3 w-3" />
-                        )}
-                        Resend Mail
+                        <Play className="h-4 w-4" />
+                        Start
                       </Button>
                     )}
                     {/* For Demo Slot Booking (stage 4) in progress, show Book Slot button */}
