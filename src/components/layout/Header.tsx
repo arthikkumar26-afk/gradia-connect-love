@@ -15,7 +15,24 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const stored = localStorage.getItem("theme");
+    if (stored) return stored === "dark";
+    return document.documentElement.classList.contains("dark");
+  });
+
+  // Apply persisted theme on mount and keep <html> class in sync
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    try {
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    } catch {}
+  }, [isDark]);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const {
     isAuthenticated,
@@ -60,8 +77,7 @@ const Header = () => {
     };
   }, [isMenuOpen]);
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle("dark");
+    setIsDark((prev) => !prev);
   };
   const handleProtectedNavigation = (path: string) => {
     if (!isAuthenticated) {
