@@ -14,14 +14,14 @@ interface MockTestLimits {
 }
 
 const PLAN_LIMITS: Record<string, number> = {
-  free: Infinity,
-  starter: Infinity,
-  advance: Infinity,
-  pro_accelerator: Infinity,
+  free: 2,
+  starter: 5,
+  advance: 15,
+  pro_accelerator: 40,
   elite: Infinity,
 };
 
-const EXTRA_TEST_PRICE = 0;
+const EXTRA_TEST_PRICE = 149;
 
 export const useMockTestLimits = (userId: string | undefined): MockTestLimits => {
   const [plan, setPlan] = useState("free");
