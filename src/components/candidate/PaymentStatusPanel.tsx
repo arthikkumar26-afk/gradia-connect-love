@@ -2,8 +2,18 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, XCircle, AlertCircle, Clock, RefreshCw, CreditCard, Receipt } from "lucide-react";
+import { CheckCircle2, XCircle, AlertCircle, Clock, RefreshCw, CreditCard, Receipt, Video } from "lucide-react";
+
+interface MockTxn {
+  id: string;
+  amount_inr: number;
+  status: string;
+  created_at: string;
+  razorpay_payment_id: string | null;
+  razorpay_order_id: string | null;
+}
 
 interface Props {
   userId: string;
