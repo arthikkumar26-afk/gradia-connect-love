@@ -16,7 +16,7 @@ import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER, type CandidatePlan } from "@/con
 import { CANDIDATE_FREELANCER_COMBOS, FREELANCER_PLANS } from "@/config/freelancerPlans";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 
-const loadRazorpayScript = (): Promise<boolean =>
+const loadRazorpayScript = (): Promise<boolean> =>
   new Promise((resolve) => {
     if ((window as any).Razorpay) return resolve(true);
     const s = document.createElement("script");
