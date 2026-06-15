@@ -1997,10 +1997,10 @@ export const MockInterviewTab = () => {
                     key={`${p.interviewType}.${p.pipelineType}.${p.role}-${i}`}
                     type="button"
                     onMouseDown={(e) => { e.preventDefault(); applyPosition(p); }}
-                    className="w-full text-left px-3 py-2 hover:bg-accent border-b last:border-b-0"
+                    className="group w-full text-left px-3 py-2 hover:bg-accent focus:bg-accent border-b last:border-b-0"
                   >
-                    <div className="text-sm font-medium">{p.roleLabel}</div>
-                    <div className="text-xs text-muted-foreground">{p.interviewLabel} · {p.pipelineLabel}</div>
+                    <div className="text-sm font-medium group-hover:text-accent-foreground group-focus:text-accent-foreground">{p.roleLabel}</div>
+                    <div className="text-xs text-muted-foreground group-hover:text-accent-foreground/80 group-focus:text-accent-foreground/80">{p.interviewLabel} · {p.pipelineLabel}</div>
                   </button>
                 ))}
               </div>
