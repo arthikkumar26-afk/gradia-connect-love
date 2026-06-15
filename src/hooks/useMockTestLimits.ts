@@ -62,11 +62,15 @@ export const useMockTestLimits = (userId: string | undefined): MockTestLimits =>
         .eq("candidate_id", userId)
         .gte("created_at", monthStart);
 
-      setUsedTests(count || 0);
+      const { count: paidCount } = await supabase
+        .from("payment_transactions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("action_key", "extra_mock_test")
+        .eq("status", "paid")
+        .gte("created_at", monthStart);
 
-      setPaidExtras(0);
-    } catch (error) {
-      console.error("Error fetching mock test limits:", error);
+      setPaidExtras(paidCount || 0);
     } finally {
       setIsLoading(false);
     }
