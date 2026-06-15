@@ -509,7 +509,7 @@ export const MockInterviewTab = () => {
         const configStages = (interviewPipelineConfig
           .find(t => t.value === sessInterviewType)
           ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
-          ?.stages || []).filter(s => s.name.toLowerCase() !== 'offer stage');
+          ?.stages || []).filter(s => s.name.toLowerCase() !== 'offer stage' && !s.name.toLowerCase().includes('slot booking'));
         if (configStages.length > 0) {
           resolvedStages = configStages.map((s, idx) => ({
             name: s.name,
