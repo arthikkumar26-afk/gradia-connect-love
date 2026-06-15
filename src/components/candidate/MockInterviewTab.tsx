@@ -113,6 +113,8 @@ const NON_CODING_BUSINESS_ROLES = [
 export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const mockLimits = useMockTestLimits(user?.id);
+  const { startPayment, isProcessing: isPayProcessing } = useActionPayment();
   const [stages, setStages] = useState<InterviewStage[]>([]);
   const [currentSession, setCurrentSession] = useState<MockInterviewSession | null>(null);
   const [stageResults, setStageResults] = useState<StageResult[]>([]);
