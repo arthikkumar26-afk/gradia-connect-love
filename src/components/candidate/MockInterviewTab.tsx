@@ -509,7 +509,7 @@ export const MockInterviewTab = () => {
         const configStages = (interviewPipelineConfig
           .find(t => t.value === sessInterviewType)
           ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
-          ?.stages || []).filter(s => s.name.toLowerCase() !== 'offer stage' && !s.name.toLowerCase().includes('slot booking'));
+          ?.stages || []).filter(s => s.name.toLowerCase() !== 'offer stage' && !s.name.toLowerCase().includes('slot booking') && !s.name.toLowerCase().includes('cv') && !s.name.toLowerCase().includes('resume'));
         if (configStages.length > 0) {
           resolvedStages = configStages.map((s, idx) => ({
             name: s.name,
@@ -1579,7 +1579,7 @@ export const MockInterviewTab = () => {
 
   // Get the current pipeline's display stages
   const getDisplayStages = () => {
-    const stripOffer = <T extends { name: string }>(arr: T[]) => arr.filter(s => s.name.toLowerCase() !== 'offer stage' && !s.name.toLowerCase().includes('slot booking'));
+    const stripOffer = <T extends { name: string }>(arr: T[]) => arr.filter(s => s.name.toLowerCase() !== 'offer stage' && !s.name.toLowerCase().includes('slot booking') && !s.name.toLowerCase().includes('cv') && !s.name.toLowerCase().includes('resume'));
     // Priority 1: Use stages from the selected pipeline dropdown (most accurate)
     if (selectedPipelineStages.length > 0) {
       return stripOffer(selectedPipelineStages).map((s, idx) => ({
