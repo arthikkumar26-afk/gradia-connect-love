@@ -506,10 +506,19 @@ export const MockInterviewTab = () => {
       const sessPipelineType = (prioritizedSession as any)?.pipeline_type || localStorage.getItem('mock_pipeline_type') || '';
 
       if (sessInterviewType && sessPipelineType) {
+        const sessRole = (prioritizedSession as any)?.role || localStorage.getItem('mock_role') || '';
+        const removeCodingLoad = NON_CODING_BUSINESS_ROLES.includes(sessRole);
         const configStages = (interviewPipelineConfig
           .find(t => t.value === sessInterviewType)
           ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
-          ?.stages || []).filter(s => s.name.toLowerCase() !== 'offer stage' && !s.name.toLowerCase().includes('slot booking') && !s.name.toLowerCase().includes('cv') && !s.name.toLowerCase().includes('resume'));
+          ?.stages || []).filter(s => {
+            const n = s.name.toLowerCase();
+            return n !== 'offer stage'
+              && !n.includes('slot booking')
+              && !n.includes('cv')
+              && !n.includes('resume')
+              && (!removeCodingLoad || !n.includes('coding'));
+          });
         if (configStages.length > 0) {
           resolvedStages = configStages.map((s, idx) => ({
             name: s.name,
