@@ -53,6 +53,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Download } from "lucide-react";
 import { generateMockInterviewReportPdf } from "@/utils/mockInterviewReportPdf";
+import { useMockTestLimits } from "@/hooks/useMockTestLimits";
+import { useActionPayment } from "@/hooks/useActionPayment";
 import { InterviewProgressTracker } from "@/components/candidate/InterviewProgressTracker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { indiaLocationData } from "@/data/indiaLocations";
