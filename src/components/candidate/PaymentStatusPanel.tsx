@@ -70,7 +70,9 @@ const formatDate = (iso: string | null) => {
 
 export default function PaymentStatusPanel({ userId }: Props) {
   const [data, setData] = useState<StatusData | null>(null);
+  const [mockTxns, setMockTxns] = useState<MockTxn[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
