@@ -779,6 +779,7 @@ export const MockInterviewTab = () => {
       setCurrentSession(session);
       setStageResults([]);
       toast.success("New interview started! Begin with Interview Instructions.");
+      mockLimits.refetch();
 
     } catch (error) {
       console.error('Error starting new session:', error);
