@@ -77,8 +77,7 @@ const Header = () => {
     };
   }, [isMenuOpen]);
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle("dark");
+    setIsDark((prev) => !prev);
   };
   const handleProtectedNavigation = (path: string) => {
     if (!isAuthenticated) {
