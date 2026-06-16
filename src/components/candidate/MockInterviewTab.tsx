@@ -691,23 +691,6 @@ export const MockInterviewTab = () => {
   };
 
   const ensureMockQuota = async (): Promise<boolean> => {
-    if (mockLimits.isLoading) {
-      toast.info("Checking your mock test quota…");
-      return false;
-    }
-    if (mockLimits.canStart) return true;
-    const confirmed = window.confirm(
-      `You've used all ${mockLimits.maxTests} mock interviews on the ${mockLimits.plan} plan this month. Pay ₹${mockLimits.extraTestPrice} to unlock one more mock interview?`,
-    );
-    if (!confirmed) return false;
-    const paid = await startPayment({
-      actionKey: "extra_mock_test",
-      userName: profile?.full_name,
-      userEmail: profile?.email,
-      userPhone: profile?.phone,
-    });
-    if (!paid) return false;
-    await mockLimits.refetch();
     return true;
   };
 
