@@ -704,7 +704,7 @@ Requirements:
 1. ALL questions must be DIFFICULT - no easy or basic questions
 2. Each question should require deep technical knowledge to answer well
 3. Include scenario-based and problem-solving questions
-4. For multiple choice questions, provide 4 options with plausible distractors
+4. For multiple choice questions, provide 4 options with plausible distractors AND set correctAnswer to the exact text of the right option
 5. Include expected key points for text answers
 6. Mix question types: multiple_choice and text/scenario
 
