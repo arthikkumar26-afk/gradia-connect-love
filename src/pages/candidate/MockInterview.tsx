@@ -1687,16 +1687,65 @@ const MockInterview = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid gap-3">
-                  {stages.filter(s => s.order < 7).map((s) => (
-                    <div key={s.order} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        <span className="font-medium">{s.name}</span>
+                <div className="flex justify-end">
+                  <Button onClick={downloadFinalReviewPdf} variant="outline" size="sm" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Download Full Report (PDF)
+                  </Button>
+                </div>
+
+                <div className="grid gap-4">
+                  {stages.filter(s => s.order < 7).map((s) => {
+                    const r = allStageResults.find((x: any) => x.stage_order === s.order);
+                    const score = r?.ai_score ?? null;
+                    const passed = r?.passed ?? false;
+                    const feedback = r?.ai_feedback || '';
+                    const strengths: string[] = (r?.strengths as string[]) || [];
+                    const improvements: string[] = (r?.improvements as string[]) || [];
+                    return (
+                      <div key={s.order} className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            <span className="font-semibold">{s.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {score !== null && (
+                              <Badge variant={passed ? 'default' : 'secondary'}>
+                                Score: {score}/100
+                              </Badge>
+                            )}
+                            <Badge variant={passed ? 'default' : 'outline'}>
+                              {passed ? 'Passed' : (r ? 'Completed' : 'Completed')}
+                            </Badge>
+                          </div>
+                        </div>
+                        {feedback && (
+                          <p className="text-sm text-muted-foreground mb-3 whitespace-pre-wrap">{feedback}</p>
+                        )}
+                        {(strengths.length > 0 || improvements.length > 0) && (
+                          <div className="grid md:grid-cols-2 gap-3 mt-2">
+                            {strengths.length > 0 && (
+                              <div className="bg-green-50 dark:bg-green-900/10 rounded p-3">
+                                <h5 className="text-xs font-semibold text-green-700 dark:text-green-400 mb-2 uppercase tracking-wide">Strengths</h5>
+                                <ul className="text-sm space-y-1 list-disc list-inside text-foreground">
+                                  {strengths.map((t, i) => <li key={i}>{t}</li>)}
+                                </ul>
+                              </div>
+                            )}
+                            {improvements.length > 0 && (
+                              <div className="bg-amber-50 dark:bg-amber-900/10 rounded p-3">
+                                <h5 className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2 uppercase tracking-wide">Areas to Improve</h5>
+                                <ul className="text-sm space-y-1 list-disc list-inside text-foreground">
+                                  {improvements.map((t, i) => <li key={i}>{t}</li>)}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <Badge variant="default">Completed</Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 text-center">
@@ -1709,9 +1758,15 @@ const MockInterview = () => {
                   </p>
                 </div>
 
-                <Button onClick={goToDashboard} className="w-full" size="lg">
-                  Return to Dashboard
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button onClick={downloadFinalReviewPdf} variant="outline" className="w-full gap-2" size="lg">
+                    <Download className="h-5 w-5" />
+                    Download Report
+                  </Button>
+                  <Button onClick={goToDashboard} className="w-full" size="lg">
+                    Return to Dashboard
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
