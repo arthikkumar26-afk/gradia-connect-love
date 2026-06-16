@@ -805,8 +805,38 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
           commonStages.offerStage,
         ],
       },
+      {
+        value: 'freshers_entry_level',
+        label: 'Freshers / Entry-Level',
+        stages: [
+          commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
+          { order: 3, name: 'Aptitude Test', description: 'Quantitative, logical & verbal aptitude — 20 MCQs (60 sec each)', isAutomated: true },
+          { order: 4, name: 'Group Discussion', description: 'Group discussion on current affairs / case scenario', isAutomated: false },
+          commonStages.hrRoundSlotBooking,
+          commonStages.hrRound,
+          commonStages.finalReview,
+          commonStages.offerStage,
+        ],
+      },
+      {
+        value: 'mba_management_trainee',
+        label: 'MBA / Management Trainee',
+        stages: [
+          commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
+          { order: 3, name: 'Aptitude & Business Case Test', description: 'Quant, business case & verbal reasoning', isAutomated: true },
+          { order: 4, name: 'Case Study Presentation', description: 'Live business case study presentation', isAutomated: false },
+          { order: 5, name: 'Functional / Domain Round', description: 'Functional interview (HR / Finance / Marketing / Ops / Strategy)', isAutomated: false },
+          commonStages.hrRoundSlotBooking,
+          commonStages.hrRound,
+          commonStages.finalReview,
+          commonStages.offerStage,
+        ],
+      },
     ],
   },
+
   {
     value: 'film_media',
     label: 'Film & Media (Audition + Portfolio)',
