@@ -575,7 +575,7 @@ const MockInterview = () => {
   };
 
   const goToDashboard = () => {
-    navigate('/candidate/dashboard');
+    navigate('/candidate/dashboard?tab=mocktest');
   };
 
   const retryStage = async () => {
