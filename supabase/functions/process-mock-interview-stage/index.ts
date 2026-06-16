@@ -722,7 +722,7 @@ IMPORTANT: ${subjectFocus}
 Requirements:
 1. Questions should be relevant to the candidate's background
 2. Mix of difficulty levels
-3. For multiple choice questions, provide 4 options
+3. For multiple choice questions, provide 4 options AND set correctAnswer to the exact text of the right option
 4. Include expected key points for text answers
 
 For "${stage.name}" stage, focus on:
