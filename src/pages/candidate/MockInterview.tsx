@@ -585,16 +585,21 @@ const MockInterview = () => {
       const logoModule = await import('@/assets/gradia-logo.png');
       const logoUrl = (logoModule as any).default || logoModule;
 
-      // Load logo as data URL
+      // Load logo as high-resolution data URL for crisp rendering
       const logoDataUrl = await new Promise<string>((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
+          const scale = 3; // upscale source to avoid PDF blur
           const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
           const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0);
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            (ctx as any).imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          }
           resolve(canvas.toDataURL('image/png'));
         };
         img.onerror = reject;
@@ -607,9 +612,9 @@ const MockInterview = () => {
       const margin = 40;
       let y = 40;
 
-      // Header with logo
+      // Header with logo (rendered crisp via NONE compression)
       if (logoDataUrl) {
-        try { doc.addImage(logoDataUrl, 'PNG', margin, y, 90, 30); } catch {}
+        try { doc.addImage(logoDataUrl, 'PNG', margin, y, 90, 30, undefined, 'NONE'); } catch {}
       }
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
@@ -679,21 +684,49 @@ const MockInterview = () => {
           doc.setFont('helvetica', 'bold'); doc.text('Questions & Answers:', margin, y); y += 14;
           qs.forEach((q: any, i: number) => {
             const qText = typeof q === 'string' ? q : (q?.question || '');
+            const qType = (typeof q === 'object' && q?.type) || 'text';
+            const opts: string[] = (typeof q === 'object' && Array.isArray(q?.options)) ? q.options : [];
+            const correct: string | undefined = typeof q === 'object' ? q?.correctAnswer : undefined;
             const aRaw = ans[i];
             const aText = typeof aRaw === 'string' ? aRaw : (aRaw?.answer ?? aRaw?.code ?? JSON.stringify(aRaw ?? ''));
             const sc = qScores.find((x: any) => x?.questionId === (q?.id ?? i + 1));
-            ensureSpace(30);
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+            ensureSpace(40);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(0);
             writeWrapped(`Q${i + 1}. ${qText}`, margin, pageW - margin * 2);
-            doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
-            writeWrapped(`Answer: ${aText || '(no answer)'}`, margin + 10, pageW - margin * 2 - 10);
-            doc.setTextColor(0);
+
+            if (qType === 'multiple_choice' && opts.length) {
+              // Render options A. B. C. D. with chosen + correct markers
+              opts.forEach((opt, oi) => {
+                const letter = String.fromCharCode(65 + oi);
+                const isChosen = (aText || '').trim() === opt.trim();
+                const isCorrect = correct && correct.trim() === opt.trim();
+                let prefix = `   ${letter}. `;
+                let suffix = '';
+                if (isCorrect && isChosen) { suffix = '   ✓ Your answer (Correct)'; doc.setTextColor(22, 130, 50); }
+                else if (isCorrect) { suffix = '   ✓ Correct answer'; doc.setTextColor(22, 130, 50); }
+                else if (isChosen) { suffix = '   ✗ Your answer'; doc.setTextColor(200, 40, 40); }
+                else { doc.setTextColor(60); }
+                doc.setFont('helvetica', (isChosen || isCorrect) ? 'bold' : 'normal');
+                writeWrapped(`${prefix}${opt}${suffix}`, margin, pageW - margin * 2);
+              });
+              doc.setTextColor(0); doc.setFont('helvetica', 'normal');
+              if (!aText) {
+                doc.setTextColor(150);
+                writeWrapped(`   (Not answered)`, margin, pageW - margin * 2);
+                doc.setTextColor(0);
+              }
+            } else {
+              doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+              writeWrapped(`Answer: ${aText || '(no answer)'}`, margin + 10, pageW - margin * 2 - 10);
+              doc.setTextColor(0);
+            }
+
             if (sc) {
               doc.setTextColor(90); doc.setFontSize(10);
               writeWrapped(`Score: ${sc.score ?? '-'}/100${sc.feedback ? ` — ${sc.feedback}` : ''}`, margin + 10, pageW - margin * 2 - 10, 12);
               doc.setTextColor(0); doc.setFontSize(11);
             }
-            y += 4;
+            y += 6;
           });
         }
         y += 8;

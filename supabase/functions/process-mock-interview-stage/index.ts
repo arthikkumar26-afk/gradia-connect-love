@@ -357,6 +357,7 @@ serve(async (req) => {
                         question: { type: 'string', description: 'The problem statement or question text' },
                         type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario', 'coding'] },
                         options: { type: 'array', items: { type: 'string' } },
+                        correctAnswer: { type: 'string', description: 'For multiple_choice questions: the exact correct option text from options array' },
                         expectedPoints: { type: 'array', items: { type: 'string' } },
                         category: { type: 'string' },
                         functionSignature: { type: 'string', description: 'Function signature e.g. function twoSum(nums: number[], target: number): number[]' },
@@ -703,7 +704,7 @@ Requirements:
 1. ALL questions must be DIFFICULT - no easy or basic questions
 2. Each question should require deep technical knowledge to answer well
 3. Include scenario-based and problem-solving questions
-4. For multiple choice questions, provide 4 options with plausible distractors
+4. For multiple choice questions, provide 4 options with plausible distractors AND set correctAnswer to the exact text of the right option
 5. Include expected key points for text answers
 6. Mix question types: multiple_choice and text/scenario
 
@@ -721,7 +722,7 @@ IMPORTANT: ${subjectFocus}
 Requirements:
 1. Questions should be relevant to the candidate's background
 2. Mix of difficulty levels
-3. For multiple choice questions, provide 4 options
+3. For multiple choice questions, provide 4 options AND set correctAnswer to the exact text of the right option
 4. Include expected key points for text answers
 
 For "${stage.name}" stage, focus on:
