@@ -643,36 +643,80 @@ const MockInterview = () => {
         });
       };
 
+      // Helper: filled rounded chip
+      const drawChip = (text: string, x: number, cy: number, fill: [number, number, number], textColor: [number, number, number] = [255, 255, 255]) => {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+        const w = doc.getTextWidth(text) + 14;
+        doc.setFillColor(...fill);
+        doc.roundedRect(x, cy - 10, w, 14, 3, 3, 'F');
+        doc.setTextColor(...textColor);
+        doc.text(text, x + 7, cy);
+        doc.setTextColor(0);
+        return w;
+      };
+
+      // Helper: subtle section label
+      const sectionLabel = (text: string, color: [number, number, number] = [80, 80, 80]) => {
+        ensureSpace(18);
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+        doc.setTextColor(...color);
+        doc.text(text.toUpperCase(), margin, y);
+        doc.setTextColor(0); doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+        y += 14;
+      };
+
       stages.filter(s => s.order < 7).forEach((s) => {
         const r: any = allStageResults.find((x: any) => x.stage_order === s.order);
-        ensureSpace(60);
-        doc.setDrawColor(220); doc.line(margin, y, pageW - margin, y); y += 16;
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
-        doc.text(`${s.order}. ${s.name}`, margin, y); y += 16;
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+        ensureSpace(80);
+
+        // Stage header band
+        doc.setFillColor(245, 247, 250);
+        doc.roundedRect(margin, y, pageW - margin * 2, 30, 4, 4, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(30);
+        doc.text(`${s.order}. ${s.name}`, margin + 12, y + 19);
+
         const score = r?.ai_score ?? null;
         const passed = r?.passed ?? false;
-        doc.text(`Status: ${r ? (passed ? 'Passed' : 'Completed') : 'Completed'}${score !== null ? `   |   Score: ${score}/100` : ''}`, margin, y);
-        y += 16;
+        let chipX = pageW - margin - 12;
+        if (score !== null) {
+          const scoreText = `${score}/100`;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+          const w = doc.getTextWidth(scoreText) + 14;
+          chipX -= w;
+          drawChip(scoreText, chipX, y + 19, score >= 60 ? [34, 139, 84] : [200, 80, 60]);
+          chipX -= 6;
+        }
+        const statusText = r ? (passed ? 'PASSED' : 'COMPLETED') : 'COMPLETED';
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+        const sw = doc.getTextWidth(statusText) + 14;
+        chipX -= sw;
+        drawChip(statusText, chipX, y + 19, passed ? [34, 139, 84] : [100, 116, 139]);
+
+        doc.setTextColor(0);
+        y += 42;
+
         if (r?.ai_feedback) {
-          doc.setFont('helvetica', 'bold'); doc.text('Feedback:', margin, y); y += 14;
-          doc.setFont('helvetica', 'normal');
-          writeWrapped(r.ai_feedback, margin, pageW - margin * 2);
-          y += 4;
+          sectionLabel('Feedback');
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(55);
+          writeWrapped(r.ai_feedback, margin, pageW - margin * 2, 15);
+          doc.setTextColor(0);
+          y += 8;
         }
         const strengths: string[] = (r?.strengths as string[]) || [];
         if (strengths.length) {
-          doc.setFont('helvetica', 'bold'); doc.text('Strengths:', margin, y); y += 14;
-          doc.setFont('helvetica', 'normal');
-          strengths.forEach(t => writeWrapped(`• ${t}`, margin + 10, pageW - margin * 2 - 10));
-          y += 4;
+          sectionLabel('Strengths', [34, 120, 70]);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(50);
+          strengths.forEach(t => writeWrapped(`•  ${t}`, margin + 4, pageW - margin * 2 - 4, 15));
+          doc.setTextColor(0);
+          y += 6;
         }
         const improvements: string[] = (r?.improvements as string[]) || [];
         if (improvements.length) {
-          doc.setFont('helvetica', 'bold'); doc.text('Areas to Improve:', margin, y); y += 14;
-          doc.setFont('helvetica', 'normal');
-          improvements.forEach(t => writeWrapped(`• ${t}`, margin + 10, pageW - margin * 2 - 10));
-          y += 4;
+          sectionLabel('Areas to Improve', [170, 90, 20]);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(50);
+          improvements.forEach(t => writeWrapped(`•  ${t}`, margin + 4, pageW - margin * 2 - 4, 15));
+          doc.setTextColor(0);
+          y += 6;
         }
 
         // Questions & Answers
@@ -680,8 +724,8 @@ const MockInterview = () => {
         const ans: any[] = (r?.answers as any[]) || [];
         const qScores: any[] = (r?.question_scores as any[]) || [];
         if (qs.length) {
-          ensureSpace(20);
-          doc.setFont('helvetica', 'bold'); doc.text('Questions & Answers:', margin, y); y += 14;
+          y += 4;
+          sectionLabel('Questions & Answers');
           qs.forEach((q: any, i: number) => {
             const qText = typeof q === 'string' ? q : (q?.question || '');
             const qType = (typeof q === 'object' && q?.type) || 'text';
@@ -690,46 +734,102 @@ const MockInterview = () => {
             const aRaw = ans[i];
             const aText = typeof aRaw === 'string' ? aRaw : (aRaw?.answer ?? aRaw?.code ?? JSON.stringify(aRaw ?? ''));
             const sc = qScores.find((x: any) => x?.questionId === (q?.id ?? i + 1));
-            ensureSpace(40);
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(0);
-            writeWrapped(`Q${i + 1}. ${qText}`, margin, pageW - margin * 2);
+
+            ensureSpace(60);
+
+            // Question card background
+            const cardStartY = y - 4;
+            doc.setDrawColor(225); doc.setFillColor(252, 252, 253);
+            // We'll draw the card border after content, using a measured height.
+            const cardStartCursor = y;
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.setTextColor(25);
+            writeWrapped(`Q${i + 1}.  ${qText}`, margin + 10, pageW - margin * 2 - 20, 15);
+            y += 4;
 
             if (qType === 'multiple_choice' && opts.length) {
-              // Render options A. B. C. D. with chosen + correct markers
               opts.forEach((opt, oi) => {
                 const letter = String.fromCharCode(65 + oi);
                 const isChosen = (aText || '').trim() === opt.trim();
-                const isCorrect = correct && correct.trim() === opt.trim();
-                let prefix = `   ${letter}. `;
-                let suffix = '';
-                if (isCorrect && isChosen) { suffix = '   ✓ Your answer (Correct)'; doc.setTextColor(22, 130, 50); }
-                else if (isCorrect) { suffix = '   ✓ Correct answer'; doc.setTextColor(22, 130, 50); }
-                else if (isChosen) { suffix = '   ✗ Your answer'; doc.setTextColor(200, 40, 40); }
-                else { doc.setTextColor(60); }
+                const isCorrect = !!correct && correct.trim() === opt.trim();
+                ensureSpace(18);
+
+                // Option row highlight
+                if (isCorrect || isChosen) {
+                  const fill: [number, number, number] = isCorrect
+                    ? [230, 246, 234]
+                    : [253, 232, 232];
+                  doc.setFillColor(...fill);
+                  doc.roundedRect(margin + 14, y - 11, pageW - margin * 2 - 28, 16, 2, 2, 'F');
+                }
+
+                let badge = '';
+                let badgeColor: [number, number, number] = [120, 120, 120];
+                if (isCorrect && isChosen) { badge = '✓ Your answer (Correct)'; badgeColor = [22, 130, 50]; }
+                else if (isCorrect) { badge = '✓ Correct answer'; badgeColor = [22, 130, 50]; }
+                else if (isChosen) { badge = '✗ Your answer'; badgeColor = [200, 40, 40]; }
+
                 doc.setFont('helvetica', (isChosen || isCorrect) ? 'bold' : 'normal');
-                writeWrapped(`${prefix}${opt}${suffix}`, margin, pageW - margin * 2);
+                doc.setFontSize(10.5);
+                doc.setTextColor(isChosen || isCorrect ? 25 : 70);
+                const labelText = `${letter}.  ${opt}`;
+                const labelMax = pageW - margin * 2 - 28 - (badge ? 150 : 8);
+                const labelLines = doc.splitTextToSize(labelText, labelMax);
+                labelLines.forEach((ln: string, li: number) => {
+                  if (li > 0) { ensureSpace(14); }
+                  doc.text(ln, margin + 22, y);
+                  if (li === 0 && badge) {
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+                    doc.setTextColor(...badgeColor);
+                    doc.text(badge, pageW - margin - 14, y, { align: 'right' });
+                    doc.setTextColor(isChosen || isCorrect ? 25 : 70);
+                    doc.setFont('helvetica', (isChosen || isCorrect) ? 'bold' : 'normal');
+                    doc.setFontSize(10.5);
+                  }
+                  y += 14;
+                });
+                y += 2;
               });
               doc.setTextColor(0); doc.setFont('helvetica', 'normal');
               if (!aText) {
-                doc.setTextColor(150);
-                writeWrapped(`   (Not answered)`, margin, pageW - margin * 2);
-                doc.setTextColor(0);
+                ensureSpace(14);
+                doc.setTextColor(150); doc.setFontSize(10);
+                doc.text('(Not answered)', margin + 22, y);
+                doc.setTextColor(0); doc.setFontSize(11);
+                y += 14;
               }
             } else {
-              doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
-              writeWrapped(`Answer: ${aText || '(no answer)'}`, margin + 10, pageW - margin * 2 - 10);
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(110);
+              doc.text('YOUR ANSWER', margin + 22, y); y += 12;
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(40);
+              writeWrapped(aText || '(no answer)', margin + 22, pageW - margin * 2 - 32, 14);
               doc.setTextColor(0);
             }
 
             if (sc) {
-              doc.setTextColor(90); doc.setFontSize(10);
-              writeWrapped(`Score: ${sc.score ?? '-'}/100${sc.feedback ? ` — ${sc.feedback}` : ''}`, margin + 10, pageW - margin * 2 - 10, 12);
+              ensureSpace(16);
+              y += 4;
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(110);
+              doc.text('SCORE', margin + 22, y);
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(60);
+              const scoreLine = `${sc.score ?? '-'}/100${sc.feedback ? ` — ${sc.feedback}` : ''}`;
+              const lines = doc.splitTextToSize(scoreLine, pageW - margin * 2 - 70);
+              lines.forEach((ln: string, li: number) => {
+                if (li > 0) ensureSpace(13);
+                doc.text(ln, margin + 60, y);
+                y += 13;
+              });
               doc.setTextColor(0); doc.setFontSize(11);
             }
-            y += 6;
+
+            // Draw card border around question block
+            const cardEndY = y + 4;
+            doc.setDrawColor(230);
+            doc.roundedRect(margin, cardStartCursor - 14, pageW - margin * 2, cardEndY - cardStartCursor + 16, 4, 4, 'S');
+            y = cardEndY + 10;
           });
         }
-        y += 8;
+        y += 10;
       });
 
       doc.save(`mock-interview-report-${sessionId || 'session'}.pdf`);
