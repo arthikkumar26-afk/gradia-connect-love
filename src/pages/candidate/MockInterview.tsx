@@ -582,15 +582,40 @@ const MockInterview = () => {
   const downloadFinalReviewPdf = async () => {
     try {
       const { jsPDF } = await import('jspdf');
+      const logoModule = await import('@/assets/gradia-logo.png');
+      const logoUrl = (logoModule as any).default || logoModule;
+
+      // Load logo as data URL
+      const logoDataUrl = await new Promise<string>((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = reject;
+        img.src = logoUrl as string;
+      }).catch(() => '');
+
       const doc = new jsPDF({ unit: 'pt', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
       const margin = 40;
-      let y = 50;
+      let y = 40;
 
+      // Header with logo
+      if (logoDataUrl) {
+        try { doc.addImage(logoDataUrl, 'PNG', margin, y, 90, 30); } catch {}
+      }
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.text('Mock Interview - Final Report', pageW / 2, y, { align: 'center' });
-      y += 24;
+      doc.setFontSize(16);
+      doc.text('Mock Interview - Final Report', pageW - margin, y + 20, { align: 'right' });
+      y += 50;
+      doc.setDrawColor(200); doc.line(margin, y, pageW - margin, y); y += 16;
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(11);
@@ -600,19 +625,22 @@ const MockInterview = () => {
       doc.text(`Date: ${new Date().toLocaleString()}`, margin, y); y += 20;
       doc.setTextColor(0);
 
-      const writeWrapped = (text: string, x: number, startY: number, maxW: number, lh = 14) => {
-        const lines = doc.splitTextToSize(text, maxW);
+      const ensureSpace = (needed: number) => {
+        if (y + needed > pageH - 40) { doc.addPage(); y = 50; }
+      };
+
+      const writeWrapped = (text: string, x: number, maxW: number, lh = 14) => {
+        const lines = doc.splitTextToSize(text || '', maxW);
         lines.forEach((ln: string) => {
-          if (startY > 780) { doc.addPage(); startY = 50; }
-          doc.text(ln, x, startY);
-          startY += lh;
+          ensureSpace(lh);
+          doc.text(ln, x, y);
+          y += lh;
         });
-        return startY;
       };
 
       stages.filter(s => s.order < 7).forEach((s) => {
         const r: any = allStageResults.find((x: any) => x.stage_order === s.order);
-        if (y > 720) { doc.addPage(); y = 50; }
+        ensureSpace(60);
         doc.setDrawColor(220); doc.line(margin, y, pageW - margin, y); y += 16;
         doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
         doc.text(`${s.order}. ${s.name}`, margin, y); y += 16;
@@ -624,22 +652,49 @@ const MockInterview = () => {
         if (r?.ai_feedback) {
           doc.setFont('helvetica', 'bold'); doc.text('Feedback:', margin, y); y += 14;
           doc.setFont('helvetica', 'normal');
-          y = writeWrapped(r.ai_feedback, margin, y, pageW - margin * 2);
+          writeWrapped(r.ai_feedback, margin, pageW - margin * 2);
           y += 4;
         }
         const strengths: string[] = (r?.strengths as string[]) || [];
         if (strengths.length) {
           doc.setFont('helvetica', 'bold'); doc.text('Strengths:', margin, y); y += 14;
           doc.setFont('helvetica', 'normal');
-          strengths.forEach(t => { y = writeWrapped(`• ${t}`, margin + 10, y, pageW - margin * 2 - 10); });
+          strengths.forEach(t => writeWrapped(`• ${t}`, margin + 10, pageW - margin * 2 - 10));
           y += 4;
         }
         const improvements: string[] = (r?.improvements as string[]) || [];
         if (improvements.length) {
           doc.setFont('helvetica', 'bold'); doc.text('Areas to Improve:', margin, y); y += 14;
           doc.setFont('helvetica', 'normal');
-          improvements.forEach(t => { y = writeWrapped(`• ${t}`, margin + 10, y, pageW - margin * 2 - 10); });
+          improvements.forEach(t => writeWrapped(`• ${t}`, margin + 10, pageW - margin * 2 - 10));
           y += 4;
+        }
+
+        // Questions & Answers
+        const qs: any[] = (r?.questions as any[]) || [];
+        const ans: any[] = (r?.answers as any[]) || [];
+        const qScores: any[] = (r?.question_scores as any[]) || [];
+        if (qs.length) {
+          ensureSpace(20);
+          doc.setFont('helvetica', 'bold'); doc.text('Questions & Answers:', margin, y); y += 14;
+          qs.forEach((q: any, i: number) => {
+            const qText = typeof q === 'string' ? q : (q?.question || '');
+            const aRaw = ans[i];
+            const aText = typeof aRaw === 'string' ? aRaw : (aRaw?.answer ?? aRaw?.code ?? JSON.stringify(aRaw ?? ''));
+            const sc = qScores.find((x: any) => x?.questionId === (q?.id ?? i + 1));
+            ensureSpace(30);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+            writeWrapped(`Q${i + 1}. ${qText}`, margin, pageW - margin * 2);
+            doc.setFont('helvetica', 'normal'); doc.setTextColor(60);
+            writeWrapped(`Answer: ${aText || '(no answer)'}`, margin + 10, pageW - margin * 2 - 10);
+            doc.setTextColor(0);
+            if (sc) {
+              doc.setTextColor(90); doc.setFontSize(10);
+              writeWrapped(`Score: ${sc.score ?? '-'}/100${sc.feedback ? ` — ${sc.feedback}` : ''}`, margin + 10, pageW - margin * 2 - 10, 12);
+              doc.setTextColor(0); doc.setFontSize(11);
+            }
+            y += 4;
+          });
         }
         y += 8;
       });
@@ -651,6 +706,7 @@ const MockInterview = () => {
       toast.error('Failed to generate report');
     }
   };
+
 
 
   const retryStage = async () => {
