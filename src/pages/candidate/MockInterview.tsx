@@ -34,7 +34,8 @@ import {
   ListChecks,
   MapPin,
   Code,
-  Terminal
+  Terminal,
+  Download
 } from "lucide-react";
 import { useVideoRecorder } from "@/hooks/useVideoRecorder";
 import { MockInterviewResults } from "@/components/candidate/MockInterviewResults";
