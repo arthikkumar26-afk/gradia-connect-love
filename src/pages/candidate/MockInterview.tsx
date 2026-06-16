@@ -585,16 +585,21 @@ const MockInterview = () => {
       const logoModule = await import('@/assets/gradia-logo.png');
       const logoUrl = (logoModule as any).default || logoModule;
 
-      // Load logo as data URL
+      // Load logo as high-resolution data URL for crisp rendering
       const logoDataUrl = await new Promise<string>((resolve, reject) => {
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
+          const scale = 3; // upscale source to avoid PDF blur
           const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
           const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0);
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            (ctx as any).imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          }
           resolve(canvas.toDataURL('image/png'));
         };
         img.onerror = reject;
@@ -607,9 +612,9 @@ const MockInterview = () => {
       const margin = 40;
       let y = 40;
 
-      // Header with logo
+      // Header with logo (rendered crisp via NONE compression)
       if (logoDataUrl) {
-        try { doc.addImage(logoDataUrl, 'PNG', margin, y, 90, 30); } catch {}
+        try { doc.addImage(logoDataUrl, 'PNG', margin, y, 90, 30, undefined, 'NONE'); } catch {}
       }
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
