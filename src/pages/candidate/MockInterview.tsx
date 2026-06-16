@@ -579,6 +579,80 @@ const MockInterview = () => {
     navigate('/candidate/dashboard?tab=mocktest');
   };
 
+  const downloadFinalReviewPdf = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const margin = 40;
+      let y = 50;
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('Mock Interview - Final Report', pageW / 2, y, { align: 'center' });
+      y += 24;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(90);
+      doc.text(`Candidate: ${profile?.full_name || ''}`, margin, y); y += 14;
+      doc.text(`Email: ${profile?.email || ''}`, margin, y); y += 14;
+      doc.text(`Date: ${new Date().toLocaleString()}`, margin, y); y += 20;
+      doc.setTextColor(0);
+
+      const writeWrapped = (text: string, x: number, startY: number, maxW: number, lh = 14) => {
+        const lines = doc.splitTextToSize(text, maxW);
+        lines.forEach((ln: string) => {
+          if (startY > 780) { doc.addPage(); startY = 50; }
+          doc.text(ln, x, startY);
+          startY += lh;
+        });
+        return startY;
+      };
+
+      stages.filter(s => s.order < 7).forEach((s) => {
+        const r: any = allStageResults.find((x: any) => x.stage_order === s.order);
+        if (y > 720) { doc.addPage(); y = 50; }
+        doc.setDrawColor(220); doc.line(margin, y, pageW - margin, y); y += 16;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+        doc.text(`${s.order}. ${s.name}`, margin, y); y += 16;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+        const score = r?.ai_score ?? null;
+        const passed = r?.passed ?? false;
+        doc.text(`Status: ${r ? (passed ? 'Passed' : 'Completed') : 'Completed'}${score !== null ? `   |   Score: ${score}/100` : ''}`, margin, y);
+        y += 16;
+        if (r?.ai_feedback) {
+          doc.setFont('helvetica', 'bold'); doc.text('Feedback:', margin, y); y += 14;
+          doc.setFont('helvetica', 'normal');
+          y = writeWrapped(r.ai_feedback, margin, y, pageW - margin * 2);
+          y += 4;
+        }
+        const strengths: string[] = (r?.strengths as string[]) || [];
+        if (strengths.length) {
+          doc.setFont('helvetica', 'bold'); doc.text('Strengths:', margin, y); y += 14;
+          doc.setFont('helvetica', 'normal');
+          strengths.forEach(t => { y = writeWrapped(`• ${t}`, margin + 10, y, pageW - margin * 2 - 10); });
+          y += 4;
+        }
+        const improvements: string[] = (r?.improvements as string[]) || [];
+        if (improvements.length) {
+          doc.setFont('helvetica', 'bold'); doc.text('Areas to Improve:', margin, y); y += 14;
+          doc.setFont('helvetica', 'normal');
+          improvements.forEach(t => { y = writeWrapped(`• ${t}`, margin + 10, y, pageW - margin * 2 - 10); });
+          y += 4;
+        }
+        y += 8;
+      });
+
+      doc.save(`mock-interview-report-${sessionId || 'session'}.pdf`);
+      toast.success('Report downloaded');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to generate report');
+    }
+  };
+
+
   const retryStage = async () => {
     try {
       setIsLoading(true);
