@@ -357,6 +357,7 @@ serve(async (req) => {
                         question: { type: 'string', description: 'The problem statement or question text' },
                         type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario', 'coding'] },
                         options: { type: 'array', items: { type: 'string' } },
+                        correctAnswer: { type: 'string', description: 'For multiple_choice questions: the exact correct option text from options array' },
                         expectedPoints: { type: 'array', items: { type: 'string' } },
                         category: { type: 'string' },
                         functionSignature: { type: 'string', description: 'Function signature e.g. function twoSum(nums: number[], target: number): number[]' },
