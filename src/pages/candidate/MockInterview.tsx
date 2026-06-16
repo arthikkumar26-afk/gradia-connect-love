@@ -229,10 +229,10 @@ const MockInterview = () => {
       setCurrentInterviewType(sessInterviewType);
 
       if (sessInterviewType && sessPipelineType) {
-        const configStages = interviewPipelineConfig
+        const configStages = (interviewPipelineConfig
           .find(t => t.value === sessInterviewType)
           ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
-          ?.stages || [];
+          ?.stages || []).filter(s => !s.name.toLowerCase().includes('slot booking'));
         if (configStages.length > 0) {
           resolvedStages = configStages.map((s, idx) => ({
             name: s.name,
