@@ -23,13 +23,11 @@ import {
 
 const stagesList = [
   { order: 1, name: "Interview Instructions", icon: Mail },
-  { order: 2, name: "Technical Assessment Slot Booking", icon: Calendar },
-  { order: 3, name: "Technical Assessment", icon: Code },
-  { order: 4, name: "Demo Slot Booking", icon: Calendar },
-  { order: 5, name: "Demo Round", icon: Monitor },
-  { order: 6, name: "Demo Feedback", icon: BarChart3 },
-  { order: 7, name: "Final Review (HR)", icon: FileText },
-  { order: 8, name: "All Reviews", icon: ListChecks },
+  { order: 2, name: "Technical Assessment", icon: Code },
+  { order: 3, name: "Demo Round", icon: Monitor },
+  { order: 4, name: "Demo Feedback", icon: BarChart3 },
+  { order: 5, name: "Final Review (HR)", icon: FileText },
+  { order: 6, name: "All Reviews", icon: ListChecks },
 ];
 
 const MockInterviewStart = () => {
