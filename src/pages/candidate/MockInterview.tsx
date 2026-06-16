@@ -230,11 +230,26 @@ const MockInterview = () => {
       const sessPipelineType = (fetchedSessionData as any).pipeline_type || localStorage.getItem('mock_pipeline_type') || '';
       setCurrentInterviewType(sessInterviewType);
 
+      // Roles that should skip coding stages (must match MockInterviewTab)
+      const NON_CODING_BUSINESS_ROLES = [
+        'business_analyst', 'it_business_analyst', 'functional_consultant',
+        'erp_consultant', 'crm_consultant', 'it_consultant',
+        'solution_architect', 'pre_sales_consultant',
+      ];
       if (sessInterviewType && sessPipelineType) {
+        const sessRole = (fetchedSessionData as any)?.role || localStorage.getItem('mock_role') || '';
+        const removeCodingLoad = NON_CODING_BUSINESS_ROLES.includes(sessRole);
         const configStages = (interviewPipelineConfig
           .find(t => t.value === sessInterviewType)
           ?.pipelineTypes.find(pt => pt.value === sessPipelineType)
-          ?.stages || []).filter(s => !s.name.toLowerCase().includes('slot booking'));
+          ?.stages || []).filter(s => {
+            const n = s.name.toLowerCase();
+            return n !== 'offer stage'
+              && !n.includes('slot booking')
+              && !n.includes('cv')
+              && !n.includes('resume')
+              && (!removeCodingLoad || !n.includes('coding'));
+          });
         if (configStages.length > 0) {
           resolvedStages = configStages.map((s, idx) => ({
             name: s.name,
