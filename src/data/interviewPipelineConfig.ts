@@ -1451,13 +1451,23 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
   // Non-IT Corporate
   'non_it_corporate.hr_executive': [
     { value: 'hr_executive', label: 'HR Executive' },
+    { value: 'hr_generalist', label: 'HR Generalist' },
+    { value: 'talent_acquisition_specialist', label: 'Talent Acquisition Specialist / Recruiter' },
+    { value: 'hrbp', label: 'HR Business Partner (HRBP)' },
+    { value: 'training_development_executive', label: 'Training & Development Executive' },
+    { value: 'ld_manager', label: 'Learning & Development (L&D) Manager' },
+    { value: 'comp_benefits_analyst', label: 'Compensation & Benefits Analyst' },
+    { value: 'employee_relations_specialist', label: 'Employee Relations Specialist' },
+    { value: 'hr_operations_executive', label: 'HR Operations Executive' },
     { value: 'hr_manager', label: 'HR Manager' },
+    { value: 'hr_director', label: 'HR Director' },
     { value: 'admin_officer', label: 'Admin Officer' },
     { value: 'office_manager', label: 'Office Manager' },
     { value: 'executive_assistant', label: 'Executive Assistant' },
     { value: 'receptionist', label: 'Receptionist / Front Desk' },
     { value: 'training_coordinator', label: 'Training & Development Coordinator' },
   ],
+
   'non_it_corporate.finance_accounting': [
     { value: 'accountant', label: 'Accountant' },
     { value: 'finance_analyst', label: 'Finance Analyst' },
