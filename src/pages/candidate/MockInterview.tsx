@@ -206,7 +206,9 @@ const MockInterview = () => {
       const { data: stagesData } = await supabase.functions.invoke('process-mock-interview-stage', {
         body: { action: 'get_stages' }
       });
-      let resolvedStages: InterviewStage[] = stagesData?.stages || [];
+      let resolvedStages: InterviewStage[] = (stagesData?.stages || []).filter(
+        (s: InterviewStage) => !s.name.toLowerCase().includes('slot booking')
+      );
 
       // Try to get session first to resolve pipeline-specific stages
       const { data: fetchedSessionData, error: sessionError } = await supabase
