@@ -1528,10 +1528,9 @@ export const MockInterviewTab = () => {
         { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Cloud, DevOps tools & infrastructure MCQs' },
         { order: 3, name: 'Scripting / IaC Challenge', icon: Code, desc: 'Bash, Terraform, or Ansible scenario tasks' },
         { order: 4, name: 'System Design (Infrastructure)', icon: Monitor, desc: 'Design scalable cloud architecture' },
-        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for live technical demo' },
-        { order: 6, name: 'Live Technical Demo', icon: Video, desc: 'Demonstrate CI/CD pipeline setup' },
-        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation & culture discussion' },
-        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+        { order: 5, name: 'Live Technical Demo', icon: Video, desc: 'Demonstrate CI/CD pipeline setup' },
+        { order: 6, name: 'HR Round', icon: FileText, desc: 'Compensation & culture discussion' },
+        { order: 7, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
       ];
     }
     if (isData) {
@@ -1540,10 +1539,9 @@ export const MockInterviewTab = () => {
         { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Statistics, ML algorithms & data concepts' },
         { order: 3, name: 'Coding / Analysis Challenge', icon: Code, desc: 'Python/SQL data analysis tasks' },
         { order: 4, name: 'Case Study Presentation', icon: Monitor, desc: 'Present a data-driven business case' },
-        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for portfolio presentation' },
-        { order: 6, name: 'Portfolio Demo', icon: Video, desc: 'Walk through real projects & notebooks' },
-        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation & team culture fit' },
-        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+        { order: 5, name: 'Portfolio Demo', icon: Video, desc: 'Walk through real projects & notebooks' },
+        { order: 6, name: 'HR Round', icon: FileText, desc: 'Compensation & team culture fit' },
+        { order: 7, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
       ];
     }
     if (isFullStack) {
@@ -1552,10 +1550,9 @@ export const MockInterviewTab = () => {
         { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Full stack concepts, frameworks & DB MCQs' },
         { order: 3, name: 'Coding Challenge', icon: Code, desc: 'Build a mini feature (frontend + backend)' },
         { order: 4, name: 'System Design Round', icon: Monitor, desc: 'Design a scalable web application' },
-        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for live project demo' },
-        { order: 6, name: 'Live Project Demo', icon: Video, desc: 'Demonstrate your project end-to-end' },
-        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
-        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+        { order: 5, name: 'Live Project Demo', icon: Video, desc: 'Demonstrate your project end-to-end' },
+        { order: 6, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
+        { order: 7, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
       ];
     }
     if (isFrontend) {
@@ -1564,10 +1561,9 @@ export const MockInterviewTab = () => {
         { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'JavaScript, CSS, React/Angular/Vue MCQs' },
         { order: 3, name: 'UI Coding Challenge', icon: Code, desc: 'Build a responsive UI component' },
         { order: 4, name: 'Code Review Round', icon: Monitor, desc: 'Review and improve given code snippets' },
-        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for portfolio review' },
-        { order: 6, name: 'Portfolio Demo', icon: Video, desc: 'Walk through your projects & code' },
-        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
-        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+        { order: 5, name: 'Portfolio Demo', icon: Video, desc: 'Walk through your projects & code' },
+        { order: 6, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
+        { order: 7, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
       ];
     }
     if (isBackend) {
@@ -1576,10 +1572,9 @@ export const MockInterviewTab = () => {
         { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Backend concepts, APIs, DB & system design MCQs' },
         { order: 3, name: 'Coding Challenge', icon: Code, desc: 'DSA problem solving & API design task' },
         { order: 4, name: 'System Design Round', icon: Monitor, desc: 'Design a distributed backend system' },
-        { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for technical discussion' },
-        { order: 6, name: 'Technical Discussion', icon: Video, desc: 'Deep-dive into architecture & past projects' },
-        { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
-        { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+        { order: 5, name: 'Technical Discussion', icon: Video, desc: 'Deep-dive into architecture & past projects' },
+        { order: 6, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
+        { order: 7, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
       ];
     }
     // Generic IT / Software Engineer
@@ -1588,10 +1583,9 @@ export const MockInterviewTab = () => {
       { order: 2, name: 'MCQ Technical Test', icon: Code, desc: 'Core CS concepts, algorithms & domain MCQs' },
       { order: 3, name: 'Coding Challenge', icon: Code, desc: 'Solve DSA & domain-specific coding problems' },
       { order: 4, name: 'System Design Round', icon: Monitor, desc: 'Design a real-world scalable system' },
-      { order: 5, name: 'Demo Slot Booking', icon: Calendar, desc: 'Book slot for live technical interview' },
-      { order: 6, name: 'Live Technical Interview', icon: Video, desc: 'Pair programming & technical discussion' },
-      { order: 7, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
-      { order: 8, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
+      { order: 5, name: 'Live Technical Interview', icon: Video, desc: 'Pair programming & technical discussion' },
+      { order: 6, name: 'HR Round', icon: FileText, desc: 'Compensation, culture & role discussion' },
+      { order: 7, name: 'Final Review', icon: ListChecks, desc: 'Overall assessment & offer decision' },
     ];
   };
 
