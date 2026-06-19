@@ -123,7 +123,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
         if (eventIds.length > 0) {
           const { data: respData } = await supabase
             .from('interview_responses')
-            .select('interview_event_id, score, total_questions, correct_answers, time_taken_seconds')
+            .select('interview_event_id, score, total_questions, correct_answers, time_taken_seconds, questions, answers')
             .in('interview_event_id', eventIds);
           responses = respData || [];
         }
