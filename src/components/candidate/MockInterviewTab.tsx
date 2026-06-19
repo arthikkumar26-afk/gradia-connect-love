@@ -110,6 +110,14 @@ const NON_CODING_BUSINESS_ROLES = [
   'solution_architect', 'pre_sales_consultant',
 ];
 
+const isSlotBookingName = (value?: string | null) => /slot\s*booking/i.test(value || '');
+const isHiddenMockStage = (stage: { name?: string | null; stageType?: string | null }) =>
+  stage.stageType === 'slot_booking' || isSlotBookingName(stage.name);
+const normalizeVisibleMockStages = <T extends { name?: string | null; stageType?: string | null }>(items: T[]) =>
+  items.filter((stage) => !isHiddenMockStage(stage)).map((stage, idx) => ({ ...stage, order: idx + 1 }));
+const removeSlotBookingResults = <T extends { stage_name?: string | null }>(items: T[]) =>
+  items.filter((result) => !isSlotBookingName(result.stage_name));
+
 export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -525,7 +533,7 @@ export const MockInterviewTab = () => {
           ?.stages || []).filter(s => {
             const n = s.name.toLowerCase();
             return n !== 'offer stage'
-              && !n.includes('slot booking')
+              && !isHiddenMockStage(s)
               && !n.includes('cv')
               && !n.includes('resume')
               && (!removeCodingLoad || !n.includes('coding'));
@@ -557,9 +565,7 @@ export const MockInterviewTab = () => {
         });
         if (stagesData?.stages) {
           // Strip slot booking stages from fallback pipeline and re-order
-          resolvedStages = stagesData.stages
-            .filter((s: any) => s.stageType !== 'slot_booking' && !String(s.name || '').toLowerCase().includes('slot booking'))
-            .map((s: any, idx: number) => ({ ...s, order: idx + 1 }));
+          resolvedStages = normalizeVisibleMockStages(stagesData.stages as InterviewStage[]);
         }
       }
 
@@ -584,7 +590,7 @@ export const MockInterviewTab = () => {
           .order('stage_order', { ascending: true });
         
         if (resultsData) {
-          setStageResults(resultsData as StageResult[]);
+          setStageResults(removeSlotBookingResults(resultsData as StageResult[]));
         }
         
         // Load existing HR negotiation for this session
