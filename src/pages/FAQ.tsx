@@ -79,7 +79,14 @@ const FAQ = () => {
       <Helmet>
         <title>FAQ - Gradia</title>
         <meta name="description" content="Find answers about Gradia's job matching, hiring process, pricing, and platform features for candidates and employers." />
-        <link rel="canonical" href="https://gradiaa.com/faq" />
+        <link rel="canonical" href="https://gradia.world/faq" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="FAQ - Gradia" />
+        <meta property="og:description" content="Answers about Gradia's job matching, hiring process, pricing, and platform features." />
+        <meta property="og:url" content="https://gradia.world/faq" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="FAQ - Gradia" />
+        <meta name="twitter:description" content="Answers about Gradia's job matching, hiring process, pricing, and platform features." />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "FAQPage",
