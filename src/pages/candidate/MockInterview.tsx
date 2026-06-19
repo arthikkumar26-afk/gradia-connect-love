@@ -1030,7 +1030,7 @@ const MockInterview = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Problem Statement */}
-                  <div>
+                  <div className="select-none" onCopy={(e) => e.preventDefault()}>
                     <h4 className="font-semibold text-base mb-2">Problem Statement</h4>
                     <p className="text-foreground leading-relaxed">{currentQuestion.question}</p>
                   </div>
@@ -1264,7 +1264,7 @@ const MockInterview = () => {
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <Brain className="h-5 w-5 text-primary" />
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 select-none" onCopy={(e) => e.preventDefault()}>
                       <Badge variant="outline" className="mb-2">{currentQuestion.category}</Badge>
                       <p className="text-lg font-medium text-foreground">{currentQuestion.question}</p>
                     </div>
@@ -1274,9 +1274,9 @@ const MockInterview = () => {
                     <RadioGroup value={currentAnswer} onValueChange={setCurrentAnswer}>
                       <div className="space-y-3">
                         {currentQuestion.options.map((option, idx) => (
-                          <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                          <div key={idx} className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer select-none" onCopy={(e) => e.preventDefault()}>
                             <RadioGroupItem value={option} id={`option-${idx}`} />
-                            <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
+                            <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer select-none">
                               {option}
                             </Label>
                           </div>

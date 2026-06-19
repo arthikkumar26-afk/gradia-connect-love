@@ -524,7 +524,7 @@ Current question to focus on: Question ${currentQuestionIndex + 1}`;
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Current Question */}
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg select-none" onCopy={(e) => e.preventDefault()}>
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold shrink-0">
                     {currentQuestionIndex + 1}
