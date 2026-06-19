@@ -737,6 +737,20 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         ],
       },
       {
+        value: 'business_analytics',
+        label: 'Business Analytics',
+        stages: [
+          commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
+          { order: 3, name: 'Aptitude & Analytics Test', description: 'Quantitative aptitude, data interpretation & SQL/Excel basics', isAutomated: true },
+          { order: 4, name: 'Business Case Study', description: 'Live business case analysis & data-driven insights presentation', isAutomated: false },
+          commonStages.hrRoundSlotBooking,
+          commonStages.hrRound,
+          commonStages.finalReview,
+          commonStages.offerStage,
+        ],
+      },
+      {
         value: 'operations_logistics',
         label: 'Operations & Logistics',
         stages: [
