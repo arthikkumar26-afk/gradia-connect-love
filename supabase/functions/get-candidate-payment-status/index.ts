@@ -59,8 +59,13 @@ serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(5);
 
-    let activeSub = subs?.find((s: any) => s.status === "active") || null;
-    let latestSub = subs?.[0] || null;
+    const isSubActive = (sub: any) =>
+      !!sub &&
+      sub.status === "active" &&
+      (!sub.ends_at || new Date(sub.ends_at).getTime() > Date.now());
+
+    let activeSub = subs?.find(isSubActive) || null;
+    let latestSub = activeSub || subs?.[0] || null;
 
     const { data: orders } = await admin
       .from("razorpay_webhook_logs")
@@ -143,7 +148,10 @@ serve(async (req) => {
                 }
               }
 
-              if (!activeSub) {
+              // A captured paid order must upgrade the subscription even when
+              // the candidate already has an active lower/free plan row.
+              const activeAlreadyMatchesPayment = activeSub?.plan === orderPlan && isSubActive(activeSub);
+              if (!activeAlreadyMatchesPayment) {
                 const now = new Date();
                 const endsAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 
