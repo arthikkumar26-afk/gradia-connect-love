@@ -238,17 +238,41 @@ const PlanControl = ({ accessRole }: Props) => {
     setPlanSubmitting(true);
     try {
       if (planTarget.type === "candidate") {
+        const nowIso = new Date().toISOString();
+        const endsIso = new Date(Date.now() + 30 * 86400_000).toISOString();
+
+        // Deactivate any other active/trial rows for this candidate so the
+        // app's "active subscription" lookup resolves to exactly one row.
+        const { error: deactErr } = await supabase
+          .from("candidate_subscriptions")
+          .update({ status: "inactive", updated_at: nowIso })
+          .eq("candidate_id", planTarget.userId)
+          .neq("id", planTarget.id)
+          .in("status", ["active", "trial"]);
+        if (deactErr) throw deactErr;
+
+        // Activate the selected row with the new plan.
         const { error } = await supabase
           .from("candidate_subscriptions")
           .update({
             plan: newPlan,
             status: "active",
-            started_at: new Date().toISOString(),
-            ends_at: new Date(Date.now() + 30 * 86400_000).toISOString(),
-            updated_at: new Date().toISOString(),
+            started_at: nowIso,
+            ends_at: endsIso,
+            updated_at: nowIso,
           })
           .eq("id", planTarget.id);
         if (error) throw error;
+
+        // Log the manual activation so it shows in history & audits.
+        await supabase.from("subscription_activation_logs").insert({
+          candidate_id: planTarget.userId,
+          plan: newPlan,
+          source: "admin_manual_activation",
+          activation_result: "success",
+          subscription_id: planTarget.id,
+        });
+
       } else {
         const { error } = await supabase
           .from("subscriptions")
