@@ -44,12 +44,19 @@ const Blog = () => {
       <Helmet>
         <title>Career Blog - Gradia</title>
         <meta name="description" content="Career insights, hiring trends, and industry expertise to help candidates and employers succeed in the modern job market." />
-        <link rel="canonical" href="https://gradiaa.com/blog" />
+        <link rel="canonical" href="https://gradia.world/blog" />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content="Career Blog - Gradia" />
+        <meta property="og:description" content="Career insights, hiring trends, and industry expertise from Gradia." />
+        <meta property="og:url" content="https://gradia.world/blog" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Career Blog - Gradia" />
+        <meta name="twitter:description" content="Career insights, hiring trends, and industry expertise from Gradia." />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Blog",
           name: "Gradia Career Blog",
-          url: "https://gradiaa.com/blog",
+          url: "https://gradia.world/blog",
           description: "Career insights, hiring trends, and industry expertise from Gradia.",
           blogPost: posts.map((p) => ({
             "@type": "BlogPosting",
