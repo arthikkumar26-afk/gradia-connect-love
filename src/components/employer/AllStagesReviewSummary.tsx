@@ -172,6 +172,8 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                 review.correctAnswers = resp.correct_answers;
                 review.timeTaken = resp.time_taken_seconds;
                 review.score = resp.score || review.score;
+                review.questions = Array.isArray(resp.questions) ? resp.questions : [];
+                review.answers = Array.isArray(resp.answers) ? resp.answers : [];
               }
             }
 
