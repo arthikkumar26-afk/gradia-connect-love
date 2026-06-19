@@ -846,7 +846,7 @@ export const MockInterviewTab = () => {
     setIsBookingSlot(true);
     try {
       const currentStage = currentSession.current_stage_order;
-      const isFirstSlotBookingStage = isFirstSlotBooking(currentStage);
+      const isFirstSlotBookingStage = false;
 
       // Determine the actual slot time
       let slotTime: Date;
@@ -1110,7 +1110,7 @@ export const MockInterviewTab = () => {
       const scoredResults = stageResults.filter(r => 
         r.ai_score !== undefined && 
         r.stage_order !== 1 && // Interview Instructions
-        !isSlotBookingOrder(r.stage_order) // Slot Booking stages
+        !isSlotBookingName(r.stage_name) // Slot Booking stages
       );
       const overallScore = scoredResults.length > 0 
         ? scoredResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / scoredResults.length 
@@ -1826,7 +1826,7 @@ export const MockInterviewTab = () => {
                 {selectedPipelineStages.length > 0 ? `Interview Stages — ${selectedPipelineTypeLabel}` : 'Interview Stages'}
               </p>
               <div className="grid gap-1.5">
-                {(selectedPipelineStages.length > 0 ? selectedPipelineStages : [
+                {(displayStagesList.length > 0 ? displayStagesList : [
                   { order: 1, name: "Select Interview Type above to see stages" },
                 ]).map((stage) => (
                   <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
