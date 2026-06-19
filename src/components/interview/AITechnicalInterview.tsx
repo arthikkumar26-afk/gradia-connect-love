@@ -335,7 +335,7 @@ export const AITechnicalInterview = ({
               </Button>
 
               {currentQuestion?.keyPoints && currentQuestion.keyPoints.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-2 select-none" onCopy={(e) => e.preventDefault()}>
                   <p className="text-sm font-medium text-muted-foreground">
                     Key points to cover:
                   </p>

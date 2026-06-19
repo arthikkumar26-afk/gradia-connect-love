@@ -622,18 +622,21 @@ const MockTest = () => {
           {currentQuestion && (
             <>
               <Badge variant="secondary" className="mb-4">{currentQuestion.category}</Badge>
-              <h2 className="text-xl font-semibold text-foreground mb-6">{currentQuestion.question}</h2>
+              <div className="select-none" onCopy={(e) => e.preventDefault()}>
+                <h2 className="text-xl font-semibold text-foreground mb-6">{currentQuestion.question}</h2>
+              </div>
 
               <div className="space-y-3 mb-8">
                 {currentQuestion.options.map((option, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleAnswerSelect(option)}
-                    className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                    className={`w-full text-left p-4 rounded-lg border-2 transition-all select-none ${
                       selectedAnswer === option
                         ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-primary/50'
                     }`}
+                    onCopy={(e) => e.preventDefault()}
                   >
                     {option}
                   </button>
