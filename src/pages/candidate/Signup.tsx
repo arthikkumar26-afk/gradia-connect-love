@@ -1293,6 +1293,10 @@ const CandidateSignup = () => {
               <SelectContent>
                 <SelectItem value="Education">Education</SelectItem>
                 <SelectItem value="IT Corporate">IT Corporate</SelectItem>
+                <SelectItem value="Non-IT Corporate">Non-IT Corporate</SelectItem>
+                <SelectItem value="Banking & Finance">Banking & Finance</SelectItem>
+                <SelectItem value="Film & Media">Film & Media</SelectItem>
+                <SelectItem value="Civil Engineering">Civil Engineering</SelectItem>
                 <SelectItem value="Legal">Legal</SelectItem>
                 <SelectItem value="Doctor">Doctor</SelectItem>
                 <SelectItem value="Civil Service">Civil Service</SelectItem>
