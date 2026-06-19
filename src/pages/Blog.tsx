@@ -117,8 +117,8 @@ const Blog = () => {
                       {post.readTime}
                     </div>
                   </div>
-                  <Button variant="ghost" className="w-full mt-4">
-                    Read More
+                  <Button variant="ghost" className="w-full mt-4" aria-label={`Read full article: ${post.title}`}>
+                    Read full article
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </CardContent>

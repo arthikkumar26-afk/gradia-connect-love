@@ -287,7 +287,7 @@ export default function LearningPlatform() {
                 Get personalized guidance from industry experts.
               </p>
               <Button variant="outline" size="sm" asChild>
-                <a href={`${SKILLORY_BASE}/coaching`} target="_blank" rel="noopener noreferrer">Learn More</a>
+                <a href={`${SKILLORY_BASE}/coaching`} target="_blank" rel="noopener noreferrer">Explore Career Coaching</a>
               </Button>
             </div>
             <div>

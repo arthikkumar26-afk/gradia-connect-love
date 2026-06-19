@@ -191,6 +191,7 @@ const Hero = () => {
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
+                    aria-label="Search by job title, company, or keywords"
                     placeholder="Job title, company, or keywords..."
                     className="pl-10 h-9 md:h-12 text-sm md:text-lg border border-input bg-background text-foreground"
                     value={searchTerm}
@@ -199,6 +200,7 @@ const Hero = () => {
                 </div>
                 <div className="flex-1 relative">
                   <Input
+                    aria-label="Search by location"
                     placeholder="Location (remote, city, country)"
                     className="h-9 md:h-12 text-sm md:text-lg border border-input bg-background text-foreground"
                     value={location}
