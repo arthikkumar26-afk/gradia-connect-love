@@ -1584,9 +1584,6 @@ export const MockInterviewTab = () => {
   const industryCategory = getIndustryCategory();
   const isITCorporate = industryCategory === 'it_corporate';
 
-  // Helper: detect slot booking stages by name (not hardcoded order)
-  const isSlotBookingStage = (stageName: string) => stageName.toLowerCase().includes('slot booking');
-
   // ── Interview Type → Pipeline Type → Role (matches vacancy creation) ──
 
   // Derive available pipeline types for the selected interview type
@@ -1614,7 +1611,7 @@ export const MockInterviewTab = () => {
     const stripOffer = <T extends { name: string }>(arr: T[]) => arr.filter(s => {
       const n = s.name.toLowerCase();
       return n !== 'offer stage'
-        && !n.includes('slot booking')
+        && !isHiddenMockStage(s)
         && !n.includes('cv')
         && !n.includes('resume')
         && (!removeCoding || !n.includes('coding'));
@@ -1658,15 +1655,6 @@ export const MockInterviewTab = () => {
     return stripOffer(stages).map((s, idx) => ({ name: s.name, order: idx + 1, description: '' }));
   };
   const displayStagesList = getDisplayStages();
-  // Find slot booking stage orders dynamically
-  const slotBookingStageOrders = displayStagesList
-    .filter(s => isSlotBookingStage(s.name))
-    .map(s => s.order);
-  const isSlotBookingOrder = (order: number) => slotBookingStageOrders.includes(order);
-  // First slot booking = technical assessment slot, others = demo slot
-  const firstSlotBookingOrder = slotBookingStageOrders[0] ?? -1;
-  const isFirstSlotBooking = (order: number) => order === firstSlotBookingOrder;
-
   // Check if all 3 fields are selected
   const isMockRoleSelected = !!selectedMockInterviewType && !!selectedMockPipelineType && !!selectedMockRole;
 
