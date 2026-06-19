@@ -1383,8 +1383,17 @@ const CandidateSignup = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 md:col-span-2">
                     <Label>Designation</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        placeholder="Search positions..."
+                        value={positionSearch}
+                        onChange={(e) => setPositionSearch(e.target.value)}
+                        className="pl-9 h-9 text-sm"
+                      />
+                    </div>
                     <Select value={segment || undefined} onValueChange={setSegment} key={`desig-${primarySubject}`}>
                       <SelectTrigger className="h-10"><SelectValue placeholder="Select Designation" /></SelectTrigger>
                       <SelectContent>
@@ -1402,7 +1411,13 @@ const CandidateSignup = () => {
                           };
                           const pipelineKey = pipelineMap[primarySubject] || '';
                           const roles = getRolesForPipeline('it_corporate', pipelineKey);
-                          return roles.map((role) => (
+                          const filtered = positionSearch.trim()
+                            ? roles.filter((r) => r.label.toLowerCase().includes(positionSearch.toLowerCase()))
+                            : roles;
+                          if (!filtered.length) {
+                            return <div className="px-2 py-3 text-sm text-muted-foreground text-center">No matches</div>;
+                          }
+                          return filtered.map((role) => (
                             <SelectItem key={role.value} value={role.label}>{role.label}</SelectItem>
                           ));
                         })()}
