@@ -26,6 +26,8 @@ interface StageReview {
   totalQuestions?: number;
   correctAnswers?: number;
   timeTaken?: number;
+  questions?: any[];
+  answers?: number[];
   // Demo Feedback specific
   reviews?: {
     reviewerName: string | null;
@@ -121,7 +123,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
         if (eventIds.length > 0) {
           const { data: respData } = await supabase
             .from('interview_responses')
-            .select('interview_event_id, score, total_questions, correct_answers, time_taken_seconds')
+            .select('interview_event_id, score, total_questions, correct_answers, time_taken_seconds, questions, answers')
             .in('interview_event_id', eventIds);
           responses = respData || [];
         }
@@ -170,6 +172,8 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                 review.correctAnswers = resp.correct_answers;
                 review.timeTaken = resp.time_taken_seconds;
                 review.score = resp.score || review.score;
+                review.questions = Array.isArray(resp.questions) ? resp.questions : [];
+                review.answers = Array.isArray(resp.answers) ? resp.answers : [];
               }
             }
 
@@ -354,6 +358,47 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             const timeStr = review.timeTaken ? `${Math.floor(review.timeTaken / 60)}m ${review.timeTaken % 60}s` : 'N/A';
             doc.text(`Time Taken: ${timeStr}`, pw / 2, y);
             y += 6;
+
+            // Questions & Answers
+            if (review.questions && review.questions.length > 0) {
+              review.questions.forEach((q: any, qi: number) => {
+                const userAns = review.answers?.[qi];
+                const correctIdx = q.correctAnswer ?? q.correct_answer;
+                const isCorrect = userAns === correctIdx;
+                checkPage(20);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.text(`Q${qi + 1}. `, margin + 10, y);
+                doc.setFont('helvetica', 'normal');
+                const qLines = doc.splitTextToSize(String(q.question || ''), contentW - 24);
+                doc.text(qLines, margin + 20, y);
+                y += qLines.length * 4 + 1;
+                if (Array.isArray(q.options)) {
+                  q.options.forEach((opt: string, oi: number) => {
+                    checkPage(6);
+                    const letter = String.fromCharCode(65 + oi);
+                    const isCorrectOpt = oi === correctIdx;
+                    const isUserOpt = oi === userAns;
+                    if (isCorrectOpt) doc.setTextColor(22, 130, 70);
+                    else if (isUserOpt && !isCorrectOpt) doc.setTextColor(190, 40, 40);
+                    else doc.setTextColor(60, 60, 60);
+                    const optLines = doc.splitTextToSize(`${letter}. ${opt}${isCorrectOpt ? '  (Correct)' : ''}${isUserOpt && !isCorrectOpt ? '  (Your answer)' : ''}`, contentW - 28);
+                    doc.text(optLines, margin + 20, y);
+                    y += optLines.length * 4;
+                  });
+                  doc.setTextColor(0, 0, 0);
+                }
+                if (userAns === undefined || userAns === null || userAns < 0) {
+                  doc.setFont('helvetica', 'italic');
+                  doc.setTextColor(150, 150, 150);
+                  doc.text('Not answered', margin + 20, y);
+                  doc.setTextColor(0, 0, 0);
+                  doc.setFont('helvetica', 'normal');
+                  y += 4;
+                }
+                y += 3;
+              });
+            }
           }
 
           // Feedback Reviews
@@ -605,7 +650,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
 
                   {/* Written Test - MCQ Results */}
                   {review.stageName === 'Written Test' && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       {review.totalQuestions && (
                         <div className="flex items-center gap-3 text-xs">
                           <span className="text-muted-foreground">
@@ -618,6 +663,47 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                       )}
                       {review.aiFeedback && typeof review.aiFeedback === 'object' && review.aiFeedback.feedback && (
                         <p className="text-xs text-muted-foreground">{review.aiFeedback.feedback}</p>
+                      )}
+                      {review.questions && review.questions.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          {review.questions.map((q: any, qi: number) => {
+                            const userAns = review.answers?.[qi];
+                            const correctIdx = q.correctAnswer ?? q.correct_answer;
+                            const isCorrect = userAns === correctIdx;
+                            return (
+                              <div key={qi} className="bg-background rounded-md p-2 border space-y-1">
+                                <div className="flex items-start gap-1.5">
+                                  <Badge variant="outline" className="text-[10px] py-0">Q{qi + 1}</Badge>
+                                  <Badge className={cn("text-[10px] py-0", isCorrect ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200")}>
+                                    {isCorrect ? 'Correct' : 'Incorrect'}
+                                  </Badge>
+                                </div>
+                                <p className="text-[11px] font-medium text-foreground">{q.question}</p>
+                                {Array.isArray(q.options) && (
+                                  <div className="space-y-1">
+                                    {q.options.map((opt: string, oi: number) => {
+                                      const isCorrectOpt = oi === correctIdx;
+                                      const isUserOpt = oi === userAns;
+                                      return (
+                                        <div key={oi} className={cn(
+                                          "text-[11px] px-2 py-1 rounded border",
+                                          isCorrectOpt ? "bg-green-50 border-green-200 text-green-800" :
+                                          isUserOpt ? "bg-red-50 border-red-200 text-red-800" :
+                                          "bg-muted/40 border-border text-muted-foreground"
+                                        )}>
+                                          <span className="font-medium mr-1">{String.fromCharCode(65 + oi)}.</span>
+                                          {opt}
+                                          {isCorrectOpt && <span className="ml-1 font-medium">(Correct)</span>}
+                                          {isUserOpt && !isCorrectOpt && <span className="ml-1 font-medium">(Your answer)</span>}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   )}
