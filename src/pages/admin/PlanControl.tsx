@@ -240,11 +240,29 @@ const PlanControl = ({ accessRole }: Props) => {
       return;
     }
     setPlanSubmitting(true);
+    const previousPlan = planTarget.currentPlan;
+    const { data: { user: actor } } = await supabase.auth.getUser();
+    const nowIso = new Date().toISOString();
+    const endsIso = new Date(Date.now() + 30 * 86400_000).toISOString();
+    const baseLog = {
+      candidate_id: planTarget.type === "candidate" ? planTarget.userId : null,
+      plan: newPlan,
+      previous_plan: previousPlan,
+      source: planTarget.type === "candidate"
+        ? "admin_manual_activation"
+        : "admin_manual_activation_employer",
+      actor_user_id: actor?.id ?? null,
+      actor_email: actor?.email ?? null,
+      subscription_id: planTarget.id,
+      payload_summary: {
+        target_user_id: planTarget.userId,
+        target_name: planTarget.name,
+        target_email: planTarget.email,
+        type: planTarget.type,
+      },
+    };
     try {
       if (planTarget.type === "candidate") {
-        const nowIso = new Date().toISOString();
-        const endsIso = new Date(Date.now() + 30 * 86400_000).toISOString();
-
         // Deactivate any other active/trial rows for this candidate so the
         // app's "active subscription" lookup resolves to exactly one row.
         const { error: deactErr } = await supabase
@@ -267,16 +285,6 @@ const PlanControl = ({ accessRole }: Props) => {
           })
           .eq("id", planTarget.id);
         if (error) throw error;
-
-        // Log the manual activation so it shows in history & audits.
-        await supabase.from("subscription_activation_logs").insert({
-          candidate_id: planTarget.userId,
-          plan: newPlan,
-          source: "admin_manual_activation",
-          activation_result: "success",
-          subscription_id: planTarget.id,
-        });
-
       } else {
         const { error } = await supabase
           .from("subscriptions")
@@ -284,11 +292,17 @@ const PlanControl = ({ accessRole }: Props) => {
             plan_id: newPlan,
             plan_name: newPlan.charAt(0).toUpperCase() + newPlan.slice(1),
             status: "active",
-            updated_at: new Date().toISOString(),
+            updated_at: nowIso,
           })
           .eq("id", planTarget.id);
         if (error) throw error;
       }
+
+      await supabase.from("subscription_activation_logs").insert({
+        ...baseLog,
+        activation_result: "success",
+      });
+
       toast({
         title: "Plan updated",
         description: `${planTarget.name} → ${newPlan}`,
@@ -296,11 +310,17 @@ const PlanControl = ({ accessRole }: Props) => {
       setPlanDlgOpen(false);
       fetchAll();
     } catch (e: any) {
+      await supabase.from("subscription_activation_logs").insert({
+        ...baseLog,
+        activation_result: "failed",
+        error_message: e?.message ?? String(e),
+      });
       toast({ title: "Update failed", description: e.message, variant: "destructive" });
     } finally {
       setPlanSubmitting(false);
     }
   };
+
 
   /** Invoice helpers */
   const buildInvoicePdf = (log: ActivationLog, profile?: Profile) => {
