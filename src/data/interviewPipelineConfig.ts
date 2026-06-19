@@ -737,6 +737,20 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         ],
       },
       {
+        value: 'business_analytics',
+        label: 'Business Analytics',
+        stages: [
+          commonStages.resumeScreening,
+          commonStages.writtenTestSlotBooking,
+          { order: 3, name: 'Aptitude & Analytics Test', description: 'Quantitative aptitude, data interpretation & SQL/Excel basics', isAutomated: true },
+          { order: 4, name: 'Business Case Study', description: 'Live business case analysis & data-driven insights presentation', isAutomated: false },
+          commonStages.hrRoundSlotBooking,
+          commonStages.hrRound,
+          commonStages.finalReview,
+          commonStages.offerStage,
+        ],
+      },
+      {
         value: 'operations_logistics',
         label: 'Operations & Logistics',
         stages: [
@@ -1497,6 +1511,18 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'pr_executive', label: 'PR Executive' },
     { value: 'corporate_communications', label: 'Corporate Communications' },
     { value: 'digital_marketing', label: 'Digital Marketing Executive' },
+  ],
+  'non_it_corporate.business_analytics': [
+    { value: 'business_analyst_nic', label: 'Business Analyst' },
+    { value: 'data_analyst_nic', label: 'Data Analyst' },
+    { value: 'business_intelligence_analyst', label: 'Business Intelligence Analyst' },
+    { value: 'reporting_analyst', label: 'Reporting Analyst' },
+    { value: 'analytics_consultant', label: 'Analytics Consultant' },
+    { value: 'market_research_analyst', label: 'Market Research Analyst' },
+    { value: 'insights_analyst', label: 'Insights Analyst' },
+    { value: 'financial_analyst_ba', label: 'Financial Analyst' },
+    { value: 'operations_analytics_lead', label: 'Operations Analytics Lead' },
+    { value: 'analytics_manager', label: 'Analytics Manager' },
   ],
   'non_it_corporate.operations_logistics': [
     { value: 'operations_executive', label: 'Operations Executive' },
