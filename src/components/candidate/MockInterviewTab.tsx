@@ -2292,8 +2292,6 @@ export const MockInterviewTab = () => {
                             View Full Details
                           </Button>
                         </div>
-                      </>
-                    )}
                   </div>
                 )}
 
