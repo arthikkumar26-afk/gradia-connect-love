@@ -153,11 +153,11 @@ export default function InterviewPrep() {
                               <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
                             )}
                           </div>
-                          <span className="flex-1">{q.question}</span>
+                          <span className="flex-1 select-none" onCopy={(e) => e.preventDefault()}>{q.question}</span>
                           <Badge variant="outline">{q.difficulty}</Badge>
                         </div>
                       </AccordionTrigger>
-                      <AccordionContent className="text-muted-foreground pl-8">
+                      <AccordionContent className="text-muted-foreground pl-8 select-none" onCopy={(e) => e.preventDefault()}>
                         {q.answer}
                       </AccordionContent>
                     </AccordionItem>
