@@ -308,7 +308,8 @@ export const AIInterviewSession = ({
                 {questions.map((q, idx) => (
                   <div 
                     key={idx} 
-                    className="p-3 bg-muted rounded-lg flex items-start gap-3"
+                    className="p-3 bg-muted rounded-lg flex items-start gap-3 select-none"
+                    onCopy={(e) => e.preventDefault()}
                   >
                     <span className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm shrink-0">
                       {idx + 1}
