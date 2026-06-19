@@ -556,7 +556,10 @@ export const MockInterviewTab = () => {
           body: { action: 'get_stages' }
         });
         if (stagesData?.stages) {
-          resolvedStages = stagesData.stages;
+          // Strip slot booking stages from fallback pipeline and re-order
+          resolvedStages = stagesData.stages
+            .filter((s: any) => s.stageType !== 'slot_booking' && !String(s.name || '').toLowerCase().includes('slot booking'))
+            .map((s: any, idx: number) => ({ ...s, order: idx + 1 }));
         }
       }
 
