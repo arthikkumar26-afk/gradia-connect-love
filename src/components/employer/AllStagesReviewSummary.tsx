@@ -26,6 +26,8 @@ interface StageReview {
   totalQuestions?: number;
   correctAnswers?: number;
   timeTaken?: number;
+  questions?: any[];
+  answers?: number[];
   // Demo Feedback specific
   reviews?: {
     reviewerName: string | null;
