@@ -2098,17 +2098,10 @@ export const MockInterviewTab = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{stage.name}</h3>
-                      {/* Only show score for stages other than Interview Instructions (1) and Slot Booking stages (2, 4) */}
-                      {result?.ai_score !== undefined && stage.order !== 1 && !isSlotBookingOrder(stage.order) && (
+                      {/* Only show score for stages other than Interview Instructions (1) */}
+                      {result?.ai_score !== undefined && stage.order !== 1 && (
                         <Badge variant="default" className="bg-green-500">
                           {result.ai_score.toFixed(0)}%
-                        </Badge>
-                      )}
-                      {/* Show "Slot Booked" badge for completed slot booking stages */}
-                      {status === 'completed' && isSlotBookingOrder(stage.order) && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Slot Booked
                         </Badge>
                       )}
                       {status === 'current' && (
@@ -2152,20 +2145,8 @@ export const MockInterviewTab = () => {
                         {isStarting ? 'Starting...' : 'Start Test'}
                       </Button>
                     )}
-                    {/* For Technical Assessment Slot Booking (stage 2) in progress, show Book Slot button */}
-                    {status === 'current' && isFirstSlotBooking(stage.order) && (
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
-                        className="gap-1"
-                      >
-                        <Calendar className="h-4 w-4" />
-                        {isExpanded ? 'Hide Booking' : 'Book Slot'}
-                      </Button>
-                    )}
                     {/* For current (in-progress) stages without a dedicated action, show Start button */}
-                    {status === 'current' && currentSession && stage.order !== 1 && stage.order !== 7 && stage.order !== 8 && !isSlotBookingOrder(stage.order) && (
+                    {status === 'current' && currentSession && stage.order !== 1 && stage.order !== 7 && stage.order !== 8 && (
                       <Button
                         variant="default"
                         size="sm"
@@ -2177,18 +2158,6 @@ export const MockInterviewTab = () => {
                       >
                         <Play className="h-4 w-4" />
                         Start
-                      </Button>
-                    )}
-                    {/* For Demo Slot Booking (stage 4) in progress, show Book Slot button */}
-                    {status === 'current' && isSlotBookingOrder(stage.order) && !isFirstSlotBooking(stage.order) && (
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
-                        className="gap-1"
-                      >
-                        <Calendar className="h-4 w-4" />
-                        {isExpanded ? 'Hide Booking' : 'Book Slot'}
                       </Button>
                     )}
                     {/* For Demo Feedback (stage 6) - show View Results like other completed stages */}
@@ -2240,25 +2209,7 @@ export const MockInterviewTab = () => {
                 {/* Expanded Results Section */}
                 {isExpanded && hasResults && result && (
                   <div className="mt-4 pt-4 border-t space-y-4">
-                    {/* For Slot Booking stages (2 and 4), show simplified confirmation */}
-                    {isSlotBookingOrder(stage.order) ? (
-                      <div className="p-4 rounded-lg bg-green-50/50 dark:bg-green-900/10 border border-green-500/30">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                            <CheckCircle2 className="h-5 w-5 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-green-700 dark:text-green-400">
-                              {stage.name} — Slot Booked
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-0.5">
-                              {result.ai_feedback || 'Your slot has been confirmed. Check your email for details.'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
+                    <>
                         {/* AI Feedback */}
                         {result.ai_feedback && (
                           <div className="p-3 rounded-lg bg-muted/50">
