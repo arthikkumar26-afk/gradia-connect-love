@@ -948,7 +948,7 @@ const QRFlyerModal = ({ employerId, companyName = "Your Company", companyLogo, j
                 </div>
                 <div className="mt-4 bg-gray-50 border-t border-gray-200 py-3 text-center">
                   <p className="text-gray-400 text-[8px]">Powered by Gradia • www.gradia.world</p>
-                  <img src={gradiaLogo} alt="Gradia" className="h-4 mx-auto mt-1 opacity-60" />
+                  <img src={gradiaLogo} alt="Gradia recruitment logo" className="h-4 mx-auto mt-1 opacity-60" />
                 </div>
                 <div className="h-2 bg-gradient-to-r from-[#0f4c75] to-[#3282b8]" />
               </div>
