@@ -1369,6 +1369,55 @@ const CandidateSignup = () => {
             {errors.confirmPassword && <p id="confirmPassword-error" className="text-sm text-destructive">{errors.confirmPassword}</p>}
           </div>
 
+          {/* Global position search — sits ABOVE Industry Category so a
+              candidate can type the role they want and pick directly,
+              skipping the industry/domain drill-down. */}
+          <div className="space-y-2">
+            <Label htmlFor="globalPositionSearch">Search Position</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                id="globalPositionSearch"
+                placeholder="Search any position (e.g. Frontend Developer, Loan Officer)"
+                value={globalPositionQuery}
+                onChange={(e) => setGlobalPositionQuery(e.target.value)}
+                className="pl-9 h-10"
+                autoComplete="off"
+              />
+            </div>
+            {globalPositionQuery.trim() && (
+              <div className="rounded-md border border-border bg-background shadow-sm max-h-72 overflow-y-auto">
+                {globalPositionMatches.length === 0 ? (
+                  <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                    No positions match "{globalPositionQuery}"
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {globalPositionMatches.map((entry, idx) => (
+                      <li key={`${entry.industryCategory}-${entry.domainLabel}-${entry.roleValue}-${idx}`}>
+                        <button
+                          type="button"
+                          onClick={() => applyGlobalPosition(entry)}
+                          className="w-full text-left px-3 py-2 hover:bg-accent focus:bg-accent focus:outline-none transition-colors"
+                        >
+                          <div className="text-sm font-medium text-foreground">{entry.roleLabel}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {entry.industryCategory} · {entry.domainFieldLabel}: {entry.domainLabel}
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            {segment && !globalPositionQuery.trim() && (
+              <p className="text-xs text-muted-foreground">
+                Selected: <span className="font-medium text-foreground">{segment}</span> — {industryCategory} · {primarySubject}
+              </p>
+            )}
+          </div>
+
           {/* Industry Category */}
           <div className="space-y-2">
             <Label htmlFor="industryCategory">Industry Category <span className="text-destructive">*</span></Label>
