@@ -1404,6 +1404,56 @@ const CandidateSignup = () => {
                   </div>
                 </>
               )}
+              {(industryCategory === "Non-IT Corporate" ||
+                industryCategory === "Banking & Finance" ||
+                industryCategory === "Film & Media" ||
+                industryCategory === "Civil Engineering") && (() => {
+                const interviewTypeMap: Record<string, string> = {
+                  "Non-IT Corporate": "non_it_corporate",
+                  "Banking & Finance": "banking",
+                  "Film & Media": "film_media",
+                  "Civil Engineering": "civil_engineering",
+                };
+                const domainLabelMap: Record<string, string> = {
+                  "Non-IT Corporate": "Department / Domain",
+                  "Banking & Finance": "Banking Function",
+                  "Film & Media": "Specialization",
+                  "Civil Engineering": "Specialization",
+                };
+                const interviewType = interviewTypeMap[industryCategory];
+                const pipelineTypes = getPipelineTypesForInterviewType(interviewType);
+                const selectedPipeline = pipelineTypes.find(p => p.label === primarySubject);
+                const roles = selectedPipeline ? getRolesForPipeline(interviewType, selectedPipeline.value) : [];
+                return (
+                  <>
+                    <div className="space-y-2">
+                      <Label>{domainLabelMap[industryCategory]}</Label>
+                      <Select value={primarySubject || undefined} onValueChange={(val) => {
+                        setPrimarySubject(val);
+                        setSegment("");
+                      }}>
+                        <SelectTrigger className="h-10"><SelectValue placeholder={`Select ${domainLabelMap[industryCategory]}`} /></SelectTrigger>
+                        <SelectContent>
+                          {pipelineTypes.map((p) => (
+                            <SelectItem key={p.value} value={p.label}>{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Designation</Label>
+                      <Select value={segment || undefined} onValueChange={setSegment} key={`desig-${primarySubject}`}>
+                        <SelectTrigger className="h-10"><SelectValue placeholder="Select Designation" /></SelectTrigger>
+                        <SelectContent>
+                          {roles.map((role) => (
+                            <SelectItem key={role.value} value={role.label}>{role.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                );
+              })()}
               {industryCategory === "Legal" && (
                 <>
                   <div className="space-y-2">
