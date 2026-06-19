@@ -69,6 +69,7 @@ interface ActivationLog {
   id: string;
   candidate_id: string | null;
   plan: string | null;
+  previous_plan: string | null;
   source: string;
   payment_id: string | null;
   order_id: string | null;
@@ -76,8 +77,11 @@ interface ActivationLog {
   currency: string | null;
   activation_result: string;
   error_message: string | null;
+  actor_user_id: string | null;
+  actor_email: string | null;
   created_at: string;
 }
+
 
 const CANDIDATE_PLANS = ["free", "starter", "advance", "pro_accelerator", "elite"] as const;
 const EMPLOYER_PLANS = ["starter", "growth", "enterprise"] as const;
