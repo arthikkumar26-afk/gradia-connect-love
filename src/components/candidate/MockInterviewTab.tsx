@@ -2028,7 +2028,6 @@ export const MockInterviewTab = () => {
 
       <div className="relative">
         <div>
-        <>
 
       {/* Progress Tracker */}
       <Card className="bg-muted/30">
