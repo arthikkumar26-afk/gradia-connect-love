@@ -17,7 +17,7 @@ import gradiaLogo from "@/assets/gradia-logo.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { getRolesForPipeline } from "@/data/interviewPipelineConfig";
+import { getRolesForPipeline, getPipelineTypesForInterviewType } from "@/data/interviewPipelineConfig";
 import { Loader2 } from "lucide-react";
 import { PasswordStrengthIndicator } from "@/components/ui/PasswordStrengthIndicator";
 import { Badge } from "@/components/ui/badge";
