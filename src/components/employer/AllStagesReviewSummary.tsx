@@ -650,7 +650,7 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
 
                   {/* Written Test - MCQ Results */}
                   {review.stageName === 'Written Test' && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       {review.totalQuestions && (
                         <div className="flex items-center gap-3 text-xs">
                           <span className="text-muted-foreground">
@@ -663,6 +663,47 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
                       )}
                       {review.aiFeedback && typeof review.aiFeedback === 'object' && review.aiFeedback.feedback && (
                         <p className="text-xs text-muted-foreground">{review.aiFeedback.feedback}</p>
+                      )}
+                      {review.questions && review.questions.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          {review.questions.map((q: any, qi: number) => {
+                            const userAns = review.answers?.[qi];
+                            const correctIdx = q.correctAnswer ?? q.correct_answer;
+                            const isCorrect = userAns === correctIdx;
+                            return (
+                              <div key={qi} className="bg-background rounded-md p-2 border space-y-1">
+                                <div className="flex items-start gap-1.5">
+                                  <Badge variant="outline" className="text-[10px] py-0">Q{qi + 1}</Badge>
+                                  <Badge className={cn("text-[10px] py-0", isCorrect ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200")}>
+                                    {isCorrect ? 'Correct' : 'Incorrect'}
+                                  </Badge>
+                                </div>
+                                <p className="text-[11px] font-medium text-foreground">{q.question}</p>
+                                {Array.isArray(q.options) && (
+                                  <div className="space-y-1">
+                                    {q.options.map((opt: string, oi: number) => {
+                                      const isCorrectOpt = oi === correctIdx;
+                                      const isUserOpt = oi === userAns;
+                                      return (
+                                        <div key={oi} className={cn(
+                                          "text-[11px] px-2 py-1 rounded border",
+                                          isCorrectOpt ? "bg-green-50 border-green-200 text-green-800" :
+                                          isUserOpt ? "bg-red-50 border-red-200 text-red-800" :
+                                          "bg-muted/40 border-border text-muted-foreground"
+                                        )}>
+                                          <span className="font-medium mr-1">{String.fromCharCode(65 + oi)}.</span>
+                                          {opt}
+                                          {isCorrectOpt && <span className="ml-1 font-medium">(Correct)</span>}
+                                          {isUserOpt && !isCorrectOpt && <span className="ml-1 font-medium">(Your answer)</span>}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   )}
