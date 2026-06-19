@@ -1674,7 +1674,7 @@ export const MockInterviewTab = () => {
     return (
       <div className="space-y-6">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-4">
           <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
             <Brain className="h-6 w-6 text-primary" />
             Mock Interview Practice
@@ -1685,7 +1685,7 @@ export const MockInterviewTab = () => {
 
           {/* Profile-based pipeline info */}
           {profile && (
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
               {profile.category && (
                 <Badge variant="outline" className="gap-1 text-xs">
                   <Building2 className="h-3 w-3" />
@@ -1706,19 +1706,6 @@ export const MockInterviewTab = () => {
               )}
             </div>
           )}
-          
-          <div className="mt-4">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={loadDemoResults}
-              disabled={isStarting}
-              className="gap-2 text-xs"
-            >
-              {isStarting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ListChecks className="h-3 w-3" />}
-              Load Demo Results (All Stages)
-            </Button>
-          </div>
         </div>
 
         {/* ── Role Selector: Interview Type → Pipeline Type → Role (matches vacancy creation) ── */}
