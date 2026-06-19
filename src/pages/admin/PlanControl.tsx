@@ -69,6 +69,7 @@ interface ActivationLog {
   id: string;
   candidate_id: string | null;
   plan: string | null;
+  previous_plan: string | null;
   source: string;
   payment_id: string | null;
   order_id: string | null;
@@ -76,8 +77,11 @@ interface ActivationLog {
   currency: string | null;
   activation_result: string;
   error_message: string | null;
+  actor_user_id: string | null;
+  actor_email: string | null;
   created_at: string;
 }
+
 
 const CANDIDATE_PLANS = ["free", "starter", "advance", "pro_accelerator", "elite"] as const;
 const EMPLOYER_PLANS = ["starter", "growth", "enterprise"] as const;
@@ -236,11 +240,29 @@ const PlanControl = ({ accessRole }: Props) => {
       return;
     }
     setPlanSubmitting(true);
+    const previousPlan = planTarget.currentPlan;
+    const { data: { user: actor } } = await supabase.auth.getUser();
+    const nowIso = new Date().toISOString();
+    const endsIso = new Date(Date.now() + 30 * 86400_000).toISOString();
+    const baseLog = {
+      candidate_id: planTarget.type === "candidate" ? planTarget.userId : null,
+      plan: newPlan,
+      previous_plan: previousPlan,
+      source: planTarget.type === "candidate"
+        ? "admin_manual_activation"
+        : "admin_manual_activation_employer",
+      actor_user_id: actor?.id ?? null,
+      actor_email: actor?.email ?? null,
+      subscription_id: planTarget.id,
+      payload_summary: {
+        target_user_id: planTarget.userId,
+        target_name: planTarget.name,
+        target_email: planTarget.email,
+        type: planTarget.type,
+      },
+    };
     try {
       if (planTarget.type === "candidate") {
-        const nowIso = new Date().toISOString();
-        const endsIso = new Date(Date.now() + 30 * 86400_000).toISOString();
-
         // Deactivate any other active/trial rows for this candidate so the
         // app's "active subscription" lookup resolves to exactly one row.
         const { error: deactErr } = await supabase
@@ -263,16 +285,6 @@ const PlanControl = ({ accessRole }: Props) => {
           })
           .eq("id", planTarget.id);
         if (error) throw error;
-
-        // Log the manual activation so it shows in history & audits.
-        await supabase.from("subscription_activation_logs").insert({
-          candidate_id: planTarget.userId,
-          plan: newPlan,
-          source: "admin_manual_activation",
-          activation_result: "success",
-          subscription_id: planTarget.id,
-        });
-
       } else {
         const { error } = await supabase
           .from("subscriptions")
@@ -280,11 +292,17 @@ const PlanControl = ({ accessRole }: Props) => {
             plan_id: newPlan,
             plan_name: newPlan.charAt(0).toUpperCase() + newPlan.slice(1),
             status: "active",
-            updated_at: new Date().toISOString(),
+            updated_at: nowIso,
           })
           .eq("id", planTarget.id);
         if (error) throw error;
       }
+
+      await supabase.from("subscription_activation_logs").insert({
+        ...baseLog,
+        activation_result: "success",
+      });
+
       toast({
         title: "Plan updated",
         description: `${planTarget.name} → ${newPlan}`,
@@ -292,11 +310,17 @@ const PlanControl = ({ accessRole }: Props) => {
       setPlanDlgOpen(false);
       fetchAll();
     } catch (e: any) {
+      await supabase.from("subscription_activation_logs").insert({
+        ...baseLog,
+        activation_result: "failed",
+        error_message: e?.message ?? String(e),
+      });
       toast({ title: "Update failed", description: e.message, variant: "destructive" });
     } finally {
       setPlanSubmitting(false);
     }
   };
+
 
   /** Invoice helpers */
   const buildInvoicePdf = (log: ActivationLog, profile?: Profile) => {
@@ -532,7 +556,9 @@ const PlanControl = ({ accessRole }: Props) => {
                     <TableRow>
                       <TableHead>Date</TableHead>
                       <TableHead>User</TableHead>
-                      <TableHead>Plan</TableHead>
+                      <TableHead>Plan change</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Actor</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Payment ID</TableHead>
                       <TableHead>Result</TableHead>
@@ -549,12 +575,39 @@ const PlanControl = ({ accessRole }: Props) => {
                             <div className="text-sm">{profile?.full_name || "—"}</div>
                             <div className="text-xs text-muted-foreground">{profile?.email || "—"}</div>
                           </TableCell>
-                          <TableCell>{planBadge(h.plan || "—")}</TableCell>
+                          <TableCell className="text-xs">
+                            {h.previous_plan ? (
+                              <span className="text-muted-foreground">{h.previous_plan} → </span>
+                            ) : null}
+                            <span className="font-medium">{h.plan || "—"}</span>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            <Badge variant="outline" className="capitalize">
+                              {(h.source || "").replace(/_/g, " ") || "—"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {h.actor_email ? (
+                              <span title={h.actor_user_id ?? ""}>{h.actor_email}</span>
+                            ) : h.source?.startsWith("admin_") ? (
+                              <span className="text-muted-foreground">admin</span>
+                            ) : (
+                              <span className="text-muted-foreground">system</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-xs">
                             {h.amount_paise ? `${h.currency || "INR"} ${(h.amount_paise / 100).toFixed(2)}` : "—"}
                           </TableCell>
                           <TableCell className="text-xs font-mono">{h.payment_id || "—"}</TableCell>
-                          <TableCell>{resultBadge(h.activation_result)}</TableCell>
+                          <TableCell>
+                            {resultBadge(h.activation_result)}
+                            {h.error_message ? (
+                              <div className="text-[10px] text-destructive mt-1 max-w-[220px] truncate" title={h.error_message}>
+                                {h.error_message}
+                              </div>
+                            ) : null}
+                          </TableCell>
+
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" onClick={() => downloadInvoice(h)}>
@@ -569,7 +622,7 @@ const PlanControl = ({ accessRole }: Props) => {
                       );
                     })}
                     {filteredHistory.length === 0 && (
-                      <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">No payment history</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-10">No payment history</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>

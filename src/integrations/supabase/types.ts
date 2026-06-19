@@ -4057,6 +4057,8 @@ export type Database = {
       subscription_activation_logs: {
         Row: {
           activation_result: string
+          actor_email: string | null
+          actor_user_id: string | null
           amount_paise: number | null
           candidate_id: string | null
           created_at: string
@@ -4067,12 +4069,15 @@ export type Database = {
           payload_summary: Json | null
           payment_id: string | null
           plan: string | null
+          previous_plan: string | null
           source: string
           subscription_id: string | null
           webhook_event_id: string | null
         }
         Insert: {
           activation_result?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
           amount_paise?: number | null
           candidate_id?: string | null
           created_at?: string
@@ -4083,12 +4088,15 @@ export type Database = {
           payload_summary?: Json | null
           payment_id?: string | null
           plan?: string | null
+          previous_plan?: string | null
           source?: string
           subscription_id?: string | null
           webhook_event_id?: string | null
         }
         Update: {
           activation_result?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
           amount_paise?: number | null
           candidate_id?: string | null
           created_at?: string
@@ -4099,6 +4107,7 @@ export type Database = {
           payload_summary?: Json | null
           payment_id?: string | null
           plan?: string | null
+          previous_plan?: string | null
           source?: string
           subscription_id?: string | null
           webhook_event_id?: string | null
