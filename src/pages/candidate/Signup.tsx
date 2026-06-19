@@ -494,7 +494,6 @@ const CandidateSignup = () => {
     setIndustryCategory(entry.industryCategory);
     setPrimarySubject(entry.domainLabel);
     setSegment(entry.roleLabel);
-    setPositionSearch("");
     setGlobalPositionQuery("");
   };
   const [errors, setErrors] = useState<FormErrors>({});
