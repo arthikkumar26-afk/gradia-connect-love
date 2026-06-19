@@ -56,15 +56,24 @@ serve(async (req) => {
       .from("candidate_subscriptions")
       .select("id, plan, status, started_at, ends_at, updated_at, created_at")
       .eq("candidate_id", userId)
-      .order("created_at", { ascending: false })
+      .order("updated_at", { ascending: false })
       .limit(5);
+
+    const { data: newestActiveSub } = await admin
+      .from("candidate_subscriptions")
+      .select("id, plan, status, started_at, ends_at, updated_at, created_at")
+      .eq("candidate_id", userId)
+      .eq("status", "active")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     const isSubActive = (sub: any) =>
       !!sub &&
       sub.status === "active" &&
       (!sub.ends_at || new Date(sub.ends_at).getTime() > Date.now());
 
-    let activeSub = subs?.find(isSubActive) || null;
+    let activeSub = isSubActive(newestActiveSub) ? newestActiveSub : subs?.find(isSubActive) || null;
     let latestSub = activeSub || subs?.[0] || null;
 
     const { data: orders } = await admin
