@@ -409,7 +409,7 @@ const CandidateSignup = () => {
   const [industryCategory, setIndustryCategory] = useState("");
   const [primarySubject, setPrimarySubject] = useState("");
   const [segment, setSegment] = useState("");
-  const [positionSearch, setPositionSearch] = useState("");
+  
   // Global position search shown ABOVE Industry Category. Lets the candidate
   // type a role (e.g. "Frontend Developer") and pick from a flat list across
   // every industry — same catalog the mock-test page exposes. Selecting an
