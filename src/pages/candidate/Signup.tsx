@@ -415,6 +415,12 @@ const CandidateSignup = () => {
   // user resubmits with the same unresolved errors.
   const [submitCount, setSubmitCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Reset position search whenever domain or industry changes so the user
+  // starts with a clean filter for the new category / pipeline.
+  useEffect(() => {
+    setPositionSearch("");
+  }, [primarySubject, industryCategory]);
   
   // Agreement state
   const [agreementAccepted, setAgreementAccepted] = useState(false);
