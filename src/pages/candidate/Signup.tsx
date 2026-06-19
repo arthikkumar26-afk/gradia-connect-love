@@ -400,12 +400,6 @@ const CandidateSignup = () => {
     return () => { metas.forEach((m) => m.remove()); };
   }, []);
 
-  // Reset position search whenever domain or industry changes so the user
-  // starts with a clean filter for the new category / pipeline.
-  useEffect(() => {
-    setPositionSearch("");
-  }, [primarySubject, industryCategory]);
-
   // Form state (prefilled from invite link if present)
   const [fullName, setFullName] = useState(prefillName);
   const [email, setEmail] = useState(prefillEmail);
