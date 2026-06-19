@@ -1512,6 +1512,18 @@ export const pipelineRoleOptions: Record<string, { value: string; label: string 
     { value: 'corporate_communications', label: 'Corporate Communications' },
     { value: 'digital_marketing', label: 'Digital Marketing Executive' },
   ],
+  'non_it_corporate.business_analytics': [
+    { value: 'business_analyst_nic', label: 'Business Analyst' },
+    { value: 'data_analyst_nic', label: 'Data Analyst' },
+    { value: 'business_intelligence_analyst', label: 'Business Intelligence Analyst' },
+    { value: 'reporting_analyst', label: 'Reporting Analyst' },
+    { value: 'analytics_consultant', label: 'Analytics Consultant' },
+    { value: 'market_research_analyst', label: 'Market Research Analyst' },
+    { value: 'insights_analyst', label: 'Insights Analyst' },
+    { value: 'financial_analyst_ba', label: 'Financial Analyst' },
+    { value: 'operations_analytics_lead', label: 'Operations Analytics Lead' },
+    { value: 'analytics_manager', label: 'Analytics Manager' },
+  ],
   'non_it_corporate.operations_logistics': [
     { value: 'operations_executive', label: 'Operations Executive' },
     { value: 'operations_analyst', label: 'Operations Analyst' },
