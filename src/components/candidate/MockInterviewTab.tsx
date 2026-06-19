@@ -2209,7 +2209,6 @@ export const MockInterviewTab = () => {
                 {/* Expanded Results Section */}
                 {isExpanded && hasResults && result && (
                   <div className="mt-4 pt-4 border-t space-y-4">
-                    <>
                         {/* AI Feedback */}
                         {result.ai_feedback && (
                           <div className="p-3 rounded-lg bg-muted/50">
@@ -2910,7 +2909,6 @@ export const MockInterviewTab = () => {
         </Card>
       )}
 
-        </>
         </div>
       </div>
     </div>
