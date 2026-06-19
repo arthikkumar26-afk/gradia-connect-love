@@ -17,7 +17,14 @@ const About = () => {
       <Helmet>
         <title>About Us - Gradia</title>
         <meta name="description" content="Learn about Gradia's mission to transform hiring. AI-powered recruitment connecting talent with opportunity across software and education sectors." />
-        <link rel="canonical" href="https://gradiaa.com/about" />
+        <link rel="canonical" href="https://gradia.world/about" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="About Us - Gradia" />
+        <meta property="og:description" content="Learn about Gradia's mission to transform hiring with AI-powered recruitment across software and education." />
+        <meta property="og:url" content="https://gradia.world/about" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="About Us - Gradia" />
+        <meta name="twitter:description" content="Learn about Gradia's mission to transform hiring with AI-powered recruitment across software and education." />
       </Helmet>
       <div className="min-h-screen">
       <AboutHero />
