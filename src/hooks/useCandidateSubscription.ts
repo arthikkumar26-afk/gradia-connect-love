@@ -39,10 +39,10 @@ export const useCandidateSubscription = () => {
 
       const { data: subs } = await supabase
         .from("candidate_subscriptions")
-        .select("plan, status, ends_at, created_at")
+        .select("plan, status, ends_at, created_at, updated_at")
         .eq("candidate_id", user.id)
         .eq("status", "active")
-        .order("created_at", { ascending: false })
+        .order("updated_at", { ascending: false })
         .limit(1);
 
       const sub = subs?.[0] ?? null;
