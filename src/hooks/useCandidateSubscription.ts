@@ -37,19 +37,22 @@ export const useCandidateSubscription = () => {
       }
       setUserId(user.id);
 
-      const { data: sub } = await supabase
+      const { data: subs } = await supabase
         .from("candidate_subscriptions")
-        .select("plan, status, ends_at")
+        .select("plan, status, ends_at, created_at")
         .eq("candidate_id", user.id)
         .eq("status", "active")
-        .maybeSingle();
+        .order("created_at", { ascending: false })
+        .limit(1);
 
+      const sub = subs?.[0] ?? null;
       const active =
         sub && (sub.ends_at == null || new Date(sub.ends_at) > new Date());
       const resolvedPlan: CandidatePlan = active
         ? ((sub!.plan as CandidatePlan) ?? "free")
         : "free";
       setPlan(resolvedPlan);
+
 
       const { data: usageRows } = await supabase
         .from("candidate_feature_usage")
