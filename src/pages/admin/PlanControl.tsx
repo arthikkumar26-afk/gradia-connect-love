@@ -622,7 +622,7 @@ const PlanControl = ({ accessRole }: Props) => {
                       );
                     })}
                     {filteredHistory.length === 0 && (
-                      <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">No payment history</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={9} className="text-center text-sm text-muted-foreground py-10">No payment history</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
