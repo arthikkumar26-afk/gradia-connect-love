@@ -759,50 +759,50 @@ const MockInterview = () => {
                 const letter = String.fromCharCode(65 + oi);
                 const isChosen = (aText || '').trim() === opt.trim();
                 const isCorrect = !!correct && correct.trim() === opt.trim();
-                ensureSpace(18);
 
-                // Option row highlight
+                let tag = '';
+                let tagColor: [number, number, number] = [120, 120, 120];
+                if (isCorrect && isChosen) { tag = '(Your answer - Correct)'; tagColor = [22, 130, 50]; }
+                else if (isCorrect) { tag = '(Correct answer)'; tagColor = [22, 130, 50]; }
+                else if (isChosen) { tag = '(Your answer)'; tagColor = [200, 40, 40]; }
+
+                const textMax = pageW - margin * 2 - 32;
+                const baseText = `${letter}.  ${opt}`;
+                const baseLines = doc.splitTextToSize(baseText, textMax);
+                const rowH = baseLines.length * 13 + 4;
+                ensureSpace(rowH + 2);
+
                 if (isCorrect || isChosen) {
                   const fill: [number, number, number] = isCorrect
-                    ? [230, 246, 234]
-                    : [253, 232, 232];
+                    ? [232, 247, 236]
+                    : [253, 235, 235];
                   doc.setFillColor(...fill);
-                  doc.roundedRect(margin + 14, y - 11, pageW - margin * 2 - 28, 16, 2, 2, 'F');
+                  doc.roundedRect(margin + 14, y - 9, pageW - margin * 2 - 28, rowH, 2, 2, 'F');
                 }
-
-                let badge = '';
-                let badgeColor: [number, number, number] = [120, 120, 120];
-                if (isCorrect && isChosen) { badge = '✓ Your answer (Correct)'; badgeColor = [22, 130, 50]; }
-                else if (isCorrect) { badge = '✓ Correct answer'; badgeColor = [22, 130, 50]; }
-                else if (isChosen) { badge = '✗ Your answer'; badgeColor = [200, 40, 40]; }
 
                 doc.setFont('helvetica', (isChosen || isCorrect) ? 'bold' : 'normal');
                 doc.setFontSize(10.5);
                 doc.setTextColor(isChosen || isCorrect ? 25 : 70);
-                const labelText = `${letter}.  ${opt}`;
-                const labelMax = pageW - margin * 2 - 28 - (badge ? 150 : 8);
-                const labelLines = doc.splitTextToSize(labelText, labelMax);
-                labelLines.forEach((ln: string, li: number) => {
-                  if (li > 0) { ensureSpace(14); }
+                baseLines.forEach((ln: string) => {
                   doc.text(ln, margin + 22, y);
-                  if (li === 0 && badge) {
-                    doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-                    doc.setTextColor(...badgeColor);
-                    doc.text(badge, pageW - margin - 14, y, { align: 'right' });
-                    doc.setTextColor(isChosen || isCorrect ? 25 : 70);
-                    doc.setFont('helvetica', (isChosen || isCorrect) ? 'bold' : 'normal');
-                    doc.setFontSize(10.5);
-                  }
-                  y += 14;
+                  y += 13;
                 });
-                y += 2;
+                if (tag) {
+                  const lastLine = baseLines[baseLines.length - 1];
+                  const lastW = doc.getTextWidth(lastLine);
+                  doc.setTextColor(...tagColor);
+                  doc.setFont('helvetica', 'bold');
+                  doc.setFontSize(9.5);
+                  doc.text('  ' + tag, margin + 22 + lastW, y - 13);
+                }
+                y += 3;
               });
               doc.setTextColor(0); doc.setFont('helvetica', 'normal');
               if (!aText) {
                 ensureSpace(14);
-                doc.setTextColor(150); doc.setFontSize(10);
+                doc.setTextColor(150); doc.setFontSize(10); doc.setFont('helvetica', 'italic');
                 doc.text('(Not answered)', margin + 22, y);
-                doc.setTextColor(0); doc.setFontSize(11);
+                doc.setTextColor(0); doc.setFontSize(11); doc.setFont('helvetica', 'normal');
                 y += 14;
               }
             } else {
