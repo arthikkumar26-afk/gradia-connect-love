@@ -409,7 +409,7 @@ const CandidateSignup = () => {
   const [industryCategory, setIndustryCategory] = useState("");
   const [primarySubject, setPrimarySubject] = useState("");
   const [segment, setSegment] = useState("");
-  const [positionSearch, setPositionSearch] = useState("");
+  
   // Global position search shown ABOVE Industry Category. Lets the candidate
   // type a role (e.g. "Frontend Developer") and pick from a flat list across
   // every industry — same catalog the mock-test page exposes. Selecting an
@@ -494,7 +494,6 @@ const CandidateSignup = () => {
     setIndustryCategory(entry.industryCategory);
     setPrimarySubject(entry.domainLabel);
     setSegment(entry.roleLabel);
-    setPositionSearch("");
     setGlobalPositionQuery("");
   };
   const [errors, setErrors] = useState<FormErrors>({});
@@ -503,11 +502,6 @@ const CandidateSignup = () => {
   const [submitCount, setSubmitCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Reset position search whenever domain or industry changes so the user
-  // starts with a clean filter for the new category / pipeline.
-  useEffect(() => {
-    setPositionSearch("");
-  }, [primarySubject, industryCategory]);
   
   // Agreement state
   const [agreementAccepted, setAgreementAccepted] = useState(false);
@@ -1521,15 +1515,6 @@ const CandidateSignup = () => {
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>Designation</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                      <Input
-                        placeholder="Search positions..."
-                        value={positionSearch}
-                        onChange={(e) => setPositionSearch(e.target.value)}
-                        className="pl-9 h-9 text-sm"
-                      />
-                    </div>
                     <Select value={segment || undefined} onValueChange={setSegment} key={`desig-${primarySubject}`}>
                       <SelectTrigger className="h-10"><SelectValue placeholder="Select Designation" /></SelectTrigger>
                       <SelectContent>
@@ -1547,13 +1532,7 @@ const CandidateSignup = () => {
                           };
                           const pipelineKey = pipelineMap[primarySubject] || '';
                           const roles = getRolesForPipeline('it_corporate', pipelineKey);
-                          const filtered = positionSearch.trim()
-                            ? roles.filter((r) => r.label.toLowerCase().includes(positionSearch.toLowerCase()))
-                            : roles;
-                          if (!filtered.length) {
-                            return <div className="px-2 py-3 text-sm text-muted-foreground text-center">No matches</div>;
-                          }
-                          return filtered.map((role) => (
+                          return roles.map((role) => (
                             <SelectItem key={role.value} value={role.label}>{role.label}</SelectItem>
                           ));
                         })()}
@@ -1600,26 +1579,11 @@ const CandidateSignup = () => {
                     </div>
                     <div className="space-y-2 md:col-span-2">
                       <Label>Designation</Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                        <Input
-                          placeholder="Search positions..."
-                          value={positionSearch}
-                          onChange={(e) => setPositionSearch(e.target.value)}
-                          className="pl-9 h-9 text-sm"
-                        />
-                      </div>
                       <Select value={segment || undefined} onValueChange={setSegment} key={`desig-${primarySubject}`}>
                         <SelectTrigger className="h-10"><SelectValue placeholder="Select Designation" /></SelectTrigger>
                         <SelectContent>
                           {(() => {
-                            const filtered = positionSearch.trim()
-                              ? roles.filter((r) => r.label.toLowerCase().includes(positionSearch.toLowerCase()))
-                              : roles;
-                            if (!filtered.length) {
-                              return <div className="px-2 py-3 text-sm text-muted-foreground text-center">No matches</div>;
-                            }
-                            return filtered.map((role) => (
+                            return roles.map((role) => (
                               <SelectItem key={role.value} value={role.label}>{role.label}</SelectItem>
                             ));
                           })()}
@@ -1651,15 +1615,6 @@ const CandidateSignup = () => {
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label>Designation</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                      <Input
-                        placeholder="Search positions..."
-                        value={positionSearch}
-                        onChange={(e) => setPositionSearch(e.target.value)}
-                        className="pl-9 h-9 text-sm"
-                      />
-                    </div>
                     <Select value={segment || undefined} onValueChange={setSegment}>
                       <SelectTrigger className="h-10"><SelectValue placeholder="Select Designation" /></SelectTrigger>
                       <SelectContent>
@@ -1674,13 +1629,7 @@ const CandidateSignup = () => {
                             { value: "Notary", label: "Notary" },
                             { value: "Other", label: "Other" },
                           ];
-                          const filtered = positionSearch.trim()
-                            ? legalRoles.filter((r) => r.label.toLowerCase().includes(positionSearch.toLowerCase()))
-                            : legalRoles;
-                          if (!filtered.length) {
-                            return <div className="px-2 py-3 text-sm text-muted-foreground text-center">No matches</div>;
-                          }
-                          return filtered.map((role) => (
+                          return legalRoles.map((role) => (
                             <SelectItem key={role.value} value={role.label}>{role.label}</SelectItem>
                           ));
                         })()}
