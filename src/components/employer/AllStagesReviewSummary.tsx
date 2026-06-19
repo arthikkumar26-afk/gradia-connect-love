@@ -358,6 +358,47 @@ export const AllStagesReviewSummary = ({ interviewCandidateId }: { interviewCand
             const timeStr = review.timeTaken ? `${Math.floor(review.timeTaken / 60)}m ${review.timeTaken % 60}s` : 'N/A';
             doc.text(`Time Taken: ${timeStr}`, pw / 2, y);
             y += 6;
+
+            // Questions & Answers
+            if (review.questions && review.questions.length > 0) {
+              review.questions.forEach((q: any, qi: number) => {
+                const userAns = review.answers?.[qi];
+                const correctIdx = q.correctAnswer ?? q.correct_answer;
+                const isCorrect = userAns === correctIdx;
+                checkPage(20);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.text(`Q${qi + 1}. `, margin + 10, y);
+                doc.setFont('helvetica', 'normal');
+                const qLines = doc.splitTextToSize(String(q.question || ''), contentW - 24);
+                doc.text(qLines, margin + 20, y);
+                y += qLines.length * 4 + 1;
+                if (Array.isArray(q.options)) {
+                  q.options.forEach((opt: string, oi: number) => {
+                    checkPage(6);
+                    const letter = String.fromCharCode(65 + oi);
+                    const isCorrectOpt = oi === correctIdx;
+                    const isUserOpt = oi === userAns;
+                    if (isCorrectOpt) doc.setTextColor(22, 130, 70);
+                    else if (isUserOpt && !isCorrectOpt) doc.setTextColor(190, 40, 40);
+                    else doc.setTextColor(60, 60, 60);
+                    const optLines = doc.splitTextToSize(`${letter}. ${opt}${isCorrectOpt ? '  (Correct)' : ''}${isUserOpt && !isCorrectOpt ? '  (Your answer)' : ''}`, contentW - 28);
+                    doc.text(optLines, margin + 20, y);
+                    y += optLines.length * 4;
+                  });
+                  doc.setTextColor(0, 0, 0);
+                }
+                if (userAns === undefined || userAns === null || userAns < 0) {
+                  doc.setFont('helvetica', 'italic');
+                  doc.setTextColor(150, 150, 150);
+                  doc.text('Not answered', margin + 20, y);
+                  doc.setTextColor(0, 0, 0);
+                  doc.setFont('helvetica', 'normal');
+                  y += 4;
+                }
+                y += 3;
+              });
+            }
           }
 
           // Feedback Reviews
