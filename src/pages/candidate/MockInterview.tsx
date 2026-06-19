@@ -81,6 +81,14 @@ interface EvaluationResult {
   questionScores?: Array<{ questionId: number; score: number; feedback: string }>;
 }
 
+const isSlotBookingName = (value?: string | null) => /slot\s*booking/i.test(value || '');
+const isHiddenMockStage = (stage: { name?: string | null; stageType?: string | null }) =>
+  stage.stageType === 'slot_booking' || isSlotBookingName(stage.name);
+const normalizeVisibleMockStages = <T extends { name?: string | null; stageType?: string | null }>(items: T[]) =>
+  items.filter((stage) => !isHiddenMockStage(stage)).map((stage, idx) => ({ ...stage, order: idx + 1 }));
+const removeSlotBookingResults = <T extends { stage_name?: string | null }>(items: T[]) =>
+  items.filter((result) => !isSlotBookingName(result.stage_name));
+
 const MockInterview = () => {
   const { sessionId, stageOrder } = useParams();
   const navigate = useNavigate();
@@ -208,9 +216,7 @@ const MockInterview = () => {
       const { data: stagesData } = await supabase.functions.invoke('process-mock-interview-stage', {
         body: { action: 'get_stages' }
       });
-      let resolvedStages: InterviewStage[] = (stagesData?.stages || [])
-        .filter((s: InterviewStage) => s.stageType !== 'slot_booking' && !s.name.toLowerCase().includes('slot booking'))
-        .map((s: InterviewStage, idx: number) => ({ ...s, order: idx + 1 }));
+      let resolvedStages: InterviewStage[] = normalizeVisibleMockStages((stagesData?.stages || []) as InterviewStage[]);
 
       // Try to get session first to resolve pipeline-specific stages
       const { data: fetchedSessionData, error: sessionError } = await supabase
@@ -247,7 +253,7 @@ const MockInterview = () => {
           ?.stages || []).filter(s => {
             const n = s.name.toLowerCase();
             return n !== 'offer stage'
-              && !n.includes('slot booking')
+              && !isHiddenMockStage(s)
               && !n.includes('cv')
               && !n.includes('resume')
               && (!removeCodingLoad || !n.includes('coding'));
@@ -294,12 +300,13 @@ const MockInterview = () => {
         .eq('session_id', sessionId)
         .order('stage_order', { ascending: true });
 
+      const visibleResults = removeSlotBookingResults(allResults || []);
       if (allResults) {
-        setAllStageResults(allResults);
+        setAllStageResults(visibleResults);
       }
 
       // Check if this stage was already completed
-      const stageResult = allResults?.find(r => r.stage_order === parseInt(stageOrder || '1'));
+      const stageResult = visibleResults.find(r => r.stage_order === parseInt(stageOrder || '1'));
 
       if (stageResult?.completed_at) {
         // Stage already completed, show results with strengths and improvements
