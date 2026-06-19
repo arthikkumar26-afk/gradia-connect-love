@@ -410,6 +410,93 @@ const CandidateSignup = () => {
   const [primarySubject, setPrimarySubject] = useState("");
   const [segment, setSegment] = useState("");
   const [positionSearch, setPositionSearch] = useState("");
+  // Global position search shown ABOVE Industry Category. Lets the candidate
+  // type a role (e.g. "Frontend Developer") and pick from a flat list across
+  // every industry — same catalog the mock-test page exposes. Selecting an
+  // entry auto-fills industryCategory + primarySubject (domain) + segment
+  // (designation) so the user doesn't have to drill through the dropdowns.
+  const [globalPositionQuery, setGlobalPositionQuery] = useState("");
+
+  type GlobalPositionEntry = {
+    industryCategory: string;
+    domainLabel: string; // primarySubject value
+    domainFieldLabel: string; // e.g. "Skills / Domain"
+    roleLabel: string;
+    roleValue: string;
+  };
+
+  const globalPositionCatalog = useMemo<GlobalPositionEntry[]>(() => {
+    const out: GlobalPositionEntry[] = [];
+
+    // IT Corporate — domain labels are hard-coded in the dropdown above, so
+    // mirror that mapping to keep the auto-fill consistent with manual flow.
+    const itDomains: { label: string; pipeline: string }[] = [
+      { label: 'Software Engineer', pipeline: 'software_engineer' },
+      { label: 'Cybersecurity', pipeline: 'cybersecurity' },
+      { label: 'Data & Artificial Intelligence', pipeline: 'data_ai' },
+      { label: 'Cloud & Infrastructure', pipeline: 'cloud_infrastructure' },
+      { label: 'Quality Assurance & Testing', pipeline: 'qa_testing' },
+      { label: 'Product & Project Management', pipeline: 'product_project_management' },
+      { label: 'UI/UX & Design', pipeline: 'ui_ux_design' },
+      { label: 'Business & IT Consulting', pipeline: 'business_it_consulting' },
+      { label: 'IT Support & Operations', pipeline: 'it_support_operations' },
+    ];
+    itDomains.forEach((d) => {
+      getRolesForPipeline('it_corporate', d.pipeline).forEach((r) => {
+        out.push({
+          industryCategory: 'IT Corporate',
+          domainLabel: d.label,
+          domainFieldLabel: 'Skills / Domain',
+          roleLabel: r.label,
+          roleValue: r.value,
+        });
+      });
+    });
+
+    // Data-driven categories — Non-IT, Banking, Film, Civil — pull domain
+    // (pipelineType) + roles directly from the shared config.
+    const dataDriven: { category: string; interviewType: string; domainFieldLabel: string }[] = [
+      { category: 'Non-IT Corporate', interviewType: 'non_it_corporate', domainFieldLabel: 'Department / Domain' },
+      { category: 'Banking & Finance', interviewType: 'banking', domainFieldLabel: 'Banking Function' },
+      { category: 'Film & Media', interviewType: 'film_media', domainFieldLabel: 'Specialization' },
+      { category: 'Civil Engineering', interviewType: 'civil_engineering', domainFieldLabel: 'Specialization' },
+    ];
+    dataDriven.forEach((c) => {
+      getPipelineTypesForInterviewType(c.interviewType).forEach((p) => {
+        getRolesForPipeline(c.interviewType, p.value).forEach((r) => {
+          out.push({
+            industryCategory: c.category,
+            domainLabel: p.label,
+            domainFieldLabel: c.domainFieldLabel,
+            roleLabel: r.label,
+            roleValue: r.value,
+          });
+        });
+      });
+    });
+
+    return out;
+  }, []);
+
+  const globalPositionMatches = useMemo(() => {
+    const q = globalPositionQuery.trim().toLowerCase();
+    if (!q) return [] as GlobalPositionEntry[];
+    return globalPositionCatalog
+      .filter((e) =>
+        e.roleLabel.toLowerCase().includes(q) ||
+        e.domainLabel.toLowerCase().includes(q) ||
+        e.industryCategory.toLowerCase().includes(q)
+      )
+      .slice(0, 40);
+  }, [globalPositionQuery, globalPositionCatalog]);
+
+  const applyGlobalPosition = (entry: GlobalPositionEntry) => {
+    setIndustryCategory(entry.industryCategory);
+    setPrimarySubject(entry.domainLabel);
+    setSegment(entry.roleLabel);
+    setPositionSearch("");
+    setGlobalPositionQuery("");
+  };
   const [errors, setErrors] = useState<FormErrors>({});
   // Bumped on every submit so the ARIA live announcer re-fires even when the
   // user resubmits with the same unresolved errors.
