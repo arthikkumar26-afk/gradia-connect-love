@@ -556,7 +556,9 @@ const PlanControl = ({ accessRole }: Props) => {
                     <TableRow>
                       <TableHead>Date</TableHead>
                       <TableHead>User</TableHead>
-                      <TableHead>Plan</TableHead>
+                      <TableHead>Plan change</TableHead>
+                      <TableHead>Source</TableHead>
+                      <TableHead>Actor</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Payment ID</TableHead>
                       <TableHead>Result</TableHead>
@@ -573,12 +575,39 @@ const PlanControl = ({ accessRole }: Props) => {
                             <div className="text-sm">{profile?.full_name || "—"}</div>
                             <div className="text-xs text-muted-foreground">{profile?.email || "—"}</div>
                           </TableCell>
-                          <TableCell>{planBadge(h.plan || "—")}</TableCell>
+                          <TableCell className="text-xs">
+                            {h.previous_plan ? (
+                              <span className="text-muted-foreground">{h.previous_plan} → </span>
+                            ) : null}
+                            <span className="font-medium">{h.plan || "—"}</span>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            <Badge variant="outline" className="capitalize">
+                              {(h.source || "").replace(/_/g, " ") || "—"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {h.actor_email ? (
+                              <span title={h.actor_user_id ?? ""}>{h.actor_email}</span>
+                            ) : h.source?.startsWith("admin_") ? (
+                              <span className="text-muted-foreground">admin</span>
+                            ) : (
+                              <span className="text-muted-foreground">system</span>
+                            )}
+                          </TableCell>
                           <TableCell className="text-xs">
                             {h.amount_paise ? `${h.currency || "INR"} ${(h.amount_paise / 100).toFixed(2)}` : "—"}
                           </TableCell>
                           <TableCell className="text-xs font-mono">{h.payment_id || "—"}</TableCell>
-                          <TableCell>{resultBadge(h.activation_result)}</TableCell>
+                          <TableCell>
+                            {resultBadge(h.activation_result)}
+                            {h.error_message ? (
+                              <div className="text-[10px] text-destructive mt-1 max-w-[220px] truncate" title={h.error_message}>
+                                {h.error_message}
+                              </div>
+                            ) : null}
+                          </TableCell>
+
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button size="sm" variant="outline" onClick={() => downloadInvoice(h)}>
