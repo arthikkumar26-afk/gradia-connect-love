@@ -110,6 +110,14 @@ const NON_CODING_BUSINESS_ROLES = [
   'solution_architect', 'pre_sales_consultant',
 ];
 
+const isSlotBookingName = (value?: string | null) => /slot\s*booking/i.test(value || '');
+const isHiddenMockStage = (stage: { name?: string | null; stageType?: string | null }) =>
+  stage.stageType === 'slot_booking' || isSlotBookingName(stage.name);
+const normalizeVisibleMockStages = <T extends { name?: string | null; stageType?: string | null }>(items: T[]) =>
+  items.filter((stage) => !isHiddenMockStage(stage)).map((stage, idx) => ({ ...stage, order: idx + 1 }));
+const removeSlotBookingResults = <T extends { stage_name?: string | null }>(items: T[]) =>
+  items.filter((result) => !isSlotBookingName(result.stage_name));
+
 export const MockInterviewTab = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -525,7 +533,7 @@ export const MockInterviewTab = () => {
           ?.stages || []).filter(s => {
             const n = s.name.toLowerCase();
             return n !== 'offer stage'
-              && !n.includes('slot booking')
+              && !isHiddenMockStage(s)
               && !n.includes('cv')
               && !n.includes('resume')
               && (!removeCodingLoad || !n.includes('coding'));
@@ -557,9 +565,7 @@ export const MockInterviewTab = () => {
         });
         if (stagesData?.stages) {
           // Strip slot booking stages from fallback pipeline and re-order
-          resolvedStages = stagesData.stages
-            .filter((s: any) => s.stageType !== 'slot_booking' && !String(s.name || '').toLowerCase().includes('slot booking'))
-            .map((s: any, idx: number) => ({ ...s, order: idx + 1 }));
+          resolvedStages = normalizeVisibleMockStages(stagesData.stages as InterviewStage[]);
         }
       }
 
@@ -584,7 +590,7 @@ export const MockInterviewTab = () => {
           .order('stage_order', { ascending: true });
         
         if (resultsData) {
-          setStageResults(resultsData as StageResult[]);
+          setStageResults(removeSlotBookingResults(resultsData as StageResult[]));
         }
         
         // Load existing HR negotiation for this session
@@ -840,7 +846,7 @@ export const MockInterviewTab = () => {
     setIsBookingSlot(true);
     try {
       const currentStage = currentSession.current_stage_order;
-      const isFirstSlotBookingStage = isFirstSlotBooking(currentStage);
+      const isFirstSlotBookingStage = false;
 
       // Determine the actual slot time
       let slotTime: Date;
@@ -1104,7 +1110,7 @@ export const MockInterviewTab = () => {
       const scoredResults = stageResults.filter(r => 
         r.ai_score !== undefined && 
         r.stage_order !== 1 && // Interview Instructions
-        !isSlotBookingOrder(r.stage_order) // Slot Booking stages
+        !isSlotBookingName(r.stage_name) // Slot Booking stages
       );
       const overallScore = scoredResults.length > 0 
         ? scoredResults.reduce((sum, r) => sum + (r.ai_score || 0), 0) / scoredResults.length 
@@ -1578,9 +1584,6 @@ export const MockInterviewTab = () => {
   const industryCategory = getIndustryCategory();
   const isITCorporate = industryCategory === 'it_corporate';
 
-  // Helper: detect slot booking stages by name (not hardcoded order)
-  const isSlotBookingStage = (stageName: string) => stageName.toLowerCase().includes('slot booking');
-
   // ── Interview Type → Pipeline Type → Role (matches vacancy creation) ──
 
   // Derive available pipeline types for the selected interview type
@@ -1608,7 +1611,7 @@ export const MockInterviewTab = () => {
     const stripOffer = <T extends { name: string }>(arr: T[]) => arr.filter(s => {
       const n = s.name.toLowerCase();
       return n !== 'offer stage'
-        && !n.includes('slot booking')
+        && !isHiddenMockStage(s)
         && !n.includes('cv')
         && !n.includes('resume')
         && (!removeCoding || !n.includes('coding'));
@@ -1652,15 +1655,6 @@ export const MockInterviewTab = () => {
     return stripOffer(stages).map((s, idx) => ({ name: s.name, order: idx + 1, description: '' }));
   };
   const displayStagesList = getDisplayStages();
-  // Find slot booking stage orders dynamically
-  const slotBookingStageOrders = displayStagesList
-    .filter(s => isSlotBookingStage(s.name))
-    .map(s => s.order);
-  const isSlotBookingOrder = (order: number) => slotBookingStageOrders.includes(order);
-  // First slot booking = technical assessment slot, others = demo slot
-  const firstSlotBookingOrder = slotBookingStageOrders[0] ?? -1;
-  const isFirstSlotBooking = (order: number) => order === firstSlotBookingOrder;
-
   // Check if all 3 fields are selected
   const isMockRoleSelected = !!selectedMockInterviewType && !!selectedMockPipelineType && !!selectedMockRole;
 
@@ -1832,7 +1826,7 @@ export const MockInterviewTab = () => {
                 {selectedPipelineStages.length > 0 ? `Interview Stages — ${selectedPipelineTypeLabel}` : 'Interview Stages'}
               </p>
               <div className="grid gap-1.5">
-                {(selectedPipelineStages.length > 0 ? selectedPipelineStages : [
+                {(displayStagesList.length > 0 ? displayStagesList : [
                   { order: 1, name: "Select Interview Type above to see stages" },
                 ]).map((stage) => (
                   <div key={stage.order} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
@@ -2034,7 +2028,6 @@ export const MockInterviewTab = () => {
 
       <div className="relative">
         <div>
-        <>
 
       {/* Progress Tracker */}
       <Card className="bg-muted/30">
@@ -2104,17 +2097,10 @@ export const MockInterviewTab = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold">{stage.name}</h3>
-                      {/* Only show score for stages other than Interview Instructions (1) and Slot Booking stages (2, 4) */}
-                      {result?.ai_score !== undefined && stage.order !== 1 && !isSlotBookingOrder(stage.order) && (
+                      {/* Only show score for stages other than Interview Instructions (1) */}
+                      {result?.ai_score !== undefined && stage.order !== 1 && (
                         <Badge variant="default" className="bg-green-500">
                           {result.ai_score.toFixed(0)}%
-                        </Badge>
-                      )}
-                      {/* Show "Slot Booked" badge for completed slot booking stages */}
-                      {status === 'completed' && isSlotBookingOrder(stage.order) && (
-                        <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Slot Booked
                         </Badge>
                       )}
                       {status === 'current' && (
@@ -2158,20 +2144,8 @@ export const MockInterviewTab = () => {
                         {isStarting ? 'Starting...' : 'Start Test'}
                       </Button>
                     )}
-                    {/* For Technical Assessment Slot Booking (stage 2) in progress, show Book Slot button */}
-                    {status === 'current' && isFirstSlotBooking(stage.order) && (
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
-                        className="gap-1"
-                      >
-                        <Calendar className="h-4 w-4" />
-                        {isExpanded ? 'Hide Booking' : 'Book Slot'}
-                      </Button>
-                    )}
                     {/* For current (in-progress) stages without a dedicated action, show Start button */}
-                    {status === 'current' && currentSession && stage.order !== 1 && stage.order !== 7 && stage.order !== 8 && !isSlotBookingOrder(stage.order) && (
+                    {status === 'current' && currentSession && stage.order !== 1 && stage.order !== 7 && stage.order !== 8 && (
                       <Button
                         variant="default"
                         size="sm"
@@ -2183,18 +2157,6 @@ export const MockInterviewTab = () => {
                       >
                         <Play className="h-4 w-4" />
                         Start
-                      </Button>
-                    )}
-                    {/* For Demo Slot Booking (stage 4) in progress, show Book Slot button */}
-                    {status === 'current' && isSlotBookingOrder(stage.order) && !isFirstSlotBooking(stage.order) && (
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        onClick={() => setExpandedStage(isExpanded ? null : stage.order)}
-                        className="gap-1"
-                      >
-                        <Calendar className="h-4 w-4" />
-                        {isExpanded ? 'Hide Booking' : 'Book Slot'}
                       </Button>
                     )}
                     {/* For Demo Feedback (stage 6) - show View Results like other completed stages */}
@@ -2246,25 +2208,6 @@ export const MockInterviewTab = () => {
                 {/* Expanded Results Section */}
                 {isExpanded && hasResults && result && (
                   <div className="mt-4 pt-4 border-t space-y-4">
-                    {/* For Slot Booking stages (2 and 4), show simplified confirmation */}
-                    {isSlotBookingOrder(stage.order) ? (
-                      <div className="p-4 rounded-lg bg-green-50/50 dark:bg-green-900/10 border border-green-500/30">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                            <CheckCircle2 className="h-5 w-5 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-green-700 dark:text-green-400">
-                              {stage.name} — Slot Booked
-                            </p>
-                            <p className="text-sm text-muted-foreground mt-0.5">
-                              {result.ai_feedback || 'Your slot has been confirmed. Check your email for details.'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
                         {/* AI Feedback */}
                         {result.ai_feedback && (
                           <div className="p-3 rounded-lg bg-muted/50">
@@ -2348,8 +2291,6 @@ export const MockInterviewTab = () => {
                             View Full Details
                           </Button>
                         </div>
-                      </>
-                    )}
                   </div>
                 )}
 
@@ -2965,7 +2906,6 @@ export const MockInterviewTab = () => {
         </Card>
       )}
 
-        </>
         </div>
       </div>
     </div>

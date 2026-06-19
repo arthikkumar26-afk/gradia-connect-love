@@ -46,6 +46,10 @@ export const InterviewProgressTracker = ({
   stageResults,
   className,
 }: InterviewProgressTrackerProps) => {
+  const visibleStages = stages.filter(
+    (stage) => stage.stageType !== "slot_booking" && !/slot\s*booking/i.test(stage.name)
+  );
+
   const getStageStatus = (stageOrder: number) => {
     const result = stageResults.find((r) => r.stage_order === stageOrder);
     if (result?.completed_at) return "completed";
@@ -63,12 +67,12 @@ export const InterviewProgressTracker = ({
           <div
             className="h-full bg-primary transition-all duration-500"
             style={{
-              width: `${Math.max(0, ((currentStageOrder - 1) / (stages.length - 1)) * 100)}%`,
+              width: `${Math.max(0, ((currentStageOrder - 1) / (visibleStages.length - 1)) * 100)}%`,
             }}
           />
         </div>
 
-        {stages.map((stage) => {
+        {visibleStages.map((stage) => {
           const status = getStageStatus(stage.order);
           const Icon = stageIconsByName[stage.name] || stageIconsByOrder[stage.order] || Circle;
           const result = stageResults.find((r) => r.stage_order === stage.order);
@@ -77,7 +81,7 @@ export const InterviewProgressTracker = ({
             <div
               key={stage.order}
               className="flex flex-col items-center relative z-10"
-              style={{ width: `${100 / stages.length}%` }}
+                  style={{ width: `${100 / visibleStages.length}%` }}
             >
               {/* Circle Indicator */}
               <div
@@ -122,11 +126,11 @@ export const InterviewProgressTracker = ({
 
       {/* Mobile: Vertical Compact Layout */}
       <div className="md:hidden space-y-2">
-        {stages.map((stage, index) => {
+        {visibleStages.map((stage, index) => {
           const status = getStageStatus(stage.order);
           const Icon = stageIconsByName[stage.name] || stageIconsByOrder[stage.order] || Circle;
           const result = stageResults.find((r) => r.stage_order === stage.order);
-          const isLast = index === stages.length - 1;
+          const isLast = index === visibleStages.length - 1;
 
           return (
             <div key={stage.order} className="flex items-start gap-3">
