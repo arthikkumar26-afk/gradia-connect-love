@@ -409,6 +409,7 @@ const CandidateSignup = () => {
   const [industryCategory, setIndustryCategory] = useState("");
   const [primarySubject, setPrimarySubject] = useState("");
   const [segment, setSegment] = useState("");
+  const [positionSearch, setPositionSearch] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
   // Bumped on every submit so the ARIA live announcer re-fires even when the
   // user resubmits with the same unresolved errors.
