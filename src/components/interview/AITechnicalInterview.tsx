@@ -311,7 +311,7 @@ export const AITechnicalInterview = ({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="p-4 bg-muted rounded-lg">
+              <div className="p-4 bg-muted rounded-lg select-none" onCopy={(e) => e.preventDefault()}>
                 <p className="text-lg leading-relaxed">{currentQuestion?.question}</p>
               </div>
 
