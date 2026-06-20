@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/select";
 import {
   Loader2, ArrowLeft, Search, RefreshCw, FileDown, Mail, Crown, Zap,
-  CheckCircle, XCircle, History, Receipt,
+  CheckCircle, XCircle, History, Receipt, AlertTriangle,
 } from "lucide-react";
+
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import { AdminShell } from "@/components/admin/AdminShell";
