@@ -207,6 +207,18 @@ const PlanControl = ({ accessRole }: Props) => {
       profile?.email?.toLowerCase().includes(q);
   }), [history, candidateSubs, q]);
 
+  /** Latest activation log per candidate — drives the Activation column. */
+  const latestActivationByCandidate = useMemo(() => {
+    const map: Record<string, ActivationLog> = {};
+    // history is already ordered created_at DESC, so first hit per candidate is latest
+    for (const h of history) {
+      if (h.candidate_id && !map[h.candidate_id]) map[h.candidate_id] = h;
+    }
+    return map;
+  }, [history]);
+
+
+
   /** Plan change */
   const openPlanChange = (
     type: "candidate" | "employer",
