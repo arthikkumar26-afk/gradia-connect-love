@@ -2626,6 +2626,15 @@ const CandidateSignup = () => {
         <title>Candidate Sign Up - Gradia</title>
         <meta name="description" content="Create a Gradia candidate profile, get matched with jobs, and unlock AI-powered career tools." />
         <link rel="canonical" href="https://gradiaa.com/candidate/signup" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Candidate Sign Up - Gradia" />
+        <meta property="og:description" content="Create a Gradia candidate profile, get matched with jobs, and unlock AI-powered career tools." />
+        <meta property="og:url" content="https://gradia.world/candidate/signup" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Candidate Sign Up - Gradia" />
+        <meta name="twitter:description" content="Create a Gradia candidate profile, get matched with jobs, and unlock AI-powered career tools." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background px-4 py-12">
       <SignupGuidedTour

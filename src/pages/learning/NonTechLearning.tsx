@@ -45,6 +45,15 @@ export default function NonTechLearning() {
         <title>Non-Tech Learning - Gradia</title>
         <meta name="description" content="Build non-technical skills like sales, marketing, design, and operations via Gradia learning tracks." />
         <link rel="canonical" href="https://gradiaa.com/learning/non-tech" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Non-Tech Learning - Gradia" />
+        <meta property="og:description" content="Build non-technical skills like sales, marketing, design, and operations via Gradia learning tracks." />
+        <meta property="og:url" content="https://gradia.world/learning/non-tech" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Non-Tech Learning - Gradia" />
+        <meta name="twitter:description" content="Build non-technical skills like sales, marketing, design, and operations via Gradia learning tracks." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-card border-b">

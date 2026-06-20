@@ -147,6 +147,15 @@ const Careers = () => {
         <title>Open Positions - Gradia Careers</title>
         <meta name="description" content="Explore open positions at Gradia and join our mission to transform hiring. Find roles matched to your skills and experience." />
         <link rel="canonical" href="https://gradiaa.com/careers" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Open Positions - Gradia Careers" />
+        <meta property="og:description" content="Explore open positions at Gradia and join our mission to transform hiring. Find roles matched to your skills and experience." />
+        <meta property="og:url" content="https://gradia.world/careers" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Open Positions - Gradia Careers" />
+        <meta name="twitter:description" content="Explore open positions at Gradia and join our mission to transform hiring. Find roles matched to your skills and experience." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
       <div className="min-h-screen">
       <section className="py-20 bg-gradient-hero text-primary-foreground">

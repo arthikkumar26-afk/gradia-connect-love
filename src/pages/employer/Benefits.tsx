@@ -59,6 +59,15 @@ export default function Benefits() {
         <title>Employer Benefits - Gradia</title>
         <meta name="description" content="Discover the benefits of hiring with Gradia: vetted candidates, AI screening, and faster pipelines." />
         <link rel="canonical" href="https://gradiaa.com/employer/benefits" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Employer Benefits - Gradia" />
+        <meta property="og:description" content="Discover the benefits of hiring with Gradia: vetted candidates, AI screening, and faster pipelines." />
+        <meta property="og:url" content="https://gradia.world/employer/benefits" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Employer Benefits - Gradia" />
+        <meta name="twitter:description" content="Discover the benefits of hiring with Gradia: vetted candidates, AI screening, and faster pipelines." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="w-full max-w-4xl">

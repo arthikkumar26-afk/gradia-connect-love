@@ -192,6 +192,15 @@ export default function EduTechSignup() {
         <title>EduTech Sign Up - Gradia</title>
         <meta name="description" content="Register your institute on Gradia EduTech to manage student placements and outreach campaigns." />
         <link rel="canonical" href="https://gradiaa.com/edutech/signup" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="EduTech Sign Up - Gradia" />
+        <meta property="og:description" content="Register your institute on Gradia EduTech to manage student placements and outreach campaigns." />
+        <meta property="og:url" content="https://gradia.world/edutech/signup" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="EduTech Sign Up - Gradia" />
+        <meta name="twitter:description" content="Register your institute on Gradia EduTech to manage student placements and outreach campaigns." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4 py-12">
       <div className="w-full max-w-md">

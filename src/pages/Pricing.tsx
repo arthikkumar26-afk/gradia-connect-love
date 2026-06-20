@@ -85,6 +85,15 @@ const PricingPage = () => {
         <title>Pricing - Gradia</title>
         <meta name="description" content="Transparent pricing for candidates and employers. One-time registration for candidates, flexible plans for employers." />
         <link rel="canonical" href="https://gradiaa.com/pricing" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Pricing - Gradia" />
+        <meta property="og:description" content="Transparent pricing for candidates and employers. One-time registration for candidates, flexible plans for employers." />
+        <meta property="og:url" content="https://gradia.world/pricing" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Pricing - Gradia" />
+        <meta name="twitter:description" content="Transparent pricing for candidates and employers. One-time registration for candidates, flexible plans for employers." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
       <div className="min-h-screen">
       {/* Hero */}

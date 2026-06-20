@@ -134,6 +134,15 @@ const FreelancerLogin = () => {
         <title>Freelancer Login - Gradia</title>
         <meta name="description" content="Sign in to your Gradia freelancer account to manage portfolio, mentorship, and outsource projects." />
         <link rel="canonical" href="https://gradiaa.com/freelancer/login" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Freelancer Login - Gradia" />
+        <meta property="og:description" content="Sign in to your Gradia freelancer account to manage portfolio, mentorship, and outsource projects." />
+        <meta property="og:url" content="https://gradia.world/freelancer/login" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Freelancer Login - Gradia" />
+        <meta name="twitter:description" content="Sign in to your Gradia freelancer account to manage portfolio, mentorship, and outsource projects." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
       <div className="w-full max-w-md">

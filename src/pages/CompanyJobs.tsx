@@ -309,6 +309,15 @@ const CompanyJobs = () => {
         <title>Company Jobs - Gradia</title>
         <meta name="description" content="Explore active openings at this employer and apply directly through Gradia." />
         <link rel="canonical" href="https://gradiaa.com/company/jobs" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Company Jobs - Gradia" />
+        <meta property="og:description" content="Explore active openings at this employer and apply directly through Gradia." />
+        <meta property="og:url" content="https://gradia.world/company/jobs" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Company Jobs - Gradia" />
+        <meta name="twitter:description" content="Explore active openings at this employer and apply directly through Gradia." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-subtle">
       {/* Company Header */}

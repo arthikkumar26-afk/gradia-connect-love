@@ -122,6 +122,15 @@ export default function Agreement() {
         <title>Employer Agreement - Gradia</title>
         <meta name="description" content="Review the Gradia employer service agreement before posting jobs and managing candidates." />
         <link rel="canonical" href="https://gradiaa.com/employer/agreement" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Employer Agreement - Gradia" />
+        <meta property="og:description" content="Review the Gradia employer service agreement before posting jobs and managing candidates." />
+        <meta property="og:url" content="https://gradia.world/employer/agreement" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Employer Agreement - Gradia" />
+        <meta name="twitter:description" content="Review the Gradia employer service agreement before posting jobs and managing candidates." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="w-full max-w-4xl">

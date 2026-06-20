@@ -234,6 +234,15 @@ const JobsResults = () => {
         <title>Find Jobs - Gradia</title>
         <meta name="description" content="Browse thousands of active job openings across software and education. Filter by location, skills, and experience to find your perfect role." />
         <link rel="canonical" href="https://gradiaa.com/jobs-results" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Find Jobs - Gradia" />
+        <meta property="og:description" content="Browse thousands of active job openings across software and education. Filter by location, skills, and experience to find your perfect role." />
+        <meta property="og:url" content="https://gradia.world/jobs-results" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Find Jobs - Gradia" />
+        <meta name="twitter:description" content="Browse thousands of active job openings across software and education. Filter by location, skills, and experience to find your perfect role." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
       <div className="min-h-screen bg-background">
       {/* Header with Search */}

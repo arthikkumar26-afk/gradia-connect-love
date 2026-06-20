@@ -134,6 +134,15 @@ export default function RequestDemo() {
         <title>Request a Demo - Gradia</title>
         <meta name="description" content="Book a personalized walkthrough of Gradia's hiring platform for your team." />
         <link rel="canonical" href="https://gradiaa.com/employer/demo" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Request a Demo - Gradia" />
+        <meta property="og:description" content="Book a personalized walkthrough of Gradia's hiring platform for your team." />
+        <meta property="og:url" content="https://gradia.world/employer/demo" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Request a Demo - Gradia" />
+        <meta name="twitter:description" content="Book a personalized walkthrough of Gradia's hiring platform for your team." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

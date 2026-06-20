@@ -15,6 +15,15 @@ const NotFound = () => {
         <title>Page Not Found - Gradia</title>
         <meta name="description" content="The page you're looking for doesn't exist. Return to Gradia to continue exploring jobs and hiring tools." />
         <link rel="canonical" href="https://gradiaa.com/404" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Page Not Found - Gradia" />
+        <meta property="og:description" content="The page you're looking for doesn't exist. Return to Gradia to continue exploring jobs and hiring tools." />
+        <meta property="og:url" content="https://gradia.world/404" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Page Not Found - Gradia" />
+        <meta name="twitter:description" content="The page you're looking for doesn't exist. Return to Gradia to continue exploring jobs and hiring tools." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="text-center">

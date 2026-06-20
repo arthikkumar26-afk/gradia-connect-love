@@ -69,6 +69,15 @@ const HRLogin = () => {
         <title>HR Login - Gradia</title>
         <meta name="description" content="Sign in to the Gradia HR portal to manage employer accounts, candidates, and outreach." />
         <link rel="canonical" href="https://gradiaa.com/hr/login" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="HR Login - Gradia" />
+        <meta property="og:description" content="Sign in to the Gradia HR portal to manage employer accounts, candidates, and outreach." />
+        <meta property="og:url" content="https://gradia.world/hr/login" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="HR Login - Gradia" />
+        <meta name="twitter:description" content="Sign in to the Gradia HR portal to manage employer accounts, candidates, and outreach." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-6">
       <div className="w-full max-w-md">

@@ -1014,6 +1014,15 @@ const SignupPortal = () => {
         <title>Sign Up - Gradia</title>
         <meta name="description" content="Create a Gradia account as a candidate, employer, freelancer, or partner to get started." />
         <link rel="canonical" href="https://gradiaa.com/signup" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Sign Up - Gradia" />
+        <meta property="og:description" content="Create a Gradia account as a candidate, employer, freelancer, or partner to get started." />
+        <meta property="og:url" content="https://gradia.world/signup" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Sign Up - Gradia" />
+        <meta name="twitter:description" content="Create a Gradia account as a candidate, employer, freelancer, or partner to get started." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex bg-slate-900">
       <SignupGuidedTour

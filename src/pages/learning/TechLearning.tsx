@@ -65,6 +65,15 @@ export default function TechLearning() {
         <title>Tech Learning - Gradia</title>
         <meta name="description" content="Curated tech upskilling tracks covering software, data, cloud, and emerging technologies." />
         <link rel="canonical" href="https://gradiaa.com/learning/tech" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Tech Learning - Gradia" />
+        <meta property="og:description" content="Curated tech upskilling tracks covering software, data, cloud, and emerging technologies." />
+        <meta property="og:url" content="https://gradia.world/learning/tech" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Tech Learning - Gradia" />
+        <meta name="twitter:description" content="Curated tech upskilling tracks covering software, data, cloud, and emerging technologies." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-card border-b">

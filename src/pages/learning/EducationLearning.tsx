@@ -45,6 +45,15 @@ export default function EducationLearning() {
         <title>Education Learning - Gradia</title>
         <meta name="description" content="Professional development tracks for teachers and academic professionals on Gradia." />
         <link rel="canonical" href="https://gradiaa.com/learning/education" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Education Learning - Gradia" />
+        <meta property="og:description" content="Professional development tracks for teachers and academic professionals on Gradia." />
+        <meta property="og:url" content="https://gradia.world/learning/education" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Education Learning - Gradia" />
+        <meta name="twitter:description" content="Professional development tracks for teachers and academic professionals on Gradia." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-card border-b">
