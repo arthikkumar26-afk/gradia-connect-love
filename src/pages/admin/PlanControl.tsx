@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/select";
 import {
   Loader2, ArrowLeft, Search, RefreshCw, FileDown, Mail, Crown, Zap,
-  CheckCircle, XCircle, History, Receipt,
+  CheckCircle, XCircle, History, Receipt, AlertTriangle,
 } from "lucide-react";
+
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -205,6 +206,18 @@ const PlanControl = ({ accessRole }: Props) => {
       h.plan?.toLowerCase().includes(q) ||
       profile?.email?.toLowerCase().includes(q);
   }), [history, candidateSubs, q]);
+
+  /** Latest activation log per candidate — drives the Activation column. */
+  const latestActivationByCandidate = useMemo(() => {
+    const map: Record<string, ActivationLog> = {};
+    // history is already ordered created_at DESC, so first hit per candidate is latest
+    for (const h of history) {
+      if (h.candidate_id && !map[h.candidate_id]) map[h.candidate_id] = h;
+    }
+    return map;
+  }, [history]);
+
+
 
   /** Plan change */
   const openPlanChange = (
@@ -452,13 +465,16 @@ const PlanControl = ({ accessRole }: Props) => {
                       <TableHead>User</TableHead>
                       <TableHead>Plan</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Activation</TableHead>
                       <TableHead>Started</TableHead>
                       <TableHead>Ends</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCandidates.map(s => (
+                    {filteredCandidates.map(s => {
+                      const act = latestActivationByCandidate[s.candidate_id];
+                      return (
                       <TableRow key={s.id}>
                         <TableCell>
                           <div className="font-medium text-sm">{s.profile?.full_name || "—"}</div>
@@ -466,6 +482,7 @@ const PlanControl = ({ accessRole }: Props) => {
                         </TableCell>
                         <TableCell>{planBadge(s.plan)}</TableCell>
                         <TableCell>{statusBadge(s.status)}</TableCell>
+                        <TableCell>{activationCell(act)}</TableCell>
                         <TableCell className="text-xs">{format(new Date(s.started_at), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-xs">{s.ends_at ? format(new Date(s.ends_at), "dd MMM yyyy") : "—"}</TableCell>
                         <TableCell className="text-right">
@@ -474,10 +491,11 @@ const PlanControl = ({ accessRole }: Props) => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    );})}
                     {filteredCandidates.length === 0 && (
-                      <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">No candidate subscriptions</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">No candidate subscriptions</TableCell></TableRow>
                     )}
+
                   </TableBody>
                 </Table>
               </CardContent>
@@ -722,6 +740,53 @@ const statusBadge = (status: string) => {
   if (s === "trial") return <Badge className="bg-blue-500/10 text-blue-700 border-blue-200">Trial</Badge>;
   return <Badge variant="secondary">{status}</Badge>;
 };
+
+const activationCell = (log?: {
+  activation_result: string;
+  error_message: string | null;
+  plan: string | null;
+  created_at: string;
+} | null) => {
+  if (!log) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  const r = log.activation_result.toLowerCase();
+  const when = format(new Date(log.created_at), "dd MMM, hh:mm a");
+  if (r === "success") {
+    return (
+      <div className="flex flex-col gap-0.5" title={`Activated ${log.plan ?? ""} on ${when}`}>
+        <Badge className="bg-green-500/10 text-green-700 border-green-200 w-fit">
+          <CheckCircle className="h-3 w-3 mr-1" />Success
+        </Badge>
+        <span className="text-[10px] text-muted-foreground">{when}</span>
+      </div>
+    );
+  }
+  if (r === "pending") {
+    return (
+      <div className="flex flex-col gap-0.5" title={`Pending since ${when}`}>
+        <Badge className="bg-yellow-500/10 text-yellow-700 border-yellow-200 w-fit">
+          <Loader2 className="h-3 w-3 mr-1 animate-spin" />Pending
+        </Badge>
+        <span className="text-[10px] text-muted-foreground">{when}</span>
+      </div>
+    );
+  }
+  // failed / anything else
+  const err = log.error_message || "Activation failed. No error message recorded.";
+  return (
+    <div className="flex flex-col gap-0.5 max-w-[240px]" title={err}>
+      <Badge className="bg-red-500/10 text-red-700 border-red-200 w-fit">
+        <AlertTriangle className="h-3 w-3 mr-1" />Failed
+      </Badge>
+      <span className="text-[10px] text-destructive line-clamp-2 leading-tight">
+        {err}
+      </span>
+      <span className="text-[10px] text-muted-foreground">{when}</span>
+    </div>
+  );
+};
+
 
 const resultBadge = (result: string) => {
   const r = result.toLowerCase();
