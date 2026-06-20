@@ -135,6 +135,12 @@ serve(async (req) => {
             normalizePlan((order.metadata as any)?.plan_id) ||
             normalizePlan((order.metadata as any)?.plan_name);
           if (!orderPlan) continue;
+          // Never auto-downgrade to free, and never overwrite an existing
+          // active paid plan (e.g. one the admin just activated manually).
+          if (orderPlan === "free") continue;
+          if (isSubActive(activeSub) && activeSub?.plan && activeSub.plan !== "free") {
+            continue;
+          }
 
               const { data: existingActivation } = await admin
                 .from("subscription_activation_logs")
