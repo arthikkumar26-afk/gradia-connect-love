@@ -935,6 +935,46 @@ const Users = () => {
                                 if (user.role !== "candidate" && user.role !== "employer") {
                                   return <span className="text-xs text-muted-foreground">—</span>;
                                 }
+                                const plan = paymentMap[user.id]?.plan;
+                                const isPaid = paymentMap[user.id]?.paid;
+                                if (!plan || plan === "basic" || plan === "free") {
+                                  return (
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="text-xs">Free</Badge>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 px-2 text-xs"
+                                        onClick={() => openManageDialog(user)}
+                                      >
+                                        <CreditCard className="h-3 w-3 mr-1" />
+                                        Activate
+                                      </Button>
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <Badge className={isPaid ? "bg-green-500/10 text-green-700 border-green-200 capitalize" : "bg-muted text-muted-foreground capitalize"}>
+                                      {String(plan).replace(/_/g, " ")}
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 px-2 text-xs"
+                                      onClick={() => openManageDialog(user)}
+                                    >
+                                      Change
+                                    </Button>
+                                  </div>
+                                );
+                              })()}
+                            </TableCell>
+                            <TableCell>
+                              {(() => {
+                                if (user.role !== "candidate" && user.role !== "employer") {
+                                  return <span className="text-xs text-muted-foreground">—</span>;
+                                }
                                 const info = paymentMap[user.id];
                                 if (info?.paid) {
                                   return (
