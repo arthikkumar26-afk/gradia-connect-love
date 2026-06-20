@@ -741,6 +741,53 @@ const statusBadge = (status: string) => {
   return <Badge variant="secondary">{status}</Badge>;
 };
 
+const activationCell = (log?: {
+  activation_result: string;
+  error_message: string | null;
+  plan: string | null;
+  created_at: string;
+} | null) => {
+  if (!log) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  const r = log.activation_result.toLowerCase();
+  const when = format(new Date(log.created_at), "dd MMM, hh:mm a");
+  if (r === "success") {
+    return (
+      <div className="flex flex-col gap-0.5" title={`Activated ${log.plan ?? ""} on ${when}`}>
+        <Badge className="bg-green-500/10 text-green-700 border-green-200 w-fit">
+          <CheckCircle className="h-3 w-3 mr-1" />Success
+        </Badge>
+        <span className="text-[10px] text-muted-foreground">{when}</span>
+      </div>
+    );
+  }
+  if (r === "pending") {
+    return (
+      <div className="flex flex-col gap-0.5" title={`Pending since ${when}`}>
+        <Badge className="bg-yellow-500/10 text-yellow-700 border-yellow-200 w-fit">
+          <Loader2 className="h-3 w-3 mr-1 animate-spin" />Pending
+        </Badge>
+        <span className="text-[10px] text-muted-foreground">{when}</span>
+      </div>
+    );
+  }
+  // failed / anything else
+  const err = log.error_message || "Activation failed. No error message recorded.";
+  return (
+    <div className="flex flex-col gap-0.5 max-w-[240px]" title={err}>
+      <Badge className="bg-red-500/10 text-red-700 border-red-200 w-fit">
+        <AlertTriangle className="h-3 w-3 mr-1" />Failed
+      </Badge>
+      <span className="text-[10px] text-destructive line-clamp-2 leading-tight">
+        {err}
+      </span>
+      <span className="text-[10px] text-muted-foreground">{when}</span>
+    </div>
+  );
+};
+
+
 const resultBadge = (result: string) => {
   const r = result.toLowerCase();
   if (r === "success") return <Badge className="bg-green-500/10 text-green-700 border-green-200">Success</Badge>;
