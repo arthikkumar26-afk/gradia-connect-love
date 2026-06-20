@@ -242,8 +242,6 @@ const PlanControl = ({ accessRole }: Props) => {
     setPlanSubmitting(true);
     const previousPlan = planTarget.currentPlan;
     const { data: { user: actor } } = await supabase.auth.getUser();
-    const nowIso = new Date().toISOString();
-    const endsIso = new Date(Date.now() + 30 * 86400_000).toISOString();
     const baseLog = {
       candidate_id: planTarget.type === "candidate" ? planTarget.userId : null,
       plan: newPlan,
@@ -262,41 +260,21 @@ const PlanControl = ({ accessRole }: Props) => {
       },
     };
     try {
-      if (planTarget.type === "candidate") {
-        // Deactivate any other active/trial rows for this candidate so the
-        // app's "active subscription" lookup resolves to exactly one row.
-        const { error: deactErr } = await supabase
-          .from("candidate_subscriptions")
-          .update({ status: "inactive", updated_at: nowIso })
-          .eq("candidate_id", planTarget.userId)
-          .neq("id", planTarget.id)
-          .in("status", ["active", "trial"]);
-        if (deactErr) throw deactErr;
-
-        // Activate the selected row with the new plan.
-        const { error } = await supabase
-          .from("candidate_subscriptions")
-          .update({
-            plan: newPlan,
-            status: "active",
-            started_at: nowIso,
-            ends_at: endsIso,
-            updated_at: nowIso,
-          })
-          .eq("id", planTarget.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("subscriptions")
-          .update({
-            plan_id: newPlan,
-            plan_name: newPlan.charAt(0).toUpperCase() + newPlan.slice(1),
-            status: "active",
-            updated_at: nowIso,
-          })
-          .eq("id", planTarget.id);
-        if (error) throw error;
-      }
+      // Route the actual DB mutation through the service-role edge function
+      // so RLS on candidate_subscriptions / subscriptions can never silently
+      // drop the update when the admin's user_roles row is incomplete.
+      const { data, error } = await supabase.functions.invoke("manage-user-roles", {
+        body: {
+          action: "update-subscription",
+          targetUserId: planTarget.userId,
+          targetRole: planTarget.type,
+          plan: newPlan,
+          billingCycle: "monthly",
+          planAction: "activate",
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       await supabase.from("subscription_activation_logs").insert({
         ...baseLog,
@@ -320,6 +298,7 @@ const PlanControl = ({ accessRole }: Props) => {
       setPlanSubmitting(false);
     }
   };
+
 
 
   /** Invoice helpers */
