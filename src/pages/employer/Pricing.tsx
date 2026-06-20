@@ -107,6 +107,15 @@ export default function Pricing() {
         <title>Employer Pricing - Gradia</title>
         <meta name="description" content="Transparent hiring plans for employers on Gradia with flexible wallet point-based pricing." />
         <link rel="canonical" href="https://gradiaa.com/employer/pricing" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Employer Pricing - Gradia" />
+        <meta property="og:description" content="Transparent hiring plans for employers on Gradia with flexible wallet point-based pricing." />
+        <meta property="og:url" content="https://gradia.world/employer/pricing" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Employer Pricing - Gradia" />
+        <meta name="twitter:description" content="Transparent hiring plans for employers on Gradia with flexible wallet point-based pricing." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

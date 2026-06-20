@@ -92,6 +92,15 @@ const Login = () => {
         <title>Login - Gradia</title>
         <meta name="description" content="Sign in to Gradia to manage your job applications, hiring pipeline, or organization dashboard." />
         <link rel="canonical" href="https://gradiaa.com/login" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Login - Gradia" />
+        <meta property="og:description" content="Sign in to Gradia to manage your job applications, hiring pipeline, or organization dashboard." />
+        <meta property="og:url" content="https://gradia.world/login" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Login - Gradia" />
+        <meta name="twitter:description" content="Sign in to Gradia to manage your job applications, hiring pipeline, or organization dashboard." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
       <div className="w-full max-w-md">

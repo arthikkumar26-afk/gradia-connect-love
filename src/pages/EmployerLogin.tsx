@@ -142,6 +142,15 @@ const EmployerLogin = () => {
         <title>Employer Login - Gradia</title>
         <meta name="description" content="Sign in to your Gradia employer account to manage vacancies, candidates, and hiring pipelines." />
         <link rel="canonical" href="https://gradiaa.com/employer/login" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Employer Login - Gradia" />
+        <meta property="og:description" content="Sign in to your Gradia employer account to manage vacancies, candidates, and hiring pipelines." />
+        <meta property="og:url" content="https://gradia.world/employer/login" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Employer Login - Gradia" />
+        <meta name="twitter:description" content="Sign in to your Gradia employer account to manage vacancies, candidates, and hiring pipelines." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-6">
       <div className="w-full max-w-md">

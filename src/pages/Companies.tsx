@@ -154,6 +154,15 @@ const Companies = () => {
         <title>Partner Companies - Gradia</title>
         <meta name="description" content="Discover 500+ partner companies hiring on Gradia. Browse top employers across technology, education, finance, and healthcare." />
         <link rel="canonical" href="https://gradiaa.com/companies" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Partner Companies - Gradia" />
+        <meta property="og:description" content="Discover 500+ partner companies hiring on Gradia. Browse top employers across technology, education, finance, and healthcare." />
+        <meta property="og:url" content="https://gradia.world/companies" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Partner Companies - Gradia" />
+        <meta name="twitter:description" content="Discover 500+ partner companies hiring on Gradia. Browse top employers across technology, education, finance, and healthcare." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
       <div className="min-h-screen">
       {/* Hero Section */}

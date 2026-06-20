@@ -173,6 +173,15 @@ export default function LearningPlatform() {
         <title>Learning Platform - Gradia</title>
         <meta name="description" content="Skillory-powered learning platform integrated with Gradia for upskilling candidates and teams." />
         <link rel="canonical" href="https://gradiaa.com/learning-platform" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Learning Platform - Gradia" />
+        <meta property="og:description" content="Skillory-powered learning platform integrated with Gradia for upskilling candidates and teams." />
+        <meta property="og:url" content="https://gradia.world/learning-platform" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Learning Platform - Gradia" />
+        <meta name="twitter:description" content="Skillory-powered learning platform integrated with Gradia for upskilling candidates and teams." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-6xl">

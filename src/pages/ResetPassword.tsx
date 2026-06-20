@@ -213,6 +213,15 @@ const ResetPassword = () => {
         <title>Reset Password - Gradia</title>
         <meta name="description" content="Choose a new password for your Gradia account and regain access to your dashboard." />
         <link rel="canonical" href="https://gradiaa.com/reset-password" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Reset Password - Gradia" />
+        <meta property="og:description" content="Choose a new password for your Gradia account and regain access to your dashboard." />
+        <meta property="og:url" content="https://gradia.world/reset-password" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Reset Password - Gradia" />
+        <meta name="twitter:description" content="Choose a new password for your Gradia account and regain access to your dashboard." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
       <div className="w-full max-w-md">

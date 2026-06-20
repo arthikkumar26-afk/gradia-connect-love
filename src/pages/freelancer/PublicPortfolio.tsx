@@ -68,6 +68,15 @@ const PublicPortfolio = () => {
         <title>Freelancer Portfolio - Gradia</title>
         <meta name="description" content="View this freelancer's public portfolio, projects, and skills on Gradia." />
         <link rel="canonical" href="https://gradiaa.com/portfolio" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Freelancer Portfolio - Gradia" />
+        <meta property="og:description" content="View this freelancer's public portfolio, projects, and skills on Gradia." />
+        <meta property="og:url" content="https://gradia.world/portfolio" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Freelancer Portfolio - Gradia" />
+        <meta name="twitter:description" content="View this freelancer's public portfolio, projects, and skills on Gradia." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto py-12 px-4">

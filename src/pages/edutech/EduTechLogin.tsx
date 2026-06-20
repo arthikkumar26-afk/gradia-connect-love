@@ -65,6 +65,15 @@ export default function EduTechLogin() {
         <title>EduTech Login - Gradia</title>
         <meta name="description" content="Sign in to the Gradia EduTech portal to manage students, campaigns, and placements." />
         <link rel="canonical" href="https://gradiaa.com/edutech/login" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="EduTech Login - Gradia" />
+        <meta property="og:description" content="Sign in to the Gradia EduTech portal to manage students, campaigns, and placements." />
+        <meta property="og:url" content="https://gradia.world/edutech/login" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="EduTech Login - Gradia" />
+        <meta name="twitter:description" content="Sign in to the Gradia EduTech portal to manage students, campaigns, and placements." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-md">

@@ -27,6 +27,15 @@ const HRPortalChoice = () => {
         <title>HR Portal - Gradia</title>
         <meta name="description" content="Choose between the employer-side and candidate-side HR dashboards on Gradia." />
         <link rel="canonical" href="https://gradiaa.com/hr/dashboard" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="HR Portal - Gradia" />
+        <meta property="og:description" content="Choose between the employer-side and candidate-side HR dashboards on Gradia." />
+        <meta property="og:url" content="https://gradia.world/hr/dashboard" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="HR Portal - Gradia" />
+        <meta name="twitter:description" content="Choose between the employer-side and candidate-side HR dashboards on Gradia." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-subtle">
       <header className="h-14 bg-card border-b border-border flex items-center justify-between px-4 md:px-6">

@@ -178,6 +178,15 @@ const FreelancerSignup = () => {
         <title>Freelancer Sign Up - Gradia</title>
         <meta name="description" content="Join Gradia as a freelancer to access portfolio tools, mentorship, and outsource project work." />
         <link rel="canonical" href="https://gradiaa.com/freelancer/signup" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Freelancer Sign Up - Gradia" />
+        <meta property="og:description" content="Join Gradia as a freelancer to access portfolio tools, mentorship, and outsource project work." />
+        <meta property="og:url" content="https://gradia.world/freelancer/signup" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Freelancer Sign Up - Gradia" />
+        <meta name="twitter:description" content="Join Gradia as a freelancer to access portfolio tools, mentorship, and outsource project work." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">

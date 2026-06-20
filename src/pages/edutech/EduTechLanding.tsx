@@ -163,6 +163,15 @@ export default function EduTechLanding() {
         <title>EduTech Portal - Gradia</title>
         <meta name="description" content="Placement and student management portal for colleges and training institutes powered by Gradia." />
         <link rel="canonical" href="https://gradiaa.com/edutech" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="EduTech Portal - Gradia" />
+        <meta property="og:description" content="Placement and student management portal for colleges and training institutes powered by Gradia." />
+        <meta property="og:url" content="https://gradia.world/edutech" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="EduTech Portal - Gradia" />
+        <meta name="twitter:description" content="Placement and student management portal for colleges and training institutes powered by Gradia." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-background">
       {/* Hero Section */}

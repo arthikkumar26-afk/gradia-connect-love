@@ -121,6 +121,15 @@ const Index = () => {
           description: "Next-gen hiring platform connecting candidates with employers across IT, Banking, Education, and more.",
           sameAs: ["https://twitter.com/gradia"]
         })}</script>
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Gradia - Your Next Step" />
+        <meta property="og:description" content="Gradia connects talented candidates with their dream careers. AI-powered job matching for software and education sectors." />
+        <meta property="og:url" content="https://gradia.world/" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Gradia - Your Next Step" />
+        <meta name="twitter:description" content="Gradia connects talented candidates with their dream careers. AI-powered job matching for software and education sectors." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
       <div className="min-h-screen">
       <SignupGuidedTour

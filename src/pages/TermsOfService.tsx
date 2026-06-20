@@ -173,6 +173,15 @@ const TermsOfService = () => {
         <title>Terms & Conditions - Gradia</title>
         <meta name="description" content="Read Gradia's terms and conditions covering candidate, employer, and freelancer usage of our recruitment platform." />
         <link rel="canonical" href="https://gradiaa.com/terms" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Terms & Conditions - Gradia" />
+        <meta property="og:description" content="Read Gradia's terms and conditions covering candidate, employer, and freelancer usage of our recruitment platform." />
+        <meta property="og:url" content="https://gradia.world/terms" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Terms & Conditions - Gradia" />
+        <meta name="twitter:description" content="Read Gradia's terms and conditions covering candidate, employer, and freelancer usage of our recruitment platform." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
       <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-4xl">

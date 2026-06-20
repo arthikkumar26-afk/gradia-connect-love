@@ -130,6 +130,15 @@ const ForgotPassword = () => {
         <title>Forgot Password - Gradia</title>
         <meta name="description" content="Reset your Gradia account password securely with a one-time link sent to your email." />
         <link rel="canonical" href="https://gradiaa.com/forgot-password" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Forgot Password - Gradia" />
+        <meta property="og:description" content="Reset your Gradia account password securely with a one-time link sent to your email." />
+        <meta property="og:url" content="https://gradia.world/forgot-password" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Forgot Password - Gradia" />
+        <meta name="twitter:description" content="Reset your Gradia account password securely with a one-time link sent to your email." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-subtle px-4 py-12">
       <div className="w-full max-w-md">

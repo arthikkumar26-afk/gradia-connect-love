@@ -56,6 +56,15 @@ const Contact = () => {
         <title>Contact Us - Gradia</title>
         <meta name="description" content="Get in touch with Gradia for career support, hiring solutions, partnerships, or general inquiries. Our team is here to help." />
         <link rel="canonical" href="https://gradiaa.com/contact" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Contact Us - Gradia" />
+        <meta property="og:description" content="Get in touch with Gradia for career support, hiring solutions, partnerships, or general inquiries. Our team is here to help." />
+        <meta property="og:url" content="https://gradia.world/contact" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Contact Us - Gradia" />
+        <meta name="twitter:description" content="Get in touch with Gradia for career support, hiring solutions, partnerships, or general inquiries. Our team is here to help." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
       <div className="min-h-screen">
       {/* Hero Section */}

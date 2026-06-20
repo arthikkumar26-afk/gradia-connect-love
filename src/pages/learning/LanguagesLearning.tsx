@@ -45,6 +45,15 @@ export default function LanguagesLearning() {
         <title>Language Learning - Gradia</title>
         <meta name="description" content="Improve workplace communication with curated language learning tracks on Gradia." />
         <link rel="canonical" href="https://gradiaa.com/learning/languages" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Language Learning - Gradia" />
+        <meta property="og:description" content="Improve workplace communication with curated language learning tracks on Gradia." />
+        <meta property="og:url" content="https://gradia.world/learning/languages" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Language Learning - Gradia" />
+        <meta name="twitter:description" content="Improve workplace communication with curated language learning tracks on Gradia." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-background">
       <div className="bg-gradient-card border-b">

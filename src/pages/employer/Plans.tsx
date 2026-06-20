@@ -240,6 +240,15 @@ export default function Plans() {
         <title>Employer Plans - Gradia</title>
         <meta name="description" content="Compare Gradia hiring plans for startups, growing companies, and enterprises and pick the right tier." />
         <link rel="canonical" href="https://gradiaa.com/employer/plans" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Employer Plans - Gradia" />
+        <meta property="og:description" content="Compare Gradia hiring plans for startups, growing companies, and enterprises and pick the right tier." />
+        <meta property="og:url" content="https://gradia.world/employer/plans" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Employer Plans - Gradia" />
+        <meta name="twitter:description" content="Compare Gradia hiring plans for startups, growing companies, and enterprises and pick the right tier." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="max-w-6xl mx-auto">

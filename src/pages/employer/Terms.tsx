@@ -88,6 +88,15 @@ export default function Terms() {
         <title>Employer Terms - Gradia</title>
         <meta name="description" content="Terms and conditions for employers using Gradia's hiring platform and related services." />
         <link rel="canonical" href="https://gradiaa.com/employer/terms" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Employer Terms - Gradia" />
+        <meta property="og:description" content="Terms and conditions for employers using Gradia's hiring platform and related services." />
+        <meta property="og:url" content="https://gradia.world/employer/terms" />
+        <meta property="og:image" content="https://gradia.world/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Employer Terms - Gradia" />
+        <meta name="twitter:description" content="Terms and conditions for employers using Gradia's hiring platform and related services." />
+        <meta name="twitter:image" content="https://gradia.world/og-image.png" />
       </Helmet>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background p-4 py-12">
       <div className="w-full max-w-4xl">
