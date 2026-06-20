@@ -465,13 +465,16 @@ const PlanControl = ({ accessRole }: Props) => {
                       <TableHead>User</TableHead>
                       <TableHead>Plan</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Activation</TableHead>
                       <TableHead>Started</TableHead>
                       <TableHead>Ends</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCandidates.map(s => (
+                    {filteredCandidates.map(s => {
+                      const act = latestActivationByCandidate[s.candidate_id];
+                      return (
                       <TableRow key={s.id}>
                         <TableCell>
                           <div className="font-medium text-sm">{s.profile?.full_name || "—"}</div>
@@ -479,6 +482,7 @@ const PlanControl = ({ accessRole }: Props) => {
                         </TableCell>
                         <TableCell>{planBadge(s.plan)}</TableCell>
                         <TableCell>{statusBadge(s.status)}</TableCell>
+                        <TableCell>{activationCell(act)}</TableCell>
                         <TableCell className="text-xs">{format(new Date(s.started_at), "dd MMM yyyy")}</TableCell>
                         <TableCell className="text-xs">{s.ends_at ? format(new Date(s.ends_at), "dd MMM yyyy") : "—"}</TableCell>
                         <TableCell className="text-right">
@@ -487,10 +491,11 @@ const PlanControl = ({ accessRole }: Props) => {
                           </Button>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    );})}
                     {filteredCandidates.length === 0 && (
-                      <TableRow><TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-10">No candidate subscriptions</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-10">No candidate subscriptions</TableCell></TableRow>
                     )}
+
                   </TableBody>
                 </Table>
               </CardContent>
