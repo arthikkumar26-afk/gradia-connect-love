@@ -334,16 +334,18 @@ const MockInterview = () => {
     }
   };
 
-  const requestPermissions = async () => {
+  const permissionStreamRef = useRef<MediaStream | null>(null);
+
+  const requestPermissions = async (): Promise<MediaStream | null> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      stream.getTracks().forEach(track => track.stop());
+      permissionStreamRef.current = stream;
       setPermissionsGranted(true);
-      return true;
+      return stream;
     } catch (error) {
       console.error('Permission denied:', error);
       toast.error("Please allow camera and microphone access to continue");
-      return false;
+      return null;
     }
   };
 
