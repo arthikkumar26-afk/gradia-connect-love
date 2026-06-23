@@ -2115,35 +2115,58 @@ export const MockInterviewTab = () => {
 
                   {/* Action */}
                   <div className="flex-shrink-0 flex items-center gap-2">
-                    {/* For stage 1 (Interview Instructions) current - show Start button that directly advances */}
-                    {status === 'current' && stage.order === 1 && currentSession && (
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        disabled={isStarting}
-                        onClick={async () => {
-                          setIsStarting(true);
-                          try {
-                            await completeInstructionsStage(currentSession.id);
-                            await loadData();
-                            // Move directly to next stage
-                            const nextStage = stages.find(s => s.order > 1);
-                            if (nextStage) {
-                              goToStage(nextStage.order);
+                    {/* For stage 1 (Interview Instructions) current - show Start button that directly advances.
+                        IMPORTANT: only auto-complete if this stage really is the email/instructions stage.
+                        Some pipelines (e.g. HR / Non-IT Corporate) use stage 1 as the actual Written Test,
+                        which must NOT be auto-completed. */}
+                    {status === 'current' && stage.order === 1 && currentSession && (() => {
+                      const sn = (stage.name || '').toLowerCase();
+                      const isInstructionsStage = sn.includes('instruction') || sn.includes('invitation') || sn.includes('email');
+                      if (!isInstructionsStage) {
+                        return (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              goToStage(stage.order);
+                            }}
+                            className="gap-1"
+                          >
+                            <Play className="h-4 w-4" />
+                            Start
+                          </Button>
+                        );
+                      }
+                      return (
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          disabled={isStarting}
+                          onClick={async () => {
+                            setIsStarting(true);
+                            try {
+                              await completeInstructionsStage(currentSession.id);
+                              await loadData();
+                              // Move directly to next stage
+                              const nextStage = stages.find(s => s.order > 1);
+                              if (nextStage) {
+                                goToStage(nextStage.order);
+                              }
+                            } catch (err) {
+                              console.error("Error starting test:", err);
+                              toast.error("Failed to start test.");
+                            } finally {
+                              setIsStarting(false);
                             }
-                          } catch (err) {
-                            console.error("Error starting test:", err);
-                            toast.error("Failed to start test.");
-                          } finally {
-                            setIsStarting(false);
-                          }
-                        }}
-                        className="gap-1"
-                      >
-                        {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                        {isStarting ? 'Starting...' : 'Start Test'}
-                      </Button>
-                    )}
+                          }}
+                          className="gap-1"
+                        >
+                          {isStarting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                          {isStarting ? 'Starting...' : 'Start Test'}
+                        </Button>
+                      );
+                    })()}
                     {/* For current (in-progress) stages without a dedicated action, show Start button */}
                     {status === 'current' && currentSession && stage.order !== 1 && stage.order !== 7 && stage.order !== 8 && (
                       <Button
