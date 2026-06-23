@@ -1536,7 +1536,7 @@ const MockInterview = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="bg-muted/50 rounded-lg p-4 space-y-4">
-                  <h4 className="font-semibold">Your Interview Journey (7 Stages):</h4>
+                  <h4 className="font-semibold">Your Interview Journey (4 Stages):</h4>
                   <div className="space-y-3">
                     {stages.map((s, idx) => (
                       <div key={s.order} className="flex items-start gap-3">
