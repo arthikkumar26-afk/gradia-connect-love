@@ -1518,8 +1518,18 @@ const MockInterview = () => {
       </div>
     );
 
-    // Stage 1: Interview Instructions
-    if (stage.stageType === 'email_info' || stage.order === 1) {
+    // Stage 1: Interview Instructions (only when this stage is truly the
+    // email/instructions stage — some pipelines use stage 1 as the actual
+    // Written Test / MCQ assessment, which must NOT show the instructions
+    // screen or it would auto-mark the round complete without the candidate
+    // taking the test).
+    const stageNameLower = (stage.name || '').toLowerCase();
+    const isInstructionsStage =
+      stage.stageType === 'email_info' ||
+      stageNameLower.includes('instruction') ||
+      stageNameLower.includes('invitation') ||
+      stageNameLower.includes('email');
+    if (isInstructionsStage) {
       return (
         <div className="min-h-screen bg-background p-4 md:p-8">
           <div className="max-w-3xl mx-auto">
