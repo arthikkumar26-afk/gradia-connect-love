@@ -470,10 +470,11 @@ const MockInterview = () => {
         }
         setIsStarted(true);
         
-        // Only auto-start recording if camera/mic available
-        if (canRecord) {
+        // Only auto-start recording if camera/mic available — reuse the granted stream
+        if (canRecord && mediaStream) {
+          const streamForRecording = mediaStream;
           setTimeout(() => {
-            startRecording();
+            startRecording(streamForRecording);
           }, 500);
         }
       }
