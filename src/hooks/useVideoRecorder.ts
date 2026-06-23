@@ -62,9 +62,25 @@ export const useVideoRecorder = (options?: UseVideoRecorderOptions) => {
         videoRef.current.play();
       }
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9,opus'
-      });
+      // Pick a supported mime type — vp9 isn't available on Safari/some Firefox/Windows builds
+      const candidateMimeTypes = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm;codecs=vp8',
+        'video/webm',
+        'video/mp4;codecs=h264,aac',
+        'video/mp4',
+      ];
+      let chosenMimeType: string | undefined;
+      if (typeof MediaRecorder !== 'undefined' && typeof MediaRecorder.isTypeSupported === 'function') {
+        chosenMimeType = candidateMimeTypes.find((t) => {
+          try { return MediaRecorder.isTypeSupported(t); } catch { return false; }
+        });
+      }
+      console.log('[useVideoRecorder] Using mimeType:', chosenMimeType || '(browser default)');
+      const mediaRecorder = chosenMimeType
+        ? new MediaRecorder(stream, { mimeType: chosenMimeType })
+        : new MediaRecorder(stream);
 
       mediaRecorderRef.current = mediaRecorder;
 
@@ -75,7 +91,8 @@ export const useVideoRecorder = (options?: UseVideoRecorderOptions) => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const blobType = chosenMimeType?.split(';')[0] || 'video/webm';
+        const blob = new Blob(chunksRef.current, { type: blobType });
         setRecordedBlob(blob);
         const url = URL.createObjectURL(blob);
         setPreviewUrl(url);
