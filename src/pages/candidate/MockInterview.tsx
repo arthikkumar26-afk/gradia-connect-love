@@ -1568,7 +1568,7 @@ const MockInterview = () => {
                 <div className="flex flex-col gap-3">
                   <Button onClick={handleCompleteInstructions} className="w-full gap-2" size="lg" disabled={isGenerating}>
                     {isGenerating ? <Loader2 className="h-5 w-5 animate-spin" /> : <ArrowRight className="h-5 w-5" />}
-                    I Understand, Proceed to Technical Assessment
+                    Start Test
                   </Button>
                   <Button variant="outline" onClick={goToDashboard} className="w-full">
                     Return to Dashboard
