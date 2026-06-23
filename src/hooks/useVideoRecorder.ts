@@ -91,7 +91,8 @@ export const useVideoRecorder = (options?: UseVideoRecorderOptions) => {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const blobType = chosenMimeType?.split(';')[0] || 'video/webm';
+        const blob = new Blob(chunksRef.current, { type: blobType });
         setRecordedBlob(blob);
         const url = URL.createObjectURL(blob);
         setPreviewUrl(url);
