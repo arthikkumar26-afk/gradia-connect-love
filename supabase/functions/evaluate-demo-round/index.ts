@@ -165,7 +165,7 @@ Return your evaluation as a JSON object with this structure:
           ai_feedback: evaluation.detailedFeedback,
           strengths: evaluation.strengths,
           improvements: evaluation.improvements,
-          passed: evaluation.overallScore >= 65,
+          passed: evaluation.overallScore >= 60,
           recording_url: recordingUrl,
           questions: [{ type: 'demo', topic: demoTopic }],
           answers: [{ demoCompleted: true, duration: durationSeconds }],
@@ -187,7 +187,7 @@ Return your evaluation as a JSON object with this structure:
           ai_feedback: evaluation.detailedFeedback,
           strengths: evaluation.strengths,
           improvements: evaluation.improvements,
-          passed: evaluation.overallScore >= 65,
+          passed: evaluation.overallScore >= 60,
           recording_url: recordingUrl,
           questions: [{ type: 'demo', topic: demoTopic }],
           answers: [{ demoCompleted: true, duration: durationSeconds }],
@@ -219,7 +219,7 @@ Return your evaluation as a JSON object with this structure:
         ai_feedback: evaluation.detailedFeedback,
         strengths: evaluation.strengths,
         improvements: evaluation.improvements,
-        passed: evaluation.overallScore >= 65,
+        passed: evaluation.overallScore >= 60,
         question_scores: evaluation.criteria,
         completed_at: new Date().toISOString()
       });
