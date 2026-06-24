@@ -264,9 +264,9 @@ Return your evaluation as a JSON object with this structure:
       try {
         const resend = new Resend(RESEND_API_KEY);
         
-        const scoreColor = evaluation.overallScore >= 80 ? '#16a34a' : evaluation.overallScore >= 65 ? '#ca8a04' : '#dc2626';
-        const scoreBg = evaluation.overallScore >= 80 ? '#f0fdf4' : evaluation.overallScore >= 65 ? '#fefce8' : '#fef2f2';
-        const passedText = evaluation.overallScore >= 65 ? 'Passed ✓' : 'Below Threshold';
+        const scoreColor = evaluation.overallScore >= 80 ? '#16a34a' : evaluation.overallScore >= 60 ? '#ca8a04' : '#dc2626';
+        const scoreBg = evaluation.overallScore >= 80 ? '#f0fdf4' : evaluation.overallScore >= 60 ? '#fefce8' : '#fef2f2';
+        const passedText = evaluation.overallScore >= 60 ? 'Passed ✓' : 'Below Threshold';
         
         // Build criteria HTML
         let criteriaHtml = '';
@@ -279,7 +279,7 @@ Return your evaluation as a JSON object with this structure:
               timeManagement: 'Time Management',
               overallPotential: 'Overall Potential'
             };
-            const cColor = value.score >= 80 ? '#16a34a' : value.score >= 65 ? '#ca8a04' : '#dc2626';
+            const cColor = value.score >= 80 ? '#16a34a' : value.score >= 60 ? '#ca8a04' : '#dc2626';
             criteriaHtml += `
               <div style="padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 12px; background: #fafafa;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
