@@ -432,7 +432,7 @@ Return your evaluation as a JSON object with this structure:
       nextStage,
       nextStageOrder,
       isComplete: isLastStage,
-      passed: evaluation.overallScore >= 65,
+      passed: evaluation.overallScore >= 60,
       sessionId
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
