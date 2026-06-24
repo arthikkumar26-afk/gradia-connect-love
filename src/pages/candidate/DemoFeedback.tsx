@@ -184,19 +184,19 @@ export default function DemoFeedback() {
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
-    if (score >= 65) return 'text-amber-600';
+    if (score >= 60) return 'text-amber-600';
     return 'text-red-600';
   };
 
   const getScoreBg = (score: number) => {
     if (score >= 80) return 'bg-green-100 border-green-200';
-    if (score >= 65) return 'bg-amber-100 border-amber-200';
+    if (score >= 60) return 'bg-amber-100 border-amber-200';
     return 'bg-red-100 border-red-200';
   };
 
   const getProgressColor = (score: number) => {
     if (score >= 80) return 'bg-green-500';
-    if (score >= 65) return 'bg-amber-500';
+    if (score >= 60) return 'bg-amber-500';
     return 'bg-red-500';
   };
 
@@ -290,7 +290,7 @@ export default function DemoFeedback() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Minimum passing score: 65%
+                    Minimum passing score: 60%
                   </p>
                 </div>
               </div>
