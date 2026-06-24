@@ -578,7 +578,7 @@ export default function DemoRound() {
           <Card className="border-primary/20">
             <CardHeader className="text-center">
               <div className={`h-20 w-20 mx-auto rounded-full flex items-center justify-center mb-4 ${
-                evaluation.overallScore >= 65 ? 'bg-green-500' : 'bg-red-500'
+                evaluation.overallScore >= 60 ? 'bg-green-500' : 'bg-red-500'
               }`}>
                 <CheckCircle2 className="h-10 w-10 text-white" />
               </div>
@@ -592,7 +592,7 @@ export default function DemoRound() {
                 <p className={`text-5xl font-bold ${getScoreColor(evaluation.overallScore)}`}>
                   {evaluation.overallScore}%
                 </p>
-                <Badge variant={evaluation.overallScore >= 65 ? 'default' : 'destructive'} className="mt-2">
+                <Badge variant={evaluation.overallScore >= 60 ? 'default' : 'destructive'} className="mt-2">
                   {evaluation.recommendation}
                 </Badge>
               </div>

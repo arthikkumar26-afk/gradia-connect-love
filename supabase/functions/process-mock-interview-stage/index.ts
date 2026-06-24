@@ -64,7 +64,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
     description: 'Role-specific technical questions to assess your domain knowledge and problem-solving skills.',
     questionCount: 8,
     timePerQuestion: 150,
-    passingScore: 70,
+    passingScore: 60,
     stageType: 'assessment',
     autoProgressAfterCompletion: false
   },
@@ -85,7 +85,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
     description: 'Live teaching demonstration where AI evaluates your teaching clarity, subject knowledge, and presentation skills.',
     questionCount: 1,
     timePerQuestion: 600, // 10 minutes
-    passingScore: 65,
+    passingScore: 60,
     stageType: 'demo',
     autoProgressAfterCompletion: true
   },
@@ -105,7 +105,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
     description: 'HR round - Submit required documents for verification and final review.',
     questionCount: 4,
     timePerQuestion: 120,
-    passingScore: 75,
+    passingScore: 60,
     stageType: 'hr_documents',
     autoProgressAfterCompletion: true
   },
@@ -304,7 +304,7 @@ serve(async (req) => {
           description: '',
           questionCount: isTechnicalInterview ? 20 : effectiveStageType === 'coding' ? 1 : 8,
           timePerQuestion: isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 150,
-          passingScore: 65,
+          passingScore: 60,
           stageType: effectiveStageType || 'assessment',
           autoProgressAfterCompletion: false
         };
@@ -497,6 +497,9 @@ serve(async (req) => {
       if (toolCall?.function?.arguments) {
         evaluation = JSON.parse(toolCall.function.arguments);
       }
+
+      // Enforce strict pass threshold — override AI hallucinations
+      evaluation.passed = (evaluation.overallScore || 0) >= 60;
 
       // Update stage result with recording URL, strengths, and improvements
       await supabase
