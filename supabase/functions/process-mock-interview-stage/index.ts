@@ -498,6 +498,9 @@ serve(async (req) => {
         evaluation = JSON.parse(toolCall.function.arguments);
       }
 
+      // Enforce strict pass threshold — override AI hallucinations
+      evaluation.passed = (evaluation.overallScore || 0) >= 60;
+
       // Update stage result with recording URL, strengths, and improvements
       await supabase
         .from('mock_interview_stage_results')
