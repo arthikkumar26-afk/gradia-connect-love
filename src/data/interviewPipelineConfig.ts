@@ -702,7 +702,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
           commonStages.resumeScreening,
           commonStages.writtenTestSlotBooking,
           commonStages.technicalAssessment,
-          { order: 4, name: 'Group Discussion', description: 'Group discussion & communication assessment', isAutomated: false },
+          { order: 4, name: 'Just A Minute (JAM) Test', description: '1-minute spoken impromptu — AI evaluates presentation, dressing & communication', isAutomated: true },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
