@@ -43,6 +43,7 @@ import { InterviewProgressTracker } from "@/components/candidate/InterviewProgre
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { indiaLocationData } from "@/data/indiaLocations";
+import JamTestStage from "@/components/candidate/JamTestStage";
 
 interface StageQuestion {
   id: number;
