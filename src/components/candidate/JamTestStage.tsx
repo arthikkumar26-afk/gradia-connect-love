@@ -171,6 +171,7 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
     try {
       setPhase("uploading");
       const snapshot = captureSnapshot();
+      try { recognitionRef.current?.stop(); } catch {}
       // Stop tracks AFTER snapshot
       streamRef.current?.getTracks().forEach((t) => t.stop());
 
