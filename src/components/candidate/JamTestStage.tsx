@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Camera, Mic, Loader2, Play, ArrowLeft, Sparkles, Timer, CheckCircle2 } from "lucide-react";
+import { Camera, Mic, Loader2, Play, ArrowLeft, Sparkles, Timer, CheckCircle2, ArrowRight } from "lucide-react";
 
 const JAM_TOPICS = [
   "Why I want this job",
