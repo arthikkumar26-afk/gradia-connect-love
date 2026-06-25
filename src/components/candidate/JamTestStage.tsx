@@ -137,6 +137,9 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
     rec.onstop = () => finalize();
     rec.start(1000);
     setPhase("recording");
+    finalRef.current = "";
+    setLiveCaption("");
+    startLiveCaptions();
     setSecondsLeft(60);
     tickRef.current = setInterval(() => {
       setSecondsLeft((s) => {
