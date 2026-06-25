@@ -131,3 +131,6 @@ verify_jwt = false
 
 [functions.score-resume-match]
 verify_jwt = false
+
+[functions.evaluate-jam-test]
+verify_jwt = false
