@@ -120,12 +120,12 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
       const v = videoRef.current;
       if (!v || !v.videoWidth) return null;
       const canvas = document.createElement("canvas");
-      canvas.width = Math.min(640, v.videoWidth);
+      canvas.width = Math.min(320, v.videoWidth);
       canvas.height = Math.round((canvas.width / v.videoWidth) * v.videoHeight);
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
       ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/jpeg", 0.7);
+      return canvas.toDataURL("image/jpeg", 0.6);
     } catch { return null; }
   };
 
