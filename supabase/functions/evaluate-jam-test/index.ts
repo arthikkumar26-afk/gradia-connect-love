@@ -15,6 +15,7 @@ interface Body {
   durationSec: number;
   recordingUrl?: string | null;
   snapshotDataUrl?: string | null;
+  transcript?: string;
   candidateProfile?: { full_name?: string; designation?: string; role?: string };
 }
 
@@ -25,7 +26,7 @@ serve(async (req) => {
     const body = (await req.json()) as Body;
     const {
       sessionId, stageOrder, stageName = "Just A Minute (JAM) Test",
-      topic, durationSec, recordingUrl, snapshotDataUrl, candidateProfile,
+      topic, durationSec, recordingUrl, snapshotDataUrl, transcript, candidateProfile,
     } = body;
 
     const supabase = createClient(
@@ -34,28 +35,40 @@ serve(async (req) => {
     );
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const safeTranscript = (transcript || "").trim();
 
-    // Build a multimodal request: pass snapshot (if any) for visual evaluation
-    // of professional appearance / dressing, plus the spoken-topic context.
     const systemPrompt = `You are an expert interviewer evaluating a candidate's "Just A Minute (JAM)" round.
+The JAM round evaluates the candidate's SPONTANEITY, COMMUNICATION FLUENCY, and ability to ORGANIZE THOUGHTS UNDER PRESSURE.
 The candidate spoke for ${durationSec} seconds on the topic: "${topic}".
-You will see a snapshot of the candidate (if provided) — judge professional appearance, dressing, grooming, posture, eye contact, framing, and lighting.
-Also judge confidence and presentation based on the candidate having spoken for the full minute.
-Return ONLY a JSON object with this exact shape:
+
+You will see:
+- A snapshot of the candidate (if provided) — judge professional APPEARANCE, DRESSING, GROOMING, POSTURE, eye contact, framing, and lighting / BODY LANGUAGE.
+- A live transcript of what the candidate actually spoke (if provided) — judge content quality, structure (intro/points/closing), vocabulary, grammar, fluency, filler words, relevance to topic, spontaneity, and how well thoughts were organized under pressure.
+
+Return ONLY a JSON object with this exact shape (no markdown):
 {
   "overallScore": number (0-100),
   "passed": boolean (true if overallScore >= 60),
-  "feedback": string (2-3 sentences),
+  "feedback": string (3-4 sentences covering spontaneity, fluency, organization of thoughts, body language and looks),
   "strengths": string[] (3-5 short bullets),
   "improvements": string[] (3-5 short bullets),
-  "appearance": { "dressing": number, "grooming": number, "posture": number, "framing": number },
-  "communication": { "confidence": number, "clarity": number, "fluency": number }
+  "appearance": { "dressing": number, "grooming": number, "posture": number, "bodyLanguage": number },
+  "communication": { "spontaneity": number, "fluency": number, "organization": number, "clarity": number },
+  "transcriptSummary": string (1-2 sentence summary of what the candidate said)
 }`;
 
     let evaluation: any = null;
     if (LOVABLE_API_KEY) {
       const userContent: any[] = [
-        { type: "text", text: `Candidate: ${candidateProfile?.full_name || "N/A"} | Role: ${candidateProfile?.designation || candidateProfile?.role || "N/A"}\nTopic: ${topic}\nDuration spoken: ${durationSec}s` },
+        { type: "text", text:
+          `Candidate: ${candidateProfile?.full_name || "N/A"} | Role: ${candidateProfile?.designation || candidateProfile?.role || "N/A"}
+Topic: ${topic}
+Duration spoken: ${durationSec}s
+
+LIVE TRANSCRIPT OF CANDIDATE'S SPEECH:
+"""
+${safeTranscript || "(No speech was captured by the live transcription)"}
+"""` },
       ];
       if (snapshotDataUrl) {
         userContent.push({ type: "image_url", image_url: { url: snapshotDataUrl } });
@@ -87,40 +100,60 @@ Return ONLY a JSON object with this exact shape:
     }
 
     if (!evaluation) {
-      // Fallback deterministic evaluation
-      const base = durationSec >= 55 ? 78 : durationSec >= 30 ? 65 : 45;
+      const base = durationSec >= 55 ? 72 : durationSec >= 30 ? 60 : 45;
       evaluation = {
         overallScore: base,
         passed: base >= 60,
-        feedback: `You spoke for ${durationSec} seconds on "${topic}". Keep practicing impromptu speaking to build confidence and structured delivery.`,
+        feedback: `You spoke for ${durationSec} seconds on "${topic}". Keep practicing impromptu speaking to build spontaneity, fluency, and organize your thoughts under pressure.`,
         strengths: ["Attempted the JAM round", "Maintained camera presence", "Stayed on the assigned topic"],
         improvements: ["Speak for the full minute", "Use clearer structure: intro, points, closing", "Project more confidence and vary tone"],
-        appearance: { dressing: 70, grooming: 70, posture: 70, framing: 70 },
-        communication: { confidence: 65, clarity: 65, fluency: 65 },
+        appearance: { dressing: 70, grooming: 70, posture: 70, bodyLanguage: 70 },
+        communication: { spontaneity: 60, fluency: 60, organization: 60, clarity: 65 },
+        transcriptSummary: safeTranscript ? safeTranscript.slice(0, 240) : "No speech captured.",
       };
     }
 
-    // Enforce 60% pass threshold consistently
     evaluation.passed = (evaluation.overallScore ?? 0) >= 60;
 
-    // Upsert stage result
+    // Compose a richer feedback string so it shows nicely in the report
+    const app = evaluation.appearance || {};
+    const com = evaluation.communication || {};
+    const breakdownLines = [
+      `Appearance & Body Language — Dressing ${app.dressing ?? "-"}/100 · Grooming ${app.grooming ?? "-"}/100 · Posture ${app.posture ?? "-"}/100 · Body Language ${app.bodyLanguage ?? app.framing ?? "-"}/100`,
+      `Communication — Spontaneity ${com.spontaneity ?? "-"}/100 · Fluency ${com.fluency ?? "-"}/100 · Organization of Thoughts ${com.organization ?? "-"}/100 · Clarity ${com.clarity ?? "-"}/100`,
+      `This round evaluates your spontaneity, communication fluency, and ability to organize thoughts under pressure.`,
+    ];
+    const composedFeedback = [evaluation.feedback, ...breakdownLines].filter(Boolean).join("\n\n");
+
+    const answerText = safeTranscript
+      ? `Topic: ${topic}\nDuration: ${durationSec}s\n\nTranscript (auto-captioned from your speech):\n"${safeTranscript}"`
+      : `Topic: ${topic}\nDuration: ${durationSec}s\n\n(No speech transcript was captured.)`;
+
     await supabase.from("mock_interview_stage_results").upsert({
       session_id: sessionId,
       stage_order: stageOrder,
       stage_name: stageName,
       ai_score: evaluation.overallScore,
       passed: evaluation.passed,
-      ai_feedback: evaluation.feedback,
+      ai_feedback: composedFeedback,
       strengths: evaluation.strengths,
       improvements: evaluation.improvements,
-      questions: [{ id: 1, question: `JAM topic: ${topic}`, type: "text", category: "JAM" }],
-      answers: [`Spoke for ${durationSec} seconds on the topic.`],
-      question_scores: [],
+      questions: [{
+        id: 1,
+        question: `JAM Topic: ${topic}\n(Evaluates spontaneity, communication fluency, and ability to organize thoughts under pressure, plus body language & professional looks.)`,
+        type: "text",
+        category: "JAM",
+      }],
+      answers: [answerText],
+      question_scores: [{
+        questionId: 1,
+        score: evaluation.overallScore,
+        feedback: evaluation.transcriptSummary || "",
+      }],
       recording_url: recordingUrl || null,
       completed_at: new Date().toISOString(),
     }, { onConflict: "session_id,stage_order" });
 
-    // Advance session's current_stage_order
     const nextStageOrder = stageOrder + 1;
     await supabase
       .from("mock_interview_sessions")
