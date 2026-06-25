@@ -50,6 +50,18 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
     };
   }, []);
 
+  const attachStreamToVideo = async () => {
+    const v = videoRef.current;
+    const s = streamRef.current;
+    if (!v || !s) return;
+    try {
+      if (v.srcObject !== s) v.srcObject = s;
+      v.muted = true;
+      v.playsInline = true;
+      await v.play().catch(() => {});
+    } catch (e) { console.warn("video attach failed", e); }
+  };
+
   const start = async () => {
     setPermissionError(null);
     try {
@@ -58,12 +70,9 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        await videoRef.current.play().catch(() => {});
-      }
       setPhase("countdown");
+      // Wait a tick so the <video> element mounts, then attach the stream.
+      setTimeout(() => { attachStreamToVideo(); }, 50);
       setCountdown(3);
       let c = 3;
       const cdInterval = setInterval(() => {
@@ -111,12 +120,12 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
       const v = videoRef.current;
       if (!v || !v.videoWidth) return null;
       const canvas = document.createElement("canvas");
-      canvas.width = Math.min(640, v.videoWidth);
+      canvas.width = Math.min(320, v.videoWidth);
       canvas.height = Math.round((canvas.width / v.videoWidth) * v.videoHeight);
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
       ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
-      return canvas.toDataURL("image/jpeg", 0.7);
+      return canvas.toDataURL("image/jpeg", 0.6);
     } catch { return null; }
   };
 
