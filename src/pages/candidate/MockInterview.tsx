@@ -916,55 +916,10 @@ const MockInterview = () => {
     );
   }
 
-  // Show results
+  // Stage completed: show a simple "Done" confirmation and auto-return to mock test page.
+  // Full results, strengths/improvements and the download report are shown in Final Review.
   if (showResult && evaluation && stage) {
-    return (
-      <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goToDashboard}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Mock Test Stages
-            </Button>
-          </div>
-          <MockInterviewResults
-            stageName={stage.name}
-            overallScore={evaluation.overallScore}
-            passed={evaluation.passed}
-            passingScore={stage.passingScore}
-            feedback={evaluation.feedback}
-            strengths={evaluation.strengths || []}
-            improvements={evaluation.improvements || []}
-            questionScores={evaluation.questionScores}
-            questions={questions}
-            answers={answers}
-            recordingUrl={stageRecordingUrl}
-            onRetry={goToDashboard}
-            isLastStage={stage.order >= stages.length}
-          />
-          <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
-            {!evaluation.passed && (
-              <Button onClick={retryStage} variant="default" className="gap-2 w-full sm:w-auto">
-                <Play className="h-4 w-4" />
-                Retry Stage
-              </Button>
-            )}
-            <Button onClick={downloadFinalReviewPdf} variant="outline" className="gap-2 w-full sm:w-auto">
-              <Download className="h-4 w-4" />
-              Download Report
-            </Button>
-            <Button onClick={goToDashboard} variant="outline" className="w-full sm:w-auto">
-              Return to Dashboard
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+    return <StageDoneScreen stageName={stage.name} passed={evaluation.passed} onContinue={goToDashboard} />;
   }
 
   // Show generating/evaluating state
