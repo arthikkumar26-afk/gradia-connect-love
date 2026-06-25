@@ -43,6 +43,7 @@ import { InterviewProgressTracker } from "@/components/candidate/InterviewProgre
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { indiaLocationData } from "@/data/indiaLocations";
+import JamTestStage from "@/components/candidate/JamTestStage";
 
 interface StageQuestion {
   id: number;
@@ -2109,6 +2110,21 @@ const MockInterview = () => {
             </Card>
           </div>
         </div>
+      );
+    }
+
+    // Just A Minute (JAM) Test stage — 1-minute spoken impromptu with AI evaluation
+    const jamLower = (stage.name || '').toLowerCase();
+    if (jamLower.includes('jam') || jamLower.includes('just a minute')) {
+      return (
+        <JamTestStage
+          sessionId={sessionId!}
+          stageOrder={parseInt(stageOrder || '1')}
+          stageName={stage.name}
+          profile={profile}
+          onCompleted={goToDashboard}
+          onCancel={goToDashboard}
+        />
       );
     }
 
