@@ -36,19 +36,54 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
   const [countdown, setCountdown] = useState(3);
   const [secondsLeft, setSecondsLeft] = useState(60);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [liveCaption, setLiveCaption] = useState<string>("");
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const finalRef = useRef<string>("");
 
   useEffect(() => {
     return () => {
       if (tickRef.current) clearInterval(tickRef.current);
+      try { recognitionRef.current?.stop(); } catch {}
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, []);
+
+  const startLiveCaptions = () => {
+    try {
+      const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) return;
+      const rec = new SR();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = "en-US";
+      rec.onresult = (e: any) => {
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          if (r.isFinal) finalRef.current += r[0].transcript + " ";
+          else interim += r[0].transcript;
+        }
+        const full = (finalRef.current + interim).trim();
+        // Show last ~120 chars to keep overlay clean
+        setLiveCaption(full.length > 140 ? "…" + full.slice(-140) : full);
+      };
+      rec.onerror = () => {};
+      rec.onend = () => {
+        // Auto-restart while recording
+        if (recorderRef.current && recorderRef.current.state === "recording") {
+          try { rec.start(); } catch {}
+        }
+      };
+      recognitionRef.current = rec;
+      rec.start();
+    } catch (e) { console.warn("speech recognition unavailable", e); }
+  };
 
   const attachStreamToVideo = async () => {
     const v = videoRef.current;
