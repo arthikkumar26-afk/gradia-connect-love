@@ -50,6 +50,18 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
     };
   }, []);
 
+  const attachStreamToVideo = async () => {
+    const v = videoRef.current;
+    const s = streamRef.current;
+    if (!v || !s) return;
+    try {
+      if (v.srcObject !== s) v.srcObject = s;
+      v.muted = true;
+      v.playsInline = true;
+      await v.play().catch(() => {});
+    } catch (e) { console.warn("video attach failed", e); }
+  };
+
   const start = async () => {
     setPermissionError(null);
     try {
@@ -58,12 +70,9 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.muted = true;
-        await videoRef.current.play().catch(() => {});
-      }
       setPhase("countdown");
+      // Wait a tick so the <video> element mounts, then attach the stream.
+      setTimeout(() => { attachStreamToVideo(); }, 50);
       setCountdown(3);
       let c = 3;
       const cdInterval = setInterval(() => {
