@@ -155,7 +155,7 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
       if (error) throw error;
       setPhase("done");
       toast.success("JAM test completed!");
-      setTimeout(onCompleted, 1500);
+      setTimeout(onCompleted, 1800);
     } catch (e: any) {
       console.error(e);
       toast.error("Failed to evaluate JAM test. Please try again.");
