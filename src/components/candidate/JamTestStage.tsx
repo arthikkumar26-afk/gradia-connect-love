@@ -250,6 +250,11 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
                         {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")}
                       </Badge>
                     </div>
+                    {liveCaption && (
+                      <div className="absolute bottom-3 left-3 right-3 bg-black/70 text-white text-sm md:text-base font-medium px-3 py-2 rounded-md text-center leading-snug">
+                        {liveCaption}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
