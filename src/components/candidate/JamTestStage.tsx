@@ -188,6 +188,7 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
       } catch (e) { console.warn("upload failed", e); }
 
       setPhase("evaluating");
+      const transcript = (finalRef.current || "").trim();
       const { error } = await supabase.functions.invoke("evaluate-jam-test", {
         body: {
           sessionId,
@@ -197,6 +198,7 @@ const JamTestStage = ({ sessionId, stageOrder, stageName, profile, onCompleted, 
           durationSec: 60 - secondsLeft,
           recordingUrl,
           snapshotDataUrl: snapshot,
+          transcript,
           candidateProfile: profile,
         },
       });
