@@ -2113,6 +2113,21 @@ const MockInterview = () => {
       );
     }
 
+    // Just A Minute (JAM) Test stage — 1-minute spoken impromptu with AI evaluation
+    const jamLower = (stage.name || '').toLowerCase();
+    if (jamLower.includes('jam') || jamLower.includes('just a minute')) {
+      return (
+        <JamTestStage
+          sessionId={sessionId!}
+          stageOrder={parseInt(stageOrder || '1')}
+          stageName={stage.name}
+          profile={profile}
+          onCompleted={goToDashboard}
+          onCancel={goToDashboard}
+        />
+      );
+    }
+
     // Default: Assessment stages (Technical Assessment, HR Round, etc.)
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
