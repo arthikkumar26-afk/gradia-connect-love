@@ -1178,7 +1178,15 @@ const CandidateDashboard = () => {
       });
       
       if (parseError) {
-        throw new Error(parseError.message || "Failed to analyze resume");
+        let friendly = parseError.message || "Failed to analyze resume";
+        try {
+          const ctx: any = (parseError as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            if (body?.error) friendly = body.error;
+          }
+        } catch { /* ignore */ }
+        throw new Error(friendly);
       }
       
       const analysisData = analysisDataRaw;
