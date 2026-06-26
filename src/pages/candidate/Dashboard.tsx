@@ -1288,7 +1288,15 @@ const CandidateDashboard = () => {
       });
 
       if (parseErr) {
-        throw new Error(parseErr.message || 'Failed to parse resume');
+        let friendly = parseErr.message || 'Failed to parse resume';
+        try {
+          const ctx: any = (parseErr as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const body = await ctx.json();
+            if (body?.error) friendly = body.error;
+          }
+        } catch { /* ignore */ }
+        throw new Error(friendly);
       }
 
       console.log('AI parsed resume data:', data);
