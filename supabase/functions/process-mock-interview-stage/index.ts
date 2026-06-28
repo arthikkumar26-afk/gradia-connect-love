@@ -302,8 +302,8 @@ serve(async (req) => {
           name: effectiveStageName,
           order: stageOrder,
           description: '',
-          questionCount: isTechnicalInterview ? 20 : effectiveStageType === 'coding' ? 1 : 8,
-          timePerQuestion: isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 150,
+          questionCount: isTechnicalInterview ? 20 : effectiveStageType === 'coding' ? 1 : 10,
+          timePerQuestion: isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 120,
           passingScore: 60,
           stageType: effectiveStageType || 'assessment',
           autoProgressAfterCompletion: false
