@@ -231,7 +231,7 @@ export const JobManagementContent = () => {
 
       const { error } = await supabase
         .from("jobs")
-        .update({ [dbColumn]: updateValue })
+        .update({ [dbColumn]: updateValue } as any)
         .eq("id", jobId);
 
       if (error) throw error;

@@ -1024,7 +1024,7 @@ const CandidateSignup = () => {
       if (parsed.experience_level) profileUpdate.experience_level = parsed.experience_level;
       if (parsed.preferred_role) profileUpdate.preferred_role = parsed.preferred_role;
 
-      await supabase.from('profiles').update(profileUpdate).eq('id', userId);
+      await supabase.from('profiles').update(profileUpdate as any).eq('id', userId);
 
       // 4. Insert education rows
       if (Array.isArray(parsed.education) && parsed.education.length) {
