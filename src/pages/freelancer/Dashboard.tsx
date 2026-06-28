@@ -553,7 +553,7 @@ const FreelancerDashboard = () => {
       if (parsed.classes_handled) updateData.classes_handled = parsed.classes_handled;
       if (parsed.office_type) updateData.office_type = parsed.office_type;
 
-      const { error: updateError } = await supabase.from('profiles').update(updateData).eq('id', userId);
+      const { error: updateError } = await supabase.from('profiles').update(updateData as any).eq('id', userId);
       if (updateError) throw updateError;
 
       // Refresh profile to show updated data
