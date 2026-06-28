@@ -1983,6 +1983,13 @@ const MockInterview = () => {
                     const feedback = r?.ai_feedback || '';
                     const strengths: string[] = (r?.strengths as string[]) || [];
                     const improvements: string[] = (r?.improvements as string[]) || [];
+                    const rAnswers: any[] = Array.isArray((r as any)?.answers) ? (r as any).answers : [];
+                    const rQuestions: any[] = Array.isArray((r as any)?.questions) ? (r as any).questions : [];
+                    const isJam = /jam|just a minute/i.test(s.name || '') ||
+                      (rQuestions[0] && (rQuestions[0] as any).category === 'JAM');
+                    const transcriptText = isJam
+                      ? (typeof rAnswers[0] === 'string' ? rAnswers[0] : '')
+                      : '';
                     return (
                       <div key={s.order} className="border rounded-lg p-4 bg-card">
                         <div className="flex items-center justify-between mb-3">
@@ -2003,6 +2010,14 @@ const MockInterview = () => {
                         </div>
                         {feedback && (
                           <p className="text-sm text-muted-foreground mb-3 whitespace-pre-wrap">{feedback}</p>
+                        )}
+                        {isJam && transcriptText && (
+                          <div className="bg-muted/50 border rounded p-3 mb-3">
+                            <h5 className="text-xs font-semibold text-foreground mb-1 uppercase tracking-wide">
+                              What You Said (Live Transcript)
+                            </h5>
+                            <p className="text-sm whitespace-pre-wrap text-foreground">{transcriptText}</p>
+                          </div>
                         )}
                         {(strengths.length > 0 || improvements.length > 0) && (
                           <div className="grid md:grid-cols-2 gap-3 mt-2">
@@ -2028,6 +2043,7 @@ const MockInterview = () => {
                     );
                   })}
                 </div>
+
 
                 <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 text-center">
                   <p className="text-4xl font-bold text-green-600 mb-2">🎊</p>
