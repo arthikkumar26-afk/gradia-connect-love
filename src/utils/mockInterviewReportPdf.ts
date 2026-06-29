@@ -9,6 +9,9 @@ interface StageResult {
   completed_at?: string;
   strengths?: string[];
   improvements?: string[];
+  questions?: any[];
+  answers?: any[];
+  question_scores?: any[];
 }
 
 interface ReportOptions {
@@ -40,13 +43,13 @@ export const generateMockInterviewReportPdf = ({
     }
   };
 
-  const writeWrapped = (text: string, x: number, options?: { size?: number; style?: "normal" | "bold"; color?: [number, number, number] }) => {
-    const { size = 10, style = "normal", color = [40, 40, 40] } = options || {};
+  const writeWrapped = (text: string, x: number, options?: { size?: number; style?: "normal" | "bold" | "italic"; color?: [number, number, number]; maxWidthOverride?: number }) => {
+    const { size = 10, style = "normal", color = [40, 40, 40], maxWidthOverride } = options || {};
     doc.setFont("helvetica", style);
     doc.setFontSize(size);
     doc.setTextColor(...color);
-    const maxWidth = pageWidth - x - PAGE_MARGIN;
-    const lines = doc.splitTextToSize(text, maxWidth);
+    const maxWidth = maxWidthOverride ?? (pageWidth - x - PAGE_MARGIN);
+    const lines = doc.splitTextToSize(text || "", maxWidth);
     lines.forEach((line: string) => {
       ensureSpace(size * 0.5);
       doc.text(line, x, y);
@@ -118,7 +121,6 @@ export const generateMockInterviewReportPdf = ({
     const showScore = typeof s.ai_score === "number" && s.stage_order !== 1 && s.stage_order !== 3;
     doc.setDrawColor(230);
     doc.setFillColor(249, 250, 251);
-    const blockStart = y;
     doc.roundedRect(PAGE_MARGIN, y, pageWidth - PAGE_MARGIN * 2, 8, 1.5, 1.5, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
@@ -147,6 +149,67 @@ export const generateMockInterviewReportPdf = ({
     if (s.improvements && s.improvements.length > 0) {
       writeWrapped("Areas to Improve:", PAGE_MARGIN + 3, { size: 9, style: "bold", color: [146, 64, 14] });
       s.improvements.forEach(im => writeWrapped(`• ${im}`, PAGE_MARGIN + 6, { size: 9, color: [120, 70, 20] }));
+      y += 1;
+    }
+
+    // Questions & Answers (incl. JAM transcript)
+    const qs: any[] = Array.isArray(s.questions) ? s.questions : [];
+    const ans: any[] = Array.isArray(s.answers) ? s.answers : [];
+    const qScores: any[] = Array.isArray(s.question_scores) ? s.question_scores : [];
+    const isJam = /jam|just a minute/i.test(s.stage_name || "") ||
+      (qs[0] && (qs[0] as any).category === "JAM");
+
+    if (isJam) {
+      const transcript = typeof ans[0] === "string" ? ans[0] : "";
+      if (transcript) {
+        y += 2;
+        writeWrapped("What You Said (Live Transcript):", PAGE_MARGIN + 3, { size: 9, style: "bold", color: [55, 65, 145] });
+        writeWrapped(transcript, PAGE_MARGIN + 6, { size: 9, color: [40, 40, 40] });
+        y += 1;
+      }
+    } else if (qs.length > 0) {
+      y += 2;
+      writeWrapped("Questions & Answers:", PAGE_MARGIN + 3, { size: 9, style: "bold", color: [55, 65, 145] });
+      qs.forEach((q: any, i: number) => {
+        const qText = typeof q === "string" ? q : (q?.question || "");
+        const qType = (typeof q === "object" && q?.type) || "text";
+        const opts: string[] = (typeof q === "object" && Array.isArray(q?.options)) ? q.options : [];
+        const correct: string | undefined = typeof q === "object" ? q?.correctAnswer : undefined;
+        const aRaw = ans[i];
+        const aText = typeof aRaw === "string" ? aRaw : (aRaw?.answer ?? aRaw?.code ?? (aRaw != null ? JSON.stringify(aRaw) : ""));
+        const sc = qScores.find((x: any) => x?.questionId === (q?.id ?? i + 1));
+
+        ensureSpace(10);
+        writeWrapped(`Q${i + 1}. ${qText}`, PAGE_MARGIN + 6, { size: 9, style: "bold", color: [30, 30, 30] });
+
+        if (qType === "multiple_choice" && opts.length) {
+          opts.forEach((opt, oi) => {
+            const letter = String.fromCharCode(65 + oi);
+            const isChosen = (aText || "").trim() === opt.trim();
+            const isCorrect = !!correct && correct.trim() === opt.trim();
+            let tag = "";
+            let color: [number, number, number] = [80, 80, 80];
+            if (isCorrect && isChosen) { tag = " (Your answer - Correct)"; color = [22, 130, 50]; }
+            else if (isCorrect) { tag = " (Correct answer)"; color = [22, 130, 50]; }
+            else if (isChosen) { tag = " (Your answer)"; color = [200, 40, 40]; }
+            writeWrapped(`   ${letter}. ${opt}${tag}`, PAGE_MARGIN + 8, {
+              size: 9,
+              style: (isChosen || isCorrect) ? "bold" : "normal",
+              color,
+            });
+          });
+          if (!aText) {
+            writeWrapped("   (Not answered)", PAGE_MARGIN + 8, { size: 9, style: "italic", color: [150, 150, 150] });
+          }
+        } else {
+          writeWrapped(`Your Answer: ${aText || "(no answer)"}`, PAGE_MARGIN + 8, { size: 9, color: [60, 60, 60] });
+        }
+
+        if (sc) {
+          writeWrapped(`Score: ${sc.score ?? "-"}/100${sc.feedback ? ` — ${sc.feedback}` : ""}`, PAGE_MARGIN + 8, { size: 9, style: "italic", color: [90, 90, 90] });
+        }
+        y += 1;
+      });
     }
     y += 4;
   });
