@@ -12,6 +12,8 @@ interface StageQuestion {
   question: string;
   type: 'text' | 'multiple_choice' | 'scenario' | 'coding';
   options?: string[];
+  correctAnswer?: string;
+  expectedAnswer?: string;
   expectedPoints?: string[];
   category: string;
   // Coding-specific fields
@@ -358,6 +360,7 @@ serve(async (req) => {
                         type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario', 'coding'] },
                         options: { type: 'array', items: { type: 'string' } },
                         correctAnswer: { type: 'string', description: 'For multiple_choice questions: the exact correct option text from options array' },
+                        expectedAnswer: { type: 'string', description: 'For typed/scenario questions: a concise model answer reviewers can compare against' },
                         expectedPoints: { type: 'array', items: { type: 'string' } },
                         category: { type: 'string' },
                         functionSignature: { type: 'string', description: 'Function signature e.g. function twoSum(nums: number[], target: number): number[]' },
@@ -399,11 +402,13 @@ serve(async (req) => {
       if (sessionId) {
         await supabase
           .from('mock_interview_stage_results')
-          .insert({
+          .upsert({
             session_id: sessionId,
             stage_name: stage.name,
             stage_order: stage.order,
             questions: questions
+          }, {
+            onConflict: 'session_id,stage_order'
           });
       }
 
@@ -417,10 +422,6 @@ serve(async (req) => {
     }
 
     if (action === 'evaluate_answers') {
-      const stage = INTERVIEW_STAGES.find(s => s.order === stageOrder);
-      if (!stage) {
-        throw new Error('Invalid stage order');
-      }
       // Get the stage result with questions
       const { data: stageResult } = await supabase
         .from('mock_interview_stage_results')
@@ -429,7 +430,25 @@ serve(async (req) => {
         .eq('stage_order', stageOrder)
         .single();
 
-      const evaluationPrompt = buildEvaluationPrompt(stage, stageResult?.questions || [], answers, candidateProfile);
+      let stage = INTERVIEW_STAGES.find(s => s.order === stageOrder);
+      const storedQuestions = Array.isArray(stageResult?.questions) ? stageResult.questions as StageQuestion[] : [];
+      const storedStageName = stageResult?.stage_name as string | undefined;
+      const effectiveStageName = clientStageName || storedStageName || stage?.name || `Stage ${stageOrder}`;
+      const effectiveStageType = clientStageType || inferStageType(effectiveStageName, stage?.stageType);
+      if (!stage || stage.name !== effectiveStageName || stage.stageType !== effectiveStageType) {
+        stage = {
+          name: effectiveStageName,
+          order: stageOrder,
+          description: '',
+          questionCount: storedQuestions.length || 10,
+          timePerQuestion: effectiveStageType === 'coding' ? 1800 : 120,
+          passingScore: 60,
+          stageType: effectiveStageType,
+          autoProgressAfterCompletion: false
+        };
+      }
+
+      const evaluationPrompt = buildEvaluationPrompt(stage, storedQuestions, answers, candidateProfile);
 
       const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -463,7 +482,10 @@ serve(async (req) => {
                       properties: {
                         questionId: { type: 'number' },
                         score: { type: 'number' },
-                        feedback: { type: 'string' }
+                          feedback: { type: 'string' },
+                          result: { type: 'string', enum: ['correct', 'partially_correct', 'wrong', 'not_answered'], description: 'Correctness label for this answer' },
+                          correctAnswer: { type: 'string', description: 'The correct option/model answer to show in the report' },
+                          expectedAnswer: { type: 'string', description: 'Key expected points/model answer for typed answers' }
                       }
                     }
                   }
@@ -485,7 +507,7 @@ serve(async (req) => {
       const aiData = await aiResponse.json();
       const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
       
-      let evaluation = {
+      let evaluation: any = {
         overallScore: 0,
         passed: false,
         feedback: 'Unable to evaluate responses',
@@ -500,9 +522,16 @@ serve(async (req) => {
 
       // Enforce strict pass threshold — override AI hallucinations
       evaluation.passed = (evaluation.overallScore || 0) >= 60;
+      evaluation.questionScores = enrichQuestionScores(storedQuestions, answers || [], evaluation.questionScores || []);
+      if (evaluation.questionScores.length > 0) {
+        evaluation.overallScore = Math.round(
+          evaluation.questionScores.reduce((sum: number, item: any) => sum + (Number(item.score) || 0), 0) / evaluation.questionScores.length
+        );
+        evaluation.passed = evaluation.overallScore >= 60;
+      }
 
       // Update stage result with recording URL, strengths, and improvements
-      await supabase
+      const { error: resultUpdateError } = await supabase
         .from('mock_interview_stage_results')
         .update({
           answers: answers,
@@ -517,6 +546,11 @@ serve(async (req) => {
         })
         .eq('session_id', sessionId)
         .eq('stage_order', stageOrder);
+
+      if (resultUpdateError) {
+        console.error('Error updating stage result:', resultUpdateError);
+        throw new Error('Failed to save evaluated answers');
+      }
 
       // Determine next stage based on current stage
       const currentStageIndex = INTERVIEW_STAGES.findIndex(s => s.order === stageOrder);
@@ -710,7 +744,7 @@ Requirements:
 2. Each question should require deep technical knowledge to answer well
 3. Include scenario-based and problem-solving questions
 4. For multiple choice questions, provide 4 options with plausible distractors AND set correctAnswer to the exact text of the right option
-5. Include expected key points for text answers
+5. For every text or scenario question, include expectedAnswer plus expectedPoints so typed answers can be marked Correct, Partially Correct, or Wrong in the report
 6. Mix question types: multiple_choice and text/scenario
 
 Generate exactly ${stage.questionCount} questions.`;
@@ -749,12 +783,117 @@ Requirements:
 1. Questions MUST be relevant to the candidate's preferred role (${role}) and this specific stage ("${stage.name}").
 2. Mix of difficulty levels appropriate to a ${role}.
 3. For multiple choice questions, provide 4 options AND set correctAnswer to the exact text of the right option.
-4. Include expected key points for text answers.
+4. For every text or scenario question, include expectedAnswer plus expectedPoints so typed answers can be validated and shown as correct/wrong in the report.
 
 For "${stage.name}" stage, focus on:
 ${stageSpecificGuidance}
 
 Generate exactly ${stage.questionCount} questions.`;
+}
+
+function inferStageType(stageName: string, fallback?: MockInterviewStage['stageType']): MockInterviewStage['stageType'] {
+  const name = (stageName || '').toLowerCase();
+  if (name.includes('coding test') && !name.includes('slot')) return 'coding';
+  if (name.includes('slot booking')) return 'slot_booking';
+  if (name.includes('demo') || name.includes('jam') || name.includes('just a minute')) return 'demo';
+  if (name.includes('feedback') || name.includes('result')) return 'feedback';
+  if (name.includes('hr') || name.includes('final review')) return 'hr_documents';
+  if (name === 'final review' || name.includes('all review')) return 'review';
+  if (name.includes('instruction') || name.includes('invitation') || name.includes('email')) return 'email_info';
+  return fallback || 'assessment';
+}
+
+function stringifyAnswer(answer: any): string {
+  if (answer == null) return '';
+  if (typeof answer === 'string') return answer;
+  if (typeof answer === 'object') return answer.answer ?? answer.code ?? JSON.stringify(answer);
+  return String(answer);
+}
+
+function stripOptionPrefix(value: string): string {
+  return String(value || '')
+    .trim()
+    .replace(/^\(?[A-Da-d]\)?\s*[.)\-:]\s*/, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
+}
+
+function resolveOptionIndex(value: string, options: string[]): number {
+  const raw = String(value || '').trim();
+  const letterMatch = raw.match(/^\(?([A-Da-d])\)?(?:\s*[.)\-:]\s*)?$/);
+  if (letterMatch) return letterMatch[1].toUpperCase().charCodeAt(0) - 65;
+  const rawLetterWithText = raw.match(/^\(?([A-Da-d])\)?\s*[.)\-:]\s*/);
+  const normalized = stripOptionPrefix(raw);
+  const byText = options.findIndex((opt) => stripOptionPrefix(opt) === normalized || opt.trim().toLowerCase() === raw.toLowerCase());
+  if (byText >= 0) return byText;
+  if (rawLetterWithText) {
+    const idx = rawLetterWithText[1].toUpperCase().charCodeAt(0) - 65;
+    if (idx >= 0 && idx < options.length) return idx;
+  }
+  return -1;
+}
+
+function getExpectedAnswer(question: any): string {
+  if (!question || typeof question !== 'object') return '';
+  if (question.correctAnswer) return String(question.correctAnswer);
+  if (question.expectedAnswer) return String(question.expectedAnswer);
+  if (Array.isArray(question.expectedPoints) && question.expectedPoints.length > 0) {
+    return question.expectedPoints.join('; ');
+  }
+  return '';
+}
+
+function statusFromScore(score: number, hasAnswer: boolean): 'correct' | 'partially_correct' | 'wrong' | 'not_answered' {
+  if (!hasAnswer) return 'not_answered';
+  if (score >= 80) return 'correct';
+  if (score >= 40) return 'partially_correct';
+  return 'wrong';
+}
+
+function enrichQuestionScores(questions: any[], answers: any[], rawScores: any[]): any[] {
+  return (questions || []).map((question: any, index: number) => {
+    const questionId = question?.id ?? index + 1;
+    const existing = rawScores.find((item: any) => item?.questionId === questionId) || rawScores[index] || {};
+    const answerText = stringifyAnswer(answers[index]).trim();
+    const hasAnswer = answerText.length > 0;
+    const type = typeof question === 'object' ? question?.type : 'text';
+    const options = typeof question === 'object' && Array.isArray(question?.options) ? question.options : [];
+    const correctAnswer = getExpectedAnswer(question);
+
+    if (type === 'multiple_choice' && options.length > 0) {
+      const chosenIndex = resolveOptionIndex(answerText, options);
+      const correctIndex = resolveOptionIndex(correctAnswer, options);
+      const isCorrect = hasAnswer && chosenIndex >= 0 && chosenIndex === correctIndex;
+      const selectedText = chosenIndex >= 0 ? options[chosenIndex] : answerText;
+      const correctText = correctIndex >= 0 ? options[correctIndex] : correctAnswer;
+      return {
+        ...existing,
+        questionId,
+        score: hasAnswer ? (isCorrect ? 100 : 0) : 0,
+        result: hasAnswer ? (isCorrect ? 'correct' : 'wrong') : 'not_answered',
+        selectedAnswer: selectedText,
+        correctAnswer: correctText,
+        expectedAnswer: correctText,
+        feedback: existing.feedback || (hasAnswer
+          ? (isCorrect ? 'Selected answer matches the correct option.' : `Selected answer is wrong. Correct answer: ${correctText || 'Not available'}.`)
+          : `No answer submitted. Correct answer: ${correctText || 'Not available'}.`)
+      };
+    }
+
+    const numericScore = Math.max(0, Math.min(100, Number(existing.score) || 0));
+    const result = existing.result || statusFromScore(numericScore, hasAnswer);
+    return {
+      ...existing,
+      questionId,
+      score: numericScore,
+      result,
+      correctAnswer,
+      expectedAnswer: correctAnswer,
+      feedback: existing.feedback || (hasAnswer
+        ? `Answer marked ${String(result).replace('_', ' ')} based on the expected points.`
+        : `No answer submitted. Expected answer: ${correctAnswer || 'Not available'}.`)
+    };
+  });
 }
 
 function buildEvaluationPrompt(stage: MockInterviewStage, questions: any[], answers: any[], profile: any): string {
@@ -798,6 +937,8 @@ Provide:
 
   const qaPairs = questions.map((q: any, i: number) => `
 Question ${i + 1}: ${q.question}
+Question Type: ${q.type || 'text'}
+Correct Option / Model Answer: ${q.correctAnswer || q.expectedAnswer || 'Not provided'}
 ${q.expectedPoints ? `Expected Points: ${q.expectedPoints.join(', ')}` : ''}
 Candidate Answer: ${answers[i] || 'No answer provided'}
 `).join('\n');
@@ -819,5 +960,8 @@ Provide:
 - Constructive feedback
 - Key strengths (2-4 points)
 - Areas for improvement (2-4 points)
-- Individual question scores and brief feedback`;
+- Individual question scores and brief feedback
+- For each question score, include result as one of: correct, partially_correct, wrong, not_answered
+- For multiple-choice answers, compare the selected option against correctAnswer exactly and score 100 for correct, 0 for wrong/not answered
+- For typed/scenario answers, compare against expectedAnswer/expectedPoints and include the model answer in expectedAnswer so the report can show why it is correct or wrong`;
 }

@@ -24,6 +24,55 @@ interface ReportOptions {
 
 const PAGE_MARGIN = 14;
 
+const normalizeAnswerText = (value: any): string => {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "object") return value.answer ?? value.code ?? JSON.stringify(value);
+  return String(value);
+};
+
+const stripOptionPrefix = (value: string): string =>
+  String(value || "")
+    .trim()
+    .replace(/^\(?[A-Da-d]\)?\s*[.)\-:]\s*/, "")
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
+const resolveOptionIndex = (value: string, options: string[]): number => {
+  const raw = String(value || "").trim();
+  const letterOnly = raw.match(/^\(?([A-Da-d])\)?(?:\s*[.)\-:]\s*)?$/);
+  if (letterOnly) return letterOnly[1].toUpperCase().charCodeAt(0) - 65;
+  const normalized = stripOptionPrefix(raw);
+  const byText = options.findIndex((opt) => stripOptionPrefix(opt) === normalized || opt.trim().toLowerCase() === raw.toLowerCase());
+  if (byText >= 0) return byText;
+  const letterWithText = raw.match(/^\(?([A-Da-d])\)?\s*[.)\-:]\s*/);
+  if (letterWithText) {
+    const idx = letterWithText[1].toUpperCase().charCodeAt(0) - 65;
+    if (idx >= 0 && idx < options.length) return idx;
+  }
+  return -1;
+};
+
+const getExpectedAnswer = (q: any, sc?: any): string => {
+  const fromScore = sc?.correctAnswer || sc?.expectedAnswer;
+  if (fromScore) return String(fromScore);
+  if (q?.correctAnswer) return String(q.correctAnswer);
+  if (q?.expectedAnswer) return String(q.expectedAnswer);
+  if (Array.isArray(q?.expectedPoints) && q.expectedPoints.length > 0) return q.expectedPoints.join("; ");
+  return "";
+};
+
+const getResultLabel = (sc: any, answerText: string): { label: string; color: [number, number, number] } => {
+  const explicit = String(sc?.result || "").toLowerCase();
+  const score = Number(sc?.score);
+  const hasAnswer = answerText.trim().length > 0;
+  const result = explicit || (!hasAnswer ? "not_answered" : score >= 80 ? "correct" : score >= 40 ? "partially_correct" : "wrong");
+  if (result === "correct") return { label: "Correct", color: [22, 130, 50] };
+  if (result === "partially_correct") return { label: "Partially Correct", color: [217, 119, 6] };
+  if (result === "not_answered") return { label: "Not Answered", color: [120, 120, 120] };
+  return { label: "Wrong", color: [200, 40, 40] };
+};
+
 export const generateMockInterviewReportPdf = ({
   candidateName,
   interviewType,
@@ -210,24 +259,27 @@ export const generateMockInterviewReportPdf = ({
         const qText = typeof q === "string" ? q : (q?.question || "");
         const qType = (typeof q === "object" && q?.type) || "text";
         const opts: string[] = (typeof q === "object" && Array.isArray(q?.options)) ? q.options : [];
-        const correct: string | undefined = typeof q === "object" ? q?.correctAnswer : undefined;
         const aRaw = ans[i];
-        const aText = typeof aRaw === "string" ? aRaw : (aRaw?.answer ?? aRaw?.code ?? (aRaw != null ? JSON.stringify(aRaw) : ""));
+        const aText = normalizeAnswerText(aRaw);
         const sc = qScores.find((x: any) => x?.questionId === (q?.id ?? i + 1));
+        const expectedAnswer = getExpectedAnswer(q, sc);
+        const result = getResultLabel(sc, aText);
 
         ensureSpace(10);
         writeWrapped(`Q${i + 1}. ${qText}`, PAGE_MARGIN + 6, { size: 9, style: "bold", color: [30, 30, 30] });
 
         if (qType === "multiple_choice" && opts.length) {
+          const selectedIndex = resolveOptionIndex(aText, opts);
+          const correctIndex = resolveOptionIndex(expectedAnswer, opts);
           opts.forEach((opt, oi) => {
             const letter = String.fromCharCode(65 + oi);
-            const isChosen = (aText || "").trim() === opt.trim();
-            const isCorrect = !!correct && correct.trim() === opt.trim();
+            const isChosen = oi === selectedIndex;
+            const isCorrect = oi === correctIndex;
             let tag = "";
             let color: [number, number, number] = [80, 80, 80];
             if (isCorrect && isChosen) { tag = " (Your answer - Correct)"; color = [22, 130, 50]; }
-            else if (isCorrect) { tag = " (Correct answer)"; color = [22, 130, 50]; }
-            else if (isChosen) { tag = " (Your answer)"; color = [200, 40, 40]; }
+            else if (isCorrect) { tag = " (Right answer)"; color = [22, 130, 50]; }
+            else if (isChosen) { tag = " (Your answer - Wrong)"; color = [200, 40, 40]; }
             writeWrapped(`   ${letter}. ${opt}${tag}`, PAGE_MARGIN + 8, {
               size: 9,
               style: (isChosen || isCorrect) ? "bold" : "normal",
@@ -236,13 +288,19 @@ export const generateMockInterviewReportPdf = ({
           });
           if (!aText) {
             writeWrapped("   (Not answered)", PAGE_MARGIN + 8, { size: 9, style: "italic", color: [150, 150, 150] });
+          } else if (selectedIndex < 0) {
+            writeWrapped(`   Your Answer: ${aText} (Wrong)`, PAGE_MARGIN + 8, { size: 9, style: "bold", color: [200, 40, 40] });
           }
         } else {
+          writeWrapped(`Result: ${result.label}`, PAGE_MARGIN + 8, { size: 9, style: "bold", color: result.color });
           writeWrapped(`Your Answer: ${aText || "(no answer)"}`, PAGE_MARGIN + 8, { size: 9, color: [60, 60, 60] });
+          if (expectedAnswer) {
+            writeWrapped(`Expected / Right Answer: ${expectedAnswer}`, PAGE_MARGIN + 8, { size: 9, style: "bold", color: [22, 130, 50] });
+          }
         }
 
         if (sc) {
-          writeWrapped(`Score: ${sc.score ?? "-"}/100${sc.feedback ? ` — ${sc.feedback}` : ""}`, PAGE_MARGIN + 8, { size: 9, style: "italic", color: [90, 90, 90] });
+          writeWrapped(`Score: ${sc.score ?? "-"}/100 • ${result.label}${sc.feedback ? ` — ${sc.feedback}` : ""}`, PAGE_MARGIN + 8, { size: 9, style: "italic", color: result.color });
         }
         y += 1;
       });
