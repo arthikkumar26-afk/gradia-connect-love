@@ -701,8 +701,9 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
         stages: [
           commonStages.resumeScreening,
           commonStages.writtenTestSlotBooking,
-          commonStages.technicalAssessment,
+          { order: 3, name: 'Written Test (Aptitude)', description: 'Quantitative, logical & verbal aptitude MCQs', isAutomated: true },
           { order: 4, name: 'Just A Minute (JAM) Test', description: '1-minute spoken impromptu — AI evaluates presentation, dressing & communication', isAutomated: true },
+          { order: 5, name: 'Technical Interview', description: 'HR domain questions — Recruitment, Interviews, HR Fundamentals, Payroll, Workplace Scenarios, HR Tools & Communication', isAutomated: true },
           commonStages.hrRoundSlotBooking,
           commonStages.hrRound,
           commonStages.finalReview,
