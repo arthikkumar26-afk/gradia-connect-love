@@ -410,6 +410,8 @@ serve(async (req) => {
         questions = buildFallbackHRRoundQuestions(stage.questionCount || 10);
       }
 
+      questions = normalizeGeneratedQuestions(questions, stage);
+
       if (questions.length === 0) {
         return new Response(JSON.stringify({
           error: 'QUESTION_GENERATION_FAILED',
@@ -993,6 +995,40 @@ function buildFallbackHRRoundQuestions(questionCount = 10): StageQuestion[] {
   ];
 
   return questions.slice(0, Math.max(1, questionCount)).map((question, index) => ({ ...question, id: index + 1 }));
+}
+
+function normalizeGeneratedQuestions(questions: StageQuestion[], stage: MockInterviewStage): StageQuestion[] {
+  const desiredCount = Math.max(1, stage.questionCount || 10);
+  const normalized = (questions || [])
+    .filter((question) => question?.question && question?.type)
+    .slice(0, desiredCount)
+    .map((question, index) => {
+      const hasValidMcq = question.type === 'multiple_choice'
+        && Array.isArray(question.options)
+        && question.options.length === 4
+        && !!question.correctAnswer;
+
+      if (question.type === 'multiple_choice' && !hasValidMcq) {
+        return {
+          ...question,
+          id: index + 1,
+          type: 'text' as const,
+          options: undefined,
+          correctAnswer: undefined,
+          expectedAnswer: question.expectedAnswer || 'Candidate should provide a clear, professional HR interview response with relevant reasoning and examples.',
+          expectedPoints: question.expectedPoints?.length ? question.expectedPoints : ['Professional communication', 'Relevant reasoning', 'Clear example or action plan'],
+          category: question.category || stage.name
+        };
+      }
+
+      return {
+        ...question,
+        id: index + 1,
+        category: question.category || stage.name
+      };
+    });
+
+  return normalized;
 }
 
 function inferStageType(stageName: string, fallback?: MockInterviewStage['stageType']): MockInterviewStage['stageType'] {
