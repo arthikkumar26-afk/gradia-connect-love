@@ -1038,9 +1038,20 @@ const MockInterview = () => {
             </h3>
             <p className="text-muted-foreground mt-2">
               {isGenerating 
-                ? 'Generating personalized questions based on your profile' 
+                ? generationError || 'Generating personalized questions based on your profile' 
                 : 'Analyzing your responses and recording'}
             </p>
+            {generationError && isGenerating && (
+              <div className="mt-6 space-y-3">
+                <Button onClick={startInterview} className="w-full gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Try Again
+                </Button>
+                <Button variant="outline" onClick={goToDashboard} className="w-full">
+                  Return to Mock Test
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
