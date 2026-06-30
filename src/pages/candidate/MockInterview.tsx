@@ -89,6 +89,48 @@ const normalizeVisibleMockStages = <T extends { name?: string | null; stageType?
   items.filter((stage) => !isHiddenMockStage(stage)).map((stage, idx) => ({ ...stage, order: idx + 1 }));
 const removeSlotBookingResults = <T extends { stage_name?: string | null }>(items: T[]) =>
   items.filter((result) => !isSlotBookingName(result.stage_name));
+const normalizeReportAnswer = (value: any): string => {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object') return value.answer ?? value.code ?? JSON.stringify(value);
+  return String(value);
+};
+const stripOptionPrefix = (value: string): string => String(value || '')
+  .trim()
+  .replace(/^\(?[A-Da-d]\)?\s*[.)\-:]\s*/, '')
+  .replace(/\s+/g, ' ')
+  .toLowerCase();
+const resolveReportOptionIndex = (value: string, options: string[]): number => {
+  const raw = String(value || '').trim();
+  const letterOnly = raw.match(/^\(?([A-Da-d])\)?(?:\s*[.)\-:]\s*)?$/);
+  if (letterOnly) return letterOnly[1].toUpperCase().charCodeAt(0) - 65;
+  const normalized = stripOptionPrefix(raw);
+  const byText = options.findIndex(opt => stripOptionPrefix(opt) === normalized || opt.trim().toLowerCase() === raw.toLowerCase());
+  if (byText >= 0) return byText;
+  const letterWithText = raw.match(/^\(?([A-Da-d])\)?\s*[.)\-:]\s*/);
+  if (letterWithText) {
+    const idx = letterWithText[1].toUpperCase().charCodeAt(0) - 65;
+    if (idx >= 0 && idx < options.length) return idx;
+  }
+  return -1;
+};
+const getReportExpectedAnswer = (q: any, sc?: any): string => {
+  if (sc?.correctAnswer || sc?.expectedAnswer) return String(sc.correctAnswer || sc.expectedAnswer);
+  if (q?.correctAnswer) return String(q.correctAnswer);
+  if (q?.expectedAnswer) return String(q.expectedAnswer);
+  if (Array.isArray(q?.expectedPoints) && q.expectedPoints.length > 0) return q.expectedPoints.join('; ');
+  return '';
+};
+const getReportResultLabel = (sc: any, answerText: string): { label: string; color: [number, number, number] } => {
+  const explicit = String(sc?.result || '').toLowerCase();
+  const score = Number(sc?.score);
+  const hasAnswer = answerText.trim().length > 0;
+  const result = explicit || (!hasAnswer ? 'not_answered' : score >= 80 ? 'correct' : score >= 40 ? 'partially_correct' : 'wrong');
+  if (result === 'correct') return { label: 'Correct', color: [34, 139, 84] };
+  if (result === 'partially_correct') return { label: 'Partially Correct', color: [217, 119, 6] };
+  if (result === 'not_answered') return { label: 'Not Answered', color: [100, 116, 139] };
+  return { label: 'Wrong', color: [200, 80, 60] };
+};
 
 const StageDoneScreen = ({ stageName, passed, onContinue }: { stageName: string; passed: boolean; onContinue: () => void }) => {
   useEffect(() => {
@@ -779,10 +821,11 @@ const MockInterview = () => {
             const qText = typeof q === 'string' ? q : (q?.question || '');
             const qType = (typeof q === 'object' && q?.type) || 'text';
             const opts: string[] = (typeof q === 'object' && Array.isArray(q?.options)) ? q.options : [];
-            const correct: string | undefined = typeof q === 'object' ? q?.correctAnswer : undefined;
             const aRaw = ans[i];
-            const aText = typeof aRaw === 'string' ? aRaw : (aRaw?.answer ?? aRaw?.code ?? JSON.stringify(aRaw ?? ''));
+            const aText = normalizeReportAnswer(aRaw);
             const sc = qScores.find((x: any) => x?.questionId === (q?.id ?? i + 1));
+            const expectedAnswer = getReportExpectedAnswer(q, sc);
+            const result = getReportResultLabel(sc, aText);
 
             ensureSpace(60);
 
@@ -797,16 +840,18 @@ const MockInterview = () => {
             y += 4;
 
             if (qType === 'multiple_choice' && opts.length) {
+              const selectedIndex = resolveReportOptionIndex(aText, opts);
+              const correctIndex = resolveReportOptionIndex(expectedAnswer, opts);
               opts.forEach((opt, oi) => {
                 const letter = String.fromCharCode(65 + oi);
-                const isChosen = (aText || '').trim() === opt.trim();
-                const isCorrect = !!correct && correct.trim() === opt.trim();
+                const isChosen = oi === selectedIndex;
+                const isCorrect = oi === correctIndex;
 
                 let tag = '';
                 let tagColor: [number, number, number] = [120, 120, 120];
                 if (isCorrect && isChosen) { tag = '(Your answer - Correct)'; tagColor = [22, 130, 50]; }
-                else if (isCorrect) { tag = '(Correct answer)'; tagColor = [22, 130, 50]; }
-                else if (isChosen) { tag = '(Your answer)'; tagColor = [200, 40, 40]; }
+                else if (isCorrect) { tag = '(Right answer)'; tagColor = [22, 130, 50]; }
+                else if (isChosen) { tag = '(Your answer - Wrong)'; tagColor = [200, 40, 40]; }
 
                 const textMax = pageW - margin * 2 - 32;
                 const baseText = `${letter}.  ${opt}`;
@@ -846,12 +891,25 @@ const MockInterview = () => {
                 doc.text('(Not answered)', margin + 22, y);
                 doc.setTextColor(0); doc.setFontSize(11); doc.setFont('helvetica', 'normal');
                 y += 14;
+              } else if (selectedIndex < 0) {
+                doc.setTextColor(200, 40, 40); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+                writeWrapped(`Your Answer: ${aText} (Wrong)`, margin + 22, pageW - margin * 2 - 32, 14);
+                doc.setTextColor(0); doc.setFontSize(11); doc.setFont('helvetica', 'normal');
               }
             } else {
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...result.color);
+              doc.text(`RESULT: ${result.label.toUpperCase()}`, margin + 22, y); y += 12;
               doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(110);
               doc.text('YOUR ANSWER', margin + 22, y); y += 12;
               doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(40);
               writeWrapped(aText || '(no answer)', margin + 22, pageW - margin * 2 - 32, 14);
+              if (expectedAnswer) {
+                y += 2;
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(34, 139, 84);
+                doc.text('EXPECTED / RIGHT ANSWER', margin + 22, y); y += 12;
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(40);
+                writeWrapped(expectedAnswer, margin + 22, pageW - margin * 2 - 32, 14);
+              }
               doc.setTextColor(0);
             }
 
@@ -860,8 +918,8 @@ const MockInterview = () => {
               y += 4;
               doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(110);
               doc.text('SCORE', margin + 22, y);
-              doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(60);
-              const scoreLine = `${sc.score ?? '-'}/100${sc.feedback ? ` — ${sc.feedback}` : ''}`;
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...result.color);
+              const scoreLine = `${sc.score ?? '-'}/100 • ${result.label}${sc.feedback ? ` — ${sc.feedback}` : ''}`;
               const lines = doc.splitTextToSize(scoreLine, pageW - margin * 2 - 70);
               lines.forEach((ln: string, li: number) => {
                 if (li > 0) ensureSpace(13);
