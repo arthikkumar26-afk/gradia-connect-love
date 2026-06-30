@@ -763,7 +763,8 @@ Requirements:
 Generate exactly ${stage.questionCount} questions.`;
   }
 
-  if (isTechnicalInterview && isHRRole) {
+  const isHRTechnicalStage = stageNameLower.includes('hr technical') || stageNameLower.startsWith('hr ');
+  if (isTechnicalInterview && (isHRRole || isHRTechnicalStage)) {
     return `Generate exactly ${stage.questionCount} HR domain "Technical Interview" questions for a ${role} candidate.
 
 ${profileInfo}
