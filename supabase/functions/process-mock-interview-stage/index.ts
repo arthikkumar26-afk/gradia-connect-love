@@ -298,14 +298,17 @@ serve(async (req) => {
         stage && (stage.stageType !== clientStageType || stage.name !== clientStageName);
       
       if (!stage || clientOverridesStage) {
-        const isTechnicalInterview = effectiveStageName.toLowerCase().includes('technical interview');
+        const lowerName = effectiveStageName.toLowerCase();
+        const isTechnicalInterview = lowerName.includes('technical interview');
+        const isHRRound = lowerName === 'hr round' || lowerName.includes('hr interview');
+        const isJam = lowerName.includes('jam') || lowerName.includes('just a minute');
         // Create a virtual stage from client data for non-default pipelines
         stage = {
           name: effectiveStageName,
           order: stageOrder,
           description: '',
-          questionCount: isTechnicalInterview ? 15 : effectiveStageType === 'coding' ? 1 : 15,
-          timePerQuestion: isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 120,
+          questionCount: isJam ? 1 : isHRRound ? 6 : isTechnicalInterview ? 10 : effectiveStageType === 'coding' ? 1 : 10,
+          timePerQuestion: isHRRound ? 90 : isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 120,
           passingScore: 60,
           stageType: effectiveStageType || 'assessment',
           autoProgressAfterCompletion: false
