@@ -124,6 +124,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
 ];
 
 serve(async (req) => {
+  let requestAction = '';
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -139,6 +140,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { action, sessionId, stageOrder, candidateProfile, answers, recordingUrl, bookedSlot, stageType: clientStageType, stageName: clientStageName } = await req.json();
+    requestAction = action;
 
     console.log('Mock interview action:', { action, sessionId, stageOrder, hasRecording: !!recordingUrl, clientStageType, clientStageName });
 
@@ -307,7 +309,7 @@ serve(async (req) => {
           name: effectiveStageName,
           order: stageOrder,
           description: '',
-          questionCount: isJam ? 1 : isHRRound ? 6 : isTechnicalInterview ? 10 : effectiveStageType === 'coding' ? 1 : 10,
+          questionCount: isJam ? 1 : isHRRound ? 10 : isTechnicalInterview ? 10 : effectiveStageType === 'coding' ? 1 : 10,
           timePerQuestion: isHRRound ? 90 : isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 120,
           passingScore: 60,
           stageType: effectiveStageType || 'assessment',
@@ -328,77 +330,100 @@ serve(async (req) => {
       }
 
       const prompt = buildQuestionGenerationPrompt(stage, candidateProfile);
-      
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-lite',
-          messages: [
-            { role: 'system', content: effectiveStageType === 'coding' 
-              ? 'You are an expert software engineering interviewer. Generate coding challenges with clear problem statements, examples, constraints, and starter code. The candidate will write actual code that gets evaluated.'
-              : 'You are an expert HR interviewer and technical recruiter. Generate realistic interview questions based on the stage and candidate profile.' },
-            { role: 'user', content: prompt }
-          ],
-          tools: [{
-            type: 'function',
-            function: {
-              name: 'generate_interview_questions',
-              description: effectiveStageType === 'coding' 
-                ? 'Generate coding challenges with problem statements, examples, starter code, and test cases'
-                : 'Generate interview questions for a specific stage',
-              parameters: {
-                type: 'object',
-                properties: {
-                  questions: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'number' },
-                        question: { type: 'string', description: 'The problem statement or question text' },
-                        type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario', 'coding'] },
-                        options: { type: 'array', items: { type: 'string' } },
-                        correctAnswer: { type: 'string', description: 'For multiple_choice questions: the exact correct option text from options array' },
-                        expectedAnswer: { type: 'string', description: 'For typed/scenario questions: a concise model answer reviewers can compare against' },
-                        expectedPoints: { type: 'array', items: { type: 'string' } },
-                        category: { type: 'string' },
-                        functionSignature: { type: 'string', description: 'Function signature e.g. function twoSum(nums: number[], target: number): number[]' },
-                        examples: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, output: { type: 'string' }, explanation: { type: 'string' } }, required: ['input', 'output'] } },
-                        constraints: { type: 'array', items: { type: 'string' } },
-                        starterCode: { type: 'string', description: 'Starter code template for the candidate to complete' },
-                        testCases: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, expectedOutput: { type: 'string' } }, required: ['input', 'expectedOutput'] } },
-                        difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
-                        language: { type: 'string', description: 'Programming language e.g. javascript, python' }
-                      },
-                      required: ['id', 'question', 'type', 'category']
-                    }
-                  }
-                },
-                required: ['questions']
-              }
-            }
-          }],
-          tool_choice: { type: 'function', function: { name: 'generate_interview_questions' } }
-        }),
-      });
+      let questions: StageQuestion[] = [];
 
-      if (!aiResponse.ok) {
-        const errorText = await aiResponse.text();
-        console.error('AI API error:', errorText);
-        throw new Error('Failed to generate questions');
+      try {
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash-lite',
+            messages: [
+              { role: 'system', content: effectiveStageType === 'coding' 
+                ? 'You are an expert software engineering interviewer. Generate coding challenges with clear problem statements, examples, constraints, and starter code. The candidate will write actual code that gets evaluated.'
+                : 'You are an expert HR interviewer and technical recruiter. Generate realistic interview questions based on the stage and candidate profile.' },
+              { role: 'user', content: prompt }
+            ],
+            tools: [{
+              type: 'function',
+              function: {
+                name: 'generate_interview_questions',
+                description: effectiveStageType === 'coding' 
+                  ? 'Generate coding challenges with problem statements, examples, starter code, and test cases'
+                  : 'Generate interview questions for a specific stage',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    questions: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'number' },
+                          question: { type: 'string', description: 'The problem statement or question text' },
+                          type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario', 'coding'] },
+                          options: { type: 'array', items: { type: 'string' } },
+                          correctAnswer: { type: 'string', description: 'For multiple_choice questions: the exact correct option text from options array' },
+                          expectedAnswer: { type: 'string', description: 'For typed/scenario questions: a concise model answer reviewers can compare against' },
+                          expectedPoints: { type: 'array', items: { type: 'string' } },
+                          category: { type: 'string' },
+                          functionSignature: { type: 'string', description: 'Function signature e.g. function twoSum(nums: number[], target: number): number[]' },
+                          examples: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, output: { type: 'string' }, explanation: { type: 'string' } }, required: ['input', 'output'] } },
+                          constraints: { type: 'array', items: { type: 'string' } },
+                          starterCode: { type: 'string', description: 'Starter code template for the candidate to complete' },
+                          testCases: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, expectedOutput: { type: 'string' } }, required: ['input', 'expectedOutput'] } },
+                          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+                          language: { type: 'string', description: 'Programming language e.g. javascript, python' }
+                        },
+                        required: ['id', 'question', 'type', 'category']
+                      }
+                    }
+                  },
+                  required: ['questions']
+                }
+              }
+            }],
+            tool_choice: { type: 'function', function: { name: 'generate_interview_questions' } }
+          }),
+        });
+
+        if (!aiResponse.ok) {
+          const errorText = await aiResponse.text();
+          console.error('AI API error:', errorText);
+          throw new Error('Failed to generate questions');
+        }
+
+        const aiData = await aiResponse.json();
+        const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+        if (toolCall?.function?.arguments) {
+          const parsed = JSON.parse(toolCall.function.arguments);
+          questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+        }
+      } catch (generationError) {
+        console.error('AI question generation failed:', generationError);
       }
 
-      const aiData = await aiResponse.json();
-      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-      
-      let questions: StageQuestion[] = [];
-      if (toolCall?.function?.arguments) {
-        const parsed = JSON.parse(toolCall.function.arguments);
-        questions = parsed.questions || [];
+      if (questions.length === 0 && isHRQuestionStage(stage)) {
+        questions = buildFallbackHRRoundQuestions(stage.questionCount || 10);
+      }
+
+      questions = normalizeGeneratedQuestions(questions, stage);
+
+      if (questions.length === 0) {
+        return new Response(JSON.stringify({
+          error: 'QUESTION_GENERATION_FAILED',
+          fallback: true,
+          message: 'Interview questions could not be prepared. Please try again in a moment.',
+          questions: [],
+          stage,
+          timePerQuestion: stage.timePerQuestion
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       // Update session with generated questions
@@ -656,6 +681,18 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error('Error in process-mock-interview-stage:', error);
     const errorMessage = safeErrorMessage(error);
+    if (requestAction === 'generate_questions') {
+      return new Response(JSON.stringify({
+        error: 'QUESTION_GENERATION_FAILED',
+        fallback: true,
+        message: 'Interview questions could not be prepared. Please try again in a moment.',
+        details: errorMessage,
+        questions: []
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -864,6 +901,134 @@ For "${stage.name}" stage, focus on:
 ${stageSpecificGuidance}
 
 Generate exactly ${stage.questionCount} questions.`;
+}
+
+function isHRQuestionStage(stage: MockInterviewStage): boolean {
+  const name = (stage.name || '').toLowerCase();
+  return stage.stageType === 'hr_documents' || name === 'hr round' || name.includes('hr interview') || name.includes('hr round');
+}
+
+function buildFallbackHRRoundQuestions(questionCount = 10): StageQuestion[] {
+  const questions: StageQuestion[] = [
+    {
+      id: 1,
+      question: 'Tell me about yourself and why you are interested in this role.',
+      type: 'text',
+      category: 'HR Introduction',
+      expectedAnswer: 'A concise introduction covering education/experience, relevant strengths, interest in the role, and career direction.',
+      expectedPoints: ['Clear self-introduction', 'Relevant skills or experience', 'Role motivation', 'Professional communication']
+    },
+    {
+      id: 2,
+      question: 'What are your key strengths, and how would they help you perform well in this position?',
+      type: 'text',
+      category: 'Strengths',
+      expectedAnswer: 'Specific strengths connected to job performance with a short example or evidence.',
+      expectedPoints: ['Names realistic strengths', 'Connects strengths to work outcomes', 'Gives example/evidence']
+    },
+    {
+      id: 3,
+      question: 'How would you handle a disagreement with a teammate at work?',
+      type: 'scenario',
+      category: 'Conflict Resolution',
+      expectedAnswer: 'Listen actively, understand both sides, communicate respectfully, focus on facts, and escalate only if required.',
+      expectedPoints: ['Calm communication', 'Active listening', 'Problem-solving approach', 'Professional escalation if needed']
+    },
+    {
+      id: 4,
+      question: 'Which response best shows professionalism when you receive critical feedback?',
+      type: 'multiple_choice',
+      category: 'Professionalism',
+      options: ['Ignore the feedback if you disagree', 'Argue immediately to defend yourself', 'Listen carefully, ask clarifying questions, and act on useful points', 'Blame workload or colleagues'],
+      correctAnswer: 'Listen carefully, ask clarifying questions, and act on useful points',
+      expectedAnswer: 'A professional candidate accepts feedback constructively and uses it to improve.'
+    },
+    {
+      id: 5,
+      question: 'Why should we select you for this position?',
+      type: 'text',
+      category: 'Role Fit',
+      expectedAnswer: 'A focused answer linking skills, attitude, learning ability, and role requirements without exaggeration.',
+      expectedPoints: ['Role-relevant skills', 'Positive attitude', 'Learning mindset', 'Value to organization']
+    },
+    {
+      id: 6,
+      question: 'How do you manage pressure when you have multiple tasks with the same deadline?',
+      type: 'scenario',
+      category: 'Time Management',
+      expectedAnswer: 'Prioritize by urgency/impact, communicate timelines, break work into steps, and maintain quality.',
+      expectedPoints: ['Prioritization', 'Planning', 'Communication', 'Quality under pressure']
+    },
+    {
+      id: 7,
+      question: 'What is your expected salary and how flexible are you during negotiation?',
+      type: 'text',
+      category: 'Salary Discussion',
+      expectedAnswer: 'A professional response giving a reasonable range, openness to discussion, and consideration of role scope and growth.',
+      expectedPoints: ['Reasonable range', 'Professional tone', 'Flexibility', 'Role/growth consideration']
+    },
+    {
+      id: 8,
+      question: 'If you made a mistake at work, what would you do first?',
+      type: 'multiple_choice',
+      category: 'Accountability',
+      options: ['Hide it and hope nobody notices', 'Blame another person', 'Acknowledge it, inform the right person, and work on a correction', 'Wait until someone asks about it'],
+      correctAnswer: 'Acknowledge it, inform the right person, and work on a correction',
+      expectedAnswer: 'Accountability requires acknowledging mistakes quickly and helping correct them.'
+    },
+    {
+      id: 9,
+      question: 'Where do you see yourself in the next 2 to 3 years?',
+      type: 'text',
+      category: 'Career Goals',
+      expectedAnswer: 'A realistic growth plan aligned with learning, responsibility, and contribution to the organization.',
+      expectedPoints: ['Realistic goals', 'Learning plan', 'Alignment with role', 'Long-term commitment']
+    },
+    {
+      id: 10,
+      question: 'Are you comfortable with the job location, work timing, notice period, and joining requirements?',
+      type: 'text',
+      category: 'Joining Readiness',
+      expectedAnswer: 'A clear and honest response about availability, location, notice period, and any constraints.',
+      expectedPoints: ['Clear availability', 'Location/work timing clarity', 'Notice period clarity', 'Honest constraints if any']
+    }
+  ];
+
+  return questions.slice(0, Math.max(1, questionCount)).map((question, index) => ({ ...question, id: index + 1 }));
+}
+
+function normalizeGeneratedQuestions(questions: StageQuestion[], stage: MockInterviewStage): StageQuestion[] {
+  const desiredCount = Math.max(1, stage.questionCount || 10);
+  const normalized = (questions || [])
+    .filter((question) => question?.question && question?.type)
+    .slice(0, desiredCount)
+    .map((question, index) => {
+      const hasValidMcq = question.type === 'multiple_choice'
+        && Array.isArray(question.options)
+        && question.options.length === 4
+        && !!question.correctAnswer;
+
+      if (question.type === 'multiple_choice' && !hasValidMcq) {
+        return {
+          ...question,
+          id: index + 1,
+          type: 'text' as const,
+          options: undefined,
+          correctAnswer: undefined,
+          expectedAnswer: question.expectedAnswer || 'Candidate should provide a clear, professional HR interview response with relevant reasoning and examples.',
+          expectedPoints: question.expectedPoints?.length ? question.expectedPoints : ['Professional communication', 'Relevant reasoning', 'Clear example or action plan'],
+          category: question.category || stage.name
+        };
+      }
+
+      return {
+        ...question,
+        id: index + 1,
+        category: question.category || stage.name
+      };
+    });
+
+  return normalized;
 }
 
 function inferStageType(stageName: string, fallback?: MockInterviewStage['stageType']): MockInterviewStage['stageType'] {
