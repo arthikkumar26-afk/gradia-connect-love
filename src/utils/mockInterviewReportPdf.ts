@@ -36,6 +36,42 @@ export const generateMockInterviewReportPdf = ({
   const pageHeight = doc.internal.pageSize.getHeight();
   let y = PAGE_MARGIN;
 
+  // Debug: log JAM stage index, name/category, and answers[0] before PDF generation
+  try {
+    const debugRows = stageResults.map((s, idx) => {
+      const qs: any[] = Array.isArray(s.questions) ? s.questions : [];
+      const ans: any[] = Array.isArray(s.answers) ? s.answers : [];
+      const firstQCategory = qs[0] && typeof qs[0] === "object" ? (qs[0] as any).category : undefined;
+      const isJam = /jam|just a minute/i.test(s.stage_name || "") || firstQCategory === "JAM";
+      return {
+        arrayIndex: idx,
+        stage_order: s.stage_order,
+        stage_name: s.stage_name,
+        firstQuestionCategory: firstQCategory,
+        isJam,
+        answersLength: ans.length,
+        answer0Type: typeof ans[0],
+        answer0Preview:
+          typeof ans[0] === "string"
+            ? ans[0].slice(0, 300)
+            : ans[0] != null
+            ? JSON.stringify(ans[0]).slice(0, 300)
+            : null,
+      };
+    });
+    // eslint-disable-next-line no-console
+    console.groupCollapsed("[MockInterviewReportPdf] Debug — stages before PDF");
+    // eslint-disable-next-line no-console
+    console.table(debugRows);
+    // eslint-disable-next-line no-console
+    console.log("JAM stages:", debugRows.filter((r) => r.isJam));
+    // eslint-disable-next-line no-console
+    console.groupEnd();
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn("[MockInterviewReportPdf] debug logging failed", e);
+  }
+
   const ensureSpace = (needed: number) => {
     if (y + needed > pageHeight - PAGE_MARGIN) {
       doc.addPage();
