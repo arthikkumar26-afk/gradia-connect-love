@@ -901,6 +901,100 @@ ${stageSpecificGuidance}
 Generate exactly ${stage.questionCount} questions.`;
 }
 
+function isHRQuestionStage(stage: MockInterviewStage): boolean {
+  const name = (stage.name || '').toLowerCase();
+  return stage.stageType === 'hr_documents' || name === 'hr round' || name.includes('hr interview') || name.includes('hr round');
+}
+
+function buildFallbackHRRoundQuestions(questionCount = 10): StageQuestion[] {
+  const questions: StageQuestion[] = [
+    {
+      id: 1,
+      question: 'Tell me about yourself and why you are interested in this role.',
+      type: 'text',
+      category: 'HR Introduction',
+      expectedAnswer: 'A concise introduction covering education/experience, relevant strengths, interest in the role, and career direction.',
+      expectedPoints: ['Clear self-introduction', 'Relevant skills or experience', 'Role motivation', 'Professional communication']
+    },
+    {
+      id: 2,
+      question: 'What are your key strengths, and how would they help you perform well in this position?',
+      type: 'text',
+      category: 'Strengths',
+      expectedAnswer: 'Specific strengths connected to job performance with a short example or evidence.',
+      expectedPoints: ['Names realistic strengths', 'Connects strengths to work outcomes', 'Gives example/evidence']
+    },
+    {
+      id: 3,
+      question: 'How would you handle a disagreement with a teammate at work?',
+      type: 'scenario',
+      category: 'Conflict Resolution',
+      expectedAnswer: 'Listen actively, understand both sides, communicate respectfully, focus on facts, and escalate only if required.',
+      expectedPoints: ['Calm communication', 'Active listening', 'Problem-solving approach', 'Professional escalation if needed']
+    },
+    {
+      id: 4,
+      question: 'Which response best shows professionalism when you receive critical feedback?',
+      type: 'multiple_choice',
+      category: 'Professionalism',
+      options: ['Ignore the feedback if you disagree', 'Argue immediately to defend yourself', 'Listen carefully, ask clarifying questions, and act on useful points', 'Blame workload or colleagues'],
+      correctAnswer: 'Listen carefully, ask clarifying questions, and act on useful points',
+      expectedAnswer: 'A professional candidate accepts feedback constructively and uses it to improve.'
+    },
+    {
+      id: 5,
+      question: 'Why should we select you for this position?',
+      type: 'text',
+      category: 'Role Fit',
+      expectedAnswer: 'A focused answer linking skills, attitude, learning ability, and role requirements without exaggeration.',
+      expectedPoints: ['Role-relevant skills', 'Positive attitude', 'Learning mindset', 'Value to organization']
+    },
+    {
+      id: 6,
+      question: 'How do you manage pressure when you have multiple tasks with the same deadline?',
+      type: 'scenario',
+      category: 'Time Management',
+      expectedAnswer: 'Prioritize by urgency/impact, communicate timelines, break work into steps, and maintain quality.',
+      expectedPoints: ['Prioritization', 'Planning', 'Communication', 'Quality under pressure']
+    },
+    {
+      id: 7,
+      question: 'What is your expected salary and how flexible are you during negotiation?',
+      type: 'text',
+      category: 'Salary Discussion',
+      expectedAnswer: 'A professional response giving a reasonable range, openness to discussion, and consideration of role scope and growth.',
+      expectedPoints: ['Reasonable range', 'Professional tone', 'Flexibility', 'Role/growth consideration']
+    },
+    {
+      id: 8,
+      question: 'If you made a mistake at work, what would you do first?',
+      type: 'multiple_choice',
+      category: 'Accountability',
+      options: ['Hide it and hope nobody notices', 'Blame another person', 'Acknowledge it, inform the right person, and work on a correction', 'Wait until someone asks about it'],
+      correctAnswer: 'Acknowledge it, inform the right person, and work on a correction',
+      expectedAnswer: 'Accountability requires acknowledging mistakes quickly and helping correct them.'
+    },
+    {
+      id: 9,
+      question: 'Where do you see yourself in the next 2 to 3 years?',
+      type: 'text',
+      category: 'Career Goals',
+      expectedAnswer: 'A realistic growth plan aligned with learning, responsibility, and contribution to the organization.',
+      expectedPoints: ['Realistic goals', 'Learning plan', 'Alignment with role', 'Long-term commitment']
+    },
+    {
+      id: 10,
+      question: 'Are you comfortable with the job location, work timing, notice period, and joining requirements?',
+      type: 'text',
+      category: 'Joining Readiness',
+      expectedAnswer: 'A clear and honest response about availability, location, notice period, and any constraints.',
+      expectedPoints: ['Clear availability', 'Location/work timing clarity', 'Notice period clarity', 'Honest constraints if any']
+    }
+  ];
+
+  return questions.slice(0, Math.max(1, questionCount)).map((question, index) => ({ ...question, id: index + 1 }));
+}
+
 function inferStageType(stageName: string, fallback?: MockInterviewStage['stageType']): MockInterviewStage['stageType'] {
   const name = (stageName || '').toLowerCase();
   if (name.includes('coding test') && !name.includes('slot')) return 'coding';
