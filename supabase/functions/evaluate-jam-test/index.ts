@@ -129,7 +129,7 @@ ${safeTranscript || "(No speech was captured by the live transcription)"}
       ? `Topic: ${topic}\nDuration: ${durationSec}s\n\nTranscript (auto-captioned from your speech):\n"${safeTranscript}"`
       : `Topic: ${topic}\nDuration: ${durationSec}s\n\n(No speech transcript was captured.)`;
 
-    await supabase.from("mock_interview_stage_results").upsert({
+    const { error: upsertErr } = await supabase.from("mock_interview_stage_results").upsert({
       session_id: sessionId,
       stage_order: stageOrder,
       stage_name: stageName,
@@ -153,6 +153,11 @@ ${safeTranscript || "(No speech was captured by the live transcription)"}
       recording_url: recordingUrl || null,
       completed_at: new Date().toISOString(),
     }, { onConflict: "session_id,stage_order" });
+
+    if (upsertErr) {
+      console.error("Failed to save JAM stage result:", upsertErr);
+      throw new Error(`Could not save JAM result: ${upsertErr.message}`);
+    }
 
     const nextStageOrder = stageOrder + 1;
     await supabase
