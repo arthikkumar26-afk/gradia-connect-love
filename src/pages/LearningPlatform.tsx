@@ -17,7 +17,7 @@ interface Course {
   slug: string;
 }
 
-const SKILLORY_BASE = 'https://skillory.in';
+const SKILLORY_BASE = 'https://skillory.life';
 
 const COURSE_RECOMMENDATIONS: Record<string, Course[]> = {
   'Skill gap': [

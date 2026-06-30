@@ -232,7 +232,7 @@ const MainRoutes = () => (
         <Route path="/candidate/coaching" element={<CareerCoaching />} />
 
         {/* Learning Platform Routes */}
-        <Route path="/learning" element={<ExternalRedirect url="https://skillory.in" />} />
+        <Route path="/learning" element={<ExternalRedirect url="https://skillory.life" />} />
         <Route path="/learning/tech" element={<TechLearning />} />
         <Route path="/learning/non-tech" element={<NonTechLearning />} />
         <Route path="/learning/education" element={<EducationLearning />} />

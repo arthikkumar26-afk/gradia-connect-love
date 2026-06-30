@@ -1361,7 +1361,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.7,
         category: 'Communication Skills',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
     }
 
@@ -1375,7 +1375,7 @@ export const MockInterviewTab = () => {
         level: 'Intermediate',
         rating: 4.8,
         category: 'Subject Expertise',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
     }
 
@@ -1389,7 +1389,7 @@ export const MockInterviewTab = () => {
         level: 'Intermediate',
         rating: 4.6,
         category: 'Teaching Methods',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
       courses.push({
         id: 'teach-2',
@@ -1399,7 +1399,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.5,
         category: 'Presentation Skills',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
     }
 
@@ -1413,7 +1413,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.4,
         category: 'Productivity',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
     }
 
@@ -1427,7 +1427,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.6,
         category: 'Personal Development',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
     }
 
@@ -1441,7 +1441,7 @@ export const MockInterviewTab = () => {
         level: 'Beginner',
         rating: 4.8,
         category: 'Teaching Foundation',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
       courses.push({
         id: 'gen-2',
@@ -1451,7 +1451,7 @@ export const MockInterviewTab = () => {
         level: 'Intermediate',
         rating: 4.5,
         category: 'Career Development',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
     }
 
@@ -1465,7 +1465,7 @@ export const MockInterviewTab = () => {
         level: 'Advanced',
         rating: 4.7,
         category: 'Professional Growth',
-        url: 'https://skillory.in'
+        url: 'https://skillory.life'
       });
     }
 
@@ -2918,7 +2918,7 @@ export const MockInterviewTab = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => window.open('https://skillory.in', '_blank')}
+                onClick={() => window.open('https://skillory.life', '_blank')}
                 className="gap-2"
               >
                 <GraduationCap className="h-4 w-4" />
