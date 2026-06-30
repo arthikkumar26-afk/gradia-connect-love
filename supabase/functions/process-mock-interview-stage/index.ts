@@ -124,6 +124,7 @@ const INTERVIEW_STAGES: MockInterviewStage[] = [
 ];
 
 serve(async (req) => {
+  let requestAction = '';
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -139,6 +140,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { action, sessionId, stageOrder, candidateProfile, answers, recordingUrl, bookedSlot, stageType: clientStageType, stageName: clientStageName } = await req.json();
+    requestAction = action;
 
     console.log('Mock interview action:', { action, sessionId, stageOrder, hasRecording: !!recordingUrl, clientStageType, clientStageName });
 
@@ -677,6 +679,18 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error('Error in process-mock-interview-stage:', error);
     const errorMessage = safeErrorMessage(error);
+    if (requestAction === 'generate_questions') {
+      return new Response(JSON.stringify({
+        error: 'QUESTION_GENERATION_FAILED',
+        fallback: true,
+        message: 'Interview questions could not be prepared. Please try again in a moment.',
+        details: errorMessage,
+        questions: []
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
