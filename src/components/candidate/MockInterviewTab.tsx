@@ -1309,13 +1309,7 @@ export const MockInterviewTab = () => {
     if (!currentSession) return 'upcoming';
     const result = stageResults.find(r => r.stage_order === stageOrder);
     if (result?.completed_at) return 'completed';
-    if (stageOrder === currentSession.current_stage_order) {
-      const stageMeta = displayStagesList.find(s => s.order === stageOrder);
-      if (stageOrder === 8 || (stageMeta && /final\s*review/i.test(stageMeta.name))) {
-        return 'completed';
-      }
-      return 'current';
-    }
+    if (stageOrder === currentSession.current_stage_order) return 'current';
     if (stageOrder < currentSession.current_stage_order) return 'completed';
     return 'upcoming'; // Changed from 'locked' to 'upcoming' - no stage is locked
   };
