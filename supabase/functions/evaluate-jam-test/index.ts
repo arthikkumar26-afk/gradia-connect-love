@@ -154,6 +154,11 @@ ${safeTranscript || "(No speech was captured by the live transcription)"}
       completed_at: new Date().toISOString(),
     }, { onConflict: "session_id,stage_order" });
 
+    if (upsertErr) {
+      console.error("Failed to save JAM stage result:", upsertErr);
+      throw new Error(`Could not save JAM result: ${upsertErr.message}`);
+    }
+
     const nextStageOrder = stageOrder + 1;
     await supabase
       .from("mock_interview_sessions")
