@@ -543,13 +543,14 @@ export const MockInterviewTab = () => {
             name: s.name,
             order: idx + 1,
             description: s.description || '',
-            questionCount: s.name.toLowerCase().includes('coding') ? 1 : s.name.toLowerCase().includes('technical interview') ? 20 : s.name.toLowerCase().includes('mcq') || s.name.toLowerCase().includes('written') || s.name.toLowerCase().includes('assessment') ? 10 : 1,
-            timePerQuestion: s.name.toLowerCase().includes('coding') ? 1800 : s.name.toLowerCase().includes('technical interview') ? 120 : s.name.toLowerCase().includes('demo') ? 600 : 90,
+            questionCount: s.name.toLowerCase().includes('coding') ? 1 : s.name.toLowerCase().includes('technical interview') ? 20 : s.name.toLowerCase() === 'hr round' ? 10 : s.name.toLowerCase().includes('mcq') || s.name.toLowerCase().includes('written') || s.name.toLowerCase().includes('assessment') ? 10 : 1,
+            timePerQuestion: s.name.toLowerCase().includes('coding') ? 1800 : s.name.toLowerCase().includes('technical interview') ? 120 : s.name.toLowerCase() === 'hr round' ? 90 : s.name.toLowerCase().includes('demo') ? 600 : 90,
             passingScore: 60,
             stageType: s.name.toLowerCase().includes('slot booking') ? 'slot_booking' as const
               : s.name.toLowerCase().includes('coding test') && !s.name.toLowerCase().includes('slot') ? 'coding' as const
               : s.name.toLowerCase().includes('demo') ? 'demo' as const
               : s.name.toLowerCase().includes('feedback') ? 'feedback' as const
+              : s.name.toLowerCase() === 'hr round' ? 'assessment' as const
               : s.name.toLowerCase().includes('hr') ? 'hr_documents' as const
               : (s.name.toLowerCase() === 'final review' || s.name.toLowerCase() === 'offer stage') ? 'review' as const
               : s.name.toLowerCase().includes('instruction') || s.name.toLowerCase().includes('cv') || s.name.toLowerCase().includes('resume') ? 'email_info' as const
