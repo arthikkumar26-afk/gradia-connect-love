@@ -440,7 +440,7 @@ serve(async (req) => {
           name: effectiveStageName,
           order: stageOrder,
           description: '',
-          questionCount: storedQuestions.length || 10,
+          questionCount: storedQuestions.length || 15,
           timePerQuestion: effectiveStageType === 'coding' ? 1800 : 120,
           passingScore: 60,
           stageType: effectiveStageType,
