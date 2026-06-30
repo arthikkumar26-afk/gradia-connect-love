@@ -676,21 +676,23 @@ Example format for a coding problem:
 - language: "javascript"`;
   }
 
-  const subjectFocus = profile?.primary_subject 
-    ? `Focus questions specifically on ${profile.primary_subject} topics.`
-    : 'Focus on general teaching aptitude and pedagogical skills.';
+  const role = profile?.preferred_role || 'the target role';
+  const isEducationRole = /teacher|tutor|lecturer|professor|instructor|trainer|faculty|principal|coordinator|education/i.test(role);
+  const subjectFocus = isEducationRole && profile?.primary_subject
+    ? `Focus questions specifically on ${profile.primary_subject} topics relevant to a ${role}.`
+    : `Focus questions specifically on the "${stage.name}" stage and the responsibilities of a ${role}. DO NOT ask about unrelated academic subjects (e.g. cybersecurity, social studies, physics) unless the role itself is in that domain.`;
 
   const isTechnicalInterview = stage.name.toLowerCase().includes('technical interview');
 
   if (isTechnicalInterview) {
-    const role = profile?.preferred_role || profile?.primary_subject || 'software development';
+    const techRole = profile?.preferred_role || profile?.primary_subject || 'software development';
     const skills = profile?.skills?.join(', ') || 'JavaScript, Python, Data Structures';
-    return `Generate exactly ${stage.questionCount} DIFFICULT technical interview questions for a ${role} position.
+    return `Generate exactly ${stage.questionCount} DIFFICULT technical interview questions for a ${techRole} position.
 
 ${profileInfo}
 
 IMPORTANT: These must be HARD-LEVEL questions that test deep understanding. 
-Focus on: ${role}
+Focus on: ${techRole}
 Candidate's known skills: ${skills}
 
 Question categories to cover (distribute across all ${stage.questionCount} questions):
@@ -714,7 +716,28 @@ Requirements:
 Generate exactly ${stage.questionCount} questions.`;
   }
 
-  return `Generate ${stage.questionCount} interview questions for the "${stage.name}" stage.
+  const isHRStage = /hr|human resource|behavioral|behaviour|final review/i.test(stage.name);
+
+  let stageSpecificGuidance = '';
+  if (stage.stageType === 'assessment') {
+    if (isHRStage) {
+      stageSpecificGuidance = `- Behavioral, situational, and HR-style questions tailored to a ${role}
+- Communication, conflict resolution, teamwork, leadership, culture fit
+- Real workplace scenarios a ${role} would face
+- DO NOT ask academic subject questions (no cybersecurity, social studies, physics, chemistry, etc.) unless ${role} is in that exact domain`;
+    } else if (isEducationRole) {
+      stageSpecificGuidance = `- Deep knowledge of ${profile?.primary_subject || 'the teaching subject'} concepts
+- Pedagogy, classroom management, and practical teaching application`;
+    } else {
+      stageSpecificGuidance = `- Core competencies, tools, and day-to-day responsibilities of a ${role}
+- Practical, scenario-based problems a ${role} actually encounters on the job
+- DO NOT default to teaching/education or unrelated academic subjects`;
+    }
+  }
+  if (stage.stageType === 'demo') stageSpecificGuidance += '\n- Live demonstration, presentation skills, role-specific knowledge';
+  if (stage.stageType === 'hr_documents') stageSpecificGuidance += `\n- HR questions for a ${role}, document verification, career plans, salary expectations, notice period`;
+
+  return `Generate ${stage.questionCount} interview questions for the "${stage.name}" stage of a ${role} interview.
 
 Stage Description: ${stage.description}
 
@@ -723,16 +746,13 @@ ${profileInfo}
 IMPORTANT: ${subjectFocus}
 
 Requirements:
-1. Questions should be relevant to the candidate's background
-2. Mix of difficulty levels
-3. For multiple choice questions, provide 4 options AND set correctAnswer to the exact text of the right option
-4. Include expected key points for text answers
+1. Questions MUST be relevant to the candidate's preferred role (${role}) and this specific stage ("${stage.name}").
+2. Mix of difficulty levels appropriate to a ${role}.
+3. For multiple choice questions, provide 4 options AND set correctAnswer to the exact text of the right option.
+4. Include expected key points for text answers.
 
 For "${stage.name}" stage, focus on:
-${stage.stageType === 'assessment' ? `- Deep knowledge of ${profile?.primary_subject || profile?.preferred_role || 'the subject'} concepts
-- Problem-solving and practical application` : ''}
-${stage.stageType === 'demo' ? '- Teaching demonstration, presentation skills, subject knowledge' : ''}
-${stage.stageType === 'hr_documents' ? '- HR questions, document verification, future plans' : ''}
+${stageSpecificGuidance}
 
 Generate exactly ${stage.questionCount} questions.`;
 }
