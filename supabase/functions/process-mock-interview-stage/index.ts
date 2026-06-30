@@ -723,7 +723,7 @@ Example format for a coding problem:
   const isHRRoundStage = stageNameLower === 'hr round' || stageNameLower.includes('hr interview') || stageNameLower.includes('hr round');
 
   if (isHRRoundStage) {
-    return `Generate exactly ${stage.questionCount} HR ROUND behavioral & situational interview questions for a ${role} candidate.
+    return `Generate exactly ${stage.questionCount} HR ROUND behavioral & situational interview questions for a general professional candidate applying for an HR / management position.
 
 ${profileInfo}
 
@@ -738,7 +738,9 @@ Requirements:
 1. Mix multiple_choice and scenario/text question types.
 2. For multiple_choice, provide 4 options and set correctAnswer to the EXACT text of the right option.
 3. For text/scenario, include expectedAnswer and expectedPoints so typed answers can be graded.
-4. Keep questions HR/behavioral — do NOT ask coding/technical/academic questions.
+4. Keep questions PURELY HR / behavioral / situational. STRICTLY DO NOT ask coding, programming, cybersecurity, IT, engineering, academic-subject, or any domain-technical questions.
+5. DO NOT reference the candidate's previous technical domain or job title (e.g. "as a Cybersecurity Engineer", "as a Software Developer", "in your experience as a ..."). Frame every question as a generic HR interview question (e.g. "Tell me about a time…", "How would you handle…", "Why do you want this role?").
+6. You may use the candidate's first name naturally, but never tie questions to their prior technical role.
 
 Generate exactly ${stage.questionCount} questions.`;
   }
