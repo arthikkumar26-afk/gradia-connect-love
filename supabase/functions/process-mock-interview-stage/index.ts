@@ -720,6 +720,28 @@ Example format for a coding problem:
   const stageNameLower = stage.name.toLowerCase();
   const isAptitudeStage = stageNameLower.includes('aptitude');
   const isTechnicalInterview = stageNameLower.includes('technical interview');
+  const isHRRoundStage = stageNameLower === 'hr round' || stageNameLower.includes('hr interview') || stageNameLower.includes('hr round');
+
+  if (isHRRoundStage) {
+    return `Generate exactly ${stage.questionCount} HR ROUND behavioral & situational interview questions for a ${role} candidate.
+
+${profileInfo}
+
+Distribute across:
+- Behavioral (tell me about a time…, strengths/weaknesses, motivation, career goals)
+- Situational / Workplace scenarios (conflict, deadline pressure, teamwork, leadership)
+- Culture fit & values (why this company/role, work style, adaptability)
+- Salary expectations, notice period, relocation willingness
+- Communication, emotional intelligence & self-awareness
+
+Requirements:
+1. Mix multiple_choice and scenario/text question types.
+2. For multiple_choice, provide 4 options and set correctAnswer to the EXACT text of the right option.
+3. For text/scenario, include expectedAnswer and expectedPoints so typed answers can be graded.
+4. Keep questions HR/behavioral — do NOT ask coding/technical/academic questions.
+
+Generate exactly ${stage.questionCount} questions.`;
+  }
 
   if (isAptitudeStage) {
     return `Generate exactly ${stage.questionCount} APTITUDE multiple-choice questions for a ${role} candidate.
