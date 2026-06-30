@@ -4337,7 +4337,7 @@ const CandidateDashboard = () => {
                           {skilloryCourses.map((course, idx) => (
                             <a
                               key={idx}
-                              href="https://skilory.in"
+                              href="https://skillory.in"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block p-4 rounded-lg border bg-background hover:shadow-md hover:border-primary/50 transition-all group"
