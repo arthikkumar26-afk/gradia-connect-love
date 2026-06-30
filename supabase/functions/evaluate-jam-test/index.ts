@@ -129,7 +129,7 @@ ${safeTranscript || "(No speech was captured by the live transcription)"}
       ? `Topic: ${topic}\nDuration: ${durationSec}s\n\nTranscript (auto-captioned from your speech):\n"${safeTranscript}"`
       : `Topic: ${topic}\nDuration: ${durationSec}s\n\n(No speech transcript was captured.)`;
 
-    await supabase.from("mock_interview_stage_results").upsert({
+    const { error: upsertErr } = await supabase.from("mock_interview_stage_results").upsert({
       session_id: sessionId,
       stage_order: stageOrder,
       stage_name: stageName,
