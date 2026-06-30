@@ -12,10 +12,8 @@ import {
   Target,
   Award,
   Video,
-  Play,
-  PartyPopper
+  Play
 } from "lucide-react";
-import gradiaLogo from "@/assets/gradia-logo.png";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -264,34 +262,6 @@ export const MockInterviewResults = ({
           </Button>
         )}
       </div>
-
-      {/* Final Congratulations Banner */}
-      {isLastStage && (
-        <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-background">
-          <CardContent className="py-10 flex flex-col items-center gap-5 text-center">
-            <img
-              src={gradiaLogo}
-              alt="Gradia Logo"
-              className="h-14 w-auto object-contain"
-            />
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2">
-                <PartyPopper className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-bold text-foreground">
-                  Congratulations!
-                </h2>
-                <PartyPopper className="h-6 w-6 text-primary" />
-              </div>
-              <p className="text-lg font-medium text-foreground">
-                You&apos;ve Successfully Completed Your AI Mock Interview
-              </p>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Powered by Bluelock Technologies
-            </p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Recording Dialog */}
       <Dialog open={showRecording} onOpenChange={setShowRecording}>
