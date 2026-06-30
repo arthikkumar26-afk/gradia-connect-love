@@ -2064,6 +2064,9 @@ export const MockInterviewTab = () => {
           : stages
         ).map((stage) => {
           const status = getStageStatus(stage.order);
+          // Final Review (stage 8) is reached only after all prior stages — display as completed
+          const isFinalReview = stage.order === 8 || /final\s*review/i.test(stage.name);
+          const displayStatus = status === 'current' && isFinalReview ? 'completed' : status;
           const Icon = getStageIcon(stage.order);
           const result = stageResults.find(r => r.stage_order === stage.order);
           const isExpanded = expandedStage === stage.order;
@@ -2073,8 +2076,8 @@ export const MockInterviewTab = () => {
             <Card 
               key={stage.order}
               className={`transition-all ${
-                status === 'current' ? 'border-primary shadow-md' :
-                status === 'completed' ? 'border-green-500/50 bg-green-50/50 dark:bg-green-900/10' :
+                displayStatus === 'current' ? 'border-primary shadow-md' :
+                displayStatus === 'completed' ? 'border-green-500/50 bg-green-50/50 dark:bg-green-900/10' :
                 'border-muted'
               }`}
             >
@@ -2082,11 +2085,11 @@ export const MockInterviewTab = () => {
                 <div className="flex items-center gap-4">
                   {/* Icon */}
                   <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    status === 'completed' ? 'bg-green-500 text-white' :
-                    status === 'current' ? 'bg-primary text-primary-foreground' :
+                    displayStatus === 'completed' ? 'bg-green-500 text-white' :
+                    displayStatus === 'current' ? 'bg-primary text-primary-foreground' :
                     'bg-muted text-muted-foreground'
                   }`}>
-                    {status === 'completed' ? (
+                    {displayStatus === 'completed' ? (
                       <CheckCircle2 className="h-6 w-6" />
                     ) : (
                       <Icon className="h-6 w-6" />
@@ -2103,7 +2106,7 @@ export const MockInterviewTab = () => {
                           {result.ai_score.toFixed(0)}%
                         </Badge>
                       )}
-                      {status === 'current' && (
+                      {displayStatus === 'current' && (
                         <Badge variant="outline" className="animate-pulse border-primary text-primary">
                           <Clock className="h-3 w-3 mr-1" />
                           In Progress
@@ -2112,6 +2115,7 @@ export const MockInterviewTab = () => {
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{stage.description}</p>
                   </div>
+
 
                   {/* Action */}
                   <div className="flex-shrink-0 flex items-center gap-2">
