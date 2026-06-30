@@ -176,6 +176,7 @@ const MockInterview = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isStarted, setIsStarted] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -519,6 +520,7 @@ const MockInterview = () => {
       videoPreviewRef.current.play().catch(() => {});
     }
 
+    setGenerationError(null);
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('process-mock-interview-stage', {
@@ -534,12 +536,21 @@ const MockInterview = () => {
 
       if (error) throw error;
 
-      if (data?.questions) {
-        setQuestions(data.questions);
+      if (data?.error || data?.fallback) {
+        throw new Error(data?.message || data?.error || 'Interview questions are not ready yet. Please try again.');
+      }
+
+      const generatedQuestions = Array.isArray(data?.questions) ? data.questions : [];
+      if (generatedQuestions.length === 0) {
+        throw new Error('Interview questions could not be prepared. Please try again in a moment.');
+      }
+
+      if (generatedQuestions.length > 0) {
+        setQuestions(generatedQuestions);
         setTimeLeft(data.timePerQuestion || 120);
         // Initialize code editor with starter code for coding questions
-        if (data.questions[0]?.starterCode) {
-          setCurrentAnswer(data.questions[0].starterCode);
+        if (generatedQuestions[0]?.starterCode) {
+          setCurrentAnswer(generatedQuestions[0].starterCode);
         }
         setIsStarted(true);
         
@@ -553,10 +564,12 @@ const MockInterview = () => {
       }
     } catch (error) {
       console.error('Error generating questions:', error);
-      toast.error("Failed to generate questions");
-    } finally {
-      setIsGenerating(false);
+      const message = error instanceof Error ? error.message : 'Failed to generate questions. Please try again.';
+      setGenerationError(message);
+      toast.error(message);
+      return;
     }
+    setIsGenerating(false);
   };
 
   const handleNextQuestion = () => {
