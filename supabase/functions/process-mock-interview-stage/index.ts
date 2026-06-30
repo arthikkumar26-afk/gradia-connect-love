@@ -712,11 +712,58 @@ Example format for a coding problem:
 
   const role = profile?.preferred_role || 'the target role';
   const isEducationRole = /teacher|tutor|lecturer|professor|instructor|trainer|faculty|principal|coordinator|education/i.test(role);
+  const isHRRole = /\bhr\b|human resource|recruit|talent acquisition|people operations|hrbp|hr executive|hr manager|hr generalist/i.test(role);
   const subjectFocus = isEducationRole && profile?.primary_subject
     ? `Focus questions specifically on ${profile.primary_subject} topics relevant to a ${role}.`
     : `Focus questions specifically on the "${stage.name}" stage and the responsibilities of a ${role}. DO NOT ask about unrelated academic subjects (e.g. cybersecurity, social studies, physics) unless the role itself is in that domain.`;
 
-  const isTechnicalInterview = stage.name.toLowerCase().includes('technical interview');
+  const stageNameLower = stage.name.toLowerCase();
+  const isAptitudeStage = stageNameLower.includes('aptitude');
+  const isTechnicalInterview = stageNameLower.includes('technical interview');
+
+  if (isAptitudeStage) {
+    return `Generate exactly ${stage.questionCount} APTITUDE multiple-choice questions for a ${role} candidate.
+
+${profileInfo}
+
+Cover a balanced mix across:
+- Quantitative Aptitude (arithmetic, percentages, ratios, time & work, data interpretation)
+- Logical Reasoning (series, puzzles, syllogisms, blood relations, coding-decoding)
+- Verbal Ability (reading comprehension, synonyms/antonyms, sentence correction)
+
+Requirements:
+1. ALL questions must be multiple_choice with exactly 4 options.
+2. Set correctAnswer to the EXACT text of the right option.
+3. Include a brief expectedAnswer/explanation for review.
+4. Difficulty appropriate for entry/mid-level candidates.
+5. DO NOT ask domain-specific (HR / technical / coding) questions — pure aptitude only.
+
+Generate exactly ${stage.questionCount} questions.`;
+  }
+
+  if (isTechnicalInterview && isHRRole) {
+    return `Generate exactly ${stage.questionCount} HR domain "Technical Interview" questions for a ${role} candidate.
+
+${profileInfo}
+
+Distribute questions across these HR topics:
+1. Recruitment & Talent Acquisition — recruitment process, recruitment vs selection, sourcing, job portals, resume screening, Boolean search, shortlisting candidates.
+2. Interview Knowledge — types of interviews, conducting an HR interview, candidate questions, qualities to look for.
+3. HR Fundamentals — onboarding, induction, employee engagement, performance appraisal, HRM vs HRD.
+4. Payroll & Compliance (Basic) — CTC, CTC vs take-home, PF, ESI, gratuity, TDS.
+5. Workplace Scenarios — candidate no-show, handling a difficult employee, resolving workplace conflict, managing multiple openings.
+6. HR Tools — ATS usage, job portals, LinkedIn Recruiter, Excel for HR reports.
+7. Communication — explaining a job role, convincing a candidate to join, handling salary negotiation.
+
+Requirements:
+1. Cover ALL 7 topic groups across the ${stage.questionCount} questions.
+2. Mix question types: multiple_choice and scenario/text.
+3. For multiple_choice, provide 4 options and set correctAnswer to the exact text of the right option.
+4. For text/scenario, include expectedAnswer and expectedPoints so typed answers can be graded.
+5. Questions must be HR-specific — do NOT ask software/coding/academic subject questions.
+
+Generate exactly ${stage.questionCount} questions.`;
+  }
 
   if (isTechnicalInterview) {
     const techRole = profile?.preferred_role || profile?.primary_subject || 'software development';
