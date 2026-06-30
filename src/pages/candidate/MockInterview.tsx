@@ -599,7 +599,9 @@ const MockInterview = () => {
           stageOrder: parseInt(stageOrder || '1'),
           answers: finalAnswers,
           candidateProfile: profile,
-          recordingUrl
+          recordingUrl,
+          stageType: stage?.stageType || 'assessment',
+          stageName: stage?.name || `Stage ${stageOrder}`
         }
       });
 
