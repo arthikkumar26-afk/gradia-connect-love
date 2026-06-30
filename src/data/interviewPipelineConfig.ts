@@ -703,7 +703,7 @@ export const interviewPipelineConfig: InterviewTypeConfig[] = [
           commonStages.writtenTestSlotBooking,
           { order: 3, name: 'Written Test (Aptitude)', description: 'Quantitative, logical & verbal aptitude MCQs', isAutomated: true },
           { order: 4, name: 'Just A Minute (JAM) Test', description: '1-minute spoken impromptu — AI evaluates presentation, dressing & communication', isAutomated: true },
-          { order: 5, name: 'Technical Interview', description: 'HR domain questions — Recruitment, Interviews, HR Fundamentals, Payroll, Workplace Scenarios, HR Tools & Communication', isAutomated: true },
+          { order: 5, name: 'HR Technical Interview', description: 'HR domain questions — Recruitment, Interviews, HR Fundamentals, Payroll, Workplace Scenarios, HR Tools & Communication', isAutomated: true },
           { order: 6, name: 'HR Round', description: 'Behavioral & situational HR interview questions — culture fit, conflict handling, leadership & motivation', isAutomated: true },
           { order: 7, name: 'Final Review', description: 'Final evaluation & decision', isAutomated: true },
         ],
