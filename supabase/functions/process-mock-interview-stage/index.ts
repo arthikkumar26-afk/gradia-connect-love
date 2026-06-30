@@ -307,7 +307,7 @@ serve(async (req) => {
           name: effectiveStageName,
           order: stageOrder,
           description: '',
-          questionCount: isJam ? 1 : isHRRound ? 6 : isTechnicalInterview ? 10 : effectiveStageType === 'coding' ? 1 : 10,
+          questionCount: isJam ? 1 : isHRRound ? 10 : isTechnicalInterview ? 10 : effectiveStageType === 'coding' ? 1 : 10,
           timePerQuestion: isHRRound ? 90 : isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 120,
           passingScore: 60,
           stageType: effectiveStageType || 'assessment',
@@ -328,77 +328,98 @@ serve(async (req) => {
       }
 
       const prompt = buildQuestionGenerationPrompt(stage, candidateProfile);
-      
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-lite',
-          messages: [
-            { role: 'system', content: effectiveStageType === 'coding' 
-              ? 'You are an expert software engineering interviewer. Generate coding challenges with clear problem statements, examples, constraints, and starter code. The candidate will write actual code that gets evaluated.'
-              : 'You are an expert HR interviewer and technical recruiter. Generate realistic interview questions based on the stage and candidate profile.' },
-            { role: 'user', content: prompt }
-          ],
-          tools: [{
-            type: 'function',
-            function: {
-              name: 'generate_interview_questions',
-              description: effectiveStageType === 'coding' 
-                ? 'Generate coding challenges with problem statements, examples, starter code, and test cases'
-                : 'Generate interview questions for a specific stage',
-              parameters: {
-                type: 'object',
-                properties: {
-                  questions: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'number' },
-                        question: { type: 'string', description: 'The problem statement or question text' },
-                        type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario', 'coding'] },
-                        options: { type: 'array', items: { type: 'string' } },
-                        correctAnswer: { type: 'string', description: 'For multiple_choice questions: the exact correct option text from options array' },
-                        expectedAnswer: { type: 'string', description: 'For typed/scenario questions: a concise model answer reviewers can compare against' },
-                        expectedPoints: { type: 'array', items: { type: 'string' } },
-                        category: { type: 'string' },
-                        functionSignature: { type: 'string', description: 'Function signature e.g. function twoSum(nums: number[], target: number): number[]' },
-                        examples: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, output: { type: 'string' }, explanation: { type: 'string' } }, required: ['input', 'output'] } },
-                        constraints: { type: 'array', items: { type: 'string' } },
-                        starterCode: { type: 'string', description: 'Starter code template for the candidate to complete' },
-                        testCases: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, expectedOutput: { type: 'string' } }, required: ['input', 'expectedOutput'] } },
-                        difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
-                        language: { type: 'string', description: 'Programming language e.g. javascript, python' }
-                      },
-                      required: ['id', 'question', 'type', 'category']
-                    }
-                  }
-                },
-                required: ['questions']
-              }
-            }
-          }],
-          tool_choice: { type: 'function', function: { name: 'generate_interview_questions' } }
-        }),
-      });
+      let questions: StageQuestion[] = [];
 
-      if (!aiResponse.ok) {
-        const errorText = await aiResponse.text();
-        console.error('AI API error:', errorText);
-        throw new Error('Failed to generate questions');
+      try {
+        const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash-lite',
+            messages: [
+              { role: 'system', content: effectiveStageType === 'coding' 
+                ? 'You are an expert software engineering interviewer. Generate coding challenges with clear problem statements, examples, constraints, and starter code. The candidate will write actual code that gets evaluated.'
+                : 'You are an expert HR interviewer and technical recruiter. Generate realistic interview questions based on the stage and candidate profile.' },
+              { role: 'user', content: prompt }
+            ],
+            tools: [{
+              type: 'function',
+              function: {
+                name: 'generate_interview_questions',
+                description: effectiveStageType === 'coding' 
+                  ? 'Generate coding challenges with problem statements, examples, starter code, and test cases'
+                  : 'Generate interview questions for a specific stage',
+                parameters: {
+                  type: 'object',
+                  properties: {
+                    questions: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'number' },
+                          question: { type: 'string', description: 'The problem statement or question text' },
+                          type: { type: 'string', enum: ['text', 'multiple_choice', 'scenario', 'coding'] },
+                          options: { type: 'array', items: { type: 'string' } },
+                          correctAnswer: { type: 'string', description: 'For multiple_choice questions: the exact correct option text from options array' },
+                          expectedAnswer: { type: 'string', description: 'For typed/scenario questions: a concise model answer reviewers can compare against' },
+                          expectedPoints: { type: 'array', items: { type: 'string' } },
+                          category: { type: 'string' },
+                          functionSignature: { type: 'string', description: 'Function signature e.g. function twoSum(nums: number[], target: number): number[]' },
+                          examples: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, output: { type: 'string' }, explanation: { type: 'string' } }, required: ['input', 'output'] } },
+                          constraints: { type: 'array', items: { type: 'string' } },
+                          starterCode: { type: 'string', description: 'Starter code template for the candidate to complete' },
+                          testCases: { type: 'array', items: { type: 'object', properties: { input: { type: 'string' }, expectedOutput: { type: 'string' } }, required: ['input', 'expectedOutput'] } },
+                          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+                          language: { type: 'string', description: 'Programming language e.g. javascript, python' }
+                        },
+                        required: ['id', 'question', 'type', 'category']
+                      }
+                    }
+                  },
+                  required: ['questions']
+                }
+              }
+            }],
+            tool_choice: { type: 'function', function: { name: 'generate_interview_questions' } }
+          }),
+        });
+
+        if (!aiResponse.ok) {
+          const errorText = await aiResponse.text();
+          console.error('AI API error:', errorText);
+          throw new Error('Failed to generate questions');
+        }
+
+        const aiData = await aiResponse.json();
+        const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+        if (toolCall?.function?.arguments) {
+          const parsed = JSON.parse(toolCall.function.arguments);
+          questions = Array.isArray(parsed.questions) ? parsed.questions : [];
+        }
+      } catch (generationError) {
+        console.error('AI question generation failed:', generationError);
       }
 
-      const aiData = await aiResponse.json();
-      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-      
-      let questions: StageQuestion[] = [];
-      if (toolCall?.function?.arguments) {
-        const parsed = JSON.parse(toolCall.function.arguments);
-        questions = parsed.questions || [];
+      if (questions.length === 0 && isHRQuestionStage(stage)) {
+        questions = buildFallbackHRRoundQuestions(stage.questionCount || 10);
+      }
+
+      if (questions.length === 0) {
+        return new Response(JSON.stringify({
+          error: 'QUESTION_GENERATION_FAILED',
+          fallback: true,
+          message: 'Interview questions could not be prepared. Please try again in a moment.',
+          questions: [],
+          stage,
+          timePerQuestion: stage.timePerQuestion
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       // Update session with generated questions
