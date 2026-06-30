@@ -304,7 +304,7 @@ serve(async (req) => {
           name: effectiveStageName,
           order: stageOrder,
           description: '',
-          questionCount: isTechnicalInterview ? 20 : effectiveStageType === 'coding' ? 1 : 15,
+          questionCount: isTechnicalInterview ? 15 : effectiveStageType === 'coding' ? 1 : 15,
           timePerQuestion: isTechnicalInterview ? 120 : effectiveStageType === 'coding' ? 1800 : 120,
           passingScore: 60,
           stageType: effectiveStageType || 'assessment',
@@ -333,7 +333,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-flash-lite',
           messages: [
             { role: 'system', content: effectiveStageType === 'coding' 
               ? 'You are an expert software engineering interviewer. Generate coding challenges with clear problem statements, examples, constraints, and starter code. The candidate will write actual code that gets evaluated.'
@@ -457,7 +457,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-flash-lite',
           messages: [
             { role: 'system', content: 'You are an expert HR interviewer and technical recruiter. Evaluate candidate answers objectively and provide constructive feedback.' },
             { role: 'user', content: evaluationPrompt }
