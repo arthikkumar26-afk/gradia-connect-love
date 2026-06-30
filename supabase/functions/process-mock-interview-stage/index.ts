@@ -712,7 +712,7 @@ Example format for a coding problem:
 
   const role = profile?.preferred_role || 'the target role';
   const isEducationRole = /teacher|tutor|lecturer|professor|instructor|trainer|faculty|principal|coordinator|education/i.test(role);
-  const isHRRole = /\bhr\b|human resource|recruit|talent acquisition|people operations|hrbp|hr executive|hr manager|hr generalist/i.test(role);
+  const isHRRole = /\bhr\b|human resource|recruit|talent acquisition|people operations|hrbp|hr executive|hr manager|hr generalist|\bmba\b|business analyst|business analytics|management trainee|operations manager|marketing manager|sales manager|product manager|finance manager|administration|admin executive|office manager|executive assistant/i.test(role);
   const subjectFocus = isEducationRole && profile?.primary_subject
     ? `Focus questions specifically on ${profile.primary_subject} topics relevant to a ${role}.`
     : `Focus questions specifically on the "${stage.name}" stage and the responsibilities of a ${role}. DO NOT ask about unrelated academic subjects (e.g. cybersecurity, social studies, physics) unless the role itself is in that domain.`;
