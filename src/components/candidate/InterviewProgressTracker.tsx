@@ -54,7 +54,12 @@ export const InterviewProgressTracker = ({
     const result = stageResults.find((r) => r.stage_order === stageOrder);
     if (result?.completed_at) return "completed";
     if (stageOrder < currentStageOrder) return "completed";
-    if (stageOrder === currentStageOrder) return "current";
+    if (stageOrder === currentStageOrder) {
+      const stage = visibleStages.find((s) => s.order === stageOrder);
+      // Final Review is reached only after all prior stages are done — show as completed
+      if (stage && /final\s*review/i.test(stage.name)) return "completed";
+      return "current";
+    }
     return "locked";
   };
 
