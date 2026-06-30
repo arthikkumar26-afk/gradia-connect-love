@@ -2064,6 +2064,9 @@ export const MockInterviewTab = () => {
           : stages
         ).map((stage) => {
           const status = getStageStatus(stage.order);
+          // Final Review (stage 8) is reached only after all prior stages — display as completed
+          const isFinalReview = stage.order === 8 || /final\s*review/i.test(stage.name);
+          const displayStatus = status === 'current' && isFinalReview ? 'completed' : status;
           const Icon = getStageIcon(stage.order);
           const result = stageResults.find(r => r.stage_order === stage.order);
           const isExpanded = expandedStage === stage.order;
