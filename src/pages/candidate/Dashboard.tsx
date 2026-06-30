@@ -1721,7 +1721,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.7,
             category: 'Communication Skills',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
         }
 
@@ -1735,7 +1735,7 @@ const CandidateDashboard = () => {
             level: 'Intermediate',
             rating: 4.8,
             category: 'Subject Expertise',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
         }
 
@@ -1749,7 +1749,7 @@ const CandidateDashboard = () => {
             level: 'Intermediate',
             rating: 4.6,
             category: 'Teaching Methods',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
           courses.push({
             id: 'teach-2',
@@ -1759,7 +1759,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.5,
             category: 'Presentation Skills',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
         }
 
@@ -1773,7 +1773,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.4,
             category: 'Productivity',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
         }
 
@@ -1787,7 +1787,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.6,
             category: 'Personal Development',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
         }
 
@@ -1801,7 +1801,7 @@ const CandidateDashboard = () => {
             level: 'Beginner',
             rating: 4.8,
             category: 'Teaching Foundation',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
           courses.push({
             id: 'gen-2',
@@ -1811,7 +1811,7 @@ const CandidateDashboard = () => {
             level: 'Intermediate',
             rating: 4.5,
             category: 'Career Development',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
         }
 
@@ -1825,7 +1825,7 @@ const CandidateDashboard = () => {
             level: 'Advanced',
             rating: 4.7,
             category: 'Professional Growth',
-            url: 'https://skillory.in'
+            url: 'https://skillory.life'
           });
         }
 
@@ -3667,7 +3667,7 @@ const CandidateDashboard = () => {
                             variant="outline" 
                             size="sm" 
                             className="gap-1 h-7 text-xs px-2"
-                            onClick={() => window.open('https://skillory.in', '_blank')}
+                            onClick={() => window.open('https://skillory.life', '_blank')}
                           >
                             Skillory <ExternalLink className="h-2.5 w-2.5" />
                           </Button>
@@ -3675,7 +3675,7 @@ const CandidateDashboard = () => {
                         <Button 
                           variant="outline"
                           size="sm"
-                          onClick={() => window.open('https://skillory.in', '_blank')}
+                          onClick={() => window.open('https://skillory.life', '_blank')}
                         >
                           Explore Courses
                         </Button>
@@ -3889,7 +3889,7 @@ const CandidateDashboard = () => {
                           </p>
                           <div className="flex flex-wrap gap-2 justify-center">
                             <a 
-                              href="https://skillory.in" 
+                              href="https://skillory.life" 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-muted hover:bg-muted/80 rounded-full transition-colors"
@@ -3900,7 +3900,7 @@ const CandidateDashboard = () => {
                         </div>
                         <Button 
                           variant="outline" 
-                          onClick={() => window.open('https://skillory.in', '_blank')}
+                          onClick={() => window.open('https://skillory.life', '_blank')}
                           className="gap-2 mt-2"
                         >
                           Explore Courses
@@ -4337,7 +4337,7 @@ const CandidateDashboard = () => {
                           {skilloryCourses.map((course, idx) => (
                             <a
                               key={idx}
-                              href="https://skillory.in"
+                              href="https://skillory.life"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block p-4 rounded-lg border bg-background hover:shadow-md hover:border-primary/50 transition-all group"
