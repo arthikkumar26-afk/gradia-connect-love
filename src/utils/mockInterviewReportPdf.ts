@@ -308,6 +308,54 @@ export const generateMockInterviewReportPdf = ({
     y += 4;
   });
 
+  // Congratulations Section
+  ensureSpace(50);
+  doc.addPage();
+  y = PAGE_MARGIN + 20;
+
+  // Celebration banner
+  doc.setFillColor(99, 102, 241);
+  doc.roundedRect(PAGE_MARGIN, y, pageWidth - PAGE_MARGIN * 2, 14, 3, 3, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(255, 255, 255);
+  doc.text("Congratulations!", pageWidth / 2, y + 9, { align: "center" });
+  y += 22;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(13);
+  doc.setTextColor(40, 40, 40);
+  doc.text("You've Successfully Completed Your AI Mock Interview", pageWidth / 2, y, { align: "center" });
+  y += 12;
+
+  // Divider
+  doc.setDrawColor(200, 200, 200);
+  doc.line(PAGE_MARGIN + 20, y, pageWidth - PAGE_MARGIN - 20, y);
+  y += 14;
+
+  doc.setFontSize(11);
+  doc.setTextColor(80, 80, 80);
+  doc.text("Powered by", pageWidth / 2, y, { align: "center" });
+  y += 8;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(30, 30, 30);
+  doc.text("Bluelock Technologies", pageWidth / 2, y, { align: "center" });
+  y += 10;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(99, 102, 241);
+  doc.text("Gradia", pageWidth / 2, y, { align: "center" });
+  y += 16;
+
+  // Subtle closing line
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(9);
+  doc.setTextColor(150, 150, 150);
+  doc.text("Thank you for using Gradia Mock Interview.", pageWidth / 2, y, { align: "center" });
+
   // Footer
   const pageCount = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
