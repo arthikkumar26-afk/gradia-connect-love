@@ -12,8 +12,10 @@ import {
   Target,
   Award,
   Video,
-  Play
+  Play,
+  PartyPopper
 } from "lucide-react";
+import gradiaLogo from "@/assets/gradia-logo.png";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
