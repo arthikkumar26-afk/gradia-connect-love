@@ -333,7 +333,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-flash-lite',
           messages: [
             { role: 'system', content: effectiveStageType === 'coding' 
               ? 'You are an expert software engineering interviewer. Generate coding challenges with clear problem statements, examples, constraints, and starter code. The candidate will write actual code that gets evaluated.'
