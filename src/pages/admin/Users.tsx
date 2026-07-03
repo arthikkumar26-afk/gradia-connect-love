@@ -307,7 +307,7 @@ const Users = () => {
     }
     try {
       const { data, error } = await supabase.functions.invoke("manage-user-roles", {
-        body: { action: "create-user", targetEmail: email.trim(), password, fullName: fullName.trim(), role },
+        body: { action: "create-user", targetEmail: normalizedEmail, password, fullName: fullName.trim(), role },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
