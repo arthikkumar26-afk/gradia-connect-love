@@ -33,7 +33,15 @@ export const WebTrafficPanel = ({
   data?: TrafficData | null;
   loading?: boolean;
 }) => {
-  const [active, setActive] = useState<MetricKey>("visitors");
+  const [active, setActive] = useState<MetricKey | "all">("all");
+
+  const seriesColors: Record<MetricKey, string> = {
+    visitors: "hsl(var(--primary))",
+    newUsers: "hsl(142 76% 45%)",
+    activeUsers: "hsl(38 92% 55%)",
+  };
+  const visibleMetrics: MetricKey[] =
+    active === "all" ? METRICS.map((m) => m.key) : [active];
 
   return (
     <Card className="border-0 shadow-sm bg-card">
@@ -43,7 +51,20 @@ export const WebTrafficPanel = ({
           <span className="text-xs text-muted-foreground">Last 7 days</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mb-4 rounded-lg border border-border p-1">
+        <div className="grid grid-cols-4 gap-2 mb-4 rounded-lg border border-border p-1">
+          <button
+            onClick={() => setActive("all")}
+            className={`text-left px-3 py-2 rounded-md transition-colors ${
+              active === "all" ? "bg-muted" : "hover:bg-muted/60"
+            }`}
+          >
+            <div className="text-xs text-muted-foreground">All</div>
+            <div className="text-xl font-bold text-foreground mt-0.5">
+              {loading || !data
+                ? "…"
+                : (data.visitors7d + data.newUsers7d + data.activeUsers7d).toLocaleString()}
+            </div>
+          </button>
           {METRICS.map((m) => {
             const isActive = active === m.key;
             const total = data ? (data[m.totalKey] as number) : 0;
@@ -55,7 +76,13 @@ export const WebTrafficPanel = ({
                   isActive ? "bg-muted" : "hover:bg-muted/60"
                 }`}
               >
-                <div className="text-xs text-muted-foreground">{m.label}</div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ background: seriesColors[m.key] }}
+                  />
+                  {m.label}
+                </div>
                 <div className="text-xl font-bold text-foreground mt-0.5">
                   {loading ? "…" : total.toLocaleString()}
                 </div>
@@ -63,6 +90,7 @@ export const WebTrafficPanel = ({
             );
           })}
         </div>
+
 
         <div className="h-56 w-full rounded-lg border border-border bg-muted/20 p-2">
           {loading || !data ? (
@@ -73,10 +101,12 @@ export const WebTrafficPanel = ({
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data.series} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="trafficFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
+                  {visibleMetrics.map((key) => (
+                    <linearGradient key={key} id={`fill-${key}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={seriesColors[key]} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={seriesColors[key]} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
                 </defs>
                 <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
@@ -89,14 +119,19 @@ export const WebTrafficPanel = ({
                   }}
                   labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey={active}
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  fill="url(#trafficFill)"
-                />
+                {visibleMetrics.map((key) => (
+                  <Area
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    name={METRICS.find((m) => m.key === key)?.label}
+                    stroke={seriesColors[key]}
+                    strokeWidth={2}
+                    fill={`url(#fill-${key})`}
+                  />
+                ))}
               </AreaChart>
+
             </ResponsiveContainer>
           )}
         </div>
