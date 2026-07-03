@@ -352,6 +352,11 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground">Here's what's happening with your platform today.</p>
             </div>
 
+            {/* Web Traffic */}
+            <div className="mb-6">
+              <WebTrafficPanel data={stats?.traffic} loading={statsLoading} />
+            </div>
+
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {statsCards.map((stat, index) => (
