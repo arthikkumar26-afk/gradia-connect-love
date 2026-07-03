@@ -76,6 +76,7 @@ interface AdminStats {
     created_at: string;
     status: string;
   }>;
+  traffic?: TrafficData;
 }
 
 const AdminDashboard = () => {
