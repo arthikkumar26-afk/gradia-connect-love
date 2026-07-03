@@ -115,24 +115,54 @@ Deno.serve(async (req) => {
         );
       }
 
+      const normalizedEmail = String(targetEmail).trim().toLowerCase();
+
+      // Prevent duplicate registration: check profiles first
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email")
+        .ilike("email", normalizedEmail)
+        .maybeSingle();
+
+      if (existingProfile?.id) {
+        return new Response(
+          JSON.stringify({ error: `This email is already registered. Please use a different email or manage the existing user.`, code: "already_registered" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Also check auth.users (in case profile row was deleted but auth user remains)
+      try {
+        const { data: authList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const dup = authList?.users?.find((u: any) => (u.email || "").toLowerCase() === normalizedEmail);
+        if (dup) {
+          return new Response(
+            JSON.stringify({ error: `This email is already registered. Please use a different email or manage the existing user.`, code: "already_registered" }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      } catch (_) { /* ignore lookup failure and fall through to createUser */ }
+
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email: targetEmail,
+        email: normalizedEmail,
         password: userPassword,
         email_confirm: true,
-        user_metadata: { full_name: fullName || targetEmail, role },
+        user_metadata: { full_name: fullName || normalizedEmail, role },
       });
 
       if (createError) {
+        const msg = (createError.message || "").toLowerCase();
+        const isDup = msg.includes("already") && (msg.includes("registered") || msg.includes("exist"));
         return new Response(
-          JSON.stringify({ error: createError.message }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: isDup ? "This email is already registered. Please use a different email or manage the existing user." : createError.message, code: isDup ? "already_registered" : "create_failed" }),
+          { status: isDup ? 409 : 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       await supabaseAdmin.from("profiles").upsert({
         id: newUser.user.id,
-        email: targetEmail,
-        full_name: fullName || targetEmail,
+        email: normalizedEmail,
+        full_name: fullName || normalizedEmail,
         role,
       });
 
