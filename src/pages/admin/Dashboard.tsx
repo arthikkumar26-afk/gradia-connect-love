@@ -51,6 +51,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { formatDistanceToNow } from "date-fns";
+import { WebTrafficPanel, type TrafficData } from "@/components/admin/WebTrafficPanel";
 
 interface AdminStats {
   totalUsers: number;
@@ -75,6 +76,7 @@ interface AdminStats {
     created_at: string;
     status: string;
   }>;
+  traffic?: TrafficData;
 }
 
 const AdminDashboard = () => {
@@ -348,6 +350,11 @@ const AdminDashboard = () => {
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-foreground">Welcome back, Admin</h1>
               <p className="text-muted-foreground">Here's what's happening with your platform today.</p>
+            </div>
+
+            {/* Web Traffic */}
+            <div className="mb-6">
+              <WebTrafficPanel data={stats?.traffic} loading={statsLoading} />
             </div>
 
             {/* Stats Grid */}
