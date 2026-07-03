@@ -33,7 +33,15 @@ export const WebTrafficPanel = ({
   data?: TrafficData | null;
   loading?: boolean;
 }) => {
-  const [active, setActive] = useState<MetricKey>("visitors");
+  const [active, setActive] = useState<MetricKey | "all">("all");
+
+  const seriesColors: Record<MetricKey, string> = {
+    visitors: "hsl(var(--primary))",
+    newUsers: "hsl(142 76% 45%)",
+    activeUsers: "hsl(38 92% 55%)",
+  };
+  const visibleMetrics: MetricKey[] =
+    active === "all" ? METRICS.map((m) => m.key) : [active];
 
   return (
     <Card className="border-0 shadow-sm bg-card">
