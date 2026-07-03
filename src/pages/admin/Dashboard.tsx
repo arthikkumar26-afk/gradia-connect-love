@@ -51,6 +51,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { formatDistanceToNow } from "date-fns";
+import { WebTrafficPanel, type TrafficData } from "@/components/admin/WebTrafficPanel";
 
 interface AdminStats {
   totalUsers: number;
