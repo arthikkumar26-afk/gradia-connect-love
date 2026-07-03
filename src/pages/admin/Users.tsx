@@ -269,6 +269,11 @@ const Users = () => {
       toast({ title: "Missing fields", description: "Please fill all fields.", variant: "destructive" });
       return;
     }
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
     if (password.length < 6) {
       toast({ title: "Weak password", description: "Password must be at least 6 characters.", variant: "destructive" });
       return;
@@ -279,6 +284,27 @@ const Users = () => {
       return;
     }
     setCreateLoading(true);
+    // Client-side duplicate email guard — block before hitting the edge function.
+    try {
+      const { data: existing, error: lookupErr } = await supabase
+        .from("profiles")
+        .select("id")
+        .ilike("email", normalizedEmail)
+        .maybeSingle();
+      if (lookupErr && lookupErr.code !== "PGRST116") throw lookupErr;
+      if (existing?.id) {
+        toast({
+          title: "Email already registered",
+          description: `${normalizedEmail} is already in use. Use a different email.`,
+          variant: "destructive",
+        });
+        setCreateLoading(false);
+        return;
+      }
+    } catch (e: any) {
+      console.error("Email lookup failed:", e);
+      // Don't block on lookup error — server-side guard will still catch it.
+    }
     try {
       const { data, error } = await supabase.functions.invoke("manage-user-roles", {
         body: { action: "create-user", targetEmail: email.trim(), password, fullName: fullName.trim(), role },
