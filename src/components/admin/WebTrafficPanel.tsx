@@ -51,7 +51,20 @@ export const WebTrafficPanel = ({
           <span className="text-xs text-muted-foreground">Last 7 days</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mb-4 rounded-lg border border-border p-1">
+        <div className="grid grid-cols-4 gap-2 mb-4 rounded-lg border border-border p-1">
+          <button
+            onClick={() => setActive("all")}
+            className={`text-left px-3 py-2 rounded-md transition-colors ${
+              active === "all" ? "bg-muted" : "hover:bg-muted/60"
+            }`}
+          >
+            <div className="text-xs text-muted-foreground">All</div>
+            <div className="text-xl font-bold text-foreground mt-0.5">
+              {loading || !data
+                ? "…"
+                : (data.visitors7d + data.newUsers7d + data.activeUsers7d).toLocaleString()}
+            </div>
+          </button>
           {METRICS.map((m) => {
             const isActive = active === m.key;
             const total = data ? (data[m.totalKey] as number) : 0;
@@ -63,7 +76,13 @@ export const WebTrafficPanel = ({
                   isActive ? "bg-muted" : "hover:bg-muted/60"
                 }`}
               >
-                <div className="text-xs text-muted-foreground">{m.label}</div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ background: seriesColors[m.key] }}
+                  />
+                  {m.label}
+                </div>
                 <div className="text-xl font-bold text-foreground mt-0.5">
                   {loading ? "…" : total.toLocaleString()}
                 </div>
@@ -71,6 +90,7 @@ export const WebTrafficPanel = ({
             );
           })}
         </div>
+
 
         <div className="h-56 w-full rounded-lg border border-border bg-muted/20 p-2">
           {loading || !data ? (
