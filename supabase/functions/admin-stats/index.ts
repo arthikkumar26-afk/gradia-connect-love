@@ -131,22 +131,25 @@ serve(async (req) => {
       .select("*", { count: "exact", head: true })
       .gte("created_at", startWindow.toISOString());
 
-    const { count: activeUsers7d } = await adminClient
-      .from("profiles")
-      .select("*", { count: "exact", head: true })
-      .gte("updated_at", startWindow.toISOString());
-
-    const { data: recentProfileRows } = await adminClient
-      .from("profiles")
-      .select("created_at, updated_at")
-      .gte("created_at", startWindow.toISOString())
-      .limit(5000);
-
+    // Fetch all rows updated in window, plus created_at so we can split new vs returning
     const { data: recentActiveRows } = await adminClient
       .from("profiles")
-      .select("updated_at")
+      .select("created_at, updated_at")
       .gte("updated_at", startWindow.toISOString())
-      .limit(5000);
+      .limit(10000);
+
+    // Extra signals for visitors: applications + interview responses
+    const { data: recentApplications } = await adminClient
+      .from("applications")
+      .select("created_at")
+      .gte("created_at", startWindow.toISOString())
+      .limit(10000);
+
+    const { data: recentInterviewResponses } = await adminClient
+      .from("interview_responses")
+      .select("created_at")
+      .gte("created_at", startWindow.toISOString())
+      .limit(10000);
 
     const days: { date: string; label: string; newUsers: number; activeUsers: number; visitors: number }[] = [];
     for (let i = 7; i >= 0; i--) {
@@ -161,23 +164,35 @@ serve(async (req) => {
       });
     }
     const dayIndex = new Map(days.map((d, i) => [d.date, i]));
+    const dayKey = (iso: string) => new Date(iso).toISOString().slice(0, 10);
 
-    (recentProfileRows || []).forEach((r) => {
-      const key = new Date(r.created_at).toISOString().slice(0, 10);
-      const i = dayIndex.get(key);
-      if (i !== undefined) days[i].newUsers += 1;
-    });
+    // newUsers = profiles created on that day
+    // activeUsers = profiles updated that day but NOT created that day (returning)
     (recentActiveRows || []).forEach((r) => {
-      const key = new Date(r.updated_at).toISOString().slice(0, 10);
-      const i = dayIndex.get(key);
-      if (i !== undefined) days[i].activeUsers += 1;
-    });
-    // Visitors ~ combined signal (unique = max of the two per day as a proxy)
-    days.forEach((d) => {
-      d.visitors = Math.max(d.newUsers, d.activeUsers);
+      const uKey = dayKey(r.updated_at);
+      const cKey = dayKey(r.created_at);
+      const i = dayIndex.get(uKey);
+      if (i === undefined) return;
+      if (uKey === cKey) days[i].newUsers += 1;
+      else days[i].activeUsers += 1;
     });
 
+    // Visitors = union of signup + returning + application + interview activity
+    days.forEach((d) => {
+      d.visitors = d.newUsers + d.activeUsers;
+    });
+    (recentApplications || []).forEach((r) => {
+      const i = dayIndex.get(dayKey(r.created_at));
+      if (i !== undefined) days[i].visitors += 1;
+    });
+    (recentInterviewResponses || []).forEach((r) => {
+      const i = dayIndex.get(dayKey(r.created_at));
+      if (i !== undefined) days[i].visitors += 1;
+    });
+
+    const activeUsers7d = days.reduce((s, d) => s + d.activeUsers, 0);
     const visitors7d = days.reduce((s, d) => s + d.visitors, 0);
+
 
     // Get applications count
     const { count: totalApplications } = await adminClient
