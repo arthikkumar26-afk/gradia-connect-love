@@ -198,6 +198,12 @@ serve(async (req) => {
       totalApplications: totalApplications || 0,
       recentUsers: recentUsers || [],
       recentJobs: recentJobs || [],
+      traffic: {
+        visitors7d,
+        newUsers7d: newUsers7d || 0,
+        activeUsers7d: activeUsers7d || 0,
+        series: days,
+      },
     };
 
     return new Response(JSON.stringify(stats), {
