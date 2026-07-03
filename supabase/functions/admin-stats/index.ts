@@ -120,6 +120,65 @@ serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(5);
 
+    // ============ Web traffic-like stats derived from profiles ============
+    const now = new Date();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const startWindow = new Date(now.getTime() - 7 * dayMs);
+    startWindow.setHours(0, 0, 0, 0);
+
+    const { count: newUsers7d } = await adminClient
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("created_at", startWindow.toISOString());
+
+    const { count: activeUsers7d } = await adminClient
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .gte("updated_at", startWindow.toISOString());
+
+    const { data: recentProfileRows } = await adminClient
+      .from("profiles")
+      .select("created_at, updated_at")
+      .gte("created_at", startWindow.toISOString())
+      .limit(5000);
+
+    const { data: recentActiveRows } = await adminClient
+      .from("profiles")
+      .select("updated_at")
+      .gte("updated_at", startWindow.toISOString())
+      .limit(5000);
+
+    const days: { date: string; label: string; newUsers: number; activeUsers: number; visitors: number }[] = [];
+    for (let i = 7; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * dayMs);
+      d.setHours(0, 0, 0, 0);
+      days.push({
+        date: d.toISOString().slice(0, 10),
+        label: d.toLocaleDateString("en-US", { weekday: "short" }),
+        newUsers: 0,
+        activeUsers: 0,
+        visitors: 0,
+      });
+    }
+    const dayIndex = new Map(days.map((d, i) => [d.date, i]));
+
+    (recentProfileRows || []).forEach((r) => {
+      const key = new Date(r.created_at).toISOString().slice(0, 10);
+      const i = dayIndex.get(key);
+      if (i !== undefined) days[i].newUsers += 1;
+    });
+    (recentActiveRows || []).forEach((r) => {
+      const key = new Date(r.updated_at).toISOString().slice(0, 10);
+      const i = dayIndex.get(key);
+      if (i !== undefined) days[i].activeUsers += 1;
+    });
+    // Visitors ~ combined signal (unique = max of the two per day as a proxy)
+    days.forEach((d) => {
+      d.visitors = Math.max(d.newUsers, d.activeUsers);
+    });
+
+    const visitors7d = days.reduce((s, d) => s + d.visitors, 0);
+
     // Get applications count
     const { count: totalApplications } = await adminClient
       .from("applications")
