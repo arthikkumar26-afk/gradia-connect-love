@@ -161,8 +161,8 @@ Deno.serve(async (req) => {
 
       await supabaseAdmin.from("profiles").upsert({
         id: newUser.user.id,
-        email: targetEmail,
-        full_name: fullName || targetEmail,
+        email: normalizedEmail,
+        full_name: fullName || normalizedEmail,
         role,
       });
 
