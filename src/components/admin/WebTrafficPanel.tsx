@@ -101,10 +101,12 @@ export const WebTrafficPanel = ({
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data.series} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="trafficFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
+                  {visibleMetrics.map((key) => (
+                    <linearGradient key={key} id={`fill-${key}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={seriesColors[key]} stopOpacity={0.3} />
+                      <stop offset="100%" stopColor={seriesColors[key]} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
                 </defs>
                 <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} width={28} allowDecimals={false} />
@@ -117,14 +119,19 @@ export const WebTrafficPanel = ({
                   }}
                   labelStyle={{ color: "hsl(var(--foreground))" }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey={active}
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  fill="url(#trafficFill)"
-                />
+                {visibleMetrics.map((key) => (
+                  <Area
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    name={METRICS.find((m) => m.key === key)?.label}
+                    stroke={seriesColors[key]}
+                    strokeWidth={2}
+                    fill={`url(#fill-${key})`}
+                  />
+                ))}
               </AreaChart>
+
             </ResponsiveContainer>
           )}
         </div>
