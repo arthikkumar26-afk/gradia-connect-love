@@ -175,8 +175,30 @@ Return ONLY valid JSON with these fields:
 
     // Normalize arrays to strings
     if (Array.isArray(parsed.requirements)) parsed.requirements = parsed.requirements.join("\n");
+    if (Array.isArray(parsed.responsibilities)) parsed.responsibilities = parsed.responsibilities.join("\n");
     if (Array.isArray(parsed.skills)) parsed.skills = parsed.skills.join(", ");
     if (Array.isArray(parsed.description)) parsed.description = parsed.description.join("\n\n");
+
+    // Normalize job_type to allowed values
+    const jt = String(parsed.job_type || "").toLowerCase();
+    if (/intern/.test(jt)) parsed.job_type = "Internship";
+    else if (/part[\s-]?time/.test(jt)) parsed.job_type = "Part-time";
+    else if (/contract|freelance|contractor|temporary/.test(jt)) parsed.job_type = "Contract";
+    else if (/remote|wfh|work from home/.test(jt)) parsed.job_type = "Remote";
+    else if (/full[\s-]?time|permanent|regular/.test(jt) || !jt) parsed.job_type = "Full-time";
+
+    // Trim location; guard against empties
+    if (typeof parsed.location === "string") parsed.location = parsed.location.trim();
+    if (!parsed.location) parsed.location = "Not specified";
+
+    // Merge responsibilities into requirements so the form's requirements field carries both
+    if (parsed.responsibilities && typeof parsed.responsibilities === "string") {
+      const resp = parsed.responsibilities.trim();
+      if (resp) {
+        const existing = (parsed.requirements || "").toString().trim();
+        parsed.requirements = `Responsibilities:\n${resp}${existing ? `\n\nRequirements:\n${existing}` : ""}`;
+      }
+    }
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
