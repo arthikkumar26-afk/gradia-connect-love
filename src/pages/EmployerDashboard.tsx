@@ -53,6 +53,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { JobManagementContent } from "@/components/employer/JobManagementContent";
+import { InlineJobCreationForm } from "@/components/employer/InlineJobCreationForm";
 import TalentPoolContent from "@/components/employer/TalentPoolContent";
 import PlacementsContent from "@/components/employer/PlacementsContent";
 import { TeamsContent } from "@/components/employer/TeamsContent";
