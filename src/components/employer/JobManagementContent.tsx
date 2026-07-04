@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Eye, Pencil, Plus, Loader2, FilePlus2, ArrowRight, ArrowLeft, QrCode, Globe, Send } from "lucide-react";
+import { Search, Filter, Eye, Pencil, Plus, Loader2, QrCode, Globe, Send } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { JobDetailsDrawer } from "./JobDetailsDrawer";
 import { InlineJobCreationForm } from "./InlineJobCreationForm";
