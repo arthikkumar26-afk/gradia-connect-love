@@ -54,7 +54,9 @@ export const JobManagementContent = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formOpenCount, setFormOpenCount] = useState(0);
   const navigate = useNavigate();
-  const toggleCreateForm = () => navigate("/employer/create-position");
+  const toggleCreateForm = () => {
+    window.dispatchEvent(new CustomEvent("employer:navigate", { detail: { menu: "create-position" } }));
+  };
   const closeCreateForm = () => setShowCreateForm(false);
   const [editingCell, setEditingCell] = useState<{ jobId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");

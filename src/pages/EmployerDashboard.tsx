@@ -53,6 +53,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { JobManagementContent } from "@/components/employer/JobManagementContent";
+import { InlineJobCreationForm } from "@/components/employer/InlineJobCreationForm";
 import TalentPoolContent from "@/components/employer/TalentPoolContent";
 import PlacementsContent from "@/components/employer/PlacementsContent";
 import { TeamsContent } from "@/components/employer/TeamsContent";
@@ -814,6 +815,12 @@ const EmployerDashboard = () => {
             {activeMenu === "wallet" && user?.id && <WalletTab userId={user.id} />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
             {activeMenu === "settings" && <EmployerSettingsContent />}
+            {activeMenu === "create-position" && (
+              <InlineJobCreationForm
+                onJobCreated={() => setActiveMenu("jobs")}
+                onCancel={() => setActiveMenu("jobs")}
+              />
+            )}
             
           </div>
         </main>
