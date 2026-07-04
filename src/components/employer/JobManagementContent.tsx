@@ -402,12 +402,7 @@ export const JobManagementContent = () => {
               variant="cta"
               size="sm"
               className="gap-2 rounded-full px-5"
-              onClick={() => {
-                setShowCreateForm((s) => !s);
-                setTimeout(() => {
-                  document.getElementById("create-position-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }, 50);
-              }}
+              onClick={toggleCreateForm}
             >
               <Plus className="h-4 w-4" />
               {showCreateForm ? "Close Create Position" : "Create Position"}
