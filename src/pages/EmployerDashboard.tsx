@@ -814,6 +814,12 @@ const EmployerDashboard = () => {
             {activeMenu === "wallet" && user?.id && <WalletTab userId={user.id} />}
             {activeMenu === "upgrade-plan" && <UpgradePlanContent />}
             {activeMenu === "settings" && <EmployerSettingsContent />}
+            {activeMenu === "create-position" && (
+              <InlineJobCreationForm
+                onJobCreated={() => setActiveMenu("jobs")}
+                onCancel={() => setActiveMenu("jobs")}
+              />
+            )}
             
           </div>
         </main>
