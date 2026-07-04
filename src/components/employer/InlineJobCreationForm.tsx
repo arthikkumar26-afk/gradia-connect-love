@@ -883,7 +883,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                 <Badge variant="secondary" className="text-[10px]">Smart Fill</Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Paste requirement text or upload a document (PDF/Word/Excel) — AI will auto-fill the entire vacancy form.
+                Paste requirement text, upload a document (PDF/Word/Excel) or an image (PNG/JPG) — AI will read it and auto-fill the entire vacancy form.
               </p>
               
               <Textarea
@@ -897,7 +897,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg,.webp,.gif,.bmp,image/*"
                   className="hidden"
                   onChange={handleFileUpload}
                 />
@@ -909,7 +909,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                   className="gap-1.5"
                 >
                   <Upload className="h-3.5 w-3.5" />
-                  Upload Document
+                  Upload Document / Image
                 </Button>
                 {uploadedFileName && (
                   <Badge variant="outline" className="gap-1 text-xs">
