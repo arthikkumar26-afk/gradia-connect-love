@@ -52,6 +52,18 @@ export const JobManagementContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formOpenCount, setFormOpenCount] = useState(0);
+  const toggleCreateForm = () => {
+    setShowCreateForm((s) => {
+      const next = !s;
+      if (next) setFormOpenCount((c) => c + 1);
+      return next;
+    });
+    setTimeout(() => {
+      document.getElementById("create-position-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
+  const closeCreateForm = () => setShowCreateForm(false);
   const [editingCell, setEditingCell] = useState<{ jobId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [industryCategory, setIndustryCategory] = useState<string>("");
@@ -390,12 +402,7 @@ export const JobManagementContent = () => {
               variant="cta"
               size="sm"
               className="gap-2 rounded-full px-5"
-              onClick={() => {
-                setShowCreateForm((s) => !s);
-                setTimeout(() => {
-                  document.getElementById("create-position-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }, 50);
-              }}
+              onClick={toggleCreateForm}
             >
               <Plus className="h-4 w-4" />
               {showCreateForm ? "Close Create Position" : "Create Position"}
@@ -668,7 +675,7 @@ export const JobManagementContent = () => {
                 variant="cta"
                 size="lg"
                 className="rounded-full px-9 gap-2 text-sm"
-                onClick={() => setShowCreateForm(!showCreateForm)}
+                onClick={toggleCreateForm}
               >
                 {showCreateForm ? "Close" : "Continue"}
                 <ArrowRight className={`h-4 w-4 transition-transform ${showCreateForm ? "rotate-90" : ""}`} />
@@ -679,11 +686,12 @@ export const JobManagementContent = () => {
           {/* Inline Form - appears below the card */}
           {showCreateForm && (
             <InlineJobCreationForm
+              key={`create-position-${formOpenCount}`}
               onJobCreated={() => {
-                setShowCreateForm(false);
+                closeCreateForm();
                 fetchJobs();
               }}
-              onCancel={() => setShowCreateForm(false)}
+              onCancel={closeCreateForm}
             />
           )}
         </div>
