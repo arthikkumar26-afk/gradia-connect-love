@@ -141,8 +141,8 @@ serve(async (req) => {
     // Extra signals for visitors: applications + interview responses
     const { data: recentApplications } = await adminClient
       .from("applications")
-      .select("created_at")
-      .gte("created_at", startWindow.toISOString())
+      .select("applied_date")
+      .gte("applied_date", startWindow.toISOString())
       .limit(10000);
 
     const { data: recentInterviewResponses } = await adminClient
