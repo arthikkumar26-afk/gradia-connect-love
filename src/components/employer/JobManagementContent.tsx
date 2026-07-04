@@ -52,6 +52,18 @@ export const JobManagementContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formOpenCount, setFormOpenCount] = useState(0);
+  const toggleCreateForm = () => {
+    setShowCreateForm((s) => {
+      const next = !s;
+      if (next) setFormOpenCount((c) => c + 1);
+      return next;
+    });
+    setTimeout(() => {
+      document.getElementById("create-position-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  };
+  const closeCreateForm = () => setShowCreateForm(false);
   const [editingCell, setEditingCell] = useState<{ jobId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");
   const [industryCategory, setIndustryCategory] = useState<string>("");
