@@ -386,6 +386,20 @@ export const JobManagementContent = () => {
                 </SelectContent>
               </Select>
             </div>
+            <Button
+              variant="cta"
+              size="sm"
+              className="gap-2 rounded-full px-5"
+              onClick={() => {
+                setShowCreateForm((s) => !s);
+                setTimeout(() => {
+                  document.getElementById("create-position-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 50);
+              }}
+            >
+              <Plus className="h-4 w-4" />
+              {showCreateForm ? "Close Create Position" : "Create Position"}
+            </Button>
           </div>
 
           {/* Jobs Table */}
