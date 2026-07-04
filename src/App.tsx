@@ -102,6 +102,7 @@ const AllCategories = lazyWithRetry(() => import("./pages/learning/AllCategories
 const CandidateDashboard = lazyWithRetry(() => import("./pages/candidate/Dashboard"));
 const EditProfile = lazyWithRetry(() => import("./pages/EditProfile"));
 const PostJob = lazyWithRetry(() => import("./pages/employer/PostJob"));
+const CreatePosition = lazyWithRetry(() => import("./pages/employer/CreatePosition"));
 const CompanyJobs = lazyWithRetry(() => import("./pages/CompanyJobs"));
 const JobApply = lazyWithRetry(() => import("./pages/JobApply"));
 const Interview = lazyWithRetry(() => import("./pages/Interview"));
@@ -256,7 +257,9 @@ const MainRoutes = () => (
         <Route path="/employer/candidate/:candidateId" element={<CandidateProfilePage />} />
         <Route path="/learning-platform" element={<LearningPlatform />} />
         <Route path="/employer/post-job" element={<PostJob />} />
+        <Route path="/employer/create-position" element={<CreatePosition />} />
         <Route path="/employer/job-requirements" element={<JobRequirements />} />
+
         <Route path="/employer/shortlist" element={<PlaceholderPage title="Candidate Shortlist" />} />
         <Route path="/employer/campus-hiring" element={<PlaceholderPage title="Campus Hiring" />} />
         <Route path="/employer/partnerships" element={<PlaceholderPage title="Partnerships" />} />

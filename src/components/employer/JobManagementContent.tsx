@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -53,16 +53,8 @@ export const JobManagementContent = () => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formOpenCount, setFormOpenCount] = useState(0);
-  const toggleCreateForm = () => {
-    setShowCreateForm((s) => {
-      const next = !s;
-      if (next) setFormOpenCount((c) => c + 1);
-      return next;
-    });
-    setTimeout(() => {
-      document.getElementById("create-position-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 60);
-  };
+  const navigate = useNavigate();
+  const toggleCreateForm = () => navigate("/employer/create-position");
   const closeCreateForm = () => setShowCreateForm(false);
   const [editingCell, setEditingCell] = useState<{ jobId: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");
