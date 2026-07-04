@@ -90,6 +90,14 @@ For detected_pipeline_type, match the pipeline category within the interview typ
 - For legal: "advocate", "legal_advisor"
 - For standard: "general"
 
+EXTRACTION RULES (very important — the source may be OCR'd from an image with labeled sections like "Job Title:", "Location:", "Job Type:", "Responsibilities:"):
+- job_title: use the exact "Job Title:" line verbatim if present; otherwise infer the most specific role phrase (e.g. "Senior React Developer"). Do NOT return generic words like "Job" or "Vacancy".
+- location: copy the "Location:" line verbatim (city, state, country, Remote/Hybrid). If multiple, join with " / ". If truly absent, use "Not specified".
+- job_type: MUST be exactly one of Full-time | Part-time | Contract | Internship | Remote. Map: "intern"→Internship, "freelance"/"contractor"→Contract, "wfh"/"work from home"→Remote, "permanent"/"regular"→Full-time. Default to Full-time only if no signal.
+- description: 2-3 paragraph overview about the role, company and impact. Do NOT dump bullets here.
+- requirements: multi-line string, one requirement per line, prefixed with "- ". Include qualifications, experience, must-have skills.
+- responsibilities: capture EVERY bullet under "Responsibilities:" / "Duties:" / "What you'll do" as a multi-line string, one item per line prefixed with "- ". Never merge bullets.
+
 Return ONLY valid JSON with these fields:
 {
   "job_title": "string - the job title",
@@ -98,8 +106,9 @@ Return ONLY valid JSON with these fields:
   "location": "string - job location",
   "experience_required": "0-1 years|1-3 years|3-5 years|5-8 years|8+ years",
   "salary_range": "string - salary range or Negotiable",
-  "description": "string - detailed 3-4 paragraph job description",
-  "requirements": "string - comprehensive list of requirements",
+  "description": "string - 2-3 paragraph job description (no bullets)",
+  "responsibilities": "string - bullet list, one per line prefixed with '- '",
+  "requirements": "string - bullet list of requirements, one per line prefixed with '- '",
   "skills": "string - comma-separated list of 5-10 skills",
   "organisation": "string - organization name if mentioned",
   "detected_interview_type": "education|it_corporate|non_it_corporate|legal|standard",
@@ -166,8 +175,30 @@ Return ONLY valid JSON with these fields:
 
     // Normalize arrays to strings
     if (Array.isArray(parsed.requirements)) parsed.requirements = parsed.requirements.join("\n");
+    if (Array.isArray(parsed.responsibilities)) parsed.responsibilities = parsed.responsibilities.join("\n");
     if (Array.isArray(parsed.skills)) parsed.skills = parsed.skills.join(", ");
     if (Array.isArray(parsed.description)) parsed.description = parsed.description.join("\n\n");
+
+    // Normalize job_type to allowed values
+    const jt = String(parsed.job_type || "").toLowerCase();
+    if (/intern/.test(jt)) parsed.job_type = "Internship";
+    else if (/part[\s-]?time/.test(jt)) parsed.job_type = "Part-time";
+    else if (/contract|freelance|contractor|temporary/.test(jt)) parsed.job_type = "Contract";
+    else if (/remote|wfh|work from home/.test(jt)) parsed.job_type = "Remote";
+    else if (/full[\s-]?time|permanent|regular/.test(jt) || !jt) parsed.job_type = "Full-time";
+
+    // Trim location; guard against empties
+    if (typeof parsed.location === "string") parsed.location = parsed.location.trim();
+    if (!parsed.location) parsed.location = "Not specified";
+
+    // Merge responsibilities into requirements so the form's requirements field carries both
+    if (parsed.responsibilities && typeof parsed.responsibilities === "string") {
+      const resp = parsed.responsibilities.trim();
+      if (resp) {
+        const existing = (parsed.requirements || "").toString().trim();
+        parsed.requirements = `Responsibilities:\n${resp}${existing ? `\n\nRequirements:\n${existing}` : ""}`;
+      }
+    }
 
     return new Response(JSON.stringify(parsed), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
