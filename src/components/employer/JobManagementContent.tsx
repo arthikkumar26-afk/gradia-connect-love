@@ -650,48 +650,5 @@ export const JobManagementContent = () => {
         />
       </>
     );
-  }
-
-  // Default hero card view
-  return (
-    <div className="space-y-6">
-      <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
-        <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-5">
-            <FilePlus2 className="h-10 w-10 text-primary-foreground" />
-          </div>
-
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            Job Templates
-          </h2>
-
-          <p className="text-muted-foreground text-sm max-w-md mb-5">
-            Manage all your job templates, track applications, and create new vacancies for quick and consistent hiring
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-            <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-              Active Positions
-            </Badge>
-            <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-              Quick Posting
-            </Badge>
-            <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-              Pipeline Tracking
-            </Badge>
-          </div>
-
-          <Button
-            variant="cta"
-            size="lg"
-            className="rounded-full px-10 gap-2 text-base"
-            onClick={() => setShowTemplates(true)}
-          >
-            Templates
-            <ArrowRight className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+  };
 };
