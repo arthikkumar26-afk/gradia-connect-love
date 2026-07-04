@@ -90,6 +90,14 @@ For detected_pipeline_type, match the pipeline category within the interview typ
 - For legal: "advocate", "legal_advisor"
 - For standard: "general"
 
+EXTRACTION RULES (very important — the source may be OCR'd from an image with labeled sections like "Job Title:", "Location:", "Job Type:", "Responsibilities:"):
+- job_title: use the exact "Job Title:" line verbatim if present; otherwise infer the most specific role phrase (e.g. "Senior React Developer"). Do NOT return generic words like "Job" or "Vacancy".
+- location: copy the "Location:" line verbatim (city, state, country, Remote/Hybrid). If multiple, join with " / ". If truly absent, use "Not specified".
+- job_type: MUST be exactly one of Full-time | Part-time | Contract | Internship | Remote. Map: "intern"→Internship, "freelance"/"contractor"→Contract, "wfh"/"work from home"→Remote, "permanent"/"regular"→Full-time. Default to Full-time only if no signal.
+- description: 2-3 paragraph overview about the role, company and impact. Do NOT dump bullets here.
+- requirements: multi-line string, one requirement per line, prefixed with "- ". Include qualifications, experience, must-have skills.
+- responsibilities: capture EVERY bullet under "Responsibilities:" / "Duties:" / "What you'll do" as a multi-line string, one item per line prefixed with "- ". Never merge bullets.
+
 Return ONLY valid JSON with these fields:
 {
   "job_title": "string - the job title",
@@ -98,8 +106,9 @@ Return ONLY valid JSON with these fields:
   "location": "string - job location",
   "experience_required": "0-1 years|1-3 years|3-5 years|5-8 years|8+ years",
   "salary_range": "string - salary range or Negotiable",
-  "description": "string - detailed 3-4 paragraph job description",
-  "requirements": "string - comprehensive list of requirements",
+  "description": "string - 2-3 paragraph job description (no bullets)",
+  "responsibilities": "string - bullet list, one per line prefixed with '- '",
+  "requirements": "string - bullet list of requirements, one per line prefixed with '- '",
   "skills": "string - comma-separated list of 5-10 skills",
   "organisation": "string - organization name if mentioned",
   "detected_interview_type": "education|it_corporate|non_it_corporate|legal|standard",
