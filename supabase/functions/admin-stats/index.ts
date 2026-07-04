@@ -141,8 +141,8 @@ serve(async (req) => {
     // Extra signals for visitors: applications + interview responses
     const { data: recentApplications } = await adminClient
       .from("applications")
-      .select("created_at")
-      .gte("created_at", startWindow.toISOString())
+      .select("applied_date")
+      .gte("applied_date", startWindow.toISOString())
       .limit(10000);
 
     const { data: recentInterviewResponses } = await adminClient
@@ -182,7 +182,7 @@ serve(async (req) => {
       d.visitors = d.newUsers + d.activeUsers;
     });
     (recentApplications || []).forEach((r) => {
-      const i = dayIndex.get(dayKey(r.created_at));
+      const i = dayIndex.get(dayKey(r.applied_date));
       if (i !== undefined) days[i].visitors += 1;
     });
     (recentInterviewResponses || []).forEach((r) => {
