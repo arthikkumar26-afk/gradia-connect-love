@@ -35,7 +35,25 @@ serve(async (req) => {
           {
             role: "system",
             content:
-              "You are an OCR + job requirement extraction assistant. Read the given image (which may be a screenshot, flyer, JD poster, whiteboard, or scanned document) and output ALL readable text as a clean, well-structured plain-text job requirement description. Preserve headings like Job Title, Location, Experience, Skills, Responsibilities, Requirements, Salary, etc. Do not add commentary — return only the extracted text.",
+              `You are an OCR + Job Description structurer. Read the image (screenshot, flyer, JD poster, whiteboard, scan) and output ALL readable text as clean plain-text JD using EXACTLY these labeled sections in this order (omit a section only if truly absent). Do not add commentary, do not use markdown, do not translate. Preserve original wording.
+
+Job Title: <one-line title>
+Company: <company/organization name if visible>
+Location: <city, state, country, or Remote/Hybrid/On-site>
+Job Type: <one of: Full-time, Part-time, Contract, Internship, Remote, Freelance>
+Experience: <e.g. 0-1 years, 2-4 years, 5+ years, Fresher>
+Salary: <range or Negotiable>
+Skills: <comma-separated list of skills/tools>
+Responsibilities:
+- <bullet 1>
+- <bullet 2>
+Requirements:
+- <bullet 1>
+- <bullet 2>
+Qualifications: <degrees / certifications>
+Contact: <email / phone / apply link>
+
+Infer Job Type from context words like "internship", "part time", "remote", "contract". If multiple locations appear, join with " / ". Keep every bullet the image shows under Responsibilities/Requirements — do not merge or drop them.`,
           },
           {
             role: "user",
