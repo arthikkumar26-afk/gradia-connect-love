@@ -643,56 +643,18 @@ export const JobManagementContent = () => {
             </div>
           </div>
 
-          {/* Create Position Card - always visible */}
-          <div id="create-position-section" className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-
-            <div className="flex flex-col items-center justify-center py-7 px-5 text-center">
-              <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mb-4">
-                <Plus className="h-7 w-7 text-primary-foreground" />
-              </div>
-
-              <h2 className="text-xl font-bold text-foreground mb-1.5">
-                Create Position
-              </h2>
-
-              <p className="text-muted-foreground text-sm max-w-md mb-4">
-                Post a new education position with interview pipeline, requirements, and start receiving applications instantly
-              </p>
-
-              <div className="flex flex-wrap items-center justify-center gap-2 mb-5">
-                <Badge variant="outline" className="rounded-full px-3.5 py-0.5 text-xs font-medium border-primary/30 text-primary">
-                  Job Posting
-                </Badge>
-                <Badge variant="outline" className="rounded-full px-3.5 py-0.5 text-xs font-medium border-primary/30 text-primary">
-                  Pipeline Setup
-                </Badge>
-                <Badge variant="outline" className="rounded-full px-3.5 py-0.5 text-xs font-medium border-primary/30 text-primary">
-                  AI Screening
-                </Badge>
-              </div>
-
-              <Button
-                variant="cta"
-                size="lg"
-                className="rounded-full px-9 gap-2 text-sm"
-                onClick={toggleCreateForm}
-              >
-                {showCreateForm ? "Close" : "Continue"}
-                <ArrowRight className={`h-4 w-4 transition-transform ${showCreateForm ? "rotate-90" : ""}`} />
-              </Button>
-            </div>
-          </div>
-
-          {/* Inline Form - appears below the card */}
+          {/* Inline Form - appears below the table when triggered by the top Create Position button */}
           {showCreateForm && (
-            <InlineJobCreationForm
-              key={`create-position-${formOpenCount}`}
-              onJobCreated={() => {
-                closeCreateForm();
-                fetchJobs();
-              }}
-              onCancel={closeCreateForm}
-            />
+            <div id="create-position-section">
+              <InlineJobCreationForm
+                key={`create-position-${formOpenCount}`}
+                onJobCreated={() => {
+                  closeCreateForm();
+                  fetchJobs();
+                }}
+                onCancel={closeCreateForm}
+              />
+            </div>
           )}
         </div>
 
