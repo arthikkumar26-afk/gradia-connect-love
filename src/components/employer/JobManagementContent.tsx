@@ -346,8 +346,6 @@ export const JobManagementContent = () => {
     );
   });
 
-  // Templates full page view
-  if (showTemplates) {
     return (
       <>
         <div className="space-y-6">
