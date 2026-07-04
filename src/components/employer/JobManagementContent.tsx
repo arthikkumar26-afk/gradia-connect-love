@@ -349,15 +349,6 @@ export const JobManagementContent = () => {
     return (
       <>
         <div className="space-y-6">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            className="gap-2 text-muted-foreground hover:text-foreground"
-            onClick={() => setShowTemplates(false)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Positions
-          </Button>
 
           {/* Header row with search, filter, and Create Vacancy */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
