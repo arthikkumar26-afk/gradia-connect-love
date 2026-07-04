@@ -368,6 +368,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const isImage = file.type.startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name);
     const allowedTypes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -377,13 +378,44 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
       'text/plain',
     ];
 
-    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|docx?|xlsx?|txt)$/i)) {
-      toast({ title: "Unsupported file", description: "Please upload PDF, Word, Excel, or Text files.", variant: "destructive" });
+    if (!isImage && !allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|docx?|xlsx?|txt)$/i)) {
+      toast({ title: "Unsupported file", description: "Upload PDF, Word, Excel, Text or Image (PNG/JPG).", variant: "destructive" });
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "File too large", description: "Maximum file size is 5MB.", variant: "destructive" });
+      return;
+    }
+
+    setUploadedFileName(file.name);
+
+    // For images, OCR via edge function
+    if (isImage) {
+      try {
+        toast({ title: "Reading image...", description: "Extracting text from image via AI." });
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const { data, error } = await supabase.functions.invoke("extract-image-text", {
+          body: { imageBase64: base64, mimeType: file.type, fileName: file.name },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        const extracted = (data?.text || "").trim();
+        if (!extracted) {
+          toast({ title: "No text found", description: "Could not extract text from the image.", variant: "destructive" });
+          return;
+        }
+        setRequirementText(extracted);
+        toast({ title: "Image parsed!", description: "Click 'AI Create Vacancy' to auto-fill the form." });
+      } catch (err: any) {
+        console.error("Image OCR error:", err);
+        toast({ title: "Image parsing failed", description: err.message || "Please try again.", variant: "destructive" });
+      }
       return;
     }
 
@@ -851,7 +883,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                 <Badge variant="secondary" className="text-[10px]">Smart Fill</Badge>
               </div>
               <p className="text-xs text-muted-foreground">
-                Paste requirement text or upload a document (PDF/Word/Excel) — AI will auto-fill the entire vacancy form.
+                Paste requirement text, upload a document (PDF/Word/Excel) or an image (PNG/JPG) — AI will read it and auto-fill the entire vacancy form.
               </p>
               
               <Textarea
@@ -865,7 +897,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.png,.jpg,.jpeg,.webp,.gif,.bmp,image/*"
                   className="hidden"
                   onChange={handleFileUpload}
                 />
@@ -877,7 +909,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                   className="gap-1.5"
                 >
                   <Upload className="h-3.5 w-3.5" />
-                  Upload Document
+                  Upload Document / Image
                 </Button>
                 {uploadedFileName && (
                   <Badge variant="outline" className="gap-1 text-xs">
