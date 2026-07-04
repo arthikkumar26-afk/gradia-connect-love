@@ -62,7 +62,7 @@ export const WebTrafficPanel = ({
             <div className="text-xl font-bold text-foreground mt-0.5">
               {loading || !data
                 ? "…"
-                : (data.visitors7d + data.newUsers7d + data.activeUsers7d).toLocaleString()}
+                : data.visitors7d.toLocaleString()}
             </div>
           </button>
           {METRICS.map((m) => {
