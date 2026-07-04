@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Eye, Pencil, Plus, Loader2, FilePlus2, ArrowRight, ArrowLeft, QrCode, Globe, Send } from "lucide-react";
+import { Search, Filter, Eye, Pencil, Plus, Loader2, QrCode, Globe, Send } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { JobDetailsDrawer } from "./JobDetailsDrawer";
 import { InlineJobCreationForm } from "./InlineJobCreationForm";
@@ -50,7 +50,7 @@ export const JobManagementContent = () => {
   const [drawerMode, setDrawerMode] = useState<"view" | "edit">("view");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showTemplates, setShowTemplates] = useState(false);
+  
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formOpenCount, setFormOpenCount] = useState(0);
   const navigate = useNavigate();
@@ -346,20 +346,9 @@ export const JobManagementContent = () => {
     );
   });
 
-  // Templates full page view
-  if (showTemplates) {
     return (
       <>
         <div className="space-y-6">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            className="gap-2 text-muted-foreground hover:text-foreground"
-            onClick={() => setShowTemplates(false)}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Positions
-          </Button>
 
           {/* Header row with search, filter, and Create Vacancy */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -661,48 +650,3 @@ export const JobManagementContent = () => {
         />
       </>
     );
-  }
-
-  // Default hero card view
-  return (
-    <div className="space-y-6">
-      <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
-        <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-primary flex items-center justify-center mb-5">
-            <FilePlus2 className="h-10 w-10 text-primary-foreground" />
-          </div>
-
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            Job Templates
-          </h2>
-
-          <p className="text-muted-foreground text-sm max-w-md mb-5">
-            Manage all your job templates, track applications, and create new vacancies for quick and consistent hiring
-          </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-            <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-              Active Positions
-            </Badge>
-            <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-              Quick Posting
-            </Badge>
-            <Badge variant="outline" className="rounded-full px-4 py-1 text-xs font-medium border-primary/30 text-primary">
-              Pipeline Tracking
-            </Badge>
-          </div>
-
-          <Button
-            variant="cta"
-            size="lg"
-            className="rounded-full px-10 gap-2 text-base"
-            onClick={() => setShowTemplates(true)}
-          >
-            Templates
-            <ArrowRight className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
