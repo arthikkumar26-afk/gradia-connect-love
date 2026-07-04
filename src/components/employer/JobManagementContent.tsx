@@ -50,7 +50,7 @@ export const JobManagementContent = () => {
   const [drawerMode, setDrawerMode] = useState<"view" | "edit">("view");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showTemplates, setShowTemplates] = useState(false);
+  
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formOpenCount, setFormOpenCount] = useState(0);
   const navigate = useNavigate();
