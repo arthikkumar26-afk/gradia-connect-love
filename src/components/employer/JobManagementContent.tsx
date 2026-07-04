@@ -675,7 +675,7 @@ export const JobManagementContent = () => {
                 variant="cta"
                 size="lg"
                 className="rounded-full px-9 gap-2 text-sm"
-                onClick={() => setShowCreateForm(!showCreateForm)}
+                onClick={toggleCreateForm}
               >
                 {showCreateForm ? "Close" : "Continue"}
                 <ArrowRight className={`h-4 w-4 transition-transform ${showCreateForm ? "rotate-90" : ""}`} />
@@ -686,11 +686,12 @@ export const JobManagementContent = () => {
           {/* Inline Form - appears below the card */}
           {showCreateForm && (
             <InlineJobCreationForm
+              key={`create-position-${formOpenCount}`}
               onJobCreated={() => {
-                setShowCreateForm(false);
+                closeCreateForm();
                 fetchJobs();
               }}
-              onCancel={() => setShowCreateForm(false)}
+              onCancel={closeCreateForm}
             />
           )}
         </div>
