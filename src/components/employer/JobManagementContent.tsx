@@ -637,7 +637,8 @@ export const JobManagementContent = () => {
           </div>
 
           {/* Create Position Card - always visible */}
-          <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+          <div id="create-position-section" className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+
             <div className="flex flex-col items-center justify-center py-7 px-5 text-center">
               <div className="w-14 h-14 rounded-full bg-primary flex items-center justify-center mb-4">
                 <Plus className="h-7 w-7 text-primary-foreground" />
