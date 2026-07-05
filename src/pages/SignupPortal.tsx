@@ -112,6 +112,29 @@ interface FormErrors {
   contactNumber?: string;
 }
 
+const COUNTRIES: { code: string; name: string; flag: string; dial: string }[] = [
+  { code: "IN", name: "India", flag: "🇮🇳", dial: "+91" },
+  { code: "US", name: "United States", flag: "🇺🇸", dial: "+1" },
+  { code: "GB", name: "United Kingdom", flag: "🇬🇧", dial: "+44" },
+  { code: "CA", name: "Canada", flag: "🇨🇦", dial: "+1" },
+  { code: "AU", name: "Australia", flag: "🇦🇺", dial: "+61" },
+  { code: "AE", name: "United Arab Emirates", flag: "🇦🇪", dial: "+971" },
+  { code: "SA", name: "Saudi Arabia", flag: "🇸🇦", dial: "+966" },
+  { code: "SG", name: "Singapore", flag: "🇸🇬", dial: "+65" },
+  { code: "MY", name: "Malaysia", flag: "🇲🇾", dial: "+60" },
+  { code: "DE", name: "Germany", flag: "🇩🇪", dial: "+49" },
+  { code: "FR", name: "France", flag: "🇫🇷", dial: "+33" },
+  { code: "NL", name: "Netherlands", flag: "🇳🇱", dial: "+31" },
+  { code: "ZA", name: "South Africa", flag: "🇿🇦", dial: "+27" },
+  { code: "NG", name: "Nigeria", flag: "🇳🇬", dial: "+234" },
+  { code: "KE", name: "Kenya", flag: "🇰🇪", dial: "+254" },
+  { code: "BR", name: "Brazil", flag: "🇧🇷", dial: "+55" },
+  { code: "JP", name: "Japan", flag: "🇯🇵", dial: "+81" },
+  { code: "PH", name: "Philippines", flag: "🇵🇭", dial: "+63" },
+  { code: "ID", name: "Indonesia", flag: "🇮🇩", dial: "+62" },
+  { code: "OTHER", name: "Other", flag: "🌍", dial: "" },
+];
+
 const SignupPortal = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -121,6 +144,33 @@ const SignupPortal = () => {
   const [selectedRole, setSelectedRole] = useState<UserRole>(null);
   const [activeSection, setActiveSection] = useState<SidebarOption>("registration");
   const [tourRunKey, setTourRunKey] = useState(0);
+  const [selectedCountry, setSelectedCountry] = useState<string>(() => localStorage.getItem("gradia.signup.country") || "");
+  const [pendingRoleAction, setPendingRoleAction] = useState<null | (() => void)>(null);
+  const [countryStep, setCountryStep] = useState<"role" | "country">("role");
+
+  useEffect(() => {
+    if (selectedCountry) localStorage.setItem("gradia.signup.country", selectedCountry);
+  }, [selectedCountry]);
+
+  const chooseRole = (goto: () => void) => {
+    if (!selectedCountry) {
+      setPendingRoleAction(() => goto);
+      setCountryStep("country");
+      return;
+    }
+    goto();
+  };
+
+  const confirmCountryAndProceed = () => {
+    if (!selectedCountry) {
+      toast({ title: "Select a country", description: "Please pick your country to continue.", variant: "destructive" });
+      return;
+    }
+    const action = pendingRoleAction;
+    setPendingRoleAction(null);
+    setCountryStep("role");
+    action?.();
+  };
 
   // Read URL query parameters on mount
   useEffect(() => {
