@@ -855,24 +855,91 @@ const SignupPortal = () => {
             </Button>
           </div>
 
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <img 
               src={gradiaLogo} 
               alt="Gradia" 
               className="h-16 w-auto mx-auto mb-6 bg-white/10 rounded-lg p-2"
             />
-            <h1 className="text-4xl font-bold text-white mb-4">Who are you?</h1>
-            <p className="text-slate-400 text-lg">
-              Select your role to continue with registration
-            </p>
+            {countryStep === "country" ? (
+              <>
+                <h1 className="text-4xl font-bold text-white mb-3">Where are you based?</h1>
+                <p className="text-slate-400 text-lg">Pick your country so we can tailor jobs, currency and compliance.</p>
+              </>
+            ) : (
+              <>
+                <h1 className="text-4xl font-bold text-white mb-3">Who are you?</h1>
+                <p className="text-slate-400 text-lg">Select your role to continue with registration</p>
+              </>
+            )}
           </div>
 
+          {/* Global country picker — always visible on the role screen */}
+          {countryStep === "role" && (
+            <div className="max-w-xl mx-auto mb-10 bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex-1">
+                <label className="text-xs uppercase tracking-wider text-slate-400 font-semibold">🌐 Country</label>
+                <Select value={selectedCountry} onValueChange={setSelectedCountry}>
+                  <SelectTrigger className="mt-1 bg-slate-900/60 border-slate-600 text-white">
+                    <SelectValue placeholder="Select your country" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {COUNTRIES.map(c => (
+                      <SelectItem key={c.code} value={c.code}>
+                        <span className="mr-2">{c.flag}</span>{c.name}{c.dial && <span className="text-muted-foreground ml-2">({c.dial})</span>}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedCountry && (
+                <div className="text-xs text-slate-400 sm:self-end sm:pb-2">
+                  ✓ Signing up as <span className="text-white font-medium">{COUNTRIES.find(c => c.code === selectedCountry)?.name}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {countryStep === "country" ? (
+            <div className="max-w-2xl mx-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
+                {COUNTRIES.map(c => {
+                  const active = selectedCountry === c.code;
+                  return (
+                    <button
+                      key={c.code}
+                      onClick={() => setSelectedCountry(c.code)}
+                      className={cn(
+                        "border rounded-xl p-3 text-left transition",
+                        active
+                          ? "border-blue-500 bg-blue-500/10 ring-2 ring-blue-500/30"
+                          : "border-slate-700 bg-slate-800/50 hover:border-slate-500"
+                      )}
+                    >
+                      <div className="text-2xl mb-1">{c.flag}</div>
+                      <div className="text-sm text-white font-medium leading-tight">{c.name}</div>
+                      {c.dial && <div className="text-[11px] text-slate-400">{c.dial}</div>}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex justify-between gap-3">
+                <Button variant="outline" className="bg-white/5 border-white/20 text-white hover:bg-white/10"
+                  onClick={() => { setCountryStep("role"); setPendingRoleAction(null); }}>
+                  <ArrowLeft className="h-4 w-4 mr-1.5" /> Back
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={confirmCountryAndProceed} disabled={!selectedCountry}>
+                  Continue <ArrowRight className="h-4 w-4 ml-1.5" />
+                </Button>
+              </div>
+            </div>
+          ) : (
           <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
             {/* Candidate Option */}
             <Card 
               data-tour="role-candidate"
               className="bg-slate-800/50 border-slate-700 hover:border-blue-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10"
-              onClick={() => navigate("/candidate/signup")}
+              onClick={() => chooseRole(() => navigate(`/candidate/signup?country=${selectedCountry}`))}
             >
               <CardContent className="p-6 text-center">
                 <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-4">
@@ -896,10 +963,10 @@ const SignupPortal = () => {
             <Card 
               data-tour="role-employer"
               className="bg-slate-800/50 border-slate-700 hover:border-green-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-green-500/10"
-              onClick={() => {
+              onClick={() => chooseRole(() => {
                 setSelectedRole("employer");
                 setActiveSection("become-employer");
-              }}
+              })}
             >
               <CardContent className="p-6 text-center">
                 <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
@@ -923,7 +990,7 @@ const SignupPortal = () => {
             <Card
               data-tour="role-freelancer"
               className="bg-slate-800/50 border-slate-700 hover:border-purple-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/10"
-              onClick={() => navigate("/freelancer/signup")}
+              onClick={() => chooseRole(() => navigate(`/freelancer/signup?country=${selectedCountry}`))}
             >
               <CardContent className="p-6 text-center">
                 <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-4">
@@ -947,7 +1014,7 @@ const SignupPortal = () => {
             <Card
               data-tour="role-edutech"
               className="bg-slate-800/50 border-slate-700 hover:border-orange-500 cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-orange-500/10"
-              onClick={() => navigate("/edutech/signup")}
+              onClick={() => chooseRole(() => navigate(`/edutech/signup?country=${selectedCountry}`))}
             >
               <CardContent className="p-6 text-center">
                 <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-4">
@@ -968,8 +1035,10 @@ const SignupPortal = () => {
             </Card>
 
           </div>
+          )}
 
           {/* Stats Section */}
+          {countryStep === "role" && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
             <div className="bg-slate-800/30 rounded-lg p-4 text-center border border-slate-700">
               <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mx-auto mb-2">
@@ -1000,6 +1069,7 @@ const SignupPortal = () => {
               <div className="text-xs text-slate-400">Industry Partners</div>
             </div>
           </div>
+          )}
         </div>
       </div>
     );
