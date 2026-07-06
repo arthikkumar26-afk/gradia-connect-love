@@ -416,6 +416,31 @@ const CandidateSignup = () => {
   // entry auto-fills industryCategory + primarySubject (domain) + segment
   // (designation) so the user doesn't have to drill through the dropdowns.
   const [globalPositionQuery, setGlobalPositionQuery] = useState("");
+  const [country, setCountry] = useState<string>(() => {
+    try { return localStorage.getItem("gradia.signup.country") || ""; } catch { return ""; }
+  });
+  const COUNTRIES = useMemo(() => ([
+    { code: "IN", name: "India", flag: "🇮🇳" },
+    { code: "US", name: "United States", flag: "🇺🇸" },
+    { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+    { code: "CA", name: "Canada", flag: "🇨🇦" },
+    { code: "AU", name: "Australia", flag: "🇦🇺" },
+    { code: "AE", name: "United Arab Emirates", flag: "🇦🇪" },
+    { code: "SA", name: "Saudi Arabia", flag: "🇸🇦" },
+    { code: "SG", name: "Singapore", flag: "🇸🇬" },
+    { code: "MY", name: "Malaysia", flag: "🇲🇾" },
+    { code: "DE", name: "Germany", flag: "🇩🇪" },
+    { code: "FR", name: "France", flag: "🇫🇷" },
+    { code: "NL", name: "Netherlands", flag: "🇳🇱" },
+    { code: "ZA", name: "South Africa", flag: "🇿🇦" },
+    { code: "NG", name: "Nigeria", flag: "🇳🇬" },
+    { code: "KE", name: "Kenya", flag: "🇰🇪" },
+    { code: "BR", name: "Brazil", flag: "🇧🇷" },
+    { code: "JP", name: "Japan", flag: "🇯🇵" },
+    { code: "PH", name: "Philippines", flag: "🇵🇭" },
+    { code: "ID", name: "Indonesia", flag: "🇮🇩" },
+    { code: "OTHER", name: "Other", flag: "🌍" },
+  ]), []);
 
   type GlobalPositionEntry = {
     industryCategory: string;
