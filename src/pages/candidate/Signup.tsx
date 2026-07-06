@@ -416,6 +416,31 @@ const CandidateSignup = () => {
   // entry auto-fills industryCategory + primarySubject (domain) + segment
   // (designation) so the user doesn't have to drill through the dropdowns.
   const [globalPositionQuery, setGlobalPositionQuery] = useState("");
+  const [country, setCountry] = useState<string>(() => {
+    try { return localStorage.getItem("gradia.signup.country") || ""; } catch { return ""; }
+  });
+  const COUNTRIES = useMemo(() => ([
+    { code: "IN", name: "India", flag: "🇮🇳" },
+    { code: "US", name: "United States", flag: "🇺🇸" },
+    { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
+    { code: "CA", name: "Canada", flag: "🇨🇦" },
+    { code: "AU", name: "Australia", flag: "🇦🇺" },
+    { code: "AE", name: "United Arab Emirates", flag: "🇦🇪" },
+    { code: "SA", name: "Saudi Arabia", flag: "🇸🇦" },
+    { code: "SG", name: "Singapore", flag: "🇸🇬" },
+    { code: "MY", name: "Malaysia", flag: "🇲🇾" },
+    { code: "DE", name: "Germany", flag: "🇩🇪" },
+    { code: "FR", name: "France", flag: "🇫🇷" },
+    { code: "NL", name: "Netherlands", flag: "🇳🇱" },
+    { code: "ZA", name: "South Africa", flag: "🇿🇦" },
+    { code: "NG", name: "Nigeria", flag: "🇳🇬" },
+    { code: "KE", name: "Kenya", flag: "🇰🇪" },
+    { code: "BR", name: "Brazil", flag: "🇧🇷" },
+    { code: "JP", name: "Japan", flag: "🇯🇵" },
+    { code: "PH", name: "Philippines", flag: "🇵🇭" },
+    { code: "ID", name: "Indonesia", flag: "🇮🇩" },
+    { code: "OTHER", name: "Other", flag: "🌍" },
+  ]), []);
 
   type GlobalPositionEntry = {
     industryCategory: string;
@@ -706,6 +731,7 @@ const CandidateSignup = () => {
               industryCategory,
               primarySubject,
               segment,
+              country,
               referralCode,
             },
           });
@@ -1470,6 +1496,35 @@ const CandidateSignup = () => {
               </p>
             )}
           </div>
+
+          {/* Country selection — shown after a position is picked so the
+              candidate can localize their profile. */}
+          {segment && (
+            <div className="space-y-2">
+              <Label htmlFor="country">Country <span className="text-destructive">*</span></Label>
+              <Select
+                value={country || undefined}
+                onValueChange={(val) => {
+                  setCountry(val);
+                  try { localStorage.setItem("gradia.signup.country", val); } catch {}
+                }}
+              >
+                <SelectTrigger id="country" className="h-10">
+                  <SelectValue placeholder="Select your country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.code} value={c.name}>
+                      <span className="mr-2">{c.flag}</span>{c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                We tailor job matches and interview schedules to your country.
+              </p>
+            </div>
+          )}
 
           {/* Industry Category */}
           <div className="space-y-2">
