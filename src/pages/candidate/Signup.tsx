@@ -1496,6 +1496,35 @@ const CandidateSignup = () => {
             )}
           </div>
 
+          {/* Country selection — shown after a position is picked so the
+              candidate can localize their profile. */}
+          {segment && (
+            <div className="space-y-2">
+              <Label htmlFor="country">Country <span className="text-destructive">*</span></Label>
+              <Select
+                value={country || undefined}
+                onValueChange={(val) => {
+                  setCountry(val);
+                  try { localStorage.setItem("gradia.signup.country", val); } catch {}
+                }}
+              >
+                <SelectTrigger id="country" className="h-10">
+                  <SelectValue placeholder="Select your country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COUNTRIES.map((c) => (
+                    <SelectItem key={c.code} value={c.name}>
+                      <span className="mr-2">{c.flag}</span>{c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                We tailor job matches and interview schedules to your country.
+              </p>
+            </div>
+          )}
+
           {/* Industry Category */}
           <div className="space-y-2">
             <Label htmlFor="industryCategory">Industry Category <span className="text-destructive">*</span></Label>
