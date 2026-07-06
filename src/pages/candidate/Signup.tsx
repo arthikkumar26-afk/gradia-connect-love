@@ -475,6 +475,65 @@ const CandidateSignup = () => {
       });
     });
 
+    // Static-catalog categories (defined inline in the form dropdowns below).
+    // Mirrored here so global search can find "Lawyer", "Doctor" etc.
+    const staticCatalog: {
+      category: string;
+      domainFieldLabel: string;
+      domains: string[];
+      roles: string[];
+    }[] = [
+      {
+        category: 'Legal',
+        domainFieldLabel: 'Specialization',
+        domains: ['Corporate Law', 'Criminal Law', 'Civil Law', 'Family Law', 'Intellectual Property', 'Tax Law', 'Labour Law', 'Constitutional Law', 'Real Estate Law'],
+        roles: ['Advocate', 'Senior Advocate', 'Legal Advisor', 'Corporate Counsel', 'Paralegal', 'Judge', 'Notary'],
+      },
+      {
+        category: 'Doctor',
+        domainFieldLabel: 'Specialization',
+        domains: ['General Medicine', 'Cardiology', 'Orthopedics', 'Pediatrics', 'Dermatology', 'Neurology', 'Gynecology', 'Ophthalmology', 'ENT', 'Dentistry', 'Psychiatry', 'Surgery', 'Ayurveda', 'Homeopathy'],
+        roles: ['MBBS', 'MD', 'MS', 'DM', 'BDS', 'BAMS', 'BHMS', 'Nursing', 'Pharmacist', 'Lab Technician'],
+      },
+      {
+        category: 'Civil Service',
+        domainFieldLabel: 'Department',
+        domains: ['IAS', 'IPS', 'IFS', 'IRS', 'State Civil Services', 'Public Administration', 'Revenue', 'Education Department', 'Health Department', 'Police'],
+        roles: ['Officer', 'Clerk', 'Inspector', 'Commissioner', 'Secretary', 'Director'],
+      },
+      {
+        category: 'Real Estate & Infrastructure',
+        domainFieldLabel: 'Specialization',
+        domains: ['Civil Engineering', 'Architecture', 'Interior Design', 'Construction Management', 'Property Management', 'Urban Planning', 'Structural Engineering', 'Real Estate Sales', 'Surveying'],
+        roles: ['Site Engineer', 'Project Manager', 'Architect', 'Contractor', 'Real Estate Agent', 'Quantity Surveyor'],
+      },
+      {
+        category: 'Freelance / Independent Professionals',
+        domainFieldLabel: 'Domain',
+        domains: ['Content Writing', 'Graphic Design', 'Web Development', 'Digital Marketing', 'Photography', 'Video Editing', 'Consulting', 'Translation', 'Accounting', 'Tutoring', 'Event Management'],
+        roles: ['Remote', 'On-site', 'Hybrid', 'Project Based'],
+      },
+      {
+        category: 'Education',
+        domainFieldLabel: 'Subject',
+        domains: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Social Studies', 'Computer Science', 'Commerce / Accountancy', 'Economics', 'History', 'Geography', 'Political Science', 'Languages', 'Arts & Crafts', 'Physical Education', 'Administration'],
+        roles: EDUCATION_POSITIONS.map((p) => p.title),
+      },
+    ];
+    staticCatalog.forEach((c) => {
+      c.domains.forEach((d) => {
+        c.roles.forEach((r) => {
+          out.push({
+            industryCategory: c.category,
+            domainLabel: d,
+            domainFieldLabel: c.domainFieldLabel,
+            roleLabel: r,
+            roleValue: r,
+          });
+        });
+      });
+    });
+
     return out;
   }, []);
 
