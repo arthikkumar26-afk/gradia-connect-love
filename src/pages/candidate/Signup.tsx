@@ -731,6 +731,7 @@ const CandidateSignup = () => {
               industryCategory,
               primarySubject,
               segment,
+              country,
               referralCode,
             },
           });
