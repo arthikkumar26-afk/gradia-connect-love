@@ -645,7 +645,7 @@ export const JobDetailsDrawer = ({ job, open, onOpenChange, mode, onJobUpdated, 
                       {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent className="z-[2000]">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete Job Posting?</AlertDialogTitle>
                       <AlertDialogDescription>
