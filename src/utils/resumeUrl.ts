@@ -2,8 +2,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Extracts the storage path from a Supabase public URL for the resumes bucket.
- * E.g. "https://xxx.supabase.co/storage/v1/object/public/resumes/userId/file.pdf"
- *   → "userId/file.pdf"
  */
 function extractResumePath(url: string): string | null {
   try {
@@ -12,7 +10,6 @@ function extractResumePath(url: string): string | null {
     if (idx !== -1) {
       return decodeURIComponent(url.substring(idx + marker.length));
     }
-    // Also handle signed URL format
     const signedMarker = '/storage/v1/object/sign/resumes/';
     const sIdx = url.indexOf(signedMarker);
     if (sIdx !== -1) {
@@ -27,15 +24,14 @@ function extractResumePath(url: string): string | null {
 
 /**
  * Returns a signed URL for a resume file (valid for 1 hour).
- * Accepts either a full public URL or a storage path.
  */
 export async function getSignedResumeUrl(urlOrPath: string): Promise<string | null> {
   const path = urlOrPath.startsWith('http') ? extractResumePath(urlOrPath) : urlOrPath;
-  if (!path) return urlOrPath; // fallback to original if can't parse
+  if (!path) return urlOrPath;
 
   const { data, error } = await supabase.storage
     .from('resumes')
-    .createSignedUrl(path, 3600); // 1 hour
+    .createSignedUrl(path, 3600);
 
   if (error || !data?.signedUrl) {
     console.error('Failed to create signed URL for resume:', error);
@@ -45,19 +41,76 @@ export async function getSignedResumeUrl(urlOrPath: string): Promise<string | nu
 }
 
 /**
- * Opens the resume in a new tab using a signed URL.
+ * Downloads the resume file as a Blob using the Supabase SDK (bypasses
+ * ad-blocker URL-pattern blocking of supabase.co storage URLs).
+ */
+async function fetchResumeBlob(urlOrPath: string): Promise<{ blob: Blob; filename: string } | null> {
+  const path = urlOrPath.startsWith('http') ? extractResumePath(urlOrPath) : urlOrPath;
+  if (!path) return null;
+
+  const { data, error } = await supabase.storage.from('resumes').download(path);
+  if (error || !data) {
+    console.error('Failed to download resume:', error);
+    return null;
+  }
+  const filename = path.split('/').pop() || 'resume';
+  // Ensure PDFs open inline
+  const isPdf = /\.pdf$/i.test(filename);
+  const blob = isPdf && data.type !== 'application/pdf'
+    ? new Blob([data], { type: 'application/pdf' })
+    : data;
+  return { blob, filename };
+}
+
+/**
+ * Opens the resume in a new tab. Tries a signed URL first, and falls back to
+ * downloading via the Supabase SDK and opening a blob URL if the browser
+ * (usually an ad-blocker extension) blocks the direct storage URL.
  */
 export async function openResume(urlOrPath: string): Promise<void> {
+  // Open the tab synchronously so popup blockers don't interfere
+  const win = window.open('about:blank', '_blank');
+
+  const result = await fetchResumeBlob(urlOrPath);
+  if (result) {
+    const blobUrl = URL.createObjectURL(result.blob);
+    if (win) {
+      win.location.href = blobUrl;
+    } else {
+      window.location.href = blobUrl;
+    }
+    // Revoke later so the tab has time to load
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+    return;
+  }
+
+  // Fallback to signed URL
   const signedUrl = await getSignedResumeUrl(urlOrPath);
   if (signedUrl) {
-    window.open(signedUrl, '_blank');
+    if (win) win.location.href = signedUrl;
+    else window.open(signedUrl, '_blank');
+  } else if (win) {
+    win.close();
   }
 }
 
 /**
- * Downloads the resume using a signed URL.
+ * Downloads the resume via the Supabase SDK (bypasses ad blockers).
  */
 export async function downloadResume(urlOrPath: string, filename?: string): Promise<void> {
+  const result = await fetchResumeBlob(urlOrPath);
+  if (result) {
+    const blobUrl = URL.createObjectURL(result.blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename || result.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+    return;
+  }
+
   const signedUrl = await getSignedResumeUrl(urlOrPath);
   if (signedUrl) {
     const a = document.createElement('a');
