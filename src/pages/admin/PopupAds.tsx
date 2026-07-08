@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   Users, Briefcase, Building2, ShieldCheck, LogOut, Settings, BarChart3, FileText,
   Home, Bell, Menu, Loader2, ClipboardList, UserCog, MessageSquare, CreditCard, Ticket, UserX, UserCheck,
-  Megaphone, Plus, Trash2, Edit, Eye, EyeOff, Image, ExternalLink
+  Megaphone, Plus, Trash2, Edit, Eye, EyeOff, Image, ExternalLink, Upload
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
