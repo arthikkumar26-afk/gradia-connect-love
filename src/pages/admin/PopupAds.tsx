@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import {
   Users, Briefcase, Building2, ShieldCheck, LogOut, Settings, BarChart3, FileText,
   Home, Bell, Menu, Loader2, ClipboardList, UserCog, MessageSquare, CreditCard, Ticket, UserX, UserCheck,
-  Megaphone, Plus, Trash2, Edit, Eye, EyeOff, Image, ExternalLink
+  Megaphone, Plus, Trash2, Edit, Eye, EyeOff, Image, ExternalLink, Upload
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -58,6 +58,31 @@ const PopupAds = () => {
   const [editingAd, setEditingAd] = useState<PopupAd | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Only image files allowed", variant: "destructive" });
+      return;
+    }
+    setUploadingImage(true);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `popup-ads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage
+        .from('campaign-attachments')
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from('campaign-attachments').getPublicUrl(path);
+      setForm((f) => ({ ...f, image_url: data.publicUrl }));
+      toast({ title: "Image uploaded" });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -346,8 +371,28 @@ const PopupAds = () => {
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Ad description" rows={3} />
             </div>
             <div>
-              <Label>Image URL</Label>
-              <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." />
+              <Label>Image</Label>
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                  disabled={uploadingImage}
+                  className="flex-1"
+                />
+                {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
+              </div>
+              <Input
+                className="mt-2"
+                value={form.image_url}
+                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                placeholder="or paste image URL: https://..."
+              />
+              {form.image_url && (
+                <div className="mt-2 rounded-md overflow-hidden border border-border max-h-40">
+                  <img src={form.image_url} alt="Preview" className="w-full h-40 object-cover" />
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
