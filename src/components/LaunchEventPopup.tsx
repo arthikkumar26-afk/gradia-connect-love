@@ -75,11 +75,21 @@ const LaunchEventPopup = () => {
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden border-none bg-transparent shadow-none [&>button]:z-50 [&>button]:bg-white/80 [&>button]:rounded-full [&>button]:p-1">
         <div className="bg-background rounded-lg overflow-hidden">
+          {ad.image_url && (
+            <img src={ad.image_url} alt={ad.title} className="w-full max-h-64 object-cover" />
+          )}
           <div className="p-4 space-y-3">
             <h3 className="text-lg font-semibold text-center">{ad.title}</h3>
             {ad.description && (
               <p className="text-sm text-muted-foreground text-center">{ad.description}</p>
             )}
+            <Button
+              onClick={() => { handleClose(); navigate("/candidate/signup"); }}
+              className="w-full bg-gradient-to-r from-primary to-primary/80"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Your Resume
+            </Button>
             {ad.show_email_input && (
               <div className="flex gap-2">
                 <Input
@@ -97,7 +107,7 @@ const LaunchEventPopup = () => {
             )}
             {ad.link_url && !ad.show_email_input && (
               <div className="flex justify-center">
-                <Button asChild>
+                <Button variant="outline" asChild>
                   <a href={ad.link_url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="h-4 w-4 mr-1" />
                     {ad.link_label || "Learn More"}
@@ -106,9 +116,6 @@ const LaunchEventPopup = () => {
               </div>
             )}
           </div>
-          {ad.image_url && (
-            <img src={ad.image_url} alt={ad.title} className="w-full" />
-          )}
         </div>
       </DialogContent>
     </Dialog>
