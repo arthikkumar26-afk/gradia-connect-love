@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Mail, Loader2, ExternalLink } from "lucide-react";
+import { Mail, Loader2, ExternalLink, Upload } from "lucide-react";
 
 interface PopupAd {
   id: string;
