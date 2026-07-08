@@ -18,6 +18,7 @@ interface PopupAd {
 }
 
 const LaunchEventPopup = () => {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
