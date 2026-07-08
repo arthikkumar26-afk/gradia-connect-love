@@ -68,30 +68,36 @@ async function fetchResumeBlob(urlOrPath: string): Promise<{ blob: Blob; filenam
  * (usually an ad-blocker extension) blocks the direct storage URL.
  */
 export async function openResume(urlOrPath: string): Promise<void> {
-  // Open the tab synchronously so popup blockers don't interfere
+  // Open the tab synchronously so popup blockers don't interfere.
   const win = window.open('about:blank', '_blank');
 
-  const result = await fetchResumeBlob(urlOrPath);
-  if (result) {
-    const blobUrl = URL.createObjectURL(result.blob);
-    if (win) {
-      win.location.href = blobUrl;
-    } else {
-      window.location.href = blobUrl;
-    }
-    // Revoke later so the tab has time to load
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+  // Prefer a signed https URL — Chrome blocks top-level navigation to blob:
+  // URLs when the opener is a cross-origin iframe (e.g. the Lovable preview),
+  // which surfaces as ERR_BLOCKED_BY_CLIENT on a blob: page.
+  const signedUrl = await getSignedResumeUrl(urlOrPath);
+  if (signedUrl && /^https?:\/\//i.test(signedUrl)) {
+    if (win) win.location.href = signedUrl;
+    else window.open(signedUrl, '_blank');
     return;
   }
 
-  // Fallback to signed URL
-  const signedUrl = await getSignedResumeUrl(urlOrPath);
-  if (signedUrl) {
-    if (win) win.location.href = signedUrl;
-    else window.open(signedUrl, '_blank');
-  } else if (win) {
-    win.close();
+  // Fallback: download via SDK and trigger a save (blob nav is unreliable
+  // inside iframes, so we save the file instead of navigating to it).
+  const result = await fetchResumeBlob(urlOrPath);
+  if (result) {
+    const blobUrl = URL.createObjectURL(result.blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = result.filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+    if (win) win.close();
+    return;
   }
+
+  if (win) win.close();
 }
 
 /**
