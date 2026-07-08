@@ -371,8 +371,28 @@ const PopupAds = () => {
               <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Ad description" rows={3} />
             </div>
             <div>
-              <Label>Image URL</Label>
-              <Input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." />
+              <Label>Image</Label>
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => e.target.files?.[0] && handleImageUpload(e.target.files[0])}
+                  disabled={uploadingImage}
+                  className="flex-1"
+                />
+                {uploadingImage && <Loader2 className="h-4 w-4 animate-spin" />}
+              </div>
+              <Input
+                className="mt-2"
+                value={form.image_url}
+                onChange={(e) => setForm({ ...form, image_url: e.target.value })}
+                placeholder="or paste image URL: https://..."
+              />
+              {form.image_url && (
+                <div className="mt-2 rounded-md overflow-hidden border border-border max-h-40">
+                  <img src={form.image_url} alt="Preview" className="w-full h-40 object-cover" />
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
