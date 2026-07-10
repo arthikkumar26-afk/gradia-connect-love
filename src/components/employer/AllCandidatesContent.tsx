@@ -68,6 +68,7 @@ export function AllCandidatesContent() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [industryFilter, setIndustryFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState("all");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfile | null>(null);
   const {
     requireUnlock,
