@@ -45,6 +45,7 @@ interface CandidateProfile {
   alternate_number: string | null;
   preferred_state: string | null;
   preferred_district: string | null;
+  country: string | null;
 }
 
 const industryOptions = [
