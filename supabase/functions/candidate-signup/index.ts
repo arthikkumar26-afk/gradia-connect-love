@@ -14,8 +14,10 @@ interface CandidateSignupRequest {
   industryCategory?: string;
   primarySubject?: string;
   segment?: string;
+  country?: string;
   referralCode?: string;
 }
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
