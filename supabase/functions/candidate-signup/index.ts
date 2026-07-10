@@ -14,8 +14,10 @@ interface CandidateSignupRequest {
   industryCategory?: string;
   primarySubject?: string;
   segment?: string;
+  country?: string;
   referralCode?: string;
 }
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,8 +37,10 @@ serve(async (req) => {
       industryCategory,
       primarySubject,
       segment,
+      country,
       referralCode,
     }: CandidateSignupRequest = await req.json();
+
 
     const normalizedEmail = email?.trim().toLowerCase();
     const normalizedName = fullName?.trim();
@@ -108,6 +112,7 @@ serve(async (req) => {
       category: industryCategory || null,
       primary_subject: primarySubject || null,
       segment: segment || null,
+      country: country?.trim() || null,
       ...(referralCode ? { referred_by: referralCode.toUpperCase() } : {}),
     };
 

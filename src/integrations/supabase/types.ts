@@ -3316,6 +3316,7 @@ export type Database = {
           classes_handled: string | null
           company_description: string | null
           company_name: string | null
+          country: string | null
           created_at: string | null
           current_district: string | null
           current_salary: number | null
@@ -3367,6 +3368,7 @@ export type Database = {
           classes_handled?: string | null
           company_description?: string | null
           company_name?: string | null
+          country?: string | null
           created_at?: string | null
           current_district?: string | null
           current_salary?: number | null
@@ -3418,6 +3420,7 @@ export type Database = {
           classes_handled?: string | null
           company_description?: string | null
           company_name?: string | null
+          country?: string | null
           created_at?: string | null
           current_district?: string | null
           current_salary?: number | null

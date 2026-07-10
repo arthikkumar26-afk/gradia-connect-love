@@ -45,7 +45,9 @@ interface CandidateProfile {
   alternate_number: string | null;
   preferred_state: string | null;
   preferred_district: string | null;
+  country: string | null;
 }
+
 
 const industryOptions = [
   { value: "all", label: "All Industries" },
@@ -66,6 +68,7 @@ export function AllCandidatesContent() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [industryFilter, setIndustryFilter] = useState("all");
+  const [countryFilter, setCountryFilter] = useState("all");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfile | null>(null);
   const {
     requireUnlock,
@@ -168,7 +171,7 @@ export function AllCandidatesContent() {
     try {
       let query = supabase
         .from("profiles")
-        .select("id, full_name, email, mobile, profile_picture, experience_level, preferred_role, location, current_state, current_district, segment, category, highest_qualification, status, created_at, resume_url, gender, date_of_birth, languages, primary_subject, current_salary, expected_salary, linkedin, alternate_number, preferred_state, preferred_district")
+        .select("id, full_name, email, mobile, profile_picture, experience_level, preferred_role, location, current_state, current_district, segment, category, highest_qualification, status, created_at, resume_url, gender, date_of_birth, languages, primary_subject, current_salary, expected_salary, linkedin, alternate_number, preferred_state, preferred_district, country")
         .eq("role", "candidate")
         .order("created_at", { ascending: false });
 
@@ -203,7 +206,15 @@ export function AllCandidatesContent() {
     }
   };
 
+  const availableCountries = Array.from(
+    new Set(candidates.map((c) => (c.country || "").trim()).filter(Boolean))
+  ).sort();
+
   const filtered = candidates
+    .filter((c) => {
+      if (countryFilter === "all") return true;
+      return (c.country || "").trim().toLowerCase() === countryFilter.toLowerCase();
+    })
     .filter((c) => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
@@ -215,7 +226,8 @@ export function AllCandidatesContent() {
         c.category?.toLowerCase().includes(q) ||
         c.segment?.toLowerCase().includes(q) ||
         c.current_state?.toLowerCase().includes(q) ||
-        c.current_district?.toLowerCase().includes(q)
+        c.current_district?.toLowerCase().includes(q) ||
+        c.country?.toLowerCase().includes(q)
       );
     })
     .filter((c, index, self) =>
@@ -273,7 +285,19 @@ export function AllCandidatesContent() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={countryFilter} onValueChange={setCountryFilter}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Filter by Country" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Countries</SelectItem>
+            {availableCountries.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+
 
       {/* Candidates List */}
       {loading ? (
