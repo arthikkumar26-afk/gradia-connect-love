@@ -112,6 +112,7 @@ serve(async (req) => {
       category: industryCategory || null,
       primary_subject: primarySubject || null,
       segment: segment || null,
+      country: country?.trim() || null,
       ...(referralCode ? { referred_by: referralCode.toUpperCase() } : {}),
     };
 
