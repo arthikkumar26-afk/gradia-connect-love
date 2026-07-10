@@ -285,7 +285,19 @@ export function AllCandidatesContent() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={countryFilter} onValueChange={setCountryFilter}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Filter by Country" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Countries</SelectItem>
+            {availableCountries.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+
 
       {/* Candidates List */}
       {loading ? (
