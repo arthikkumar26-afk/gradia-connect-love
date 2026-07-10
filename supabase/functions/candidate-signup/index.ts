@@ -37,8 +37,10 @@ serve(async (req) => {
       industryCategory,
       primarySubject,
       segment,
+      country,
       referralCode,
     }: CandidateSignupRequest = await req.json();
+
 
     const normalizedEmail = email?.trim().toLowerCase();
     const normalizedName = fullName?.trim();
