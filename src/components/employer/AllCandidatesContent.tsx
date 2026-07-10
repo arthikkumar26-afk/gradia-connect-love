@@ -170,7 +170,7 @@ export function AllCandidatesContent() {
     try {
       let query = supabase
         .from("profiles")
-        .select("id, full_name, email, mobile, profile_picture, experience_level, preferred_role, location, current_state, current_district, segment, category, highest_qualification, status, created_at, resume_url, gender, date_of_birth, languages, primary_subject, current_salary, expected_salary, linkedin, alternate_number, preferred_state, preferred_district")
+        .select("id, full_name, email, mobile, profile_picture, experience_level, preferred_role, location, current_state, current_district, segment, category, highest_qualification, status, created_at, resume_url, gender, date_of_birth, languages, primary_subject, current_salary, expected_salary, linkedin, alternate_number, preferred_state, preferred_district, country")
         .eq("role", "candidate")
         .order("created_at", { ascending: false });
 
