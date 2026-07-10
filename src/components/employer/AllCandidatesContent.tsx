@@ -206,7 +206,15 @@ export function AllCandidatesContent() {
     }
   };
 
+  const availableCountries = Array.from(
+    new Set(candidates.map((c) => (c.country || "").trim()).filter(Boolean))
+  ).sort();
+
   const filtered = candidates
+    .filter((c) => {
+      if (countryFilter === "all") return true;
+      return (c.country || "").trim().toLowerCase() === countryFilter.toLowerCase();
+    })
     .filter((c) => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
@@ -218,7 +226,8 @@ export function AllCandidatesContent() {
         c.category?.toLowerCase().includes(q) ||
         c.segment?.toLowerCase().includes(q) ||
         c.current_state?.toLowerCase().includes(q) ||
-        c.current_district?.toLowerCase().includes(q)
+        c.current_district?.toLowerCase().includes(q) ||
+        c.country?.toLowerCase().includes(q)
       );
     })
     .filter((c, index, self) =>
