@@ -48,6 +48,7 @@ interface CandidateProfile {
   country: string | null;
 }
 
+
 const industryOptions = [
   { value: "all", label: "All Industries" },
   { value: "education", label: "Education" },
