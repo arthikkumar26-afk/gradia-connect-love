@@ -152,6 +152,8 @@ const SubscriptionActivationLogs = lazyWithRetry(() => import("./pages/admin/Sub
 const PlanControl = lazyWithRetry(() => import("./pages/admin/PlanControl"));
 const AdminHRManagement = lazyWithRetry(() => import("./pages/admin/HRManagement"));
 const AdminIdVerifications = lazyWithRetry(() => import("./pages/admin/IdVerifications"));
+const OAuthConsent = lazyWithRetry(() => import("./pages/OAuthConsent"));
+
 
 // Optimized QueryClient with caching
 const queryClient = new QueryClient({
@@ -198,6 +200,8 @@ const MainRoutes = () => (
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/sitemap" element={<PlaceholderPage title="Sitemap" />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
+
 
         {/* Candidate Routes */}
         <Route path="/candidate" element={<PlaceholderPage title="Candidate Home" />} />
