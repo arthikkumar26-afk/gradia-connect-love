@@ -206,8 +206,17 @@ export function AllCandidatesContent() {
     }
   };
 
+  const PRESET_COUNTRIES = [
+    "India", "United States", "United Kingdom", "Canada", "Australia",
+    "United Arab Emirates", "Saudi Arabia", "Singapore", "Malaysia",
+    "Germany", "France", "Netherlands", "South Africa", "Nigeria",
+    "Kenya", "Brazil", "Japan", "Philippines", "Indonesia", "Other",
+  ];
   const availableCountries = Array.from(
-    new Set(candidates.map((c) => (c.country || "").trim()).filter(Boolean))
+    new Set([
+      ...PRESET_COUNTRIES,
+      ...candidates.map((c) => (c.country || "").trim()).filter(Boolean),
+    ])
   ).sort();
 
   const filtered = candidates
