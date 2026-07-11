@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -14,6 +14,12 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get("next");
+  const safeNext =
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
+      ? nextParam
+      : null;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -24,9 +30,13 @@ const Login = () => {
   // Redirect based on role when authenticated
   useEffect(() => {
     if (isAuthenticated && profile) {
+      if (safeNext) {
+        window.location.href = safeNext;
+        return;
+      }
       redirectBasedOnRole(profile.role);
     }
-  }, [isAuthenticated, profile]);
+  }, [isAuthenticated, profile, safeNext]);
 
   const redirectBasedOnRole = (role: string) => {
     switch (role) {
@@ -49,6 +59,7 @@ const Login = () => {
         navigate("/", { replace: true });
     }
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
