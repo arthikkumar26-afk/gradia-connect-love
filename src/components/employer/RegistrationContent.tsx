@@ -65,7 +65,7 @@ const registrationSchema = z.object({
     .optional()
     .or(z.literal("")),
   tcAgreement: z.literal(true, {
-    errorMap: () => ({ message: "You must accept the Terms & Conditions" }),
+    message: "You must accept the Terms & Conditions",
   }),
   benefits: z.string()
     .trim()
@@ -167,7 +167,7 @@ export const RegistrationContent = () => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
+        error.issues.forEach((err) => {
           if (err.path[0]) {
             newErrors[err.path[0] as string] = err.message;
           }
