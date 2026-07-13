@@ -248,7 +248,57 @@ export function AllCandidatesContent() {
         other.email.toLowerCase() === c.email.toLowerCase() ||
         (c.mobile && other.mobile && other.mobile === c.mobile)
       )
-    );
+    )
+    .filter((c) => (aiMatches ? aiMatches.has(c.id) : true))
+    .sort((a, b) => {
+      if (!aiMatches) return 0;
+      return (aiMatches.get(b.id)?.score ?? 0) - (aiMatches.get(a.id)?.score ?? 0);
+    });
+
+  const runAiSearch = async () => {
+    if (!jdPrompt.trim()) {
+      toast.error("Paste a job description or requirement first");
+      return;
+    }
+    setAiSearching(true);
+    try {
+      const payload = candidates.map((c) => ({
+        id: c.id,
+        role: c.preferred_role,
+        subject: c.primary_subject,
+        experience: c.experience_level,
+        qualification: c.highest_qualification,
+        location: [c.location, c.current_state, c.country].filter(Boolean).join(", "),
+        category: c.category,
+        segment: c.segment,
+        languages: c.languages,
+      }));
+      const { data, error } = await supabase.functions.invoke("ai-match-candidates", {
+        body: { jobDescription: jdPrompt, candidates: payload, topK: 50 },
+      });
+      if (error) throw error;
+      const matches = (data?.matches ?? []) as Array<{ id: string; score: number; reason: string }>;
+      if (matches.length === 0) {
+        toast.info("No strong matches found for that JD");
+        setAiMatches(new Map());
+        return;
+      }
+      const map = new Map<string, { score: number; reason: string }>();
+      matches.forEach((m) => map.set(m.id, { score: m.score, reason: m.reason }));
+      setAiMatches(map);
+      toast.success(`Found ${matches.length} AI-matched candidate${matches.length === 1 ? "" : "s"}`);
+    } catch (err: any) {
+      console.error("AI match error:", err);
+      toast.error(err.message || "AI search failed");
+    } finally {
+      setAiSearching(false);
+    }
+  };
+
+  const clearAiSearch = () => {
+    setAiMatches(null);
+    setJdPrompt("");
+  };
 
   const getInitials = (name: string) =>
     name
