@@ -361,6 +361,43 @@ export function AllCandidatesContent() {
         </Select>
       </div>
 
+      {/* AI JD Search */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Sparkles className="h-4 w-4 text-primary" />
+            AI Match — paste a Job Description or requirement
+          </div>
+          <Textarea
+            placeholder="e.g. Looking for a Python full-stack developer with 3+ years in Django/React, based in Bangalore..."
+            value={jdPrompt}
+            onChange={(e) => setJdPrompt(e.target.value)}
+            rows={3}
+            className="text-sm resize-none bg-background"
+          />
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <p className="text-[11px] text-muted-foreground">
+              {aiMatches
+                ? `Showing ${aiMatches.size} AI-matched candidate${aiMatches.size === 1 ? "" : "s"} · sorted by score`
+                : "AI ranks and filters the list to only matched profiles."}
+            </p>
+            <div className="flex gap-2">
+              {aiMatches && (
+                <Button size="sm" variant="ghost" onClick={clearAiSearch}>
+                  <X className="h-3.5 w-3.5 mr-1" /> Clear AI filter
+                </Button>
+              )}
+              <Button size="sm" onClick={runAiSearch} disabled={aiSearching || !jdPrompt.trim()}>
+                {aiSearching ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                {aiSearching ? "Matching..." : "Find Matches"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
+
 
       {/* Candidates List */}
       {loading ? (
