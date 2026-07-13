@@ -71,6 +71,9 @@ export function AllCandidatesContent() {
   const [industryFilter, setIndustryFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfile | null>(null);
+  const [jdPrompt, setJdPrompt] = useState("");
+  const [aiSearching, setAiSearching] = useState(false);
+  const [aiMatches, setAiMatches] = useState<Map<string, { score: number; reason: string }> | null>(null);
   const {
     requireUnlock,
     confirmUnlock,
