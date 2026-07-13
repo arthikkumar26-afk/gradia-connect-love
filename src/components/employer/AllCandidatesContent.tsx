@@ -5,7 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, MapPin, Briefcase, Mail, Phone, GraduationCap, X, Download, PhoneCall, FileText, Calendar, IndianRupee, Globe, Home, UserCheck, BookOpen, Send } from "lucide-react";
+import { Search, Users, MapPin, Briefcase, Mail, Phone, GraduationCap, X, Download, PhoneCall, FileText, Calendar, IndianRupee, Globe, Home, UserCheck, BookOpen, Send, Sparkles, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -70,6 +71,9 @@ export function AllCandidatesContent() {
   const [industryFilter, setIndustryFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfile | null>(null);
+  const [jdPrompt, setJdPrompt] = useState("");
+  const [aiSearching, setAiSearching] = useState(false);
+  const [aiMatches, setAiMatches] = useState<Map<string, { score: number; reason: string }> | null>(null);
   const {
     requireUnlock,
     confirmUnlock,
@@ -244,7 +248,57 @@ export function AllCandidatesContent() {
         other.email.toLowerCase() === c.email.toLowerCase() ||
         (c.mobile && other.mobile && other.mobile === c.mobile)
       )
-    );
+    )
+    .filter((c) => (aiMatches ? aiMatches.has(c.id) : true))
+    .sort((a, b) => {
+      if (!aiMatches) return 0;
+      return (aiMatches.get(b.id)?.score ?? 0) - (aiMatches.get(a.id)?.score ?? 0);
+    });
+
+  const runAiSearch = async () => {
+    if (!jdPrompt.trim()) {
+      toast.error("Paste a job description or requirement first");
+      return;
+    }
+    setAiSearching(true);
+    try {
+      const payload = candidates.map((c) => ({
+        id: c.id,
+        role: c.preferred_role,
+        subject: c.primary_subject,
+        experience: c.experience_level,
+        qualification: c.highest_qualification,
+        location: [c.location, c.current_state, c.country].filter(Boolean).join(", "),
+        category: c.category,
+        segment: c.segment,
+        languages: c.languages,
+      }));
+      const { data, error } = await supabase.functions.invoke("ai-match-candidates", {
+        body: { jobDescription: jdPrompt, candidates: payload, topK: 50 },
+      });
+      if (error) throw error;
+      const matches = (data?.matches ?? []) as Array<{ id: string; score: number; reason: string }>;
+      if (matches.length === 0) {
+        toast.info("No strong matches found for that JD");
+        setAiMatches(new Map());
+        return;
+      }
+      const map = new Map<string, { score: number; reason: string }>();
+      matches.forEach((m) => map.set(m.id, { score: m.score, reason: m.reason }));
+      setAiMatches(map);
+      toast.success(`Found ${matches.length} AI-matched candidate${matches.length === 1 ? "" : "s"}`);
+    } catch (err: any) {
+      console.error("AI match error:", err);
+      toast.error(err.message || "AI search failed");
+    } finally {
+      setAiSearching(false);
+    }
+  };
+
+  const clearAiSearch = () => {
+    setAiMatches(null);
+    setJdPrompt("");
+  };
 
   const getInitials = (name: string) =>
     name
@@ -306,6 +360,43 @@ export function AllCandidatesContent() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* AI JD Search */}
+      <Card className="border-primary/30 bg-primary/5">
+        <CardContent className="p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <Sparkles className="h-4 w-4 text-primary" />
+            AI Match — paste a Job Description or requirement
+          </div>
+          <Textarea
+            placeholder="e.g. Looking for a Python full-stack developer with 3+ years in Django/React, based in Bangalore..."
+            value={jdPrompt}
+            onChange={(e) => setJdPrompt(e.target.value)}
+            rows={3}
+            className="text-sm resize-none bg-background"
+          />
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <p className="text-[11px] text-muted-foreground">
+              {aiMatches
+                ? `Showing ${aiMatches.size} AI-matched candidate${aiMatches.size === 1 ? "" : "s"} · sorted by score`
+                : "AI ranks and filters the list to only matched profiles."}
+            </p>
+            <div className="flex gap-2">
+              {aiMatches && (
+                <Button size="sm" variant="ghost" onClick={clearAiSearch}>
+                  <X className="h-3.5 w-3.5 mr-1" /> Clear AI filter
+                </Button>
+              )}
+              <Button size="sm" onClick={runAiSearch} disabled={aiSearching || !jdPrompt.trim()}>
+                {aiSearching ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                {aiSearching ? "Matching..." : "Find Matches"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+
 
 
       {/* Candidates List */}
