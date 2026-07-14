@@ -592,6 +592,7 @@ function CandidateDetailDialog({
   const [loading, setLoading] = useState(false);
   const [sendingProposal, setSendingProposal] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (candidate) {
