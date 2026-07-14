@@ -748,6 +748,51 @@ export const CandidateFullProfile = ({ candidateIdProp, onBack }: CandidateFullP
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column - AI Automation */}
           <div className="lg:col-span-4 space-y-6">
+            {/* AI Analysis Summary */}
+            {candidate.aiAnalysis && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    AI Analysis
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {candidate.aiAnalysis.summary && (
+                    <p className="text-sm text-muted-foreground">{candidate.aiAnalysis.summary}</p>
+                  )}
+                  
+                  {candidate.aiAnalysis.strengths && candidate.aiAnalysis.strengths.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-green-600 mb-2">Strengths</p>
+                      <ul className="space-y-1">
+                        {candidate.aiAnalysis.strengths.slice(0, 4).map((s: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <Star className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
+                            {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {candidate.aiAnalysis.concerns && candidate.aiAnalysis.concerns.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-amber-600 mb-2">Areas of Concern</p>
+                      <ul className="space-y-1">
+                        {candidate.aiAnalysis.concerns.slice(0, 3).map((c: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <AlertCircle className="h-3 w-3 text-amber-500 mt-0.5 flex-shrink-0" />
+                            {c}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* AI Automation Panel */}
             <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
               <CardHeader className="pb-3">
@@ -956,50 +1001,6 @@ export const CandidateFullProfile = ({ candidateIdProp, onBack }: CandidateFullP
               </Card>
             )}
 
-            {/* AI Analysis Summary */}
-            {candidate.aiAnalysis && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    AI Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {candidate.aiAnalysis.summary && (
-                    <p className="text-sm text-muted-foreground">{candidate.aiAnalysis.summary}</p>
-                  )}
-                  
-                  {candidate.aiAnalysis.strengths && candidate.aiAnalysis.strengths.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-green-600 mb-2">Strengths</p>
-                      <ul className="space-y-1">
-                        {candidate.aiAnalysis.strengths.slice(0, 4).map((s: string, i: number) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                            <Star className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
-                            {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {candidate.aiAnalysis.concerns && candidate.aiAnalysis.concerns.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-amber-600 mb-2">Areas of Concern</p>
-                      <ul className="space-y-1">
-                        {candidate.aiAnalysis.concerns.slice(0, 3).map((c: string, i: number) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                            <AlertCircle className="h-3 w-3 text-amber-500 mt-0.5 flex-shrink-0" />
-                            {c}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
           </div>
 
           {/* Right Column - Interview Stages */}
