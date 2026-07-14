@@ -680,6 +680,16 @@ function CandidateDetailDialog({
           )}
           <Button
             size="sm"
+            variant="secondary"
+            onClick={() => {
+              onClose();
+              navigate(`/employer/candidate/${candidate.id}`);
+            }}
+          >
+            <ExternalLink className="h-4 w-4 mr-1.5" /> Open
+          </Button>
+          <Button
+            size="sm"
             variant="default"
             disabled={sendingProposal}
             onClick={async () => {
@@ -693,23 +703,24 @@ function CandidateDetailDialog({
                   .maybeSingle();
 
                 const employerName = employerProfile?.company_name || employerProfile?.full_name || "An employer";
+                const positionTitle = candidate.preferred_role || "an open position";
 
-                const proposalBody = `Dear ${candidate.full_name},<br><br>Great news! <strong>${employerName}</strong> has reviewed your profile and would like to send you a job proposal.<br><br>They are interested in your skills and experience and would like to discuss a potential opportunity with you.<br><br>Please log in to your Gradia account to view more details and respond.<br><br>Best regards,<br>Gradia Team`;
+                const proposalBody = `Dear ${candidate.full_name},<br><br>Great news! <strong>${employerName}</strong> has reviewed your profile and would like to send you a job proposal for <strong>${positionTitle}</strong>.<br><br>They are interested in your skills and experience and would like to discuss this opportunity with you.<br><br>Please log in to your Gradia account to view more details and respond.<br><br>Best regards,<br>Gradia Team`;
 
                 const { error } = await supabase.functions.invoke("send-notification-email", {
                   body: {
                     type: "direct",
                     recipientEmail: candidate.email,
-                    subject: `Job Proposal from ${employerName}`,
+                    subject: `Job Proposal for ${positionTitle} from ${employerName}`,
                     html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;"><h2 style="color: #333;">You've Received a Job Proposal! 🎉</h2>${proposalBody}</div>`,
                   },
                 });
 
                 if (error) throw error;
-                toast.success(`Proposal notification sent to ${candidate.full_name}`);
+                toast.success(`Proposal email sent to ${candidate.full_name}`);
               } catch (err) {
                 console.error("Error sending proposal:", err);
-                toast.error("Failed to send proposal notification");
+                toast.error("Failed to send proposal email");
               } finally {
                 setSendingProposal(false);
               }
@@ -717,6 +728,7 @@ function CandidateDetailDialog({
           >
             <Send className="h-4 w-4 mr-1.5" /> {sendingProposal ? "Sending..." : "Proposal"}
           </Button>
+
         </div>
 
         <Separator />
