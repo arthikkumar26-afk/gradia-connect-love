@@ -747,7 +747,7 @@ export const CandidateFullProfile = ({ candidateIdProp, onBack }: CandidateFullP
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column - AI Automation */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="order-first lg:col-span-4 space-y-6">
             {/* AI Analysis Summary */}
             {candidate.aiAnalysis && (
               <Card>
