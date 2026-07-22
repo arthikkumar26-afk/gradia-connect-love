@@ -230,20 +230,27 @@ export function AllCandidatesContent() {
       return (c.country || "").trim().toLowerCase() === countryFilter.toLowerCase();
     })
     .filter((c) => {
+      // When AI matching is active, bypass the plain-text search so AI results always show.
+      if (aiMatches) return true;
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
       return (
         c.full_name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
         c.preferred_role?.toLowerCase().includes(q) ||
+        c.primary_subject?.toLowerCase().includes(q) ||
+        c.highest_qualification?.toLowerCase().includes(q) ||
+        c.experience_level?.toLowerCase().includes(q) ||
         c.location?.toLowerCase().includes(q) ||
         c.category?.toLowerCase().includes(q) ||
         c.segment?.toLowerCase().includes(q) ||
         c.current_state?.toLowerCase().includes(q) ||
         c.current_district?.toLowerCase().includes(q) ||
-        c.country?.toLowerCase().includes(q)
+        c.country?.toLowerCase().includes(q) ||
+        (c.languages || []).some((l) => l?.toLowerCase().includes(q))
       );
     })
+
     .filter((c, index, self) =>
       index === self.findIndex((other) =>
         other.email.toLowerCase() === c.email.toLowerCase() ||
