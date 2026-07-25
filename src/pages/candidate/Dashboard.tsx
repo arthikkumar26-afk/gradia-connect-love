@@ -3995,6 +3995,22 @@ const CandidateDashboard = () => {
               <MockInterviewTab />
             )}
 
+            {/* Mock Test History - Reports & Recordings */}
+            {activeMenu === "mockhistory" && user?.id && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <History className="h-5 w-5 text-primary" />
+                    Mock Test History
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    All your attended mock tests — reports, AI feedback, and recorded videos.
+                  </p>
+                </div>
+                <MockInterviewHistory candidateId={user.id} viewerRole="candidate" />
+              </div>
+            )}
+
             {/* Graphic Design Challenge */}
             {activeMenu === "designchallenge" && (
               <GraphicDesignChallenge />
