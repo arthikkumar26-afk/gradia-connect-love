@@ -3341,6 +3341,7 @@ export type Database = {
           mentor_session_points: number | null
           mobile: string | null
           office_type: string | null
+          pinned_suitable_job_id: string | null
           preferred_district: string | null
           preferred_district_2: string | null
           preferred_role: string | null
@@ -3393,6 +3394,7 @@ export type Database = {
           mentor_session_points?: number | null
           mobile?: string | null
           office_type?: string | null
+          pinned_suitable_job_id?: string | null
           preferred_district?: string | null
           preferred_district_2?: string | null
           preferred_role?: string | null
@@ -3445,6 +3447,7 @@ export type Database = {
           mentor_session_points?: number | null
           mobile?: string | null
           office_type?: string | null
+          pinned_suitable_job_id?: string | null
           preferred_district?: string | null
           preferred_district_2?: string | null
           preferred_role?: string | null
