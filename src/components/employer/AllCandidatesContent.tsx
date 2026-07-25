@@ -238,8 +238,8 @@ export function AllCandidatesContent() {
     .filter((c) => {
       // When AI matching is active, bypass the plain-text search so AI results always show.
       if (aiMatches) return true;
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
+      if (!debouncedSearch) return true;
+      const q = debouncedSearch.toLowerCase();
       return (
         c.full_name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
