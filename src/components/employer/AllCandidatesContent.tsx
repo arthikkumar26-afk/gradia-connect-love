@@ -69,12 +69,18 @@ export function AllCandidatesContent() {
   const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [industryFilter, setIndustryFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfile | null>(null);
   const [jdPrompt, setJdPrompt] = useState("");
   const [aiSearching, setAiSearching] = useState(false);
   const [aiMatches, setAiMatches] = useState<Map<string, { score: number; reason: string }> | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   const {
     requireUnlock,
     confirmUnlock,
