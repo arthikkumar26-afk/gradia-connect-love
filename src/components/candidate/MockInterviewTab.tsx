@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { getSampleMockInterviewStageResults } from "@/data/sampleMockInterviewData";
+import { MockInterviewHistory } from "@/components/shared/MockInterviewHistory";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1873,6 +1874,13 @@ export const MockInterviewTab = () => {
               </Badge>
             </div>
           </div>
+
+          {/* Mock Test History (reports + recordings) */}
+          {user?.id && (
+            <div className="pt-2">
+              <MockInterviewHistory candidateId={user.id} viewerRole="candidate" />
+            </div>
+          )}
         </div>
       </div>
     );

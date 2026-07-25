@@ -50,6 +50,7 @@ import { StageInterviewScheduleModal } from "./StageInterviewScheduleModal";
 import { StageRecordingPlayer } from "./StageRecordingPlayer";
 import { InterviewProgressTracker } from "./InterviewProgressTracker";
 import { useStatusNotification } from "@/hooks/useStatusNotification";
+import { MockInterviewHistory } from "@/components/shared/MockInterviewHistory";
 
 interface InterviewStage {
   id: string;
@@ -1172,6 +1173,11 @@ export const CandidateFullProfile = ({ candidateIdProp, onBack }: CandidateFullP
                 </div>
               </CardContent>
             </Card>
+
+            {/* Mock Test History — reports & recorded videos */}
+            {candidate?.id && (
+              <MockInterviewHistory candidateId={candidate.id} viewerRole="employer" />
+            )}
           </div>
         </div>
       </div>
