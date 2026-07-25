@@ -301,9 +301,90 @@ const Hero = () => {
                   </Button>
                 ))}
               </div>
+
+              {/* Resume Upload — AI job match */}
+              <div className="mt-4 pt-4 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div className="text-xs md:text-sm text-muted-foreground text-center sm:text-left">
+                  <Sparkles className="h-3.5 w-3.5 inline text-primary mr-1" />
+                  Upload your resume — AI finds jobs that fit you.
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx,application/pdf"
+                  className="hidden"
+                  onChange={handleResumeUpload}
+                />
+                <Button
+                  type="button"
+                  variant="cta"
+                  size="sm"
+                  disabled={resumeScanning}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-2"
+                >
+                  {resumeScanning ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Scanning…</>
+                  ) : (
+                    <><Upload className="h-4 w-4" /> Upload Resume</>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
+
+          {/* AI Resume Match Results */}
+          {(resumeScanning || resumeMatches !== null) && (
+            <div className="max-w-4xl mx-auto -mt-2 mb-8 animate-fade-in">
+              <div className="bg-background/95 backdrop-blur rounded-xl p-4 md:p-5 shadow-large">
+                <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                  <div className="flex items-center gap-2 text-sm md:text-base font-semibold text-foreground">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Suitable jobs for {resumeFileName || "your resume"}
+                  </div>
+                  {resumeMatches !== null && (
+                    <Button variant="ghost" size="sm" onClick={() => { setResumeMatches(null); setResumeFileName(""); }} className="text-xs h-7">
+                      <X className="h-3.5 w-3.5 mr-1" /> Clear
+                    </Button>
+                  )}
+                </div>
+                {resumeScanning ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Analyzing resume against open positions…
+                  </div>
+                ) : resumeMatches && resumeMatches.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {resumeMatches.map((m) => (
+                      <Link
+                        key={m.id}
+                        to={`/jobs?job=${m.id}`}
+                        className="border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-muted/30 transition group"
+                      >
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="min-w-0">
+                            <div className="text-sm font-semibold text-foreground truncate group-hover:text-primary">{m.title}</div>
+                            <div className="text-xs text-muted-foreground truncate">{m.company}</div>
+                          </div>
+                          <Badge className={`${scoreTone(m.score)} text-[11px] font-bold shrink-0`} variant="secondary">
+                            {m.score}%
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-[11px] text-muted-foreground mb-1">
+                          {m.location && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{m.location}</span>}
+                          {m.type && <span className="inline-flex items-center gap-1"><Briefcase className="h-3 w-3" />{m.type}</span>}
+                        </div>
+                        {m.reason && <p className="text-[11px] text-muted-foreground line-clamp-2">{m.reason}</p>}
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-2">No suitable jobs found right now. Try again later or browse all jobs below.</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
+
 
         {/* Jobs Section */}
         <div className="mt-16">
