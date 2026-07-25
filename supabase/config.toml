@@ -140,3 +140,6 @@ verify_jwt = false
 
 [functions.ai-match-candidates]
 verify_jwt = true
+
+[functions.match-resume-to-jobs]
+verify_jwt = false
