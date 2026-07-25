@@ -223,12 +223,24 @@ const Hero = () => {
   const handleSelectMatch = async (m: ResumeMatch) => {
     try {
       localStorage.setItem("pinnedSuitableJobId", m.id);
+      // Cache the match payload so the dashboard can render it even if
+      // the jobs table row is filtered out by status/RLS.
+      localStorage.setItem("pinnedSuitableJobData", JSON.stringify({
+        id: m.id,
+        job_title: m.title,
+        company_name: m.company,
+        location: m.location || "",
+        job_type: m.type || "",
+        salary_range: m.salary || "",
+        skills: m.skills || [],
+        description: m.reason || "",
+        status: "active",
+      }));
     } catch {}
     const dest = "/candidate/dashboard?tab=jobs";
     const { data } = await supabase.auth.getUser();
     const role = (data.user?.user_metadata as any)?.role;
     if (data.user && (!role || role === "candidate")) {
-      // Persist across devices/sessions
       try {
         await supabase.from("profiles").update({ pinned_suitable_job_id: m.id }).eq("id", data.user.id);
       } catch {}
@@ -237,6 +249,7 @@ const Hero = () => {
       navigate(`/candidate/signup?redirect=${encodeURIComponent(dest)}`);
     }
   };
+
 
 
 
