@@ -78,6 +78,7 @@ import FamilyModal from "@/components/candidate/FamilyModal";
 import AddressModal, { AddressData } from "@/components/candidate/AddressModal";
 import ResumeBuilderTab from "@/components/candidate/ResumeBuilderTab";
 import { MockInterviewTab } from "@/components/candidate/MockInterviewTab";
+import { MockInterviewHistory } from "@/components/shared/MockInterviewHistory";
 import AIJobApplyTab from "@/components/candidate/AIJobApplyTab";
 import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 import { CouponInput } from "@/components/shared/CouponInput";
