@@ -31,6 +31,10 @@ const Hero = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [dbJobs, setDbJobs] = useState<Job[]>([]);
   const [isLoadingDb, setIsLoadingDb] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [resumeScanning, setResumeScanning] = useState(false);
+  const [resumeFileName, setResumeFileName] = useState<string>("");
+  const [resumeMatches, setResumeMatches] = useState<ResumeMatch[] | null>(null);
   const fallbackJobs = getFeaturedJobs();
 
   // Fetch featured jobs from database
