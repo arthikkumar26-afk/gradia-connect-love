@@ -50,6 +50,7 @@ import { StageInterviewScheduleModal } from "./StageInterviewScheduleModal";
 import { StageRecordingPlayer } from "./StageRecordingPlayer";
 import { InterviewProgressTracker } from "./InterviewProgressTracker";
 import { useStatusNotification } from "@/hooks/useStatusNotification";
+import { MockInterviewHistory } from "@/components/shared/MockInterviewHistory";
 
 interface InterviewStage {
   id: string;
