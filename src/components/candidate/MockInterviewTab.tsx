@@ -1874,6 +1874,13 @@ export const MockInterviewTab = () => {
               </Badge>
             </div>
           </div>
+
+          {/* Mock Test History (reports + recordings) */}
+          {user?.id && (
+            <div className="pt-2">
+              <MockInterviewHistory candidateId={user.id} viewerRole="candidate" />
+            </div>
+          )}
         </div>
       </div>
     );
