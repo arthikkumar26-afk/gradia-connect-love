@@ -61,6 +61,7 @@ import {
   MessageCircle,
   BarChart3,
   ChevronDown,
+  History,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
@@ -77,6 +78,7 @@ import FamilyModal from "@/components/candidate/FamilyModal";
 import AddressModal, { AddressData } from "@/components/candidate/AddressModal";
 import ResumeBuilderTab from "@/components/candidate/ResumeBuilderTab";
 import { MockInterviewTab } from "@/components/candidate/MockInterviewTab";
+import { MockInterviewHistory } from "@/components/shared/MockInterviewHistory";
 import AIJobApplyTab from "@/components/candidate/AIJobApplyTab";
 import { useProfilePdfExport } from "@/hooks/useProfilePdfExport";
 import { CouponInput } from "@/components/shared/CouponInput";
@@ -1467,6 +1469,7 @@ const CandidateDashboard = () => {
     { id: "applications", label: "My Applications", icon: ClipboardList },
     { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "mocktest", label: "Attend Mock Test", icon: Target },
+    { id: "mockhistory", label: "Mock Test History", icon: History },
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     // { id: "mentors", label: "Mentors", icon: Users }, // hidden per request
     { id: "externaljobs", label: "External Job Listings", icon: ExternalLink },
@@ -3990,6 +3993,22 @@ const CandidateDashboard = () => {
             {/* Attend Mock Test - Standalone Section */}
             {activeMenu === "mocktest" && (
               <MockInterviewTab />
+            )}
+
+            {/* Mock Test History - Reports & Recordings */}
+            {activeMenu === "mockhistory" && user?.id && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <History className="h-5 w-5 text-primary" />
+                    Mock Test History
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    All your attended mock tests — reports, AI feedback, and recorded videos.
+                  </p>
+                </div>
+                <MockInterviewHistory candidateId={user.id} viewerRole="candidate" />
+              </div>
             )}
 
             {/* Graphic Design Challenge */}
