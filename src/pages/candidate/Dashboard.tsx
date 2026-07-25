@@ -2145,12 +2145,28 @@ const CandidateDashboard = () => {
       const suitableJobs = sortedJobs.filter(job => job.matchScore > 0);
       
       // If we have suitable jobs, show them; otherwise show recent jobs
-      if (suitableJobs.length > 0) {
-        setJobs(suitableJobs.slice(0, 10) as Job[]);
-      } else {
-        // Show recent jobs as fallback recommendations
-        setJobs(sortedJobs.slice(0, 10) as Job[]);
-      }
+      let finalJobs: Job[] = suitableJobs.length > 0
+        ? (suitableJobs.slice(0, 10) as Job[])
+        : (sortedJobs.slice(0, 10) as Job[]);
+
+      // Pinned job from Hero "Suitable jobs" click — prepend if not already present
+      try {
+        const pinnedId = localStorage.getItem("pinnedSuitableJobId");
+        if (pinnedId) {
+          localStorage.removeItem("pinnedSuitableJobId");
+          if (!finalJobs.some(j => j.id === pinnedId)) {
+            const pinned = allJobs.find((j: any) => j.id === pinnedId);
+            if (pinned) {
+              finalJobs = [{ ...pinned, matchScore: 100, matchReasons: ['resume_match'] } as Job, ...finalJobs];
+            } else {
+              const { data: pj } = await supabase.from('jobs').select('*').eq('id', pinnedId).maybeSingle();
+              if (pj) finalJobs = [{ ...pj, matchScore: 100, matchReasons: ['resume_match'] } as Job, ...finalJobs];
+            }
+          }
+        }
+      } catch {}
+
+      setJobs(finalJobs);
     } catch (error: any) {
       if (!isNetworkError(error)) {
         toast({
