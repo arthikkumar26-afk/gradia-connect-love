@@ -1469,6 +1469,7 @@ const CandidateDashboard = () => {
     { id: "applications", label: "My Applications", icon: ClipboardList },
     { id: "pipeline", label: "Interview Pipeline", icon: TrendingUp },
     { id: "mocktest", label: "Attend Mock Test", icon: Target },
+    { id: "mockhistory", label: "Mock Test History", icon: History },
     { id: "upskill", label: "Upskill Yourself", icon: Lightbulb },
     // { id: "mentors", label: "Mentors", icon: Users }, // hidden per request
     { id: "externaljobs", label: "External Job Listings", icon: ExternalLink },
