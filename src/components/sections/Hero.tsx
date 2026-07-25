@@ -220,6 +220,21 @@ const Hero = () => {
     : n >= 50 ? "bg-amber-100 text-amber-700"
     : "bg-red-100 text-red-700";
 
+  const handleSelectMatch = async (m: ResumeMatch) => {
+    try {
+      localStorage.setItem("pinnedSuitableJobId", m.id);
+    } catch {}
+    const dest = "/candidate/dashboard?tab=jobs";
+    const { data } = await supabase.auth.getUser();
+    const role = (data.user?.user_metadata as any)?.role;
+    if (data.user && (!role || role === "candidate")) {
+      navigate(dest);
+    } else {
+      navigate(`/candidate/signup?redirect=${encodeURIComponent(dest)}`);
+    }
+  };
+
+
 
   const filterButtons = [
     { id: "software" as FilterType, label: "Software Engineering" },
@@ -355,10 +370,11 @@ const Hero = () => {
                 ) : resumeMatches && resumeMatches.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {resumeMatches.map((m) => (
-                      <Link
+                      <button
                         key={m.id}
-                        to={`/jobs?job=${m.id}`}
-                        className="border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-muted/30 transition group"
+                        type="button"
+                        onClick={() => handleSelectMatch(m)}
+                        className="text-left border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-muted/30 transition group"
                       >
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div className="min-w-0">
@@ -374,7 +390,7 @@ const Hero = () => {
                           {m.type && <span className="inline-flex items-center gap-1"><Briefcase className="h-3 w-3" />{m.type}</span>}
                         </div>
                         {m.reason && <p className="text-[11px] text-muted-foreground line-clamp-2">{m.reason}</p>}
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 ) : (
