@@ -169,6 +169,58 @@ const Hero = () => {
     setActiveFilter(activeFilter === filter ? "all" : filter);
   };
 
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const lower = file.name.toLowerCase();
+    if (!(lower.endsWith(".pdf") || lower.endsWith(".docx"))) {
+      toast.error("Please upload a PDF or DOCX resume.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("File too large (max 8 MB).");
+      return;
+    }
+    setResumeScanning(true);
+    setResumeFileName(file.name);
+    setResumeMatches(null);
+    try {
+      const buf = await file.arrayBuffer();
+      let binary = "";
+      const bytes = new Uint8Array(buf);
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunk)) as any);
+      }
+      const fileBase64 = btoa(binary);
+      const { data, error } = await supabase.functions.invoke("match-resume-to-jobs", {
+        body: { fileBase64, fileName: file.name },
+      });
+      if (error || (data as any)?.error) {
+        throw new Error((data as any)?.error || error?.message || "Scan failed");
+      }
+      const matches: ResumeMatch[] = (data as any)?.matches || [];
+      setResumeMatches(matches);
+      if (matches.length === 0) {
+        toast.info("No matching jobs found for this resume yet.");
+      } else {
+        toast.success(`Found ${matches.length} suitable job${matches.length > 1 ? "s" : ""}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Could not scan resume");
+    } finally {
+      setResumeScanning(false);
+    }
+  };
+
+  const scoreTone = (n: number) =>
+    n >= 75 ? "bg-emerald-100 text-emerald-700"
+    : n >= 50 ? "bg-amber-100 text-amber-700"
+    : "bg-red-100 text-red-700";
+
+
   const filterButtons = [
     { id: "software" as FilterType, label: "Software Engineering" },
     { id: "education" as FilterType, label: "Education" },
