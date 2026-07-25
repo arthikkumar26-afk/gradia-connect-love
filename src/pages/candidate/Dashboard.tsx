@@ -2149,11 +2149,30 @@ const CandidateDashboard = () => {
         ? (suitableJobs.slice(0, 10) as Job[])
         : (sortedJobs.slice(0, 10) as Job[]);
 
-      // Pinned job from Hero "Suitable jobs" click — prepend if not already present
+      // Pinned job from Hero "Suitable jobs" click — persists across refreshes/sessions via profile
       try {
-        const pinnedId = localStorage.getItem("pinnedSuitableJobId");
+        let pinnedId: string | null = null;
+        try { pinnedId = localStorage.getItem("pinnedSuitableJobId"); } catch {}
+
+        const { data: authData } = await supabase.auth.getUser();
+        const uid = authData.user?.id;
+        if (uid) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("pinned_suitable_job_id")
+            .eq("id", uid)
+            .maybeSingle();
+          const profPinned = (prof as any)?.pinned_suitable_job_id as string | null | undefined;
+          if (!pinnedId && profPinned) {
+            pinnedId = profPinned;
+            try { localStorage.setItem("pinnedSuitableJobId", pinnedId); } catch {}
+          } else if (pinnedId && pinnedId !== profPinned) {
+            // Sync local → profile so it survives new sessions/devices
+            await supabase.from("profiles").update({ pinned_suitable_job_id: pinnedId }).eq("id", uid);
+          }
+        }
+
         if (pinnedId) {
-          localStorage.removeItem("pinnedSuitableJobId");
           if (!finalJobs.some(j => j.id === pinnedId)) {
             const pinned = allJobs.find((j: any) => j.id === pinnedId);
             if (pinned) {
@@ -2165,6 +2184,7 @@ const CandidateDashboard = () => {
           }
         }
       } catch {}
+
 
       setJobs(finalJobs);
     } catch (error: any) {
