@@ -220,6 +220,21 @@ const Hero = () => {
     : n >= 50 ? "bg-amber-100 text-amber-700"
     : "bg-red-100 text-red-700";
 
+  const handleSelectMatch = async (m: ResumeMatch) => {
+    try {
+      localStorage.setItem("pinnedSuitableJobId", m.id);
+    } catch {}
+    const dest = "/candidate/dashboard?tab=jobs";
+    const { data } = await supabase.auth.getUser();
+    const role = (data.user?.user_metadata as any)?.role;
+    if (data.user && (!role || role === "candidate")) {
+      navigate(dest);
+    } else {
+      navigate(`/candidate/signup?redirect=${encodeURIComponent(dest)}`);
+    }
+  };
+
+
 
   const filterButtons = [
     { id: "software" as FilterType, label: "Software Engineering" },
