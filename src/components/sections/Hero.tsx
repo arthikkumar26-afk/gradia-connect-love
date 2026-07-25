@@ -228,11 +228,16 @@ const Hero = () => {
     const { data } = await supabase.auth.getUser();
     const role = (data.user?.user_metadata as any)?.role;
     if (data.user && (!role || role === "candidate")) {
+      // Persist across devices/sessions
+      try {
+        await supabase.from("profiles").update({ pinned_suitable_job_id: m.id }).eq("id", data.user.id);
+      } catch {}
       navigate(dest);
     } else {
       navigate(`/candidate/signup?redirect=${encodeURIComponent(dest)}`);
     }
   };
+
 
 
 
