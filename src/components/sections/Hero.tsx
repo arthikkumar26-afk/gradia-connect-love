@@ -1,13 +1,27 @@
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useMemo, useEffect } from "react";
-import { Search, ArrowRight, X, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Search, ArrowRight, X, Loader2, Upload, Sparkles, MapPin, Briefcase } from "lucide-react";
 import JobCard from "@/components/ui/JobCard";
 import { sampleJobs, getFeaturedJobs, Job } from "@/data/sampleJobs";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type FilterType = "all" | "software" | "education" | "remote" | "entry";
+
+interface ResumeMatch {
+  id: string;
+  title: string;
+  company: string;
+  location?: string;
+  type?: string;
+  salary?: string;
+  skills?: string[];
+  score: number;
+  reason: string;
+}
 
 const Hero = () => {
   const navigate = useNavigate();
