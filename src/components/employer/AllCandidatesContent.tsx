@@ -69,12 +69,18 @@ export function AllCandidatesContent() {
   const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [industryFilter, setIndustryFilter] = useState("all");
   const [countryFilter, setCountryFilter] = useState("all");
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProfile | null>(null);
   const [jdPrompt, setJdPrompt] = useState("");
   const [aiSearching, setAiSearching] = useState(false);
   const [aiMatches, setAiMatches] = useState<Map<string, { score: number; reason: string }> | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   const {
     requireUnlock,
     confirmUnlock,
@@ -232,8 +238,8 @@ export function AllCandidatesContent() {
     .filter((c) => {
       // When AI matching is active, bypass the plain-text search so AI results always show.
       if (aiMatches) return true;
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
+      if (!debouncedSearch) return true;
+      const q = debouncedSearch.toLowerCase();
       return (
         c.full_name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
