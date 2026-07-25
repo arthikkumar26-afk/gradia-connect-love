@@ -2173,16 +2173,30 @@ const CandidateDashboard = () => {
         }
 
         if (pinnedId) {
-          if (!finalJobs.some(j => j.id === pinnedId)) {
-            const pinned = allJobs.find((j: any) => j.id === pinnedId);
-            if (pinned) {
-              finalJobs = [{ ...pinned, matchScore: 100, matchReasons: ['resume_match'] } as Job, ...finalJobs];
-            } else {
+          // Always force the pinned job to appear at index 0.
+          const existingIdx = finalJobs.findIndex(j => j.id === pinnedId);
+          if (existingIdx >= 0) {
+            const [existing] = finalJobs.splice(existingIdx, 1);
+            finalJobs = [{ ...existing, matchScore: 100, matchReasons: ['resume_match'] } as Job, ...finalJobs];
+          } else {
+            let pinnedJob: any = allJobs.find((j: any) => j.id === pinnedId);
+            if (!pinnedJob) {
               const { data: pj } = await supabase.from('jobs').select('*').eq('id', pinnedId).maybeSingle();
-              if (pj) finalJobs = [{ ...pj, matchScore: 100, matchReasons: ['resume_match'] } as Job, ...finalJobs];
+              pinnedJob = pj;
+            }
+            if (!pinnedJob) {
+              // Final fallback — use cached match payload so it always renders
+              try {
+                const cached = localStorage.getItem("pinnedSuitableJobData");
+                if (cached) pinnedJob = JSON.parse(cached);
+              } catch {}
+            }
+            if (pinnedJob) {
+              finalJobs = [{ ...pinnedJob, matchScore: 100, matchReasons: ['resume_match'] } as Job, ...finalJobs];
             }
           }
         }
+
       } catch {}
 
 
