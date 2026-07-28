@@ -310,6 +310,10 @@ const CandidateSignup = () => {
   const referralCode = searchParams.get("ref") || "";
   const prefillEmail = searchParams.get("email") || "";
   const prefillName = searchParams.get("name") || "";
+  const redirectParam = searchParams.get("redirect") || "";
+  const postSignupDestination = (redirectParam && redirectParam.startsWith("/"))
+    ? redirectParam
+    : "/candidate/dashboard";
 
   // Wizard step lives in memory only — never persisted to localStorage/sessionStorage
   // so that browser-specific storage (Edge vs Chrome) cannot resurrect stale steps.
@@ -652,7 +656,7 @@ const CandidateSignup = () => {
     if (!isAuthenticated) return;
     if (justSignedUp || justSignedUpRef.current) return;
     if (currentStep !== 'signup') return;
-    navigate('/candidate/dashboard', { replace: true });
+    navigate(postSignupDestination, { replace: true });
   }, [authLoading, isAuthenticated, justSignedUp, currentStep, navigate]);
 
   // Scroll to top whenever the wizard advances to a new step.
@@ -2300,7 +2304,7 @@ const CandidateSignup = () => {
     if (grandTotal <= 0) {
       toast({ title: 'Free plan activated', description: 'Your candidate account is ready.' });
       await refreshProfile();
-      navigate('/candidate/dashboard', { replace: true });
+      navigate(postSignupDestination, { replace: true });
       return;
     }
     if (!razorpayLoaded) {
@@ -2382,7 +2386,7 @@ const CandidateSignup = () => {
               description: 'Welcome to Gradia. Your candidate account is now active.',
             });
             await refreshProfile();
-            navigate('/candidate/dashboard', { replace: true });
+            navigate(postSignupDestination, { replace: true });
           } catch (err: any) {
             toast({
               title: 'Payment captured, activation pending',

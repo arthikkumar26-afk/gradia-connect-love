@@ -3784,21 +3784,52 @@ const CandidateDashboard = () => {
             )}
 
             {/* Suitable Jobs View — locked overlay shown if not unlocked */}
-            {activeMenu === "jobs" && !featureUnlocks.isUnlocked("jobs") && (
-              <LockedFeatureOverlay
-                feature="jobs"
-                onUnlocked={featureUnlocks.refresh}
-                onOpenAllPlans={() => setActiveMenu("upgrade")}
-              >
+            {activeMenu === "jobs" && !featureUnlocks.isUnlocked("jobs") && (() => {
+              let pinnedJob: any = null;
+              try {
+                const cached = localStorage.getItem("pinnedSuitableJobData");
+                if (cached) pinnedJob = JSON.parse(cached);
+              } catch {}
+              return (
                 <div className="space-y-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">Suitable Jobs</h2>
-                    <p className="text-sm text-muted-foreground">AI-matched jobs based on your profile (sample preview)</p>
-                  </div>
-                  <Card className="p-6"><p className="text-sm text-muted-foreground">Sample matched job listings will appear here once unlocked.</p></Card>
+                  {pinnedJob && (
+                    <Card className="p-4 border-primary/40 bg-primary/5">
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="min-w-0">
+                          <div className="text-xs uppercase tracking-wide text-primary font-semibold mb-1">Your AI resume match</div>
+                          <h3 className="text-base font-semibold text-foreground truncate">{pinnedJob.job_title || pinnedJob.title}</h3>
+                          <p className="text-sm text-muted-foreground truncate">{pinnedJob.company_name || pinnedJob.company}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-3">
+                        {pinnedJob.location && <span>{pinnedJob.location}</span>}
+                        {(pinnedJob.job_type || pinnedJob.type) && <span>{pinnedJob.job_type || pinnedJob.type}</span>}
+                        {(pinnedJob.salary_range || pinnedJob.salary) && <span>{pinnedJob.salary_range || pinnedJob.salary}</span>}
+                      </div>
+                      {pinnedJob.description && (
+                        <p className="text-xs text-muted-foreground line-clamp-3 mb-3">{pinnedJob.description}</p>
+                      )}
+                      <Button size="sm" onClick={() => navigate(`/jobs/${pinnedJob.id}`)}>
+                        View Job
+                      </Button>
+                    </Card>
+                  )}
+                  <LockedFeatureOverlay
+                    feature="jobs"
+                    onUnlocked={featureUnlocks.refresh}
+                    onOpenAllPlans={() => setActiveMenu("upgrade")}
+                  >
+                    <div className="space-y-4">
+                      <div>
+                        <h2 className="text-lg font-semibold text-foreground">Suitable Jobs</h2>
+                        <p className="text-sm text-muted-foreground">AI-matched jobs based on your profile (sample preview)</p>
+                      </div>
+                      <Card className="p-6"><p className="text-sm text-muted-foreground">Sample matched job listings will appear here once unlocked.</p></Card>
+                    </div>
+                  </LockedFeatureOverlay>
                 </div>
-              </LockedFeatureOverlay>
-            )}
+              );
+            })()}
             {activeMenu === "jobs" && featureUnlocks.isUnlocked("jobs") && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
