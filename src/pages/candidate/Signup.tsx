@@ -310,6 +310,10 @@ const CandidateSignup = () => {
   const referralCode = searchParams.get("ref") || "";
   const prefillEmail = searchParams.get("email") || "";
   const prefillName = searchParams.get("name") || "";
+  const redirectParam = searchParams.get("redirect") || "";
+  const postSignupDestination = (redirectParam && redirectParam.startsWith("/"))
+    ? redirectParam
+    : "/candidate/dashboard";
 
   // Wizard step lives in memory only — never persisted to localStorage/sessionStorage
   // so that browser-specific storage (Edge vs Chrome) cannot resurrect stale steps.
