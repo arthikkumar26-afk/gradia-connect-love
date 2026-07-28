@@ -656,7 +656,7 @@ const CandidateSignup = () => {
     if (!isAuthenticated) return;
     if (justSignedUp || justSignedUpRef.current) return;
     if (currentStep !== 'signup') return;
-    navigate('/candidate/dashboard', { replace: true });
+    navigate(postSignupDestination, { replace: true });
   }, [authLoading, isAuthenticated, justSignedUp, currentStep, navigate]);
 
   // Scroll to top whenever the wizard advances to a new step.
@@ -2304,7 +2304,7 @@ const CandidateSignup = () => {
     if (grandTotal <= 0) {
       toast({ title: 'Free plan activated', description: 'Your candidate account is ready.' });
       await refreshProfile();
-      navigate('/candidate/dashboard', { replace: true });
+      navigate(postSignupDestination, { replace: true });
       return;
     }
     if (!razorpayLoaded) {
@@ -2386,7 +2386,7 @@ const CandidateSignup = () => {
               description: 'Welcome to Gradia. Your candidate account is now active.',
             });
             await refreshProfile();
-            navigate('/candidate/dashboard', { replace: true });
+            navigate(postSignupDestination, { replace: true });
           } catch (err: any) {
             toast({
               title: 'Payment captured, activation pending',

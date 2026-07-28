@@ -237,7 +237,8 @@ const Hero = () => {
         status: "active",
       }));
     } catch {}
-    const dest = "/candidate/dashboard?tab=jobs";
+    const dest = `/jobs/${m.id}`;
+    const dashDest = "/candidate/dashboard?tab=jobs";
     const { data } = await supabase.auth.getUser();
     const role = (data.user?.user_metadata as any)?.role;
     if (data.user && (!role || role === "candidate")) {
@@ -246,7 +247,7 @@ const Hero = () => {
       } catch {}
       navigate(dest);
     } else {
-      navigate(`/candidate/signup?redirect=${encodeURIComponent(dest)}`);
+      navigate(`/candidate/signup?redirect=${encodeURIComponent(dashDest)}`);
     }
   };
 
