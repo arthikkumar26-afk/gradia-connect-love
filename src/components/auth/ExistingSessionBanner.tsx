@@ -10,7 +10,7 @@ const dashboardFor = (role?: string | null) => {
     case "owner": return "/owner/dashboard";
     case "employer": return "/employer/dashboard";
     case "hr":
-    case "hr_manager": return "/hr/dashboard";
+    case "hr_manager": return "/employer/dashboard";
     case "freelancer": return "/freelancer/dashboard";
     case "edutech": return "/edutech/dashboard";
     default: return "/candidate/dashboard";
