@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
+import ExistingSessionBanner from "@/components/auth/ExistingSessionBanner";
 
 
 interface LayoutProps {
@@ -28,10 +29,13 @@ const Layout = ({ children }: LayoutProps) => {
   const hideHeader = (location.pathname.startsWith('/admin/') && location.pathname !== '/admin/login') ||
                      (location.pathname.startsWith('/owner/') && location.pathname !== '/owner/login');
 
+  const isLoginPage = /(^|\/)(login|hr-login)$/i.test(location.pathname) || location.pathname.endsWith('/login');
+
   return (
     <div className="min-h-screen flex flex-col">
       {!hideHeader && <Header />}
       <main className="flex-1">
+        {isLoginPage && <ExistingSessionBanner key={location.pathname} />}
         {children}
       </main>
       {!hideFooter && <Footer />}
