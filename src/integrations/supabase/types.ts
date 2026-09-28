@@ -4753,6 +4753,22 @@ export type Database = {
       is_freelancer_profile: { Args: { _user_id: string }; Returns: boolean }
       is_hr_manager: { Args: { _user_id: string }; Returns: boolean }
       is_hr_user: { Args: { _user_id: string }; Returns: boolean }
+      search_public_jobs: {
+        Args: { p_limit?: number; p_location?: string; p_query?: string }
+        Returns: {
+          company_name: string
+          created_at: string
+          description: string
+          experience_required: string
+          id: string
+          job_title: string
+          job_type: string
+          location: string
+          requirements: string
+          salary_range: string
+          skills: string[]
+        }[]
+      }
       start_mock_interview_session: {
         Args: { p_interview_type?: string; p_pipeline_type?: string }
         Returns: string
