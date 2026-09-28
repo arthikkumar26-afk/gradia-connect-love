@@ -104,9 +104,15 @@ const ResetPassword = () => {
       });
 
       if (error) {
+        const leaked = /weak|easy to guess|pwned|breach/i.test(error.message || "");
+        const samePw = /should be different|same password/i.test(error.message || "");
         toast({
-          title: "Error",
-          description: error.message,
+          title: leaked ? "This password appeared in a data leak" : samePw ? "Choose a new password" : "Error",
+          description: leaked
+            ? "Even though it looks strong, this exact password has been found in public leaked-password lists, so it's not safe. Please choose a different, unique password (e.g. add unrelated words or extra characters)."
+            : samePw
+            ? "Your new password must be different from your current password."
+            : error.message,
           variant: "destructive",
         });
         return;
