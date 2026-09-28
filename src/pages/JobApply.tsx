@@ -130,6 +130,28 @@ const JobApply = () => {
         return;
       }
       setResumeFile(file);
+      autofillFromResume(file);
+    }
+  };
+
+  const autofillFromResume = async (file: File) => {
+    if (file.name.toLowerCase().endsWith(".doc")) return;
+    const id = toast.loading("Reading your resume to fill your details...");
+    try {
+      const buf = new Uint8Array(await file.arrayBuffer());
+      let bin = "";
+      for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      const { data, error } = await supabase.functions.invoke("extract-resume-contact", {
+        body: { fileBase64: btoa(bin), fileName: file.name },
+      });
+      if (error) throw error;
+      if (data?.name) setCandidateName((p) => p || data.name);
+      if (data?.email) setCandidateEmail((p) => p || data.email);
+      if (data?.phone) setCandidatePhone((p) => p || data.phone);
+      toast.success(data?.name || data?.email ? "Details filled from your resume" : "Couldn't find details — please type them", { id });
+    } catch (e) {
+      console.error(e);
+      toast.error("Couldn't read details from resume — please type them", { id });
     }
   };
 
