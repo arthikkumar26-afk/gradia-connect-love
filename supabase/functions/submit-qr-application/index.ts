@@ -46,6 +46,7 @@ serve(async (req) => {
     let existingUser: { id: string } | null = existingProfile || null;
 
     let userId: string;
+    let isNewAccount = false;
 
     if (existingUser) {
       userId = existingUser.id;
@@ -92,6 +93,7 @@ serve(async (req) => {
         }
       } else {
         userId = newUser.user.id;
+        isNewAccount = true;
 
         // Create profile
         const { error: profileError } = await supabase.from("profiles").insert({
@@ -283,6 +285,58 @@ serve(async (req) => {
       }
     } catch (emailError) {
       console.error("Confirmation email failed:", emailError);
+    }
+
+    // 7b. No account existed for this email -> invite candidate to activate their account
+    if (isNewAccount) {
+      try {
+        const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+          type: "recovery",
+          email: candidateEmail.trim(),
+          options: { redirectTo: "https://gradia.world/reset-password" },
+        });
+        const setupUrl = linkData?.properties?.action_link || "https://gradia.world/forgot-password";
+        if (linkError) console.error("Setup link error:", linkError);
+        if (RESEND_API_KEY) {
+          const html = `
+            <div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#1f2937;">
+              <div style="background:linear-gradient(135deg,#0f4c75 0%,#10b981 100%);color:#fff;padding:32px 24px;text-align:center;border-radius:12px 12px 0 0;">
+                <h1 style="margin:0;font-size:24px;">Create your Gradia account</h1>
+                <p style="margin:6px 0 0;opacity:.9;">Track your application for ${jobTitle}</p>
+              </div>
+              <div style="background:#fff;padding:28px 24px;border:1px solid #e5e7eb;">
+                <p>Hi ${candidateName},</p>
+                <p>Thanks for applying for <strong>${jobTitle}</strong> at <strong>${companyName}</strong>. We noticed you don't have a Gradia account yet — we've reserved one for <strong>${candidateEmail}</strong>.</p>
+                <p>Set your password to get the best results:</p>
+                <ul>
+                  <li>Follow up on this position and see every interview stage</li>
+                  <li>Get your AI resume score and improvement tips</li>
+                  <li>Receive matched job recommendations</li>
+                  <li>Practice with mock interviews</li>
+                </ul>
+                <p style="text-align:center;margin:24px 0;">
+                  <a href="${setupUrl}" style="background:#ea580c;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Set password & activate account</a>
+                </p>
+                <p style="font-size:13px;color:#6b7280;">This link expires soon. If it does, use "Forgot password" at https://gradia.world/login with this email.</p>
+              </div>
+              <div style="text-align:center;padding:16px;color:#6b7280;font-size:12px;">© ${new Date().getFullYear()} Gradia</div>
+            </div>`;
+          const r = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              from: "Gradia Hiring <hr@gradia.co.in>",
+              to: [candidateEmail],
+              subject: `Create your Gradia account to follow up on ${jobTitle}`,
+              html,
+            }),
+          });
+          console.log("Account setup email sent:", await r.json());
+        }
+      } catch (e) {
+        console.error("Account setup email failed:", e);
+      }
     }
 
     // 8. Trigger analyze-resume for AI scoring and pipeline automation AFTER confirmation email
