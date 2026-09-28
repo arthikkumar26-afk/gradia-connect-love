@@ -57,7 +57,8 @@ Deno.serve(async (req) => {
     const { data: jobs } = await supabase
       .from("jobs")
       .select("id, job_title, location, job_type, salary_range, skills, description, requirements, employer_id")
-      .eq("moderation_status", "approved")
+      .eq("status", "active")
+      .neq("moderation_status", "rejected")
       .order("created_at", { ascending: false })
       .limit(60);
 

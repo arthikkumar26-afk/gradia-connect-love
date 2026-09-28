@@ -106,10 +106,24 @@ const JobApply = () => {
         .select("full_name, company_name, company_description, profile_picture, website")
         .eq("id", jobData.employer_id)
         .eq("role", "employer")
-        .single();
+        .maybeSingle();
 
       if (!profileError && profileData) {
         setCompany(profileData);
+      } else {
+        // Visitors may not be able to read employer profiles; use the public job search for the company name
+        const { data: pub } = await (supabase as any).rpc("search_public_jobs", { p_query: null, p_location: null, p_limit: 100 });
+        const match = (pub || []).find((p: any) => p.id === jobData.id);
+        if (match) setCompany({ full_name: match.company_name, company_name: match.company_name } as any);
+      }
+
+      // Signed-in users: prefill their details so they can continue applying directly
+      const { data: auth } = await supabase.auth.getUser();
+      if (auth.user) {
+        const { data: me } = await supabase.from("profiles").select("full_name, email, phone").eq("id", auth.user.id).maybeSingle();
+        setCandidateName((v) => v || (me as any)?.full_name || "");
+        setCandidateEmail((v) => v || (me as any)?.email || auth.user!.email || "");
+        setCandidatePhone((v) => v || (me as any)?.phone || "");
       }
     } catch (error) {
       console.error("Error fetching job:", error);

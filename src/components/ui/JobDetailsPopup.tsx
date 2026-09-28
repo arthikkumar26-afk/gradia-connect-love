@@ -46,20 +46,23 @@ const JobDetailsPopup = ({ job, open, onOpenChange }: JobDetailsPopupProps) => {
 
   const handleApplyNow = () => {
     onOpenChange(false);
-    
-    // Check if user is authenticated as candidate
-    if (isAuthenticated && profile?.role === 'candidate') {
-      navigate(`/jobs-results?job=${job.id}&apply=true`);
-    } else if (isAuthenticated && profile?.role !== 'candidate') {
-      // User is logged in but not as a candidate (e.g., employer)
+    const isRealJob = /^[0-9a-f-]{36}$/i.test(String(job.id));
+    const applyPath = isRealJob ? `/job/${job.id}/apply` : `/jobs-results?job=${job.id}&apply=true`;
+
+    if (isAuthenticated && profile?.role && profile.role !== 'candidate') {
       toast({
         title: "Candidates Only",
         description: "Only candidates can apply for jobs. Please log in with a candidate account.",
         variant: "destructive",
       });
+      return;
+    }
+    if (isAuthenticated) {
+      // Already signed in - continue straight to the application
+      navigate(applyPath);
     } else {
-      // Not authenticated - redirect to candidate login with return URL
-      navigate(`/candidate/login?redirect=/jobs-results?job=${job.id}&apply=true`);
+      // New visitor - sign up first, then come back to this job's application
+      navigate(`/candidate/signup?redirect=${encodeURIComponent(applyPath)}`);
     }
   };
 
