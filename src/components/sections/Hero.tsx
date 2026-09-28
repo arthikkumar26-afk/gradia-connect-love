@@ -106,6 +106,42 @@ const Hero = () => {
   // Use DB jobs if available, otherwise fallback
   const allFeaturedJobs = dbJobs.length > 0 ? dbJobs : fallbackJobs;
 
+  // Live search of employer-posted jobs
+  const [searchDbJobs, setSearchDbJobs] = useState<Job[]>([]);
+  useEffect(() => {
+    if (!isSearchActive) { setSearchDbJobs([]); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await (supabase as any).rpc("search_public_jobs", {
+        p_query: searchTerm.trim() || null,
+        p_location: location.trim() || null,
+        p_limit: 50,
+      });
+      if (cancelled) return;
+      const mapped: Job[] = (data || []).map((j: any) => {
+        const t = (j.job_type || "").toLowerCase();
+        const days = j.created_at ? Math.floor((Date.now() - new Date(j.created_at).getTime()) / 86400000) : null;
+        return {
+          id: j.id,
+          title: j.job_title,
+          company: j.company_name || "Company",
+          location: j.location || "Location not specified",
+          type: (j.job_type as any) || "full-time",
+          category: (t.includes("teacher") || t.includes("education")) ? "education" : "software",
+          salary: j.salary_range || undefined,
+          experience: j.experience_required || "Not specified",
+          posted: days === null ? "Recently" : days === 0 ? "Today" : days === 1 ? "1 day ago" : `${days} days ago`,
+          description: j.description || "No description available",
+          skills: j.skills || [],
+          requirements: j.requirements || undefined,
+          featured: false,
+        } as Job;
+      });
+      setSearchDbJobs(mapped);
+    })();
+    return () => { cancelled = true; };
+  }, [isSearchActive, searchTerm, location]);
+
   const filteredJobs = useMemo(() => {
     // If search is active, search through all jobs
     let jobsToFilter = isSearchActive ? sampleJobs : allFeaturedJobs;
@@ -148,8 +184,15 @@ const Hero = () => {
       });
     }
     
+    if (isSearchActive) {
+      const dbFiltered = activeFilter === "all" ? searchDbJobs : searchDbJobs.filter(j =>
+        activeFilter === "remote" ? j.location.toLowerCase().includes("remote")
+        : activeFilter === "entry" ? (j.type === "fresher" || j.type === "internship" || /fresher|entry/i.test(j.experience))
+        : j.category === activeFilter);
+      return [...dbFiltered, ...jobsToFilter];
+    }
     return jobsToFilter;
-  }, [activeFilter, allFeaturedJobs, isSearchActive, searchTerm, location]);
+  }, [activeFilter, allFeaturedJobs, isSearchActive, searchTerm, location, searchDbJobs]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,17 +280,15 @@ const Hero = () => {
         status: "active",
       }));
     } catch {}
-    const dest = `/jobs/${m.id}`;
-    const dashDest = "/candidate/dashboard?tab=jobs";
+    const dest = `/job/${m.id}/apply`;
     const { data } = await supabase.auth.getUser();
-    const role = (data.user?.user_metadata as any)?.role;
-    if (data.user && (!role || role === "candidate")) {
+    if (data.user) {
       try {
         await supabase.from("profiles").update({ pinned_suitable_job_id: m.id }).eq("id", data.user.id);
       } catch {}
       navigate(dest);
     } else {
-      navigate(`/candidate/signup?redirect=${encodeURIComponent(dashDest)}`);
+      navigate(`/candidate/signup?redirect=${encodeURIComponent(dest)}`);
     }
   };
 
