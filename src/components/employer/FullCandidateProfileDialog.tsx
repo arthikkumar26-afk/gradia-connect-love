@@ -150,6 +150,11 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
 
         {loading ? (
           <div className="space-y-3 py-4">
+            {aiParsing && (
+              <p className="text-sm text-primary text-center">
+                AI is reading the resume to fill in missing details...
+              </p>
+            )}
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-20 w-full" />
             ))}
