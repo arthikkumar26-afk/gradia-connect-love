@@ -34,6 +34,7 @@ interface Props {
 
 export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl }: Props) => {
   const [loading, setLoading] = useState(false);
+  const [aiParsing, setAiParsing] = useState(false);
   const [profile, setProfile] = useState<any>(null);
   const [education, setEducation] = useState<any[]>([]);
   const [experience, setExperience] = useState<any[]>([]);
@@ -57,14 +58,64 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
           .order("display_order", { ascending: true }),
         supabase.from("address_details").select("*").eq("user_id", candidateId).maybeSingle(),
       ]);
-      setProfile(p);
-      setEducation(edu || []);
-      setExperience(exp || []);
+
+      let mergedProfile = p;
+      let mergedEdu = edu || [];
+      let mergedExp = exp || [];
+
+      // If the profile is sparse, extract details from the resume with AI
+      const sparse =
+        resumeUrl &&
+        (mergedEdu.length === 0 || mergedExp.length === 0 || !p?.mobile || !p?.location);
+      if (sparse) {
+        setAiParsing(true);
+        try {
+          const { data: aiData, error: aiError } = await supabase.functions.invoke(
+            "ai-parse-resume-profile",
+            { body: { resumeUrl } }
+          );
+          const ai = aiData?.profile;
+          if (!aiError && ai) {
+            const fill = (current: any, aiValue: any) =>
+              current === null || current === undefined || current === "" ? aiValue : current;
+            mergedProfile = {
+              ...p,
+              full_name: fill(p?.full_name, ai.full_name),
+              email: fill(p?.email, ai.email),
+              mobile: fill(p?.mobile, ai.phone),
+              location: fill(p?.location, ai.location),
+              preferred_role: fill(p?.preferred_role, ai.preferred_role),
+              experience_level: fill(p?.experience_level, ai.experience_level),
+              languages:
+                Array.isArray(p?.languages) && p.languages.length > 0 ? p.languages : ai.languages,
+              highest_qualification: fill(p?.highest_qualification, ai.highest_qualification),
+              current_salary: fill(p?.current_salary, ai.current_salary),
+              expected_salary: fill(p?.expected_salary, ai.expected_salary),
+              skills:
+                Array.isArray(p?.skills) && p.skills.length > 0 ? p.skills : ai.skills,
+            };
+            if (mergedEdu.length === 0 && Array.isArray(ai.education)) {
+              mergedEdu = ai.education.map((e: any, i: number) => ({ id: `ai-edu-${i}`, ...e }));
+            }
+            if (mergedExp.length === 0 && Array.isArray(ai.experience)) {
+              mergedExp = ai.experience.map((w: any, i: number) => ({ id: `ai-exp-${i}`, ...w }));
+            }
+          }
+        } catch (e) {
+          console.error("AI resume parse failed:", e);
+        } finally {
+          setAiParsing(false);
+        }
+      }
+
+      setProfile(mergedProfile);
+      setEducation(mergedEdu);
+      setExperience(mergedExp);
       setAddress(addr);
       setLoading(false);
     };
     load();
-  }, [open, candidateId]);
+  }, [open, candidateId, resumeUrl]);
 
   const Section = ({ icon: Icon, title, children }: any) => (
     <div className="space-y-2">
