@@ -59,7 +59,7 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
         supabase.from("address_details").select("*").eq("user_id", candidateId).maybeSingle(),
       ]);
 
-      let mergedProfile = p;
+      let mergedProfile: any = p;
       let mergedEdu = edu || [];
       let mergedExp = exp || [];
 
@@ -92,7 +92,7 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
               current_salary: fill(p?.current_salary, ai.current_salary),
               expected_salary: fill(p?.expected_salary, ai.expected_salary),
               skills:
-                Array.isArray(p?.skills) && p.skills.length > 0 ? p.skills : ai.skills,
+                Array.isArray((p as any)?.skills) && (p as any).skills.length > 0 ? (p as any).skills : ai.skills,
             };
             if (mergedEdu.length === 0 && Array.isArray(ai.education)) {
               mergedEdu = ai.education.map((e: any, i: number) => ({ id: `ai-edu-${i}`, ...e }));
