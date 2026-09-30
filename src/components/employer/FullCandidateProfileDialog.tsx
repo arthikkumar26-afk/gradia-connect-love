@@ -25,14 +25,39 @@ import {
   Home,
 } from "lucide-react";
 
+import { Bot, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import MockInterviewHistory from "@/components/shared/MockInterviewHistory";
+
 interface Props {
   open: boolean;
   onClose: () => void;
   candidateId: string | null;
   resumeUrl?: string | null;
+  jobTitle?: string | null;
 }
 
-export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl }: Props) => {
+export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl, jobTitle }: Props) => {
+  const [sendingScreening, setSendingScreening] = useState(false);
+  const [historyKey, setHistoryKey] = useState(0);
+
+  const sendScreening = async () => {
+    if (!candidateId) return;
+    setSendingScreening(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-ai-screening", {
+        body: { candidateId, jobTitle: jobTitle || null, appUrl: window.location.origin },
+      });
+      if (error || data?.error) throw new Error(typeof data?.error === "string" ? data.error : error?.message);
+      toast.success(data.emailSent ? "AI screening round sent to candidate" : "Screening created, but email could not be sent");
+      setHistoryKey((k) => k + 1);
+    } catch (e: any) {
+      toast.error(e.message || "Could not send screening round");
+    } finally {
+      setSendingScreening(false);
+    }
+  };
+
   const [loading, setLoading] = useState(false);
   const [aiParsing, setAiParsing] = useState(false);
   const [profile, setProfile] = useState<any>(null);
