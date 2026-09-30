@@ -254,6 +254,19 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
               <Field label="Available From" value={profile.available_from} />
             </Section>
 
+            {/* Skills */}
+            {Array.isArray(profile.skills) && profile.skills.length > 0 && (
+              <Section icon={FileText} title="Skills">
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.skills.map((s: string, i: number) => (
+                    <Badge key={i} variant="secondary" className="text-xs">
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              </Section>
+            )}
+
             {/* Education */}
             <Section icon={GraduationCap} title={`Education (${education.length})`}>
               {education.length === 0 ? (
