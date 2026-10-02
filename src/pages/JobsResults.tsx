@@ -178,12 +178,6 @@ const JobsResults = () => {
     const loc = searchParams.get('location')?.toLowerCase() || '';
 
     const filtered = jobs.filter(job => {
-      if (isCandidate) {
-        const allowed =
-          (job.employer_id && employerMap[job.employer_id]) ||
-          jobMap[job.id];
-        if (!allowed) return false;
-      }
       const matchesQuery = !query ||
         job.title.toLowerCase().includes(query) ||
         job.company.toLowerCase().includes(query) ||
