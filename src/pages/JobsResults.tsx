@@ -103,11 +103,17 @@ const JobsResults = () => {
           return;
         }
 
+        const companyById: Record<string, string> = {};
+        try {
+          const { data: pub } = await supabase.rpc('search_public_jobs', { p_limit: 100 });
+          (pub || []).forEach((p: any) => { companyById[p.id] = p.company_name; });
+        } catch {}
+
         // Transform DB jobs to match the Job interface
         const transformedJobs: Job[] = (dbJobs || []).map((job: any) => ({
           id: job.id,
           title: correctJobTitle(job.job_title || ''),
-          company: job.employer?.company_name || 'Unknown Company',
+          company: job.employer?.company_name || companyById[job.id] || 'Company',
           location: correctLocation(job.location || 'Remote'),
           type: job.job_type || 'full-time',
           experience: job.experience_required || 'Not specified',
@@ -178,12 +184,6 @@ const JobsResults = () => {
     const loc = searchParams.get('location')?.toLowerCase() || '';
 
     const filtered = jobs.filter(job => {
-      if (isCandidate) {
-        const allowed =
-          (job.employer_id && employerMap[job.employer_id]) ||
-          jobMap[job.id];
-        if (!allowed) return false;
-      }
       const matchesQuery = !query ||
         job.title.toLowerCase().includes(query) ||
         job.company.toLowerCase().includes(query) ||
