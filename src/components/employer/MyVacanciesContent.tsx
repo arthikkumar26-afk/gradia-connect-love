@@ -499,6 +499,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
           onClose={() => setProfileView(null)}
           candidateId={profileView?.candidate_id || null}
           resumeUrl={profileView?.resume_url || null}
+          jobTitle={selectedJob?.job_title || null}
         />
       </div>
     );
