@@ -56,7 +56,7 @@ const CandidateResumes = () => {
       if (!user) { navigate("/admin/login"); return; }
       const { data: roleData } = await supabase
         .from("user_roles").select("role")
-        .eq("user_id", user.id).in("role", ["admin", "owner"]).single();
+        .eq("user_id", user.id).in("role", ["admin", "owner"]).limit(1).maybeSingle();
       if (!roleData) {
         toast({ title: "Access Denied", description: "Admin access required", variant: "destructive" });
         navigate("/"); return;

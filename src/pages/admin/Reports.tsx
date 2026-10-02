@@ -88,7 +88,7 @@ const Reports = () => {
         .select('role')
         .eq('user_id', user.id)
         .in('role', ['admin', 'owner'])
-        .single();
+        .limit(1).maybeSingle();
 
       if (!roleData) {
         toast({
