@@ -221,21 +221,36 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
                   </div>
                 </div>
               </div>
-              {resumeUrl && (
-                <div className="flex flex-col gap-2">
-                  <Button size="sm" asChild>
-                    <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
-                      <Eye className="h-3.5 w-3.5 mr-1" /> View CV
-                    </a>
-                  </Button>
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={resumeUrl} download>
-                      <Download className="h-3.5 w-3.5 mr-1" /> Download
-                    </a>
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-col gap-2">
+                {resumeUrl && (
+                  <>
+                    <Button size="sm" asChild>
+                      <a href={resumeUrl} target="_blank" rel="noopener noreferrer">
+                        <Eye className="h-3.5 w-3.5 mr-1" /> View CV
+                      </a>
+                    </Button>
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={resumeUrl} download>
+                        <Download className="h-3.5 w-3.5 mr-1" /> Download
+                      </a>
+                    </Button>
+                  </>
+                )}
+                <Button size="sm" variant="secondary" onClick={sendScreening} disabled={sendingScreening}>
+                  {sendingScreening ? (
+                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                  ) : (
+                    <Bot className="h-3.5 w-3.5 mr-1" />
+                  )}
+                  Send AI Screening
+                </Button>
+              </div>
             </div>
+
+            {/* AI Screening status & recordings */}
+            {candidateId && (
+              <MockInterviewHistory key={historyKey} candidateId={candidateId} viewerRole="employer" />
+            )}
 
             {/* Contact */}
             <Section icon={Mail} title="Contact">
