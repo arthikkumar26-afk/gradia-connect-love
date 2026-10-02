@@ -89,7 +89,7 @@ const PopupAds = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/admin/login"); return; }
       const { data: roleData } = await supabase
-        .from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').single();
+        .from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin').limit(1).maybeSingle();
       if (!roleData) { navigate("/admin/login"); return; }
       setIsAuthorized(true);
       setIsLoading(false);

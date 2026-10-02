@@ -67,7 +67,7 @@ const UnsubscribedCandidates = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/admin/login"); return; }
       const { data: roleData } = await supabase
-        .from('user_roles').select('role').eq('user_id', user.id).in('role', ['admin', 'owner']).single();
+        .from('user_roles').select('role').eq('user_id', user.id).in('role', ['admin', 'owner']).limit(1).maybeSingle();
       if (!roleData) {
         toast({ title: "Access Denied", description: "No permission.", variant: "destructive" });
         navigate("/"); return;

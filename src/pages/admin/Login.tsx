@@ -28,7 +28,7 @@ const AdminLogin = () => {
             .select('role')
             .eq('user_id', user.id)
             .eq('role', 'admin')
-            .single();
+            .limit(1).maybeSingle();
           
           if (roleData) {
             navigate("/admin/dashboard");
@@ -70,7 +70,7 @@ const AdminLogin = () => {
         .select('role')
         .eq('user_id', data.user.id)
         .eq('role', 'admin')
-        .single();
+        .limit(1).maybeSingle();
 
       if (roleError || !roleData) {
         await supabase.auth.signOut();
