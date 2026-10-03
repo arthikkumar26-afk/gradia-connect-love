@@ -466,6 +466,8 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
         'Written Test Feedback',
         'HR Feedback',
         'HR Round Feedback',
+        // 'Instruction Mail' is the same email as 'Interview Guidelines' — never show it separately
+        'Instruction Mail',
       ]);
 
       let filteredStages: InterviewStage[];
