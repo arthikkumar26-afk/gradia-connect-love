@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Anyone can view interview stages" ON public.interview_stages;
+CREATE POLICY "Signed-in users can view interview stages" ON public.interview_stages FOR SELECT TO authenticated USING (auth.uid() IS NOT NULL);

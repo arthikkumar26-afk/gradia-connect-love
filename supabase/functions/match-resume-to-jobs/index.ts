@@ -115,16 +115,26 @@ Deno.serve(async (req) => {
       }),
     });
 
-    if (!aiResp.ok) {
-      const t = await aiResp.text();
-      if (aiResp.status === 429) return new Response(JSON.stringify({ error: "Rate limited" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (aiResp.status === 402) return new Response(JSON.stringify({ error: "AI credits exhausted" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      throw new Error(`AI gateway ${aiResp.status}: ${t}`);
+    let parsed: any = { matches: [] };
+    if (aiResp.ok) {
+      try {
+        const data = await aiResp.json();
+        const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+        if (args) parsed = JSON.parse(args);
+      } catch (e) { console.error("AI parse failed", e); }
+    } else {
+      console.error("AI gateway error", aiResp.status, await aiResp.text());
     }
-
-    const data = await aiResp.json();
-    const args = data?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
-    const parsed = args ? JSON.parse(args) : { matches: [] };
+    // Fallback: keyword overlap scoring when AI is unavailable or returned nothing
+    if (!parsed.matches?.length) {
+      const rt = resumeText.toLowerCase();
+      parsed.matches = jobList.map((j) => {
+        const terms = [...(j.skills || []), ...String(j.title || "").split(/\s+/)].map((t: string) => t.toLowerCase().trim()).filter((t: string) => t.length > 2);
+        const hits = terms.filter((t: string) => rt.includes(t));
+        const score = terms.length ? Math.round((hits.length / terms.length) * 100) : 0;
+        return { id: j.id, score, reason: hits.length ? `Matches: ${hits.slice(0, 5).join(", ")}` : "General fit" };
+      }).filter((m) => m.score > 0);
+    }
     const jobMap = new Map((jobs ?? []).map((j: any) => [j.id, j]));
 
     const employerIds = [...new Set((parsed.matches || []).map((m: any) => jobMap.get(m.id)?.employer_id).filter(Boolean))];
