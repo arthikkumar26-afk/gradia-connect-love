@@ -445,7 +445,17 @@ export const InterviewPipelineTab = ({ candidateId }: InterviewPipelineTabProps)
 
       // Determine visible stages based on the first interview's job pipeline
       const firstInterview = interviewsWithEvents[0];
-      const jobPipeline = (firstInterview?.job as any)?.pipeline_stages as Array<{ name: string; order: number }> | null;
+      // "Instruction Mail" is the same step as "Interview Guidelines" (one email) — merge them,
+      // so the candidate view matches the employer portal and doesn't show a stuck duplicate.
+      const rawJobPipeline = (firstInterview?.job as any)?.pipeline_stages as Array<{ name: string; order: number }> | null;
+      const jobPipeline = rawJobPipeline
+        ? (() => {
+            const seen = new Set<string>();
+            return rawJobPipeline
+              .map(ps => (ps.name === 'Instruction Mail' ? { ...ps, name: 'Interview Guidelines' } : ps))
+              .filter(ps => (seen.has(ps.name) ? false : (seen.add(ps.name), true)));
+          })()
+        : null;
 
       // Hidden stages skipped in candidate view.
       // - 'Demo Round' is replaced by 'Demo Feedback' card.
