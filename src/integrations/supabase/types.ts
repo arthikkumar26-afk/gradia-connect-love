@@ -4822,7 +4822,11 @@ export type Database = {
         }[]
       }
       set_subscription_autopay: {
-        Args: { p_enabled: boolean; p_subscription_id: string }
+        Args: {
+          p_enabled: boolean
+          p_subscription_id: string
+          p_user_id: string
+        }
         Returns: {
           created_at: string
           enabled: boolean
