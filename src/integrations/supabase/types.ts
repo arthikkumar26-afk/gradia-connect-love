@@ -4120,6 +4120,57 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_autopay: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          last_renewed_at: string | null
+          last_transaction_id: string | null
+          points_per_renewal: number
+          status: string
+          subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          last_renewed_at?: string | null
+          last_transaction_id?: string | null
+          points_per_renewal: number
+          status?: string
+          subscription_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          last_renewed_at?: string | null
+          last_transaction_id?: string | null
+          points_per_renewal?: number
+          status?: string
+          subscription_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_autopay_last_transaction_id_fkey"
+            columns: ["last_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "wallet_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_autopay_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: true
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           amount: number
@@ -4753,6 +4804,7 @@ export type Database = {
       is_freelancer_profile: { Args: { _user_id: string }; Returns: boolean }
       is_hr_manager: { Args: { _user_id: string }; Returns: boolean }
       is_hr_user: { Args: { _user_id: string }; Returns: boolean }
+      renew_wallet_point_subscriptions: { Args: never; Returns: number }
       search_public_jobs: {
         Args: { p_limit?: number; p_location?: string; p_query?: string }
         Returns: {
@@ -4768,6 +4820,30 @@ export type Database = {
           salary_range: string
           skills: string[]
         }[]
+      }
+      set_subscription_autopay: {
+        Args: {
+          p_enabled: boolean
+          p_subscription_id: string
+          p_user_id: string
+        }
+        Returns: {
+          created_at: string
+          enabled: boolean
+          last_renewed_at: string | null
+          last_transaction_id: string | null
+          points_per_renewal: number
+          status: string
+          subscription_id: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "subscription_autopay"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       start_mock_interview_session: {
         Args: { p_interview_type?: string; p_pipeline_type?: string }

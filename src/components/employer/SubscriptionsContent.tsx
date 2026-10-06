@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { pricingPlans, featureComparison } from "@/utils/pricingApi";
+import { PlanAutopay } from "@/components/employer/PlanAutopay";
 
 interface Subscription {
   id: string;
@@ -414,20 +415,19 @@ export const SubscriptionsContent = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-lg">
-                      <CreditCard className="h-6 w-6 text-primary" />
+                      <Wallet className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">No payment method added</p>
+                      <p className="font-medium">Wallet Points</p>
                       <p className="text-sm text-muted-foreground">
-                        Add a payment method to subscribe to a plan
+                        {walletPoints.toLocaleString()} pts available
                       </p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Add Card
-                  </Button>
                 </div>
               </div>
+
+              <PlanAutopay subscription={currentSubscription} walletPoints={walletPoints} onChange={async () => { await Promise.all([fetchSubscription(), loadWallet()]); }} />
 
               {/* Billing Information */}
               <div className="space-y-4">
@@ -454,11 +454,11 @@ export const SubscriptionsContent = () => {
                       <div>
                         <p className="font-medium text-lg">{currentSubscription.plan_name} Plan</p>
                         <p className="text-sm text-muted-foreground">
-                          ₹{currentSubscription.amount.toLocaleString()}/{currentSubscription.billing_cycle}
+                          {currentSubscription.currency === 'PTS' ? `${currentSubscription.amount.toLocaleString()} pts / 30 days` : `₹${currentSubscription.amount.toLocaleString()}/${currentSubscription.billing_cycle}`}
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
                           <Calendar className="h-3 w-3 inline mr-1" />
-                          Renews on{" "}
+                          Plan ends on{" "}
                           {currentSubscription.ends_at
                             ? new Date(currentSubscription.ends_at).toLocaleDateString()
                             : "N/A"}
