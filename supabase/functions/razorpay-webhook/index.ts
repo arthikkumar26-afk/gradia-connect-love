@@ -210,6 +210,41 @@ serve(async (req) => {
     }
   }
 
+  // Candidate plan autopay (Razorpay Subscriptions): each charge grants/extends 1 year
+  if (eventType === 'subscription.charged') {
+    try {
+      const subEntity = parsed?.payload?.subscription?.entity;
+      const pay = parsed?.payload?.payment?.entity;
+      const candId = subEntity?.notes?.candidate_id;
+      const plan = (subEntity?.notes?.plan || '').toString();
+      if (candId && plan && pay?.id) {
+        const { data: done } = await admin.from('razorpay_webhook_logs').select('id')
+          .eq('razorpay_payment_id', pay.id).eq('event_type', 'webhook.autopay_renewed').maybeSingle();
+        if (!done) {
+          const { data: cur } = await admin.from('candidate_subscriptions').select('id,plan,ends_at')
+            .eq('candidate_id', candId).eq('status', 'active').order('created_at', { ascending: false }).limit(1).maybeSingle();
+          const base = cur?.plan === plan && cur?.ends_at && new Date(cur.ends_at) > new Date() ? new Date(cur.ends_at) : new Date();
+          const ends = new Date(base.getTime() + 365 * 86400000).toISOString();
+          let rowId = cur?.id || null;
+          let err: any = null;
+          if (cur && cur.plan === plan) {
+            ({ error: err } = await admin.from('candidate_subscriptions').update({ ends_at: ends }).eq('id', cur.id));
+          } else {
+            await admin.from('candidate_subscriptions').update({ status: 'inactive' }).eq('candidate_id', candId).eq('status', 'active');
+            const r = await admin.from('candidate_subscriptions').insert({ candidate_id: candId, plan, status: 'active', started_at: new Date().toISOString(), ends_at: ends }).select('id').single();
+            err = r.error; rowId = r.data?.id || null;
+          }
+          await admin.from('razorpay_webhook_logs').insert({
+            source: 'webhook', event_type: 'webhook.autopay_renewed', status: err ? 'error' : 'success',
+            razorpay_payment_id: pay.id, user_id: candId, amount_paise: pay.amount ?? null, currency: pay.currency ?? null,
+            related_table: 'candidate_subscriptions', related_id: rowId, error_message: err?.message || null,
+            metadata: { plan, razorpay_subscription_id: subEntity?.id },
+          });
+        }
+      }
+    } catch (e: any) { console.error('[razorpay-webhook] autopay error', e); }
+  }
+
   return new Response(JSON.stringify({ ok: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 });
