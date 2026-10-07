@@ -103,6 +103,18 @@ serve(async (req) => {
       );
     }
 
+    if (razorpay_subscription_id) {
+      const keyId = Deno.env.get('RAZORPAY_KEY_ID');
+      const r = await fetch(`https://api.razorpay.com/v1/subscriptions/${razorpay_subscription_id}`, {
+        headers: { Authorization: `Basic ${btoa(`${keyId}:${RAZORPAY_KEY_SECRET}`)}` },
+      });
+      const sub = r.ok ? await r.json() : null;
+      if (!sub || sub.notes?.candidate_id !== candidate_id || sub.notes?.plan !== plan) {
+        return new Response(JSON.stringify({ error: 'Subscription does not match this plan' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     const supabase = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Deactivate any existing active subscription
