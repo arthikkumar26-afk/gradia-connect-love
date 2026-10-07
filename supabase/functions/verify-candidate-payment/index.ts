@@ -57,6 +57,7 @@ serve(async (req) => {
 
     const {
       razorpay_order_id,
+      razorpay_subscription_id,
       razorpay_payment_id,
       razorpay_signature,
       plan,
@@ -64,7 +65,7 @@ serve(async (req) => {
       candidate_id,
     } = await req.json();
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if ((!razorpay_order_id && !razorpay_subscription_id) || !razorpay_payment_id || !razorpay_signature) {
       return new Response(
         JSON.stringify({ error: 'Missing payment verification fields' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -89,9 +90,10 @@ serve(async (req) => {
       );
     }
 
-    const isValid = await verifySignature(
-      razorpay_order_id, razorpay_payment_id, razorpay_signature, RAZORPAY_KEY_SECRET
-    );
+    // Subscription (autopay) signature = HMAC(payment_id|subscription_id); order = HMAC(order_id|payment_id)
+    const isValid = razorpay_subscription_id
+      ? await verifySignature(razorpay_payment_id, razorpay_subscription_id, razorpay_signature, RAZORPAY_KEY_SECRET)
+      : await verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature, RAZORPAY_KEY_SECRET);
 
     if (!isValid) {
       console.error('Payment signature verification failed');
