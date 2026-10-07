@@ -107,32 +107,31 @@ export const FeatureUnlocksPanel = () => {
         toast({ title: "Could not load payment gateway", variant: "destructive" });
         return;
       }
-      const { data: orderData, error } = await supabase.functions.invoke(
-        "create-razorpay-order",
-        { body: { amount, plan_id: planId, plan_name: label, currency: "INR" } },
+      const { data: subData, error } = await supabase.functions.invoke(
+        "create-candidate-subscription",
+        { body: { plan: planId } },
       );
-      if (error || !orderData?.order_id) {
+      if (error || !subData?.subscription_id) {
         toast({
-          title: "Payment setup failed",
-          description: error?.message,
+          title: "Autopay setup failed",
+          description: subData?.error || error?.message,
           variant: "destructive",
         });
         return;
       }
       const options = {
-        key: orderData.key_id,
-        amount: orderData.amount,
-        currency: orderData.currency,
-        order_id: orderData.order_id,
+        key: subData.key_id,
+        subscription_id: subData.subscription_id,
+        recurring: 1,
         name: "Gradia",
-        description: label,
+        description: `${label} · Autopay (renews yearly)`,
         theme: { color: "#6366f1" },
         handler: async (response: any) => {
           const { error: verifyError } = await supabase.functions.invoke(
             "verify-candidate-payment",
             {
               body: {
-                razorpay_order_id: response.razorpay_order_id,
+                razorpay_subscription_id: response.razorpay_subscription_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
                 plan: planId,
