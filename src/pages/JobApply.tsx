@@ -120,10 +120,10 @@ const JobApply = () => {
       // Signed-in users: prefill their details so they can continue applying directly
       const { data: auth } = await supabase.auth.getUser();
       if (auth.user) {
-        const { data: me } = await supabase.from("profiles").select("full_name, email, phone").eq("id", auth.user.id).maybeSingle();
+        const { data: me } = await supabase.from("profiles").select("full_name, email, mobile").eq("id", auth.user.id).maybeSingle();
         setCandidateName((v) => v || (me as any)?.full_name || "");
         setCandidateEmail((v) => v || (me as any)?.email || auth.user!.email || "");
-        setCandidatePhone((v) => v || (me as any)?.phone || "");
+        setCandidatePhone((v) => v || (me as any)?.mobile || "");
       }
     } catch (error) {
       console.error("Error fetching job:", error);
