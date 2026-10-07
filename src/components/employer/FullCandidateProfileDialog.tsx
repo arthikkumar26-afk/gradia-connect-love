@@ -178,11 +178,6 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
 
         {loading ? (
           <div className="space-y-3 py-4">
-            {aiParsing && (
-              <p className="text-sm text-primary text-center">
-                AI is reading the resume to fill in missing details...
-              </p>
-            )}
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-20 w-full" />
             ))}
@@ -191,6 +186,12 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
           <p className="text-center text-muted-foreground py-8">Profile not found.</p>
         ) : (
           <div className="space-y-5 py-2">
+            {aiParsing && (
+              <p className="text-xs text-primary flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                AI is reading the resume to fill in missing details...
+              </p>
+            )}
             {/* Header card */}
             <div className="flex items-start justify-between flex-wrap gap-3 p-3 rounded-lg bg-muted/40 border border-border">
               <div className="flex items-center gap-3">
