@@ -84,14 +84,17 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
         supabase.from("address_details").select("*").eq("user_id", candidateId).maybeSingle(),
       ]);
 
-      let mergedProfile: any = p;
-      let mergedEdu = edu || [];
-      let mergedExp = exp || [];
+      // Render the database profile immediately; enrich with AI in the background
+      setProfile(p);
+      setEducation(edu || []);
+      setExperience(exp || []);
+      setAddress(addr);
+      setLoading(false);
 
-      // If the profile is sparse, extract details from the resume with AI
+      // If the profile is sparse, extract details from the resume with AI (non-blocking)
       const sparse =
         resumeUrl &&
-        (mergedEdu.length === 0 || mergedExp.length === 0 || !p?.mobile || !p?.location);
+        ((edu || []).length === 0 || (exp || []).length === 0 || !p?.mobile || !p?.location);
       if (sparse) {
         setAiParsing(true);
         try {
@@ -103,27 +106,33 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
           if (!aiError && ai) {
             const fill = (current: any, aiValue: any) =>
               current === null || current === undefined || current === "" ? aiValue : current;
-            mergedProfile = {
-              ...p,
-              full_name: fill(p?.full_name, ai.full_name),
-              email: fill(p?.email, ai.email),
-              mobile: fill(p?.mobile, ai.phone),
-              location: fill(p?.location, ai.location),
-              preferred_role: fill(p?.preferred_role, ai.preferred_role),
-              experience_level: fill(p?.experience_level, ai.experience_level),
-              languages:
-                Array.isArray(p?.languages) && p.languages.length > 0 ? p.languages : ai.languages,
-              highest_qualification: fill(p?.highest_qualification, ai.highest_qualification),
-              current_salary: fill(p?.current_salary, ai.current_salary),
-              expected_salary: fill(p?.expected_salary, ai.expected_salary),
-              skills:
-                Array.isArray((p as any)?.skills) && (p as any).skills.length > 0 ? (p as any).skills : ai.skills,
-            };
-            if (mergedEdu.length === 0 && Array.isArray(ai.education)) {
-              mergedEdu = ai.education.map((e: any, i: number) => ({ id: `ai-edu-${i}`, ...e }));
+            setProfile((prev: any) =>
+              prev
+                ? {
+                    ...prev,
+                    full_name: fill(prev.full_name, ai.full_name),
+                    email: fill(prev.email, ai.email),
+                    mobile: fill(prev.mobile, ai.phone),
+                    location: fill(prev.location, ai.location),
+                    preferred_role: fill(prev.preferred_role, ai.preferred_role),
+                    experience_level: fill(prev.experience_level, ai.experience_level),
+                    languages:
+                      Array.isArray(prev.languages) && prev.languages.length > 0
+                        ? prev.languages
+                        : ai.languages,
+                    highest_qualification: fill(prev.highest_qualification, ai.highest_qualification),
+                    current_salary: fill(prev.current_salary, ai.current_salary),
+                    expected_salary: fill(prev.expected_salary, ai.expected_salary),
+                    skills:
+                      Array.isArray(prev.skills) && prev.skills.length > 0 ? prev.skills : ai.skills,
+                  }
+                : prev
+            );
+            if ((edu || []).length === 0 && Array.isArray(ai.education)) {
+              setEducation(ai.education.map((e: any, i: number) => ({ id: `ai-edu-${i}`, ...e })));
             }
-            if (mergedExp.length === 0 && Array.isArray(ai.experience)) {
-              mergedExp = ai.experience.map((w: any, i: number) => ({ id: `ai-exp-${i}`, ...w }));
+            if ((exp || []).length === 0 && Array.isArray(ai.experience)) {
+              setExperience(ai.experience.map((w: any, i: number) => ({ id: `ai-exp-${i}`, ...w })));
             }
           }
         } catch (e) {
@@ -132,12 +141,6 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
           setAiParsing(false);
         }
       }
-
-      setProfile(mergedProfile);
-      setEducation(mergedEdu);
-      setExperience(mergedExp);
-      setAddress(addr);
-      setLoading(false);
     };
     load();
   }, [open, candidateId, resumeUrl]);
