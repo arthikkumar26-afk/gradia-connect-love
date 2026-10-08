@@ -15,6 +15,13 @@
       "when": 1791477609440,
       "tag": "0001_payment_request_upi_qr",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791477734963,
+      "tag": "0002_payment_request_manual",
+      "breakpoints": true
     }
   ]
 }

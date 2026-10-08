@@ -1,0 +1,1 @@
+ALTER TABLE public.candidate_payment_requests ADD COLUMN manually_updated boolean NOT NULL DEFAULT false, ADD COLUMN manual_note text;
