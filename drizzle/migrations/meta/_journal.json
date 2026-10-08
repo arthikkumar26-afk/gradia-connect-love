@@ -8,6 +8,13 @@
       "when": 1791477042861,
       "tag": "0000_candidate_payment_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791477609440,
+      "tag": "0001_payment_request_upi_qr",
+      "breakpoints": true
     }
   ]
 }
