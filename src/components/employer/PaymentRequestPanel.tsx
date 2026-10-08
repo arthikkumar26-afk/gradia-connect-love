@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { IndianRupee, Loader2, RefreshCw, Send } from "lucide-react";
+import { IndianRupee, Loader2, MoreVertical, RefreshCw, Send } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface Props { candidateId: string; jobId?: string | null; jobTitle?: string | null }
 
@@ -16,6 +17,12 @@ const statusStyle: Record<string, string> = {
   cancelled: "bg-muted text-muted-foreground",
 };
 const statusLabel: Record<string, string> = { sent: "Awaiting payment", paid: "Paid", failed: "Failed", expired: "Expired", cancelled: "Cancelled" };
+const manualOptions = [
+  { status: "paid", label: "Mark as cleared (paid)" },
+  { status: "cancelled", label: "Cancel request" },
+  { status: "failed", label: "Mark as failed" },
+  { status: "sent", label: "Reset to awaiting payment" },
+];
 
 export const PaymentRequestPanel = ({ candidateId, jobId, jobTitle }: Props) => {
   const { toast } = useToast();
@@ -23,6 +30,7 @@ export const PaymentRequestPanel = ({ candidateId, jobId, jobTitle }: Props) => 
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState<any[]>([]);
+  const [updating, setUpdating] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -50,6 +58,16 @@ export const PaymentRequestPanel = ({ candidateId, jobId, jobTitle }: Props) => 
     load();
   };
 
+  const setStatus = async (requestId: string, status: string) => {
+    if (status === "cancelled" && !window.confirm("Cancel this payment request? The candidate's payment link and QR will stop working.")) return;
+    setUpdating(requestId);
+    const { data, error } = await supabase.functions.invoke("candidate-payment-request", { body: { action: "set_status", requestId, status } });
+    setUpdating(null);
+    if (error || !data?.ok) { toast({ title: "Could not update status", description: data?.error || error?.message, variant: "destructive" }); return; }
+    toast({ title: `Status changed to ${statusLabel[status]}` });
+    load();
+  };
+
   return (
     <div className="rounded-lg border bg-card p-3 space-y-3">
       <div className="flex items-center justify-between">
@@ -74,7 +92,26 @@ export const PaymentRequestPanel = ({ candidateId, jobId, jobTitle }: Props) => 
                 {r.job_title && <span className="text-muted-foreground"> · {r.job_title}</span>}
                 <div className="text-muted-foreground">{new Date(r.created_at).toLocaleString()}</div>
               </div>
-              <Badge className={statusStyle[r.status] || ""}>{statusLabel[r.status] || r.status}</Badge>
+              <div className="flex items-center gap-1">
+                <Badge className={statusStyle[r.status] || ""}>
+                  {r.status === "paid" && r.manually_updated ? "Cleared" : statusLabel[r.status] || r.status}
+                  {r.manually_updated && r.status !== "paid" ? " (manual)" : ""}
+                </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" disabled={updating === r.id} aria-label="Change status">
+                      {updating === r.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MoreVertical className="h-3.5 w-3.5" />}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="z-[1600]">
+                    <DropdownMenuLabel className="text-xs">Change status</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {manualOptions.filter((o) => o.status !== r.status).map((o) => (
+                      <DropdownMenuItem key={o.status} onClick={() => setStatus(r.id, o.status)}>{o.label}</DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           ))}
         </div>
