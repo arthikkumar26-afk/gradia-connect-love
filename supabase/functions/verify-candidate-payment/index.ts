@@ -113,9 +113,22 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Subscription does not match this plan' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
+      // The nominal payment authorizes future debits; it is not a paid plan purchase.
+      // Only subscription.charged grants access after Razorpay collects the full plan amount.
+      if (sub.notes?.setup_flow === 'nominal_confirmation') {
+        if (!['authenticated', 'active'].includes(sub.status)) {
+          return new Response(JSON.stringify({ error: 'Autopay authorization is not confirmed yet' }),
+            { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        return new Response(JSON.stringify({ success: true, autopay_authorized: true,
+          plan_activated: false, first_charge_at: sub.start_at,
+          message: 'Autopay confirmed. Paid access begins after the full plan charge succeeds.' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
     }
 
-    const supabase = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY!);
+    if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('Service unavailable');
+    const supabase = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
 
     // Deactivate any existing active subscription
     await supabase
