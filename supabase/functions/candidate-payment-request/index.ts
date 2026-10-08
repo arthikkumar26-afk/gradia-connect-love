@@ -148,8 +148,14 @@ Deno.serve(async (req) => {
     });
     if (qrRes.ok) {
       const q = await qrRes.json();
-      qr = q.image_url; upiQr = true;
-      await admin.from("candidate_payment_requests").update({ razorpay_qr_id: q.id, qr_image_url: q.image_url }).eq("id", row.id);
+      // Razorpay's image is a tall branded poster behind a redirect that email apps often block.
+      // Read the UPI code from it and send a clean, directly-hosted QR instead.
+      const upiString = await extractUpiString(q.id);
+      if (upiString) {
+        qr = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&format=png&data=${encodeURIComponent(upiString)}`;
+        upiQr = true;
+      } else console.error("UPI QR decode failed; using payment-link QR", q.id);
+      await admin.from("candidate_payment_requests").update({ razorpay_qr_id: q.id, qr_image_url: qr }).eq("id", row.id);
     } else console.error("UPI QR failed", qrRes.status, await qrRes.text());
     const email = renderPaymentEmail({
       subject: b.mailSubject || "Payment Request {{amount}} – {{job_title}}",
