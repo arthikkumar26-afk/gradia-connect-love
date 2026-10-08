@@ -399,6 +399,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                         <div className="flex items-center gap-2 mb-2">
                           {!a.unlocked && (
                             <Checkbox
+                              onClick={(e) => e.stopPropagation()}
                               checked={selectedIds.has(a.applicationId)}
                               onCheckedChange={(c) =>
                                 setSelectedIds((prev) => {
@@ -464,7 +465,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                         )}
                       </div>
 
-                      <div className="flex flex-col gap-2 shrink-0">
+                      <div className="flex flex-col gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                         {a.unlocked ? (
                           <>
                             <Button
