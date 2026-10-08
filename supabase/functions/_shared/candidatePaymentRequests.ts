@@ -25,7 +25,7 @@ export { esc };
 
 // Re-check a request with Razorpay, update its status and send success/failure mail once per status.
 export async function syncPaymentRequest(admin: any, req: any) {
-  if (!req?.razorpay_link_id) return req;
+  if (!req?.razorpay_link_id || req.manually_updated) return req;
   const r = await fetch(`https://api.razorpay.com/v1/payment_links/${req.razorpay_link_id}`, {
     headers: { Authorization: rzpAuth() },
   });

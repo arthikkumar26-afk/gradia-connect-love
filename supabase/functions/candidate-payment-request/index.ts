@@ -17,6 +17,12 @@ const Body = z.discriminatedUnion("action", [
     jobTitle: z.string().max(200).nullable().optional(),
   }),
   z.object({ action: z.literal("list"), candidateId: z.string().uuid().optional() }),
+  z.object({
+    action: z.literal("set_status"),
+    requestId: z.string().uuid(),
+    status: z.enum(["paid", "cancelled", "failed", "sent"]),
+    note: z.string().max(300).optional(),
+  }),
 ]);
 
 Deno.serve(async (req) => {
@@ -41,8 +47,25 @@ Deno.serve(async (req) => {
       if (b.candidateId) q = q.eq("candidate_id", b.candidateId);
       const { data: rows } = await q;
       const out = [];
-      for (const r of rows || []) out.push(r.status === "sent" || r.status === "failed" ? await syncPaymentRequest(admin, r) : r);
+      for (const r of rows || []) out.push(!r.manually_updated && (r.status === "sent" || r.status === "failed") ? await syncPaymentRequest(admin, r) : r);
       return json({ requests: out });
+    }
+
+    if (b.action === "set_status") {
+      const { data: pr } = await admin.from("candidate_payment_requests").select("*")
+        .eq("id", b.requestId).eq("employer_id", user.id).maybeSingle();
+      if (!pr) return json({ error: "Request not found" }, 404);
+      // Cancelling also closes the payment link and UPI QR so the candidate can't pay anymore.
+      if (b.status === "cancelled") {
+        if (pr.razorpay_link_id) await fetch(`https://api.razorpay.com/v1/payment_links/${pr.razorpay_link_id}/cancel`, { method: "POST", headers: { Authorization: rzpAuth() } }).then((r) => r.text()).catch(() => {});
+        if (pr.razorpay_qr_id) await fetch(`https://api.razorpay.com/v1/payments/qr_codes/${pr.razorpay_qr_id}/close`, { method: "POST", headers: { Authorization: rzpAuth() } }).then((r) => r.text()).catch(() => {});
+      }
+      const { data: upd, error } = await admin.from("candidate_payment_requests").update({
+        status: b.status, manually_updated: b.status !== "sent", manual_note: b.note || null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", pr.id).select().single();
+      if (error) throw error;
+      return json({ ok: true, request: upd });
     }
 
     const { data: cand } = await admin.from("profiles").select("full_name, email, mobile").eq("id", b.candidateId).maybeSingle();
