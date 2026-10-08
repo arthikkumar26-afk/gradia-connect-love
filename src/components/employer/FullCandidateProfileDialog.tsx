@@ -28,6 +28,7 @@ import {
 import { Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import MockInterviewHistory from "@/components/shared/MockInterviewHistory";
+import PaymentRequestPanel from "./PaymentRequestPanel";
 
 interface Props {
   open: boolean;
@@ -35,9 +36,12 @@ interface Props {
   candidateId: string | null;
   resumeUrl?: string | null;
   jobTitle?: string | null;
+  jobId?: string | null;
+  /** Show the payment request (amount + send payment mail) panel. */
+  paymentMode?: boolean;
 }
 
-export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl, jobTitle }: Props) => {
+export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeUrl, jobTitle, jobId, paymentMode }: Props) => {
   const [sendingScreening, setSendingScreening] = useState(false);
   const [historyKey, setHistoryKey] = useState(0);
 
@@ -250,6 +254,10 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
                 </Button>
               </div>
             </div>
+
+            {paymentMode && candidateId && (
+              <PaymentRequestPanel candidateId={candidateId} jobId={jobId} jobTitle={jobTitle} />
+            )}
 
             {/* AI Screening status & recordings */}
             {candidateId && (

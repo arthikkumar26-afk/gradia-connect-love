@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791477042861,
+      "tag": "0000_candidate_payment_requests",
+      "breakpoints": true
+    }
+  ]
+}
