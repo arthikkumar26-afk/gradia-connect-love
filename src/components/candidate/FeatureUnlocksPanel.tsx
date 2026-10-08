@@ -15,6 +15,7 @@ import { useFeatureUnlocks } from "@/hooks/useFeatureUnlocks";
 import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER, type CandidatePlan } from "@/config/candidatePlans";
 import { CANDIDATE_FREELANCER_COMBOS, FREELANCER_PLANS } from "@/config/freelancerPlans";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const loadRazorpayScript = (): Promise<boolean> =>
   new Promise((resolve) => {
@@ -31,6 +32,7 @@ export const FeatureUnlocksPanel = () => {
   const { isUnlocked, expiresAt, refresh: refreshUnlocks } = useFeatureUnlocks();
   const { plan: currentPlan, refresh: refreshSub } = useCandidateSubscription();
   const [busy, setBusy] = useState<string | null>(null);
+  const [confirmPlan, setConfirmPlan] = useState<CandidatePlan | null>(null);
 
   const pay = async (
     amount: number,
@@ -124,10 +126,10 @@ export const FeatureUnlocksPanel = () => {
         subscription_id: subData.subscription_id,
         recurring: 1,
         name: "Gradia",
-        description: `${label} · Autopay (renews yearly)`,
+        description: `${label} · ₹1 confirmation now · ₹${subData.amount} tomorrow · yearly autopay`,
         theme: { color: "#6366f1" },
         handler: async (response: any) => {
-          const { error: verifyError } = await supabase.functions.invoke(
+          const { data: verification, error: verifyError } = await supabase.functions.invoke(
             "verify-candidate-payment",
             {
               body: {
@@ -140,17 +142,19 @@ export const FeatureUnlocksPanel = () => {
               },
             },
           );
-          if (verifyError) {
+          if (verifyError || !verification?.success) {
             toast({
               title: "Payment verification failed",
-              description: verifyError.message || "Please contact support.",
+              description: verification?.error || verifyError?.message || "Please contact support.",
               variant: "destructive",
             });
             return;
           }
           toast({
-            title: "Plan upgraded!",
-            description: `${label} is now active.`,
+            title: verification.autopay_authorized ? "Autopay confirmed" : "Plan upgraded!",
+            description: verification.autopay_authorized
+              ? `₹1 confirmation received. ₹${subData.amount.toLocaleString("en-IN")} will be charged on ${new Date(subData.first_charge_at * 1000).toLocaleDateString("en-IN")}. Paid access starts after payment succeeds.`
+              : `${label} is now active.`,
           });
           await refreshSub();
         },
@@ -176,6 +180,26 @@ export const FeatureUnlocksPanel = () => {
 
   return (
     <div className="space-y-8">
+      <AlertDialog open={confirmPlan !== null} onOpenChange={(open) => { if (!open) setConfirmPlan(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm autopay — ₹1 now</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmPlan && <>Pay a one-time, non-refundable ₹1 confirmation for {CANDIDATE_PLANS[confirmPlan].name}.
+                The full ₹{CANDIDATE_PLANS[confirmPlan].priceInr.toLocaleString("en-IN")} plan amount will be charged tomorrow,
+                then yearly until cancelled. Paid access begins only after the full payment succeeds.</>}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (!confirmPlan) return;
+              const selected = CANDIDATE_PLANS[confirmPlan];
+              void upgradePlan(confirmPlan, selected.priceInr, selected.name);
+            }}>Pay ₹1 &amp; authorize autopay</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         {CANDIDATE_PLAN_ORDER.map((id) => {
           const plan = CANDIDATE_PLANS[id];
@@ -203,7 +227,7 @@ export const FeatureUnlocksPanel = () => {
           } else {
             btnLabel = isUpgrade ? plan.ctaLabel : `Switch to ${plan.name}`;
             btnVariant = plan.highlight ? "default" : "outline";
-            btnAction = () => upgradePlan(id, plan.priceInr, plan.name);
+            btnAction = () => setConfirmPlan(id);
           }
 
           return (

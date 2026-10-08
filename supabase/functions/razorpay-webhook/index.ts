@@ -4,11 +4,7 @@
 // IMPORTANT: deployed with verify_jwt = false (see supabase/config.toml)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-razorpay-signature, x-razorpay-event-id',
-};
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
 async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   const enc = new TextEncoder();
@@ -29,8 +25,10 @@ function pickHeaders(req: Request): Record<string, string> {
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !SERVICE_KEY) return new Response(JSON.stringify({ error: 'Service unavailable' }),
+    { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   const admin = createClient(supabaseUrl, SERVICE_KEY);
 
   const rawBody = await req.text();
@@ -217,7 +215,10 @@ serve(async (req) => {
       const pay = parsed?.payload?.payment?.entity;
       const candId = subEntity?.notes?.candidate_id;
       const plan = (subEntity?.notes?.plan || '').toString();
-      if (candId && plan && pay?.id) {
+      const expectedPrices: Record<string, number> = { starter: 99900, advance: 249900, pro_accelerator: 799900, elite: 3499900 };
+      // Never grant a plan for the nominal mandate/setup payment.
+      if (candId && plan && pay?.id && pay.status === 'captured' && pay.currency === 'INR'
+        && expectedPrices[plan] && pay.amount >= expectedPrices[plan]) {
         const { data: done } = await admin.from('razorpay_webhook_logs').select('id')
           .eq('razorpay_payment_id', pay.id).eq('event_type', 'webhook.autopay_renewed').maybeSingle();
         if (!done) {
