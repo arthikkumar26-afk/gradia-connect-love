@@ -77,10 +77,10 @@ export async function syncPaymentRequest(admin: any, req: any, confirmedPayment?
       const role = req.job_title ? ` for <b>${esc(req.job_title)}</b>` : "";
       let paidMail: { html: string; attachments?: { filename: string; content: string }[] } | null = null;
       if (status === "paid") {
-        const { data: co } = await admin.from("profiles").select("company_name, full_name, email, mobile, company_website").eq("id", req.employer_id).maybeSingle();
+        const { data: co } = await admin.from("profiles").select("company_name, full_name, email, mobile").eq("id", req.employer_id).maybeSingle();
         const inv = { requestId: req.id, paymentId: paymentId || "-", linkId: req.razorpay_link_id, paidAt: new Date(), amountPaise: req.amount_paise, itemTitle: req.job_title || "Payment",
           candidate: { name: cand.full_name || "Candidate", email: cand.email, phone: cand.mobile },
-          company: co ? { name: co.company_name || co.full_name, email: co.email, phone: co.mobile, website: co.company_website } : null };
+          company: co ? { name: co.company_name || co.full_name, email: co.email, phone: co.mobile } : null };
         let attachments: { filename: string; content: string }[] | undefined;
         try { attachments = [{ filename: `Gradia-Invoice-${invoiceNumber(inv)}.pdf`, content: toBase64(await buildInvoicePdf(inv)) }]; }
         catch (e) { console.error("Invoice PDF failed", e); }
