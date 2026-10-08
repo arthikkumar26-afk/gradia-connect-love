@@ -4,6 +4,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3";
 import { esc, rupees, rzpAuth, sendMail, syncPaymentRequest, wrap } from "../_shared/candidatePaymentRequests.ts";
+import { renderPaymentEmail } from "../_shared/paymentEmailRenderer.ts";
 
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -15,7 +16,13 @@ const Body = z.discriminatedUnion("action", [
     amount: z.number().min(1).max(500000),
     jobId: z.string().uuid().nullable().optional(),
     jobTitle: z.string().max(200).nullable().optional(),
+    mailSubject: z.string().trim().min(1).max(250).optional(),
+    mailBody: z.string().trim().min(1).max(15000).optional(),
   }),
+  z.object({ action: z.literal("preview"), candidateId: z.string().uuid(), amount: z.number().min(1).max(500000), jobTitle: z.string().max(200).nullable().optional(), mailSubject: z.string().trim().min(1).max(250), mailBody: z.string().trim().min(1).max(15000) }),
+  z.object({ action: z.literal("templates") }),
+  z.object({ action: z.literal("save_template"), id: z.string().uuid().optional(), name: z.string().trim().min(1).max(100), subject: z.string().trim().min(1).max(250), body: z.string().trim().min(1).max(15000) }),
+  z.object({ action: z.literal("delete_template"), id: z.string().uuid() }),
   z.object({ action: z.literal("list"), candidateId: z.string().uuid().optional() }),
   z.object({
     action: z.literal("set_status"),
@@ -28,7 +35,9 @@ const Body = z.discriminatedUnion("action", [
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return json({ error: "Service unavailable" }, 500);
+    const admin = createClient(url, key);
     const token = req.headers.get("Authorization")?.replace("Bearer ", "");
     if (!token) return json({ error: "Unauthorized" }, 401);
     const { data: { user } } = await admin.auth.getUser(token);
@@ -40,6 +49,29 @@ Deno.serve(async (req) => {
     const parsed = Body.safeParse(await req.json());
     if (!parsed.success) return json({ error: parsed.error.flatten().fieldErrors }, 400);
     const b = parsed.data;
+
+    if (b.action === "templates") {
+      const { data, error } = await admin.from("payment_email_templates").select("id,name,subject,body").eq("owner_id", user.id).order("created_at");
+      if (error) throw error;
+      return json({ templates: data || [] });
+    }
+    if (b.action === "save_template") {
+      const values = { name: b.name, subject: b.subject, body: b.body, updated_at: new Date().toISOString() };
+      const query = b.id ? admin.from("payment_email_templates").update(values).eq("id", b.id).eq("owner_id", user.id) : admin.from("payment_email_templates").insert({ ...values, owner_id: user.id });
+      const { data, error } = await query.select("id,name,subject,body").single();
+      if (error) throw error;
+      return json({ ok: true, template: data });
+    }
+    if (b.action === "delete_template") {
+      const { error } = await admin.from("payment_email_templates").delete().eq("id", b.id).eq("owner_id", user.id);
+      if (error) throw error;
+      return json({ ok: true });
+    }
+    if (b.action === "preview") {
+      const { data: candidate } = await admin.from("profiles").select("full_name,email").eq("id", b.candidateId).maybeSingle();
+      if (!candidate?.email) return json({ error: "Candidate has no email address" }, 400);
+      return json({ ...renderPaymentEmail({ subject: b.mailSubject, body: b.mailBody }, { candidateName: candidate.full_name || "Candidate", jobTitle: b.jobTitle || "Internship Program", amount: rupees(Math.round(b.amount * 100)) }), recipient: candidate.email });
+    }
 
     if (b.action === "list") {
       let q = admin.from("candidate_payment_requests").select("*").eq("employer_id", user.id)
@@ -119,16 +151,11 @@ Deno.serve(async (req) => {
       qr = q.image_url; upiQr = true;
       await admin.from("candidate_payment_requests").update({ razorpay_qr_id: q.id, qr_image_url: q.image_url }).eq("id", row.id);
     } else console.error("UPI QR failed", qrRes.status, await qrRes.text());
-    const name = esc(cand.full_name || "Candidate");
-    const role = b.jobTitle ? ` for <b>${esc(b.jobTitle)}</b>` : "";
-    const emailSent = await sendMail(cand.email, `Payment request ${rupees(amountPaise)}${b.jobTitle ? ` – ${b.jobTitle}` : ""}`, wrap(
-      `<h2>Hello ${name},</h2>
-       <p>You have a payment request of <b>${rupees(amountPaise)}</b>${role}.</p>
-       <p>Pay securely using UPI, cards, net banking or wallets:</p>
-       <p><a href="${link.short_url}" style="display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Pay ${rupees(amountPaise)}</a></p>
-       <p>${upiQr ? `Or scan this UPI QR in GPay, PhonePe, Paytm or any UPI app — the amount ${rupees(amountPaise)} is filled in automatically:` : "Or scan this QR code with your phone camera to open the payment page:"}</p>
-       <p><img src="${qr}" width="260" alt="Payment QR code" style="max-width:260px" /></p>
-       <p style="font-size:13px;color:#666">Link: ${link.short_url}<br/>This link is valid for 7 days. You'll get a confirmation email after paying.</p>`));
+    const email = renderPaymentEmail({
+      subject: b.mailSubject || "Payment Request {{amount}} – {{job_title}}",
+      body: b.mailBody || "Dear {{candidate_name}},\n\nYou have a payment request of {{amount}} for {{job_title}}.\n\nPlease complete your payment below. Thank you.",
+    }, { candidateName: cand.full_name || "Candidate", jobTitle: b.jobTitle || "Internship Program", amount: rupees(amountPaise), paymentUrl: link.short_url, qrUrl: qr, upiQr });
+    const emailSent = await sendMail(cand.email, email.subject, email.html);
 
     return json({ ok: true, emailSent, request: { ...row, razorpay_link_id: link.id, payment_url: link.short_url } });
   } catch (e) {
