@@ -255,6 +255,10 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
               </div>
             </div>
 
+            {paymentMode && candidateId && (
+              <PaymentRequestPanel candidateId={candidateId} jobId={jobId} jobTitle={jobTitle} />
+            )}
+
             {/* AI Screening status & recordings */}
             {candidateId && (
               <MockInterviewHistory key={historyKey} candidateId={candidateId} viewerRole="employer" />

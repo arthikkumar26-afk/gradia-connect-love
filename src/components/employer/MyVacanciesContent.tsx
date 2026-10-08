@@ -66,9 +66,11 @@ interface MyVacanciesContentProps {
   hideWallet?: boolean;
   /** Employer organisation name shown when HR creates a vacancy on behalf of an employer. */
   employerNameOverride?: string;
+  /** Paid Vacancies view: candidate profiles show the payment request panel. */
+  paymentMode?: boolean;
 }
 
-export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hideWallet = false, employerNameOverride }: MyVacanciesContentProps = {}) => {
+export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hideWallet = false, employerNameOverride, paymentMode = false }: MyVacanciesContentProps = {}) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const isMultiEmployer = !!employerIdsOverride && employerIdsOverride.length > 0;
@@ -500,6 +502,8 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
           candidateId={profileView?.candidate_id || null}
           resumeUrl={profileView?.resume_url || null}
           jobTitle={selectedJob?.job_title || null}
+          jobId={selectedJob?.id || null}
+          paymentMode={paymentMode}
         />
       </div>
     );

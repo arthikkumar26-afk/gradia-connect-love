@@ -396,6 +396,7 @@ const EmployerDashboard = () => {
     { id: "test-papers", label: "Test Papers", icon: FileText, path: "/employer/test-papers" },
     { id: "smm", label: "SMM", icon: Megaphone, path: "/employer/smm" },
     { id: "my-vacancies", label: "My Vacancies", icon: Briefcase, path: "/employer/my-vacancies" },
+    { id: "paid-vacancies", label: "Paid Vacancies", icon: Wallet, path: "/employer/paid-vacancies" },
     { id: "talent-pool", label: "Candidate Data", icon: Users, path: "/employer/talent-pool" },
     { id: "suggested-candidates", label: "Suggested Candidates", icon: Sparkles, path: "/employer/suggested-candidates" },
     { id: "interview-pipeline", label: "Interview Pipeline", icon: GitBranch, path: "/employer/interview-pipeline" },
@@ -804,6 +805,7 @@ const EmployerDashboard = () => {
             
             {activeMenu === "smm" && <SMMContent />}
             {activeMenu === "my-vacancies" && <MyVacanciesContent />}
+            {activeMenu === "paid-vacancies" && <MyVacanciesContent key="paid-vacancies" paymentMode />}
             {activeMenu === "feedback-matrix" && <FeedbackMatrixContent />}
             {activeMenu === "confirmation" && <ConfirmationContent />}
             {activeMenu === "offer-letter" && <OfferLetterContent />}
