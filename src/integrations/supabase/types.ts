@@ -445,8 +445,10 @@ export type Database = {
           job_title: string | null
           notified_status: string | null
           payment_url: string | null
+          qr_image_url: string | null
           razorpay_link_id: string | null
           razorpay_payment_id: string | null
+          razorpay_qr_id: string | null
           status: string
           updated_at: string
         }
@@ -460,8 +462,10 @@ export type Database = {
           job_title?: string | null
           notified_status?: string | null
           payment_url?: string | null
+          qr_image_url?: string | null
           razorpay_link_id?: string | null
           razorpay_payment_id?: string | null
+          razorpay_qr_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -475,8 +479,10 @@ export type Database = {
           job_title?: string | null
           notified_status?: string | null
           payment_url?: string | null
+          qr_image_url?: string | null
           razorpay_link_id?: string | null
           razorpay_payment_id?: string | null
+          razorpay_qr_id?: string | null
           status?: string
           updated_at?: string
         }

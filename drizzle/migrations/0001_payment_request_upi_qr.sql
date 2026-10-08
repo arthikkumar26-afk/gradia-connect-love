@@ -1,0 +1,1 @@
+ALTER TABLE public.candidate_payment_requests ADD COLUMN razorpay_qr_id text, ADD COLUMN qr_image_url text;

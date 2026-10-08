@@ -44,6 +44,17 @@ export async function syncPaymentRequest(admin: any, req: any) {
     paymentId = payments.filter((p) => p.status === "failed").pop()?.payment_id || paymentId;
   }
 
+  // Paid via the UPI QR instead of the link?
+  if (status !== "paid" && req.razorpay_qr_id) {
+    const qr = await fetch(`https://api.razorpay.com/v1/payments/qr_codes/${req.razorpay_qr_id}/payments`, { headers: { Authorization: rzpAuth() } });
+    if (qr.ok) {
+      const items: any[] = (await qr.json()).items || [];
+      const ok = items.find((p) => p.status === "captured" && p.amount >= req.amount_paise);
+      if (ok) { status = "paid"; paymentId = ok.id; }
+      else if (status === "sent" && items.some((p) => p.status === "failed")) { status = "failed"; paymentId = items.find((p) => p.status === "failed").id; }
+    }
+  }
+
   const shouldMail = (status === "paid" || status === "failed") && req.notified_status !== status;
   if (status === req.status && !shouldMail) return req;
 
