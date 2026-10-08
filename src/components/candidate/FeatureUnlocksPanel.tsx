@@ -128,6 +128,23 @@ export const FeatureUnlocksPanel = () => {
         name: "Gradia",
         description: `${label} · ₹1 confirmation now · ₹${subData.amount} tomorrow · yearly autopay`,
         theme: { color: "#6366f1" },
+        // Many UPI apps can't approve autopay mandates from a scanned QR, so
+        // offer app-open / UPI ID approval and cards instead of the QR.
+        config: {
+          display: {
+            blocks: {
+              autopay: {
+                name: "Set up autopay",
+                instruments: [
+                  { method: "upi", flows: ["intent", "collect"] },
+                  { method: "card" },
+                ],
+              },
+            },
+            sequence: ["block.autopay"],
+            preferences: { show_default_blocks: false },
+          },
+        },
         handler: async (response: any) => {
           const { data: verification, error: verifyError } = await supabase.functions.invoke(
             "verify-candidate-payment",
