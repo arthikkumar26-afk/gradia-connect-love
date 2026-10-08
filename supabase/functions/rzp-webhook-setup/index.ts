@@ -40,7 +40,7 @@ serve(async (req) => {
       const patchRes = await fetch(`https://api.razorpay.com/v1/webhooks/${existing.id}`, {
         method: "PATCH",
         headers: { Authorization: auth, "Content-Type": "application/json" },
-        body: JSON.stringify({ url: TARGET_URL, active: true, events: REQUIRED_EVENTS }),
+        body: JSON.stringify({ url: TARGET_URL, active: true, events: Object.fromEntries(REQUIRED_EVENTS.map((e) => [e, true])) }),
       });
       const patched = await patchRes.json();
       return new Response(
@@ -58,7 +58,7 @@ serve(async (req) => {
         active: true,
         secret: WEBHOOK_SECRET,
         alert_email: "support@gradia.co.in",
-        events: REQUIRED_EVENTS,
+        events: Object.fromEntries(REQUIRED_EVENTS.map((e) => [e, true])),
       }),
     });
     const created = await createRes.json();
