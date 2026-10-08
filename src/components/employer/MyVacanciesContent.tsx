@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { InlineJobCreationForm } from "./InlineJobCreationForm";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -80,7 +81,8 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
   const [selectedJob, setSelectedJob] = useState<VacancyRow | null>(null);
   const [applicants, setApplicants] = useState<ApplicantRow[]>([]);
   const [loadingApps, setLoadingApps] = useState(false);
-  const [confirmUnlock, setConfirmUnlock] = useState<ApplicantRow | null>(null);
+  const [confirmUnlock, setConfirmUnlock] = useState<ApplicantRow[] | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [unlocking, setUnlocking] = useState(false);
   const [walletPoints, setWalletPoints] = useState<number>(0);
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
@@ -195,12 +197,17 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
     setLoadingApps(false);
   };
 
+  const lockedApplicants = applicants.filter((a) => !a.unlocked);
+  const selectedLocked = lockedApplicants.filter((a) => selectedIds.has(a.applicationId));
+  const confirmCost = (confirmUnlock?.length || 0) * UNLOCK_COST;
+
   const handleUnlock = async () => {
-    if (!confirmUnlock || !selectedJob || !user?.id) return;
+    if (!confirmUnlock?.length || !selectedJob || !user?.id) return;
+    const targets = confirmUnlock.filter((a) => !a.unlocked);
+    const cost = targets.length * UNLOCK_COST;
     setUnlocking(true);
 
     try {
-      // Refetch wallet to ensure latest balance
       const { data: wallet } = await supabase
         .from("wallets")
         .select("id, points_balance")
@@ -208,71 +215,60 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
         .maybeSingle();
 
       if (!wallet) {
-        toast({
-          title: "Wallet not found",
-          description: "Please load points into your wallet first.",
-          variant: "destructive",
-        });
-        setUnlocking(false);
+        toast({ title: "Wallet not found", description: "Please load points into your wallet first.", variant: "destructive" });
         return;
       }
-
-      if ((wallet.points_balance || 0) < UNLOCK_COST) {
+      if ((wallet.points_balance || 0) < cost) {
         toast({
           title: "Insufficient points",
-          description: `You need ${UNLOCK_COST} pts. Current balance: ${wallet.points_balance || 0} pts.`,
+          description: `You need ${cost} pts. Current balance: ${wallet.points_balance || 0} pts.`,
           variant: "destructive",
         });
-        setUnlocking(false);
         return;
       }
 
-      // Deduct points
-      const newBalance = (wallet.points_balance || 0) - UNLOCK_COST;
+      // Insert unlock records first (unique constraint protects against double-charge)
+      const { error: unlockErr } = await supabase.from("cv_unlocks").insert(
+        targets.map((a) => ({
+          employer_id: user.id,
+          candidate_id: a.candidate_id,
+          job_id: selectedJob.id,
+          application_id: a.applicationId,
+          points_spent: UNLOCK_COST,
+        }))
+      );
+      if (unlockErr && !unlockErr.message?.includes("duplicate")) throw unlockErr;
+
+      const newBalance = (wallet.points_balance || 0) - cost;
       const { error: updErr } = await supabase
         .from("wallets")
         .update({ points_balance: newBalance })
         .eq("id", wallet.id);
       if (updErr) throw updErr;
 
-      // Record transaction
       await supabase.from("wallet_transactions").insert({
         wallet_id: wallet.id,
         transaction_type: "debit",
         category: "cv_unlock",
-        points: UNLOCK_COST,
-        description: `Unlocked CV: ${confirmUnlock.full_name || "Candidate"} for ${selectedJob.job_title}`,
+        points: cost,
+        description:
+          targets.length === 1
+            ? `Unlocked CV: ${targets[0].full_name || "Candidate"} for ${selectedJob.job_title}`
+            : `Unlocked ${targets.length} CVs for ${selectedJob.job_title}`,
       });
 
-      // Insert unlock record (per application, not per candidate)
-      const { error: unlockErr } = await supabase.from("cv_unlocks").insert({
-        employer_id: user.id,
-        candidate_id: confirmUnlock.candidate_id,
-        job_id: selectedJob.id,
-        application_id: confirmUnlock.applicationId,
-        points_spent: UNLOCK_COST,
-      });
-      if (unlockErr && !unlockErr.message?.includes("duplicate")) throw unlockErr;
-
-      // Update local state — match by applicationId so duplicate-candidate rows don't all flip
-      setApplicants((prev) =>
-        prev.map((a) =>
-          a.applicationId === confirmUnlock.applicationId ? { ...a, unlocked: true } : a
-        )
-      );
+      const ids = new Set(targets.map((a) => a.applicationId));
+      setApplicants((prev) => prev.map((a) => (ids.has(a.applicationId) ? { ...a, unlocked: true } : a)));
+      setSelectedIds(new Set());
       setWalletPoints(newBalance);
       toast({
-        title: "CV Unlocked!",
-        description: `${UNLOCK_COST} pts deducted. New balance: ${newBalance} pts.`,
+        title: targets.length === 1 ? "CV Unlocked!" : `${targets.length} CVs Unlocked!`,
+        description: `${cost} pts deducted. New balance: ${newBalance} pts.`,
       });
       setConfirmUnlock(null);
     } catch (err: any) {
       console.error(err);
-      toast({
-        title: "Error",
-        description: err.message || "Failed to unlock CV",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: err.message || "Failed to unlock CV", variant: "destructive" });
     } finally {
       setUnlocking(false);
     }
@@ -356,6 +352,42 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
               </p>
             ) : (
               <div className="space-y-3">
+                {lockedApplicants.length > 0 && (
+                  <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg bg-muted/40 border border-border px-3 py-2">
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <Checkbox
+                        checked={
+                          selectedLocked.length === lockedApplicants.length
+                            ? true
+                            : selectedLocked.length > 0
+                            ? "indeterminate"
+                            : false
+                        }
+                        onCheckedChange={(c) =>
+                          setSelectedIds(
+                            c === true ? new Set(lockedApplicants.map((x) => x.applicationId)) : new Set()
+                          )
+                        }
+                      />
+                      Select all locked ({lockedApplicants.length})
+                    </label>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={selectedLocked.length === 0}
+                        onClick={() => setConfirmUnlock(selectedLocked)}
+                      >
+                        <Unlock className="h-3.5 w-3.5 mr-1" />
+                        Unlock selected ({selectedLocked.length}) · {selectedLocked.length * UNLOCK_COST} pts
+                      </Button>
+                      <Button size="sm" onClick={() => setConfirmUnlock(lockedApplicants)}>
+                        <Unlock className="h-3.5 w-3.5 mr-1" />
+                        Unlock all profiles · {lockedApplicants.length * UNLOCK_COST} pts
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {applicants.map((a) => (
                   <div
                     key={a.applicationId}
@@ -364,6 +396,19 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
+                          {!a.unlocked && (
+                            <Checkbox
+                              checked={selectedIds.has(a.applicationId)}
+                              onCheckedChange={(c) =>
+                                setSelectedIds((prev) => {
+                                  const n = new Set(prev);
+                                  c === true ? n.add(a.applicationId) : n.delete(a.applicationId);
+                                  return n;
+                                })
+                              }
+                              aria-label="Select profile"
+                            />
+                          )}
                           {a.unlocked ? (
                             <button
                               type="button"
@@ -454,7 +499,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                         ) : (
                           <Button
                             size="sm"
-                            onClick={() => setConfirmUnlock(a)}
+                            onClick={() => setConfirmUnlock([a])}
                             disabled={walletPoints < UNLOCK_COST}
                           >
                             <Unlock className="h-3.5 w-3.5 mr-1" />
@@ -470,27 +515,32 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
           </CardContent>
         </Card>
 
-        <Dialog open={!!confirmUnlock} onOpenChange={(o) => !o && setConfirmUnlock(null)}>
+        <Dialog open={!!confirmUnlock} onOpenChange={(o) => !o && !unlocking && setConfirmUnlock(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Unlock Candidate CV?</DialogTitle>
+              <DialogTitle>
+                Unlock {confirmUnlock && confirmUnlock.length > 1 ? `${confirmUnlock.length} Candidate CVs` : "Candidate CV"}?
+              </DialogTitle>
               <DialogDescription>
-                <span className="font-semibold text-foreground">{UNLOCK_COST} pts</span> will be
-                deducted from your wallet to view this candidate's full details and download their
-                CV.
+                <span className="font-semibold text-foreground">{confirmCost} pts</span> will be
+                deducted from your wallet ({UNLOCK_COST} pts × {confirmUnlock?.length || 0}) to view
+                full details and download CVs.
                 <br />
                 <br />
                 Current balance: <span className="font-semibold">{walletPoints} pts</span>
                 <br />
-                After unlock: <span className="font-semibold">{walletPoints - UNLOCK_COST} pts</span>
+                After unlock: <span className="font-semibold">{walletPoints - confirmCost} pts</span>
+                {walletPoints < confirmCost && (
+                  <span className="block text-destructive mt-2">Insufficient balance.</span>
+                )}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setConfirmUnlock(null)} disabled={unlocking}>
                 Cancel
               </Button>
-              <Button onClick={handleUnlock} disabled={unlocking}>
-                {unlocking ? "Processing..." : `Confirm & Pay ${UNLOCK_COST} pts`}
+              <Button onClick={handleUnlock} disabled={unlocking || walletPoints < confirmCost}>
+                {unlocking ? "Processing..." : `Confirm & Pay ${confirmCost} pts`}
               </Button>
             </DialogFooter>
           </DialogContent>
