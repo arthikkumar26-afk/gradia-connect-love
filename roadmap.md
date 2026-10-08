@@ -6,4 +6,3 @@
 # Candidate nominal autopay confirmation
 - [x] Collect a disclosed ₹1 setup payment and schedule the first full plan charge for the next day.
 - [x] Keep mandate confirmation separate from paid plan activation; real Razorpay checkout visibly confirmed ₹1 now and yearly full charges, without completing payment.
-- [ ] Enable subscription.charged delivery in Razorpay; blocked on the account owner's webhook settings (actual payment and renewal remain untested).
