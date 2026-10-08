@@ -8,5 +8,5 @@
 - [x] Keep mandate confirmation separate from paid plan activation; real Razorpay checkout visibly confirmed ₹1 now and yearly full charges, without completing payment.
 
 # Paid Vacancies payment emails
-- [ ] Add professional payment templates, editable subject/body, saved templates, and preview before sending.
-- [ ] Verify template editing, preview, persistence, and payment-mail rendering without charging or emailing a real candidate.
+- [x] Add professional payment templates, editable subject/body, saved templates, and preview before sending.
+- [x] Verify template editing and preview with example recipient, live owner-scoped storage and cleanup, and escaped payment-mail rendering; current candidate account correctly denied employer API access. No real email or payment sent.
