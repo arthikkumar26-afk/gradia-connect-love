@@ -6,3 +6,7 @@
 # Candidate nominal autopay confirmation
 - [x] Collect a disclosed ₹1 setup payment and schedule the first full plan charge for the next day.
 - [x] Keep mandate confirmation separate from paid plan activation; real Razorpay checkout visibly confirmed ₹1 now and yearly full charges, without completing payment.
+
+# Paid Vacancies payment emails
+- [ ] Add professional payment templates, editable subject/body, saved templates, and preview before sending.
+- [ ] Verify template editing, preview, persistence, and payment-mail rendering without charging or emailing a real candidate.
