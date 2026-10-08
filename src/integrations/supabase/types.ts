@@ -443,6 +443,8 @@ export type Database = {
           id: string
           job_id: string | null
           job_title: string | null
+          manual_note: string | null
+          manually_updated: boolean
           notified_status: string | null
           payment_url: string | null
           qr_image_url: string | null
@@ -460,6 +462,8 @@ export type Database = {
           id?: string
           job_id?: string | null
           job_title?: string | null
+          manual_note?: string | null
+          manually_updated?: boolean
           notified_status?: string | null
           payment_url?: string | null
           qr_image_url?: string | null
@@ -477,6 +481,8 @@ export type Database = {
           id?: string
           job_id?: string | null
           job_title?: string | null
+          manual_note?: string | null
+          manually_updated?: boolean
           notified_status?: string | null
           payment_url?: string | null
           qr_image_url?: string | null
