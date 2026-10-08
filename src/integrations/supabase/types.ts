@@ -3188,6 +3188,36 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_email_templates: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           action_key: string
