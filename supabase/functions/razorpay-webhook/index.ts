@@ -5,6 +5,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { syncPaymentRequest } from '../_shared/candidatePaymentRequests.ts';
 
 async function hmacSha256Hex(secret: string, message: string): Promise<string> {
   const enc = new TextEncoder();
@@ -245,6 +246,19 @@ serve(async (req) => {
       }
     } catch (e: any) { console.error('[razorpay-webhook] autopay error', e); }
   }
+
+  // Employer → candidate payment requests (Payment Links): sync status + send success/fail mail
+  try {
+    const linkEntity = parsed?.payload?.payment_link?.entity;
+    const reqId = linkEntity?.notes?.payment_request_id || paymentEntity?.notes?.payment_request_id;
+    const linkId = linkEntity?.id || null;
+    if (reqId || linkId) {
+      let q = admin.from('candidate_payment_requests').select('*');
+      q = reqId ? q.eq('id', reqId) : q.eq('razorpay_link_id', linkId);
+      const { data: pr } = await q.maybeSingle();
+      if (pr) await syncPaymentRequest(admin, pr);
+    }
+  } catch (e: any) { console.error('[razorpay-webhook] payment request error', e); }
 
   return new Response(JSON.stringify({ ok: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
