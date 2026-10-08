@@ -9,6 +9,23 @@ import { renderPaymentEmail } from "../_shared/paymentEmailRenderer.ts";
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+// Reads the "upi://pay?..." code out of Razorpay's QR poster so we can host a clean QR image.
+async function extractUpiString(qrId: string): Promise<string | null> {
+  try {
+    const img = await fetch(`https://api.razorpay.com/v1/l/qrcode/${encodeURIComponent(qrId)}`);
+    if (!img.ok) return null;
+    const form = new FormData();
+    form.append("file", new Blob([await img.arrayBuffer()], { type: "image/png" }), "qr.png");
+    const res = await fetch("https://api.qrserver.com/v1/read-qr-code/", { method: "POST", body: form });
+    if (!res.ok) return null;
+    const data = (await res.json())?.[0]?.symbol?.[0]?.data;
+    return typeof data === "string" && data.startsWith("upi://pay?") ? data : null;
+  } catch (e) {
+    console.error("extractUpiString", e);
+    return null;
+  }
+}
+
 const Body = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("send"),
