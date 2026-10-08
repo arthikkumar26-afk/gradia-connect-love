@@ -35,7 +35,9 @@ serve(async (req) => {
     const results: any[] = [];
 
     for (const wh of webhooks) {
-      const currentEvents: string[] = wh.events || [];
+      const currentEvents: string[] = Array.isArray(wh.events)
+        ? wh.events
+        : Object.keys(wh.events || {});
       const merged = Array.from(new Set([...currentEvents, ...REQUIRED_EVENTS]));
       const patchRes = await fetch(`https://api.razorpay.com/v1/webhooks/${wh.id}`, {
         method: "PATCH",
