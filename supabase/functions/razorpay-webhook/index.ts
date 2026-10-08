@@ -253,13 +253,30 @@ serve(async (req) => {
     const qrEntity = parsed?.payload?.qr_code?.entity;
     const reqId = linkEntity?.notes?.payment_request_id || qrEntity?.notes?.payment_request_id || paymentEntity?.notes?.payment_request_id;
     const linkId = linkEntity?.id || null;
-    if (reqId || linkId) {
+    const qrId = qrEntity?.id || null;
+    if (reqId || linkId || qrId) {
       let q = admin.from('candidate_payment_requests').select('*');
-      q = reqId ? q.eq('id', reqId) : q.eq('razorpay_link_id', linkId);
-      const { data: pr } = await q.maybeSingle();
-      if (pr) await syncPaymentRequest(admin, pr);
+      q = reqId ? q.eq('id', reqId) : linkId ? q.eq('razorpay_link_id', linkId) : q.eq('razorpay_qr_id', qrId);
+      const { data: pr, error: lookupError } = await q.maybeSingle();
+      if (lookupError) throw new Error('Unable to locate payment request');
+      if (pr) {
+        // A signed paid event is authoritative; do not wait for a follow-up API read
+        // to catch up before notifying the candidate.
+        const paidLink = eventType === 'payment_link.paid' && linkId === pr.razorpay_link_id
+          && linkEntity?.status === 'paid' && linkEntity?.currency === 'INR'
+          && linkEntity?.amount_paid >= pr.amount_paise;
+        const paidQr = eventType === 'qr_code.credited' && qrId === pr.razorpay_qr_id
+          && paymentEntity?.status === 'captured' && paymentEntity?.currency === 'INR'
+          && paymentEntity?.amount >= pr.amount_paise;
+        await syncPaymentRequest(admin, pr, paidLink || paidQr ? { paymentId: razorpayPaymentId || undefined } : undefined);
+      }
     }
-  } catch (e: any) { console.error('[razorpay-webhook] payment request error', e); }
+  } catch (e: any) {
+    console.error('[razorpay-webhook] payment request error', e);
+    // Non-2xx keeps Razorpay retries active when email or status persistence fails.
+    return new Response(JSON.stringify({ ok: false, error: 'Payment confirmation processing failed; retry required' }),
+      { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
 
   return new Response(JSON.stringify({ ok: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
