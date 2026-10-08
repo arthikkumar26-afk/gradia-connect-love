@@ -1,5 +1,5 @@
 // Shared logic for employer → candidate payment requests (Razorpay Payment Links).
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] || c));
 
 export function rzpAuth() {
   const id = Deno.env.get("RAZORPAY_KEY_ID"), secret = Deno.env.get("RAZORPAY_KEY_SECRET");
@@ -7,10 +7,10 @@ export function rzpAuth() {
   return "Basic " + btoa(`${id}:${secret}`);
 }
 
-export async function sendMail(to: string, subject: string, html: string) {
+export async function sendMail(to: string, subject: string, html: string, idempotencyKey?: string) {
   const r = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "Content-Type": "application/json", ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}) },
     body: JSON.stringify({ from: "Gradia <noreply@gradia.co.in>", to: [to], subject, html }),
   });
   if (!r.ok) console.error("Resend failed", r.status, await r.text());
@@ -24,16 +24,20 @@ export const rupees = (paise: number) => `₹${(paise / 100).toLocaleString("en-
 export { esc };
 
 // Re-check a request with Razorpay, update its status and send success/failure mail once per status.
-export async function syncPaymentRequest(admin: any, req: any) {
+export async function syncPaymentRequest(admin: any, req: any, confirmedPayment?: { paymentId?: string }) {
+  // Reload so duplicate webhook deliveries and profile refreshes share notification state.
+  const { data: current, error: readError } = await admin.from("candidate_payment_requests").select("*").eq("id", req.id).single();
+  if (readError) throw new Error("Unable to read payment request");
+  req = current;
   if (!req?.razorpay_link_id || req.manually_updated) return req;
-  const r = await fetch(`https://api.razorpay.com/v1/payment_links/${req.razorpay_link_id}`, {
+  const r = confirmedPayment ? null : await fetch(`https://api.razorpay.com/v1/payment_links/${req.razorpay_link_id}`, {
     headers: { Authorization: rzpAuth() },
   });
-  if (!r.ok) { console.error("Link fetch failed", r.status, await r.text()); return req; }
-  const link = await r.json();
+  if (r && !r.ok) throw new Error(`Payment link sync failed (${r.status})`);
+  const link = r ? await r.json() : { status: "paid", payments: [] };
   const payments: any[] = link.payments || [];
   let status = req.status;
-  let paymentId = req.razorpay_payment_id;
+  let paymentId = confirmedPayment?.paymentId || req.razorpay_payment_id;
   if (link.status === "paid") {
     status = "paid";
     paymentId = payments.find((p) => p.status === "captured")?.payment_id || paymentId;
@@ -58,24 +62,32 @@ export async function syncPaymentRequest(admin: any, req: any) {
   const shouldMail = (status === "paid" || status === "failed") && req.notified_status !== status;
   if (status === req.status && !shouldMail) return req;
 
+  // Persist the payment before sending. A delivery failure must not hide a successful payment.
+  const { error: statusError } = await admin.from("candidate_payment_requests")
+    .update({ status, razorpay_payment_id: paymentId, updated_at: new Date().toISOString() })
+    .eq("id", req.id);
+  if (statusError) throw new Error("Unable to save payment status");
   let notified = req.notified_status;
   if (shouldMail) {
-    const { data: cand } = await admin.from("profiles").select("full_name, email").eq("id", req.candidate_id).maybeSingle();
+    const { data: cand, error: candidateError } = await admin.from("profiles").select("full_name, email").eq("id", req.candidate_id).maybeSingle();
+    if (candidateError || !cand?.email) throw new Error("Unable to find payment confirmation recipient");
     if (cand?.email) {
       const name = esc(cand.full_name || "Candidate");
       const role = req.job_title ? ` for <b>${esc(req.job_title)}</b>` : "";
       const ok = status === "paid"
         ? await sendMail(cand.email, "Payment successful – Gradia", wrap(
             `<h2>Hello ${name},</h2><p>Your payment of <b>${rupees(req.amount_paise)}</b>${role} was received successfully.</p>
-             <p style="font-size:13px;color:#666">Payment ID: ${esc(paymentId || "-")}</p>`))
+              <p style="font-size:13px;color:#666">Payment ID: ${esc(paymentId || "-")}</p>`), `payment-request-${req.id}-${status}`)
         : await sendMail(cand.email, "Payment failed – Gradia", wrap(
             `<h2>Hello ${name},</h2><p>Your payment of <b>${rupees(req.amount_paise)}</b>${role} did not go through. No money was taken, or any deducted amount will be refunded by your bank.</p>
-             ${req.payment_url ? `<p><a href="${req.payment_url}" style="display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Try again</a></p>` : ""}`));
+             ${req.payment_url ? `<p><a href="${esc(req.payment_url)}" style="display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Try again</a></p>` : ""}`), `payment-request-${req.id}-${status}`);
+      if (!ok) throw new Error("Payment status email could not be delivered");
       if (ok) notified = status;
     }
   }
-  const { data } = await admin.from("candidate_payment_requests")
+  const { data, error: updateError } = await admin.from("candidate_payment_requests")
     .update({ status, razorpay_payment_id: paymentId, notified_status: notified, updated_at: new Date().toISOString() })
     .eq("id", req.id).select().single();
+  if (updateError) throw new Error("Unable to save payment notification status");
   return data || req;
 }
