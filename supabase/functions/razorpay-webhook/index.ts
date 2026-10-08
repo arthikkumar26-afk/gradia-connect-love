@@ -250,7 +250,8 @@ serve(async (req) => {
   // Employer → candidate payment requests (Payment Links): sync status + send success/fail mail
   try {
     const linkEntity = parsed?.payload?.payment_link?.entity;
-    const reqId = linkEntity?.notes?.payment_request_id || paymentEntity?.notes?.payment_request_id;
+    const qrEntity = parsed?.payload?.qr_code?.entity;
+    const reqId = linkEntity?.notes?.payment_request_id || qrEntity?.notes?.payment_request_id || paymentEntity?.notes?.payment_request_id;
     const linkId = linkEntity?.id || null;
     if (reqId || linkId) {
       let q = admin.from('candidate_payment_requests').select('*');

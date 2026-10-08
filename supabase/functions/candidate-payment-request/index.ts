@@ -78,7 +78,24 @@ Deno.serve(async (req) => {
     await admin.from("candidate_payment_requests")
       .update({ razorpay_link_id: link.id, payment_url: link.short_url }).eq("id", row.id);
 
-    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(link.short_url)}`;
+    // UPI QR: scanning in GPay/PhonePe/Paytm shows the fixed amount directly.
+    let qr = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(link.short_url)}`;
+    let upiQr = false;
+    const qrRes = await fetch("https://api.razorpay.com/v1/payments/qr_codes", {
+      method: "POST",
+      headers: { Authorization: rzpAuth(), "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "upi_qr", name: "Gradia", usage: "single_use", fixed_amount: true,
+        payment_amount: amountPaise, description: (b.jobTitle || "Payment").slice(0, 100),
+        close_by: Math.floor(Date.now() / 1000) + 7 * 86400,
+        notes: { payment_request_id: row.id },
+      }),
+    });
+    if (qrRes.ok) {
+      const q = await qrRes.json();
+      qr = q.image_url; upiQr = true;
+      await admin.from("candidate_payment_requests").update({ razorpay_qr_id: q.id, qr_image_url: q.image_url }).eq("id", row.id);
+    } else console.error("UPI QR failed", qrRes.status, await qrRes.text());
     const name = esc(cand.full_name || "Candidate");
     const role = b.jobTitle ? ` for <b>${esc(b.jobTitle)}</b>` : "";
     const emailSent = await sendMail(cand.email, `Payment request ${rupees(amountPaise)}${b.jobTitle ? ` – ${b.jobTitle}` : ""}`, wrap(
@@ -86,8 +103,8 @@ Deno.serve(async (req) => {
        <p>You have a payment request of <b>${rupees(amountPaise)}</b>${role}.</p>
        <p>Pay securely using UPI, cards, net banking or wallets:</p>
        <p><a href="${link.short_url}" style="display:inline-block;background:#0d9488;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Pay ${rupees(amountPaise)}</a></p>
-       <p>Or scan this QR code with your phone camera to open the payment page:</p>
-       <p><img src="${qr}" width="220" height="220" alt="Payment QR code" /></p>
+       <p>${upiQr ? `Or scan this UPI QR in GPay, PhonePe, Paytm or any UPI app — the amount ${rupees(amountPaise)} is filled in automatically:` : "Or scan this QR code with your phone camera to open the payment page:"}</p>
+       <p><img src="${qr}" width="260" alt="Payment QR code" style="max-width:260px" /></p>
        <p style="font-size:13px;color:#666">Link: ${link.short_url}<br/>This link is valid for 7 days. You'll get a confirmation email after paying.</p>`));
 
     return json({ ok: true, emailSent, request: { ...row, razorpay_link_id: link.id, payment_url: link.short_url } });
