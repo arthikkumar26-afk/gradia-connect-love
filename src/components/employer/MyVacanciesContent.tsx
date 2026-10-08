@@ -391,7 +391,8 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                 {applicants.map((a) => (
                   <div
                     key={a.applicationId}
-                    className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors"
+                    onClick={a.unlocked ? () => setProfileView(a) : undefined}
+                    className={`border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors ${a.unlocked ? "cursor-pointer" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1 min-w-0">
