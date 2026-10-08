@@ -391,13 +391,15 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                 {applicants.map((a) => (
                   <div
                     key={a.applicationId}
-                    className="border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors"
+                    onClick={a.unlocked ? () => setProfileView(a) : undefined}
+                    className={`border border-border rounded-lg p-4 hover:bg-muted/30 transition-colors ${a.unlocked ? "cursor-pointer" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           {!a.unlocked && (
                             <Checkbox
+                              onClick={(e) => e.stopPropagation()}
                               checked={selectedIds.has(a.applicationId)}
                               onCheckedChange={(c) =>
                                 setSelectedIds((prev) => {
@@ -463,7 +465,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                         )}
                       </div>
 
-                      <div className="flex flex-col gap-2 shrink-0">
+                      <div className="flex flex-col gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                         {a.unlocked ? (
                           <>
                             <Button
