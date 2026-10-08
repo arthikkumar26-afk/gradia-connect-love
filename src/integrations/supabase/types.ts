@@ -434,6 +434,54 @@ export type Database = {
         }
         Relationships: []
       }
+      candidate_payment_requests: {
+        Row: {
+          amount_paise: number
+          candidate_id: string
+          created_at: string
+          employer_id: string
+          id: string
+          job_id: string | null
+          job_title: string | null
+          notified_status: string | null
+          payment_url: string | null
+          razorpay_link_id: string | null
+          razorpay_payment_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_paise: number
+          candidate_id: string
+          created_at?: string
+          employer_id: string
+          id?: string
+          job_id?: string | null
+          job_title?: string | null
+          notified_status?: string | null
+          payment_url?: string | null
+          razorpay_link_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_paise?: number
+          candidate_id?: string
+          created_at?: string
+          employer_id?: string
+          id?: string
+          job_id?: string | null
+          job_title?: string | null
+          notified_status?: string | null
+          payment_url?: string | null
+          razorpay_link_id?: string | null
+          razorpay_payment_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       candidate_resumes: {
         Row: {
           created_at: string
