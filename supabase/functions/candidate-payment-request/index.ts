@@ -9,6 +9,23 @@ import { renderPaymentEmail } from "../_shared/paymentEmailRenderer.ts";
 const json = (b: unknown, s = 200) =>
   new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+// Reads the "upi://pay?..." code out of Razorpay's QR poster so we can host a clean QR image.
+async function extractUpiString(qrId: string): Promise<string | null> {
+  try {
+    const img = await fetch(`https://api.razorpay.com/v1/l/qrcode/${encodeURIComponent(qrId)}`);
+    if (!img.ok) return null;
+    const form = new FormData();
+    form.append("file", new Blob([await img.arrayBuffer()], { type: "image/png" }), "qr.png");
+    const res = await fetch("https://api.qrserver.com/v1/read-qr-code/", { method: "POST", body: form });
+    if (!res.ok) return null;
+    const data = (await res.json())?.[0]?.symbol?.[0]?.data;
+    return typeof data === "string" && data.startsWith("upi://pay?") ? data : null;
+  } catch (e) {
+    console.error("extractUpiString", e);
+    return null;
+  }
+}
+
 const Body = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("send"),
@@ -148,8 +165,14 @@ Deno.serve(async (req) => {
     });
     if (qrRes.ok) {
       const q = await qrRes.json();
-      qr = q.image_url; upiQr = true;
-      await admin.from("candidate_payment_requests").update({ razorpay_qr_id: q.id, qr_image_url: q.image_url }).eq("id", row.id);
+      // Razorpay's image is a tall branded poster behind a redirect that email apps often block.
+      // Read the UPI code from it and send a clean, directly-hosted QR instead.
+      const upiString = await extractUpiString(q.id);
+      if (upiString) {
+        qr = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&format=png&data=${encodeURIComponent(upiString)}`;
+        upiQr = true;
+      } else console.error("UPI QR decode failed; using payment-link QR", q.id);
+      await admin.from("candidate_payment_requests").update({ razorpay_qr_id: q.id, qr_image_url: qr }).eq("id", row.id);
     } else console.error("UPI QR failed", qrRes.status, await qrRes.text());
     const email = renderPaymentEmail({
       subject: b.mailSubject || "Payment Request {{amount}} – {{job_title}}",
