@@ -17,7 +17,6 @@ const REQUIRED_EVENTS = [
   "payment_link.expired",
   "payment_link.cancelled",
   "qr_code.credited",
-  "qr_code.expired",
   "qr_code.closed",
 ];
 
