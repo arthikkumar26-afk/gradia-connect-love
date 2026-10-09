@@ -13,5 +13,5 @@
 - [x] Verify template editing and preview with example recipient, live owner-scoped storage and cleanup, and escaped payment-mail rendering; current candidate account correctly denied employer API access. No real email or payment sent.
 
 # Campaign email drafting
-- [ ] Add an email prompt above the subject/message and generate an editable draft without sending emails.
-- [ ] Verify generation, loading/error states, and draft persistence.
+- [x] Add an email prompt above the subject/message and generate an editable draft without sending emails; include the prompt in existing saved drafts.
+- [x] Verify live email generation and browser generation/error recovery with mocked responses; existing message survives failures, controls re-enable, and build passes. No emails sent; signed-in draft persistence not tested.
