@@ -65,6 +65,19 @@ ${note}
       body: JSON.stringify({ from: "Gradia <noreply@gradia.co.in>", to: [cand.email], subject: subject || `Interview Invitation${jobTitle ? ` – ${jobTitle}` : ""}`, html }),
     });
     if (!r.ok) { const t = await r.text(); console.error(r.status, t); return json({ error: "Email failed to send", details: t }, 502); }
+
+    // Record the sent invitation so the employer sees the mail history in the app
+    await admin.from("interview_invitation_logs").insert({
+      employer_id: u.user.id,
+      candidate_id: candidateId,
+      job_title: jobTitle ?? null,
+      platform,
+      meeting_link: meetingLink,
+      scheduled_at: scheduledAt,
+      subject: subject || `Interview Invitation${jobTitle ? ` – ${jobTitle}` : ""}`,
+      message: message ?? null,
+    });
+
     return json({ success: true, email: cand.email });
   } catch (e) {
     console.error(e);
