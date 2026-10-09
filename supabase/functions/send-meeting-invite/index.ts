@@ -9,6 +9,7 @@ const Body = z.object({
   meetingLink: z.string().url().max(1000).refine((v) => v.startsWith("https://"), "Link must start with https://"),
   scheduledAt: z.string().min(1).max(100),
   message: z.string().max(5000).optional().nullable(),
+  subject: z.string().max(200).optional().nullable(),
 });
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
 
     const parsed = Body.safeParse(await req.json());
     if (!parsed.success) return json({ error: "Please check the meeting link and date." }, 400);
-    const { candidateId, jobTitle, platform, meetingLink, scheduledAt, message } = parsed.data;
+    const { candidateId, jobTitle, platform, meetingLink, scheduledAt, message, subject } = parsed.data;
 
     const { data: cand } = await admin.from("profiles").select("full_name,email").eq("id", candidateId).maybeSingle();
     if (!cand?.email) return json({ error: "Candidate has no email address." }, 400);
@@ -40,7 +41,7 @@ Deno.serve(async (req) => {
 
     const html = `<div style="font-family:Arial,sans-serif;font-size:14px;max-width:600px;color:#222;line-height:1.6">
 <p>Dear ${esc(cand.full_name || "Candidate")},</p>
-<p>Thank you for completing your registration. We are pleased to invite you to an interview${jobTitle ? ` for <b>${esc(jobTitle)}</b>` : ""} with ${company}.</p>
+${message ? "" : `<p>Thank you for completing your registration. We are pleased to invite you to an interview${jobTitle ? ` for <b>${esc(jobTitle)}</b>` : ""} with ${company}.</p>`}
 <table style="border-collapse:collapse;margin:12px 0">
 <tr><td style="padding:4px 12px 4px 0"><b>Date &amp; time:</b></td><td>${esc(scheduledAt)}</td></tr>
 <tr><td style="padding:4px 12px 4px 0"><b>Platform:</b></td><td>${label}</td></tr>
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${Deno.env.get("RESEND_API_KEY")}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: "Gradia <noreply@gradia.co.in>", to: [cand.email], subject: `Interview Invitation${jobTitle ? ` – ${jobTitle}` : ""}`, html }),
+      body: JSON.stringify({ from: "Gradia <noreply@gradia.co.in>", to: [cand.email], subject: subject || `Interview Invitation${jobTitle ? ` – ${jobTitle}` : ""}`, html }),
     });
     if (!r.ok) { const t = await r.text(); console.error(r.status, t); return json({ error: "Email failed to send", details: t }, 502); }
     return json({ success: true, email: cand.email });
