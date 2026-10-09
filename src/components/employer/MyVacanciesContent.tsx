@@ -450,6 +450,19 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                               <Lock className="h-3 w-3 mr-1" /> Locked
                             </Badge>
                           )}
+                          {a.screeningStatus && (
+                            <Badge
+                              variant={a.screeningStatus === "completed" ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              AI Screening:{" "}
+                              {a.screeningStatus === "completed"
+                                ? "Completed"
+                                : a.screeningStatus === "in_progress"
+                                  ? "In progress"
+                                  : "Sent"}
+                            </Badge>
+                          )}
                         </div>
 
                         {a.unlocked ? (
