@@ -25,7 +25,13 @@ import {
   Home,
 } from "lucide-react";
 
-import { Bot, Loader2 } from "lucide-react";
+import { Bot, Loader2, ChevronDown, Ban, RefreshCw, CalendarClock } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import MockInterviewHistory from "@/components/shared/MockInterviewHistory";
 import PaymentRequestPanel from "./PaymentRequestPanel";
@@ -46,22 +52,30 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
   const [sendingScreening, setSendingScreening] = useState(false);
   const [historyKey, setHistoryKey] = useState(0);
 
-  const sendScreening = async () => {
+  const screeningAction = async (action: "send" | "cancel" | "resend" | "reschedule") => {
     if (!candidateId) return;
+    if (action === "cancel" && !window.confirm("Cancel this candidate's AI screening round? The candidate will be emailed about the cancellation.")) return;
     setSendingScreening(true);
     try {
       const { data, error } = await supabase.functions.invoke("send-ai-screening", {
-        body: { candidateId, jobTitle: jobTitle || null, appUrl: window.location.origin },
+        body: { action, candidateId, jobTitle: jobTitle || null, appUrl: window.location.origin },
       });
       if (error || data?.error) throw new Error(typeof data?.error === "string" ? data.error : error?.message);
-      toast.success(data.emailSent ? "AI screening round sent to candidate" : "Screening created, but email could not be sent");
+      const messages: Record<string, string> = {
+        send: "AI screening round sent to candidate",
+        cancel: "Screening round cancelled and candidate notified",
+        resend: "Screening invitation re-sent to candidate",
+        reschedule: "Screening rescheduled — new link sent to candidate",
+      };
+      toast.success(data.emailSent ? messages[action] : "Done, but the email could not be sent");
       setHistoryKey((k) => k + 1);
     } catch (e: any) {
-      toast.error(e.message || "Could not send screening round");
+      toast.error(e.message || "Could not process the screening request");
     } finally {
       setSendingScreening(false);
     }
   };
+  const sendScreening = () => screeningAction("send");
 
   const [loading, setLoading] = useState(false);
   const [aiParsing, setAiParsing] = useState(false);
@@ -245,14 +259,34 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
                     </Button>
                   </>
                 )}
-                <Button size="sm" variant="secondary" onClick={sendScreening} disabled={sendingScreening}>
-                  {sendingScreening ? (
-                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-                  ) : (
-                    <Bot className="h-3.5 w-3.5 mr-1" />
-                  )}
-                  Send AI Screening
-                </Button>
+                <div className="flex">
+                  <Button size="sm" variant="secondary" className="rounded-r-none" onClick={sendScreening} disabled={sendingScreening}>
+                    {sendingScreening ? (
+                      <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <Bot className="h-3.5 w-3.5 mr-1" />
+                    )}
+                    Send AI Screening
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="secondary" className="rounded-l-none border-l border-border px-1.5" disabled={sendingScreening} aria-label="More screening options">
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => screeningAction("resend")}>
+                        <RefreshCw className="h-3.5 w-3.5 mr-2" /> Resend invitation
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => screeningAction("reschedule")}>
+                        <CalendarClock className="h-3.5 w-3.5 mr-2" /> Reschedule (new link)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => screeningAction("cancel")}>
+                        <Ban className="h-3.5 w-3.5 mr-2" /> Cancel round
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
 

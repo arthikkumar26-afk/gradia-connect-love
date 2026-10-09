@@ -458,6 +458,8 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                               AI Screening:{" "}
                               {a.screeningStatus === "completed"
                                 ? "Completed"
+                                : a.screeningStatus === "cancelled"
+                                ? "Cancelled"
                                 : a.screeningStatus === "in_progress"
                                   ? "In progress"
                                   : "Sent"}
