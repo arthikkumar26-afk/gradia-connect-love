@@ -164,25 +164,34 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
 
     const candidateIds = apps.map((a: any) => a.candidate_id);
 
-    // Get candidate profiles + unlocks + AI screening sessions in parallel
-    const [{ data: profiles }, { data: unlocks }, { data: screenings }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, full_name, email, mobile, location, resume_url")
-        .in("id", candidateIds),
-      supabase
-        .from("cv_unlocks")
-        .select("application_id, candidate_id")
-        .eq("employer_id", effectiveEmployerId!)
-        .eq("job_id", job.id)
-        .in("candidate_id", candidateIds),
-      supabase
-        .from("mock_interview_sessions")
-        .select("candidate_id, status, created_at")
-        .eq("interview_type", "ai_screening")
-        .in("candidate_id", candidateIds)
-        .order("created_at", { ascending: false }),
-    ]);
+    // Get candidate profiles + unlocks + AI screening sessions + payment requests in parallel
+    const profileQ = supabase
+      .from("profiles")
+      .select("id, full_name, email, mobile, location, resume_url")
+      .in("id", candidateIds);
+    const unlocksQ = supabase
+      .from("cv_unlocks")
+      .select("application_id, candidate_id")
+      .eq("employer_id", effectiveEmployerId!)
+      .eq("job_id", job.id)
+      .in("candidate_id", candidateIds);
+    const screeningsQ = supabase
+      .from("mock_interview_sessions")
+      .select("candidate_id, status, created_at")
+      .eq("interview_type", "ai_screening")
+      .in("candidate_id", candidateIds)
+      .order("created_at", { ascending: false });
+    const paymentsQ = paymentMode
+      ? supabase
+          .from("candidate_payment_requests")
+          .select("candidate_id, status, amount_paise, manually_updated, updated_at, created_at")
+          .eq("job_id", job.id)
+          .in("candidate_id", candidateIds)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] as any[] });
+
+    const [{ data: profiles }, { data: unlocks }, { data: screenings }, { data: payments }] =
+      await Promise.all([profileQ, unlocksQ, screeningsQ, paymentsQ]);
 
     // Latest screening session per candidate
     const screeningMap = new Map<string, { status: string; created_at: string }>();
