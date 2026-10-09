@@ -329,7 +329,7 @@ serve(async (req) => {
     const candidateEmailResponse = await sendEmail(RESEND_API_KEY, {
       from: 'Gradia Hiring <noreply@gradia.co.in>',
       to: [candidate.email],
-      reply_to: 'info@gradiaa.com',
+      reply_to: 'info@gradia.world',
       subject: `${stageFormat.icon} ${isManualInterview ? 'Panel Interview' : stageName} Round - ${job.job_title} at ${companyName}`,
       html: `
 <!DOCTYPE html>
@@ -445,7 +445,7 @@ serve(async (req) => {
       <td style="padding: 24px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
         <p style="margin: 0; font-size: 12px; color: #9ca3af; text-align: center;">
           This email was sent by Gradia Job Portal on behalf of ${companyName}.<br>
-          <a href="mailto:info@gradiaa.com" style="color: #10b981;">Contact Support</a> | 
+          <a href="mailto:info@gradia.world" style="color: #10b981;">Contact Support</a> | 
           <a href="mailto:unsubscribe@gradia.co.in?subject=Unsubscribe" style="color: #9ca3af;">Unsubscribe</a>
         </p>
       </td>
@@ -463,7 +463,7 @@ serve(async (req) => {
       const panelEmailResponse = await sendEmail(RESEND_API_KEY, {
         from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: panelAttendeeEmails,
-        reply_to: employer?.email || 'info@gradiaa.com',
+        reply_to: employer?.email || 'info@gradia.world',
         subject: `📅 Panel Interview Scheduled - ${candidate.full_name} for ${job.job_title}`,
         html: `
 <!DOCTYPE html>
@@ -570,7 +570,7 @@ serve(async (req) => {
       const assessmentEmailResponse = await sendEmail(RESEND_API_KEY, {
         from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: assessmentMemberEmails,
-        reply_to: employer?.email || 'info@gradiaa.com',
+        reply_to: employer?.email || 'info@gradia.world',
         subject: `📋 Assessment Assignment - ${candidate.full_name} for ${job.job_title}`,
         html: `
 <!DOCTYPE html>

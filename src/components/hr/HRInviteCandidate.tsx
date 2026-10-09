@@ -173,7 +173,7 @@ const HRInviteCandidate = ({ hrName, companyName, hrEmail }: Props) => {
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [adminName, setAdminName] = useState(hrName || "Hiring Team");
   const [companyNameInput, setCompanyNameInput] = useState(companyName || "Gradia");
-  const [contactInfo, setContactInfo] = useState(hrEmail || "info@gradiaa.com");
+  const [contactInfo, setContactInfo] = useState(hrEmail || "info@gradia.world");
   const [showTerms, setShowTerms] = useState(true);
   const [editedHtml, setEditedHtml] = useState<string | null>(null);
 

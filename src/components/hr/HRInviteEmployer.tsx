@@ -147,7 +147,7 @@ const HRInviteEmployer = ({ hrName, companyName, hrEmail }: Props) => {
         Best regards,<br/>
         <strong>${hrName || "Hiring Team"}</strong><br/>
         ${companyName || "Gradia"}<br/>
-        ${hrEmail || "info@gradiaa.com"}
+        ${hrEmail || "info@gradia.world"}
       </p>
       ${notes ? `<p style="font-size:12px;color:#9ca3af;margin-top:16px;border-left:3px solid #e5e7eb;padding-left:10px;">${notes}</p>` : ""}
     </div>`;

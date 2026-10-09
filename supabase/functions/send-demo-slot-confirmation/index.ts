@@ -108,7 +108,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'Gradia Hiring <noreply@gradia.co.in>',
         to: [candidate.email],
-        reply_to: 'info@gradiaa.com',
+        reply_to: 'info@gradia.world',
         subject: `✅ Demo Slot Timings Submitted - ${job?.job_title} at ${companyName}`,
         html: candidateEmailHtml,
       }),
@@ -163,7 +163,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: `Gradia Hiring <noreply@gradia.co.in>`,
           to: [employerEmail],
-          reply_to: 'info@gradiaa.com',
+          reply_to: 'info@gradia.world',
           subject: `📋 Demo Slot Booking: ${candidateName} - ${job?.job_title}`,
           html: employerEmailHtml,
         }),

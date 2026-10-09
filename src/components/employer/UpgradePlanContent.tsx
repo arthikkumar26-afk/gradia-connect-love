@@ -629,7 +629,7 @@ export const UpgradePlanContent = () => {
               className="w-full"
               variant="default"
               onClick={() => {
-                window.location.href = "mailto:info@gradiaa.com?subject=Sales%20Inquiry%20-%20Custom%20Plan&body=Hi%20Gradia%20Sales%20Team%2C%0A%0AI%27m%20interested%20in%20discussing%20a%20custom%20plan%20for%20my%20company.%0A%0AThanks%2C";
+                window.location.href = "mailto:info@gradia.world?subject=Sales%20Inquiry%20-%20Custom%20Plan&body=Hi%20Gradia%20Sales%20Team%2C%0A%0AI%27m%20interested%20in%20discussing%20a%20custom%20plan%20for%20my%20company.%0A%0AThanks%2C";
               }}
             >
               <Phone className="h-4 w-4 mr-2" />

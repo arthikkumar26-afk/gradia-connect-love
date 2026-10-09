@@ -714,7 +714,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           <HRInviteEmployer
             hrName={profile?.full_name || "HR Team"}
             companyName={parentEmployerName || "Gradia"}
-            hrEmail={user?.email || "info@gradiaa.com"}
+            hrEmail={user?.email || "info@gradia.world"}
           />
         );
       case "candidates-data":
@@ -734,7 +734,7 @@ const HRDashboard = ({ view = "all" }: HRDashboardProps) => {
           <HRInviteCandidate
             hrName={profile?.full_name || "HR Team"}
             companyName={parentEmployerName || "Gradia"}
-            hrEmail={user?.email || "info@gradiaa.com"}
+            hrEmail={user?.email || "info@gradia.world"}
           />
         );
       case "candidate-info":

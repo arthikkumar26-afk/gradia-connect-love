@@ -397,7 +397,7 @@ const InviteFromResume = () => {
   const [subject, setSubject] = useState(DEFAULT_SUBJECT);
   const [adminName, setAdminName] = useState("Gradia Hiring Team");
   const [companyName, setCompanyName] = useState("Gradia");
-  const [contactInfo, setContactInfo] = useState("info@gradiaa.com");
+  const [contactInfo, setContactInfo] = useState("info@gradia.world");
   const [showSubscription, setShowSubscription] = useState(true);
   const [showTerms, setShowTerms] = useState(true);
   const [editedHtml, setEditedHtml] = useState<string | null>(null);

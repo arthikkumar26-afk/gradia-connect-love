@@ -182,7 +182,7 @@ const Contact = () => {
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button variant="outline" size="sm" className="flex-1">
                         <Mail className="h-4 w-4 mr-2" />
-                        info@gradiaa.com
+                        info@gradia.world
                       </Button>
                       <Button variant="outline" size="sm" className="flex-1" onClick={() => setChatOpen(true)}>
                         <MessageCircle className="h-4 w-4 mr-2" />
@@ -211,7 +211,7 @@ const Contact = () => {
                     <div className="flex flex-col sm:flex-row gap-2">
                       <Button variant="outline" size="sm" className="flex-1">
                         <Mail className="h-4 w-4 mr-2" />
-                        info@gradiaa.com
+                        info@gradia.world
                       </Button>
                       <Button variant="outline" size="sm" className="flex-1">
                         <Phone className="h-4 w-4 mr-2" />
