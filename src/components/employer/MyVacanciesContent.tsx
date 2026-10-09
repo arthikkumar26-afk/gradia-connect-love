@@ -487,6 +487,11 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                                 Applied: {new Date(a.applied_date).toLocaleDateString()}
                               </p>
                             )}
+                            {a.screeningSentAt && (
+                              <p className="text-xs">
+                                AI Screening {a.screeningStatus === "completed" ? "completed" : a.screeningStatus === "in_progress" ? "started" : "sent"}: {new Date(a.screeningSentAt).toLocaleDateString()}
+                              </p>
+                            )}
                           </div>
                         ) : (
                           <p className="text-sm text-muted-foreground">
