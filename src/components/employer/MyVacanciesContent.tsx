@@ -56,6 +56,8 @@ interface ApplicantRow {
   applied_date: string | null;
   status: string | null;
   unlocked: boolean;
+  screeningStatus: string | null;
+  screeningSentAt: string | null;
 }
 
 interface MyVacanciesContentProps {
@@ -158,8 +160,8 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
 
     const candidateIds = apps.map((a: any) => a.candidate_id);
 
-    // Get candidate profiles + unlocks in parallel
-    const [{ data: profiles }, { data: unlocks }] = await Promise.all([
+    // Get candidate profiles + unlocks + AI screening sessions in parallel
+    const [{ data: profiles }, { data: unlocks }, { data: screenings }] = await Promise.all([
       supabase
         .from("profiles")
         .select("id, full_name, email, mobile, location, resume_url")
@@ -170,7 +172,21 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
         .eq("employer_id", effectiveEmployerId!)
         .eq("job_id", job.id)
         .in("candidate_id", candidateIds),
+      supabase
+        .from("mock_interview_sessions")
+        .select("candidate_id, status, created_at")
+        .eq("interview_type", "ai_screening")
+        .in("candidate_id", candidateIds)
+        .order("created_at", { ascending: false }),
     ]);
+
+    // Latest screening session per candidate
+    const screeningMap = new Map<string, { status: string; created_at: string }>();
+    (screenings || []).forEach((s: any) => {
+      if (!screeningMap.has(s.candidate_id)) {
+        screeningMap.set(s.candidate_id, { status: s.status, created_at: s.created_at });
+      }
+    });
 
     const unlockedAppIds = new Set(
       (unlocks || []).map((u: any) => u.application_id).filter(Boolean)
@@ -179,6 +195,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
 
     const rows: ApplicantRow[] = apps.map((a: any) => {
       const p: any = profileMap.get(a.candidate_id) || {};
+      const screening = screeningMap.get(a.candidate_id);
       return {
         applicationId: a.id,
         candidate_id: a.candidate_id,
@@ -190,6 +207,8 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
         applied_date: a.applied_date,
         status: a.status,
         unlocked: unlockedAppIds.has(a.id),
+        screeningStatus: screening?.status || null,
+        screeningSentAt: screening?.created_at || null,
       };
     });
 
@@ -431,6 +450,19 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                               <Lock className="h-3 w-3 mr-1" /> Locked
                             </Badge>
                           )}
+                          {a.screeningStatus && (
+                            <Badge
+                              variant={a.screeningStatus === "completed" ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              AI Screening:{" "}
+                              {a.screeningStatus === "completed"
+                                ? "Completed"
+                                : a.screeningStatus === "in_progress"
+                                  ? "In progress"
+                                  : "Sent"}
+                            </Badge>
+                          )}
                         </div>
 
                         {a.unlocked ? (
@@ -453,6 +485,11 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                             {a.applied_date && (
                               <p className="text-xs">
                                 Applied: {new Date(a.applied_date).toLocaleDateString()}
+                              </p>
+                            )}
+                            {a.screeningSentAt && (
+                              <p className="text-xs">
+                                AI Screening {a.screeningStatus === "completed" ? "completed" : a.screeningStatus === "in_progress" ? "started" : "sent"}: {new Date(a.screeningSentAt).toLocaleDateString()}
                               </p>
                             )}
                           </div>
