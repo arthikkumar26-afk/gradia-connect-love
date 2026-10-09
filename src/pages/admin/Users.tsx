@@ -566,7 +566,7 @@ const Users = () => {
                   <strong>Reason:</strong> ${blockReason}
                 </div>
                 <p>During this period, you will not be able to access your account or use any platform services.</p>
-                <p>If you believe this action was taken in error, or if you would like to discuss this further, please contact our support team at <a href="mailto:info@gradiaa.com">info@gradiaa.com</a>.</p>
+                <p>If you believe this action was taken in error, or if you would like to discuss this further, please contact our support team at <a href="mailto:info@gradia.world">info@gradia.world</a>.</p>
                 <p>Thank you for your understanding.</p>
                 <p style="color: #6b7280; margin-top: 24px;">Best regards,<br/>Gradia Team</p>
               </div>
@@ -610,7 +610,7 @@ const Users = () => {
               <p style="margin: 24px 0;">
                 <a href="https://gradiaa.com/pricing" style="background:#ea580c;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;">Complete Payment</a>
               </p>
-              <p>If you've already paid or need assistance, contact us at <a href="mailto:info@gradiaa.com">info@gradiaa.com</a>.</p>
+              <p>If you've already paid or need assistance, contact us at <a href="mailto:info@gradia.world">info@gradia.world</a>.</p>
               <p style="color:#6b7280;margin-top:24px;">— Gradia Team</p>
             </div>
           `,

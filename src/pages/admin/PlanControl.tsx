@@ -369,7 +369,7 @@ const PlanControl = ({ accessRole }: Props) => {
     // Footer
     doc.setTextColor(120, 120, 120);
     doc.setFontSize(9);
-    doc.text("Gradia Hiring Pvt Ltd · info@gradiaa.com · www.gradiaa.com", W / 2, 800, { align: "center" });
+    doc.text("Gradia Hiring Pvt Ltd · info@gradia.world · www.gradiaa.com", W / 2, 800, { align: "center" });
 
     return { doc, invoiceNo };
   };

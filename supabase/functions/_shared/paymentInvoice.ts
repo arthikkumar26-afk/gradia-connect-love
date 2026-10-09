@@ -53,7 +53,7 @@ export async function buildInvoicePdf(d: InvoiceData): Promise<Uint8Array> {
   y -= 34;
   text("BILLED BY", 40, y, { size: 9, b: true, color: grey }); text("BILLED TO", 320, y, { size: 9, b: true, color: grey });
   y -= 16;
-  const by = ["Gradia", "Offices: Bangalore & Hyderabad, India", "Email: info@gradiaa.com", "Website: gradia.world"];
+  const by = ["Gradia", "Offices: Bangalore & Hyderabad, India", "Email: info@gradia.world", "Website: gradia.world"];
   const co = d.company;
   if (co?.name) by.push(`On behalf of: ${co.name}`);
   if (co?.email) by.push(`Company email: ${co.email}`);
@@ -84,7 +84,7 @@ export async function buildInvoicePdf(d: InvoiceData): Promise<Uint8Array> {
 
   page.drawLine({ start: { x: 40, y }, end: { x: 555, y }, thickness: 1, color: line });
   y -= 16;
-  wrapLines("This is a computer-generated invoice and does not require a signature. Please keep it for your records. For any questions about this payment, write to info@gradiaa.com quoting the Invoice No. and Transaction ID.", 515, 9)
+  wrapLines("This is a computer-generated invoice and does not require a signature. Please keep it for your records. For any questions about this payment, write to info@gradia.world quoting the Invoice No. and Transaction ID.", 515, 9)
     .forEach((l, i) => text(l, 40, y - i * 12, { size: 9, color: grey }));
   text("Team Gradia - Learn. Practice. Compete. Get Hired.", 40, 40, { size: 9, color: grey });
   return await pdf.save();

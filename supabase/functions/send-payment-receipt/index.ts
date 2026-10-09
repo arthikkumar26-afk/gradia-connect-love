@@ -29,7 +29,7 @@ const COMPANY = {
   name: "Gradia Hiring Pvt Ltd",
   address1: "Bangalore, Karnataka, India",
   address2: "Hyderabad, Telangana, India",
-  email: "info@gradiaa.com",
+  email: "info@gradia.world",
   website: "www.gradiaa.com",
   gstin: "—",
   brandHex: "#1e6fd9",

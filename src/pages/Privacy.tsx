@@ -154,7 +154,7 @@ const sections = [
   },
   {
     title: "13. Contact Information",
-    content: `For privacy-related questions, data access requests, or concerns:\n\nPrivacy Team Email: privacy@gradia.co.in\nGeneral Support: info@gradiaa.com\nOffice Locations: Bangalore & Hyderabad, India\nBusiness Hours: Monday – Friday, 9:00 AM – 6:00 PM IST`,
+    content: `For privacy-related questions, data access requests, or concerns:\n\nPrivacy Team Email: privacy@gradia.co.in\nGeneral Support: info@gradia.world\nOffice Locations: Bangalore & Hyderabad, India\nBusiness Hours: Monday – Friday, 9:00 AM – 6:00 PM IST`,
   },
 ];
 
