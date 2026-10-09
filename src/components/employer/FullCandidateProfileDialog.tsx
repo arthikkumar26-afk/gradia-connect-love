@@ -259,14 +259,34 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
                     </Button>
                   </>
                 )}
-                <Button size="sm" variant="secondary" onClick={sendScreening} disabled={sendingScreening}>
-                  {sendingScreening ? (
-                    <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
-                  ) : (
-                    <Bot className="h-3.5 w-3.5 mr-1" />
-                  )}
-                  Send AI Screening
-                </Button>
+                <div className="flex">
+                  <Button size="sm" variant="secondary" className="rounded-r-none" onClick={sendScreening} disabled={sendingScreening}>
+                    {sendingScreening ? (
+                      <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                    ) : (
+                      <Bot className="h-3.5 w-3.5 mr-1" />
+                    )}
+                    Send AI Screening
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="secondary" className="rounded-l-none border-l border-border px-1.5" disabled={sendingScreening} aria-label="More screening options">
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => screeningAction("resend")}>
+                        <RefreshCw className="h-3.5 w-3.5 mr-2" /> Resend invitation
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => screeningAction("reschedule")}>
+                        <CalendarClock className="h-3.5 w-3.5 mr-2" /> Reschedule (new link)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-destructive" onClick={() => screeningAction("cancel")}>
+                        <Ban className="h-3.5 w-3.5 mr-2" /> Cancel round
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </div>
 
