@@ -37,7 +37,14 @@ Deno.serve(async (req) => {
     const company = esc(emp?.company_name || emp?.full_name || "Gradia");
     const label = LABEL[platform];
     const link = esc(meetingLink);
-    const note = message ? `<p>${esc(message).replace(/\n/g, "<br>")}</p>` : "";
+    // Collapse hard line wraps so paragraphs fill the full width; keep blank lines as paragraph breaks
+    const note = message
+      ? `<p>${esc(message)
+          .split(/\n{2,}/)
+          .map((para) => para.replace(/\n/g, " ").trim())
+          .filter(Boolean)
+          .join("</p><p>")}</p>`
+      : "";
 
     const html = `<div style="font-family:Arial,sans-serif;font-size:14px;max-width:600px;color:#222;line-height:1.6">
 <p>Dear ${esc(cand.full_name || "Candidate")},</p>
