@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import {
   Plus, Send, Mail, Users, Megaphone,
-  Paperclip, Loader2, XCircle, RefreshCw, FileEdit, Trash2,
+  Paperclip, Loader2, XCircle, RefreshCw, FileEdit, Trash2, Sparkles,
 } from "lucide-react";
 
 interface AttachmentFile {
@@ -27,6 +28,7 @@ interface CampaignDraft {
   campaignName: string;
   subject: string;
   messageBody: string;
+  generationPrompt?: string;
   emailList: string[];
   attachments: AttachmentFile[];
   savedAt: string;
@@ -55,6 +57,9 @@ export function EmployerCampaignContent() {
   const [emailList, setEmailList] = useState<string[]>([]);
   const [subject, setSubject] = useState("");
   const [messageBody, setMessageBody] = useState("");
+  const [generationPrompt, setGenerationPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const generationRef = useRef<AbortController | null>(null);
   const [campaignName, setCampaignName] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendResults, setSendResults] = useState<{ totalSent: number; totalFailed: number } | null>(null);
@@ -210,6 +215,42 @@ export function EmployerCampaignContent() {
 
   const COST_PER_EMAIL = 50;
 
+  useEffect(() => () => generationRef.current?.abort(), []);
+
+  const generateEmail = async () => {
+    if (!generationPrompt.trim() || generationRef.current || isSending) return;
+    if (messageBody.trim() && !window.confirm("Replace the current message with a newly generated email?")) return;
+    const controller = new AbortController();
+    generationRef.current = controller;
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-bulk-email", {
+        body: { prompt: generationPrompt.trim(), emailType: "employer", },
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      if (error) {
+        if (error instanceof FunctionsHttpError) {
+          const details = await error.context.json().catch(() => null);
+          throw new Error(typeof details?.error === "string" ? details.error : error.message);
+        }
+        throw error;
+      }
+      if (data?.error) throw new Error(typeof data.error === "string" ? data.error : "Could not generate email");
+      if (typeof data?.content !== "string" || !data.content.trim()) throw new Error("No email draft was returned. Your existing message has not changed.");
+      setMessageBody(data.content.trim());
+      if (!subject.trim() && typeof data.subject === "string") setSubject(data.subject);
+      toast.success("Email draft generated");
+    } catch (error) {
+      if (!controller.signal.aborted) toast.error(error instanceof Error ? error.message : "Could not generate email");
+    } finally {
+      if (generationRef.current === controller) {
+        generationRef.current = null;
+        setIsGenerating(false);
+      }
+    }
+  };
+
   const upsertDraft = (patch: Partial<CampaignDraft>, idOverride?: string): string => {
     const id = idOverride || activeDraftId || `draft_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const existing = drafts.find(d => d.id === id);
@@ -218,6 +259,7 @@ export function EmployerCampaignContent() {
       campaignName,
       subject,
       messageBody,
+      generationPrompt,
       emailList,
       attachments: attachments.map(a => ({ name: a.name, size: a.size, type: a.type, url: a.url })),
       savedAt: new Date().toISOString(),
@@ -335,7 +377,7 @@ export function EmployerCampaignContent() {
   };
 
   const hasUnsavedContent = () =>
-    campaignName.trim() || subject.trim() || messageBody.trim() ||
+    campaignName.trim() || subject.trim() || messageBody.trim() || generationPrompt.trim() ||
     emailList.length > 0 || attachments.length > 0;
 
   const saveAsDraft = () => {
@@ -345,6 +387,7 @@ export function EmployerCampaignContent() {
       campaignName,
       subject,
       messageBody,
+      generationPrompt,
       emailList,
       attachments: attachments.map(a => ({ name: a.name, size: a.size, type: a.type, url: a.url })),
       savedAt: new Date().toISOString(),
@@ -358,6 +401,7 @@ export function EmployerCampaignContent() {
     setCampaignName(d.campaignName);
     setSubject(d.subject);
     setMessageBody(d.messageBody);
+    setGenerationPrompt(d.generationPrompt || "");
     setEmailList(d.emailList || []);
     setAttachments(d.attachments || []);
     setActiveDraftId(d.id);
@@ -380,6 +424,9 @@ export function EmployerCampaignContent() {
   };
 
   const resetForm = () => {
+    generationRef.current?.abort();
+    generationRef.current = null;
+    setIsGenerating(false); setGenerationPrompt("");
     setEmailInput(""); setEmailList([]); setSubject(""); setMessageBody("");
     setCampaignName(""); setSendResults(null); setAttachments([]);
     setActiveDraftId(null);
@@ -642,8 +689,25 @@ export function EmployerCampaignContent() {
             </div>
 
             <div className="space-y-1.5">
+              <Label htmlFor="campaign-generation-prompt" className="text-sm font-medium">Email prompt</Label>
+              <Textarea
+                id="campaign-generation-prompt"
+                placeholder="Describe the email, key details, and tone…"
+                value={generationPrompt}
+                onChange={e => setGenerationPrompt(e.target.value)}
+                rows={3}
+                maxLength={10000}
+                disabled={isGenerating || isSending}
+              />
+              <Button type="button" size="sm" variant="outline" onClick={generateEmail} disabled={!generationPrompt.trim() || isGenerating || isSending}>
+                {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
+                {isGenerating ? "Generating…" : "Generate email"}
+              </Button>
+            </div>
+
+            <div className="space-y-1.5">
               <Label className="text-sm font-medium">Subject <span className="text-destructive">*</span></Label>
-              <Input placeholder="e.g. Exciting Job Opportunity at Our Company!" value={subject} onChange={e => setSubject(e.target.value)} />
+              <Input placeholder="e.g. Exciting Job Opportunity at Our Company!" value={subject} onChange={e => setSubject(e.target.value)} disabled={isGenerating} />
             </div>
 
             <div className="space-y-1.5">
@@ -651,6 +715,7 @@ export function EmployerCampaignContent() {
               <Textarea
                 placeholder="Type your email message here...&#10;&#10;Use line breaks for paragraphs. The message will be formatted in a professional email template automatically."
                 value={messageBody}
+                disabled={isGenerating}
                 onChange={e => setMessageBody(e.target.value)}
                 rows={8}
                 className="resize-y"
@@ -701,7 +766,7 @@ export function EmployerCampaignContent() {
             )}
 
             <div className="flex gap-2 pt-2">
-              <Button onClick={handleSendCampaign} disabled={isSending || emailList.length === 0} className="flex-1">
+              <Button onClick={handleSendCampaign} disabled={isSending || isGenerating || emailList.length === 0} className="flex-1">
                 {isSending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending {emailList.length} email(s)...</> : <><Send className="h-4 w-4 mr-2" /> Send Campaign ({emailList.length}) • {emailList.length * COST_PER_EMAIL} pts</>}
               </Button>
               <Button variant="outline" onClick={() => { saveAsDraft(); resetForm(); }} disabled={isSending || !hasUnsavedContent()}>
