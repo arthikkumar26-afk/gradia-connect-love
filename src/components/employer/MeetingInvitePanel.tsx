@@ -4,42 +4,80 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Video, Send, Loader2 } from "lucide-react";
+import { Video, Send, Loader2, Wand2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props { candidateId: string; jobTitle?: string | null }
+const LABEL = { google_meet: "Google Meet", teams: "Microsoft Teams", other: "Online meeting" } as const;
+
+async function errText(error: any) {
+  let msg = error?.message;
+  if (error instanceof FunctionsHttpError) { try { msg = (await error.context.json()).error || msg; } catch { /* ignore */ } }
+  return typeof msg === "string" ? msg : "Something went wrong";
+}
 
 export default function MeetingInvitePanel({ candidateId, jobTitle }: Props) {
-  const [platform, setPlatform] = useState<"google_meet" | "teams" | "other">("google_meet");
+  const [platform, setPlatform] = useState<keyof typeof LABEL>("google_meet");
   const [link, setLink] = useState("");
   const [when, setWhen] = useState("");
-  const [message, setMessage] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [preview, setPreview] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
+
+  const scheduledAt = when
+    ? new Date(when).toLocaleString("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }) + " IST"
+    : "";
+
+  const generate = async () => {
+    if (!prompt.trim()) return toast.error("Write a prompt first");
+    if (body.trim() && !window.confirm("Replace the current message with a new draft?")) return;
+    setGenerating(true);
+    const full = `Interview invitation email${jobTitle ? ` for the role "${jobTitle}"` : ""}, held on ${LABEL[platform]}${scheduledAt ? ` on ${scheduledAt}` : ""}. Instructions: ${prompt.trim()}. Do not include a greeting line, the meeting link, or a sign-off — those are added automatically.`;
+    const { data, error } = await supabase.functions.invoke("generate-bulk-email", { body: { prompt: full, emailType: "employer" } });
+    setGenerating(false);
+    if (error || !data?.content) return toast.error(error ? await errText(error) : "No draft returned");
+    setBody(String(data.content).trim());
+    if (!subject.trim()) setSubject(`Interview Invitation${jobTitle ? ` – ${jobTitle}` : ""}`);
+    setPreview(true);
+    toast.success("Draft ready — review it before sending");
+  };
 
   const send = async () => {
     if (!/^https:\/\/\S+$/.test(link.trim())) return toast.error("Paste a valid meeting link starting with https://");
     if (!when) return toast.error("Choose the interview date and time");
     setSending(true);
-    const scheduledAt = new Date(when).toLocaleString("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }) + " IST";
     const { data, error } = await supabase.functions.invoke("send-meeting-invite", {
-      body: { candidateId, jobTitle, platform, meetingLink: link.trim(), scheduledAt, message: message.trim() || null },
+      body: { candidateId, jobTitle, platform, meetingLink: link.trim(), scheduledAt, message: body.trim() || null, subject: subject.trim() || null },
     });
     setSending(false);
-    if (error) {
-      let msg = error.message;
-      if (error instanceof FunctionsHttpError) { try { msg = (await error.context.json()).error || msg; } catch { /* ignore */ } }
-      return toast.error(typeof msg === "string" ? msg : "Could not send invitation");
-    }
+    if (error) return toast.error(await errText(error));
     toast.success(`Interview invitation sent to ${data?.email ?? "candidate"}`);
-    setLink(""); setMessage("");
+    setLink(""); setBody(""); setPrompt(""); setSubject(""); setPreview(false);
   };
 
   return (
     <div className="rounded-xl border bg-card p-4 space-y-3">
       <div className="flex items-center gap-2 font-semibold text-sm"><Video className="h-4 w-4" /> Interview invitation</div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Prompt</Label>
+        <Textarea rows={2} maxLength={2000} value={prompt} onChange={(e) => setPrompt(e.target.value)}
+          placeholder="e.g. Friendly invite for technical round with our security lead, 45 minutes, keep laptop ready" />
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={generate} disabled={generating}>
+            {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Wand2 className="h-4 w-4 mr-2" />}
+            Generate mail
+          </Button>
+        </div>
+      </div>
+
       <div className="grid gap-2 sm:grid-cols-2">
-        <Select value={platform} onValueChange={(v) => setPlatform(v as typeof platform)}>
+        <Select value={platform} onValueChange={(v) => setPlatform(v as keyof typeof LABEL)}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent className="z-[1600]">
             <SelectItem value="google_meet">Google Meet</SelectItem>
@@ -50,9 +88,29 @@ export default function MeetingInvitePanel({ candidateId, jobTitle }: Props) {
         <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
       </div>
       <Input placeholder={platform === "teams" ? "https://teams.microsoft.com/l/meetup-join/..." : "https://meet.google.com/abc-defg-hij"} value={link} onChange={(e) => setLink(e.target.value)} maxLength={1000} />
-      <Textarea rows={3} placeholder="Optional note for the candidate (e.g. interviewer name, what to prepare)" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={5000} />
-      <div className="flex justify-end">
-        <Button onClick={send} disabled={sending}>
+      <Input placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={200} />
+      <Textarea rows={6} placeholder="Message (generate from the prompt above or write your own)" value={body} onChange={(e) => setBody(e.target.value)} maxLength={5000} />
+
+      {preview && (
+        <div className="rounded-lg border bg-muted/40 p-4 text-sm leading-relaxed space-y-2">
+          <div className="text-xs text-muted-foreground">Subject: <span className="font-medium text-foreground">{subject || `Interview Invitation${jobTitle ? ` – ${jobTitle}` : ""}`}</span></div>
+          <p>Dear Candidate,</p>
+          {body.trim()
+            ? <p className="whitespace-pre-wrap">{body}</p>
+            : <p>We are pleased to invite you to an interview{jobTitle ? ` for ${jobTitle}` : ""}.</p>}
+          <p><b>Date &amp; time:</b> {scheduledAt || "—"}<br /><b>Platform:</b> {LABEL[platform]}</p>
+          <span className="inline-block rounded-md bg-primary px-4 py-2 text-primary-foreground font-semibold">Join {LABEL[platform]}</span>
+          <p className="text-xs text-muted-foreground break-all">{link || "Meeting link"}</p>
+          <p>Best regards,<br /><b>Your company</b><br />via Gradia · gradia.world</p>
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" onClick={() => setPreview((p) => !p)}>
+          {preview ? <EyeOff className="h-4 w-4 mr-2" /> : <Eye className="h-4 w-4 mr-2" />}
+          {preview ? "Hide preview" : "Preview"}
+        </Button>
+        <Button onClick={send} disabled={sending || generating}>
           {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
           Send Interview Invitation
         </Button>
