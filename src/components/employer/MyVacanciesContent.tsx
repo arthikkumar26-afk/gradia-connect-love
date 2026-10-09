@@ -58,6 +58,10 @@ interface ApplicantRow {
   unlocked: boolean;
   screeningStatus: string | null;
   screeningSentAt: string | null;
+  paymentStatus: string | null;
+  paymentAmountPaise: number | null;
+  paymentManuallyUpdated: boolean | null;
+  paymentUpdatedAt: string | null;
 }
 
 interface MyVacanciesContentProps {
@@ -160,31 +164,48 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
 
     const candidateIds = apps.map((a: any) => a.candidate_id);
 
-    // Get candidate profiles + unlocks + AI screening sessions in parallel
-    const [{ data: profiles }, { data: unlocks }, { data: screenings }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, full_name, email, mobile, location, resume_url")
-        .in("id", candidateIds),
-      supabase
-        .from("cv_unlocks")
-        .select("application_id, candidate_id")
-        .eq("employer_id", effectiveEmployerId!)
-        .eq("job_id", job.id)
-        .in("candidate_id", candidateIds),
-      supabase
-        .from("mock_interview_sessions")
-        .select("candidate_id, status, created_at")
-        .eq("interview_type", "ai_screening")
-        .in("candidate_id", candidateIds)
-        .order("created_at", { ascending: false }),
-    ]);
+    // Get candidate profiles + unlocks + AI screening sessions + payment requests in parallel
+    const profileQ = supabase
+      .from("profiles")
+      .select("id, full_name, email, mobile, location, resume_url")
+      .in("id", candidateIds);
+    const unlocksQ = supabase
+      .from("cv_unlocks")
+      .select("application_id, candidate_id")
+      .eq("employer_id", effectiveEmployerId!)
+      .eq("job_id", job.id)
+      .in("candidate_id", candidateIds);
+    const screeningsQ = supabase
+      .from("mock_interview_sessions")
+      .select("candidate_id, status, created_at")
+      .eq("interview_type", "ai_screening")
+      .in("candidate_id", candidateIds)
+      .order("created_at", { ascending: false });
+    const paymentsQ = paymentMode
+      ? supabase
+          .from("candidate_payment_requests")
+          .select("candidate_id, status, amount_paise, manually_updated, updated_at, created_at")
+          .eq("job_id", job.id)
+          .in("candidate_id", candidateIds)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] as any[] });
+
+    const [{ data: profiles }, { data: unlocks }, { data: screenings }, { data: payments }] =
+      await Promise.all([profileQ, unlocksQ, screeningsQ, paymentsQ]);
 
     // Latest screening session per candidate
     const screeningMap = new Map<string, { status: string; created_at: string }>();
     (screenings || []).forEach((s: any) => {
       if (!screeningMap.has(s.candidate_id)) {
         screeningMap.set(s.candidate_id, { status: s.status, created_at: s.created_at });
+      }
+    });
+
+    // Latest payment request per candidate
+    const paymentMap = new Map<string, any>();
+    (payments || []).forEach((r: any) => {
+      if (!paymentMap.has(r.candidate_id)) {
+        paymentMap.set(r.candidate_id, r);
       }
     });
 
@@ -196,6 +217,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
     const rows: ApplicantRow[] = apps.map((a: any) => {
       const p: any = profileMap.get(a.candidate_id) || {};
       const screening = screeningMap.get(a.candidate_id);
+      const payment = paymentMap.get(a.candidate_id);
       return {
         applicationId: a.id,
         candidate_id: a.candidate_id,
@@ -209,6 +231,10 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
         unlocked: unlockedAppIds.has(a.id),
         screeningStatus: screening?.status || null,
         screeningSentAt: screening?.created_at || null,
+        paymentStatus: payment?.status || null,
+        paymentAmountPaise: payment?.amount_paise ?? null,
+        paymentManuallyUpdated: payment?.manually_updated ?? null,
+        paymentUpdatedAt: payment?.updated_at || payment?.created_at || null,
       };
     });
 
@@ -465,6 +491,29 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                                   : "Sent"}
                             </Badge>
                           )}
+                          {paymentMode && a.paymentStatus && (
+                            <Badge
+                              variant={
+                                a.paymentStatus === "paid"
+                                  ? "default"
+                                  : a.paymentStatus === "failed" || a.paymentStatus === "expired" || a.paymentStatus === "cancelled"
+                                  ? "destructive"
+                                  : "outline"
+                              }
+                              className="text-xs"
+                            >
+                              <Wallet className="h-3 w-3 mr-1" />
+                              {a.paymentStatus === "paid" && a.paymentManuallyUpdated
+                                ? "Cleared"
+                                : a.paymentStatus === "sent"
+                                ? "Awaiting payment"
+                                : a.paymentStatus === "paid"
+                                ? "Paid"
+                                : a.paymentStatus.charAt(0).toUpperCase() + a.paymentStatus.slice(1)}
+                              {a.paymentAmountPaise ? ` · ₹${(a.paymentAmountPaise / 100).toLocaleString("en-IN")}` : ""}
+                              {a.paymentManuallyUpdated && a.paymentStatus !== "paid" ? " (manual)" : ""}
+                            </Badge>
+                          )}
                         </div>
 
                         {a.unlocked ? (
@@ -492,6 +541,11 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                             {a.screeningSentAt && (
                               <p className="text-xs">
                                 AI Screening {a.screeningStatus === "completed" ? "completed" : a.screeningStatus === "in_progress" ? "started" : "sent"}: {new Date(a.screeningSentAt).toLocaleDateString()}
+                              </p>
+                            )}
+                            {paymentMode && a.paymentStatus && a.paymentUpdatedAt && (
+                              <p className="text-xs">
+                                Payment {a.paymentStatus === "paid" ? (a.paymentManuallyUpdated ? "cleared" : "received") : a.paymentStatus === "sent" ? "requested" : a.paymentStatus}: {new Date(a.paymentUpdatedAt).toLocaleDateString()}
                               </p>
                             )}
                           </div>
