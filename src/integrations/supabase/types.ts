@@ -1882,6 +1882,45 @@ export type Database = {
           },
         ]
       }
+      interview_invitation_logs: {
+        Row: {
+          candidate_id: string
+          created_at: string
+          employer_id: string
+          id: string
+          job_title: string | null
+          meeting_link: string
+          message: string | null
+          platform: string
+          scheduled_at: string | null
+          subject: string | null
+        }
+        Insert: {
+          candidate_id: string
+          created_at?: string
+          employer_id: string
+          id?: string
+          job_title?: string | null
+          meeting_link: string
+          message?: string | null
+          platform: string
+          scheduled_at?: string | null
+          subject?: string | null
+        }
+        Update: {
+          candidate_id?: string
+          created_at?: string
+          employer_id?: string
+          id?: string
+          job_title?: string | null
+          meeting_link?: string
+          message?: string | null
+          platform?: string
+          scheduled_at?: string | null
+          subject?: string | null
+        }
+        Relationships: []
+      }
       interview_invitations: {
         Row: {
           created_at: string | null

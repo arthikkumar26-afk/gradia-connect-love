@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,17 @@ import { Video, Send, Loader2, Wand2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props { candidateId: string; jobTitle?: string | null }
+
+interface InviteLog {
+  id: string;
+  job_title: string | null;
+  platform: string;
+  meeting_link: string;
+  scheduled_at: string | null;
+  subject: string | null;
+  message: string | null;
+  created_at: string;
+}
 const LABEL = { google_meet: "Google Meet", teams: "Microsoft Teams", other: "Online meeting" } as const;
 
 async function errText(error: any) {
@@ -28,6 +39,19 @@ export default function MeetingInvitePanel({ candidateId, jobTitle }: Props) {
   const [preview, setPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
+  const [logs, setLogs] = useState<InviteLog[]>([]);
+
+  const loadLogs = async () => {
+    const { data } = await supabase
+      .from("interview_invitation_logs")
+      .select("id, job_title, platform, meeting_link, scheduled_at, subject, message, created_at")
+      .eq("candidate_id", candidateId)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setLogs(data || []);
+  };
+
+  useEffect(() => { loadLogs(); }, [candidateId]);
 
   const scheduledAt = when
     ? new Date(when).toLocaleString("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" }) + " IST"
@@ -58,6 +82,7 @@ export default function MeetingInvitePanel({ candidateId, jobTitle }: Props) {
     if (error) return toast.error(await errText(error));
     toast.success(`Interview invitation sent to ${data?.email ?? "candidate"}`);
     setLink(""); setBody(""); setPrompt(""); setSubject(""); setPreview(false);
+    loadLogs();
   };
 
   return (
@@ -115,6 +140,40 @@ export default function MeetingInvitePanel({ candidateId, jobTitle }: Props) {
           Send Interview Invitation
         </Button>
       </div>
+
+      {logs.length > 0 && (
+        <div className="space-y-2 pt-1 border-t">
+          <div className="text-xs font-semibold text-muted-foreground pt-2">Sent invitations ({logs.length})</div>
+          {logs.map((log) => (
+            <div key={log.id} className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="font-medium text-foreground">{log.subject || "Interview Invitation"}</span>
+                <span className="text-xs text-muted-foreground">
+                  Sent {new Date(log.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                </span>
+              </div>
+              {log.scheduled_at && (
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-medium">Date & time:</span> {log.scheduled_at} ·{" "}
+                  {LABEL[log.platform as keyof typeof LABEL] || log.platform}
+                </div>
+              )}
+              {log.message && (
+                <p className="text-xs text-muted-foreground whitespace-pre-wrap">{log.message}</p>
+              )}
+              <a
+                href={log.meeting_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary underline break-all"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {log.meeting_link}
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
