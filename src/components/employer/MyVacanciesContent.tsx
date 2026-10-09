@@ -58,6 +58,10 @@ interface ApplicantRow {
   unlocked: boolean;
   screeningStatus: string | null;
   screeningSentAt: string | null;
+  paymentStatus: string | null;
+  paymentAmountPaise: number | null;
+  paymentManuallyUpdated: boolean | null;
+  paymentUpdatedAt: string | null;
 }
 
 interface MyVacanciesContentProps {
