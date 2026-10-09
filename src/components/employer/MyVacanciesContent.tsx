@@ -201,6 +201,14 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
       }
     });
 
+    // Latest payment request per candidate
+    const paymentMap = new Map<string, any>();
+    (payments || []).forEach((r: any) => {
+      if (!paymentMap.has(r.candidate_id)) {
+        paymentMap.set(r.candidate_id, r);
+      }
+    });
+
     const unlockedAppIds = new Set(
       (unlocks || []).map((u: any) => u.application_id).filter(Boolean)
     );
@@ -209,6 +217,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
     const rows: ApplicantRow[] = apps.map((a: any) => {
       const p: any = profileMap.get(a.candidate_id) || {};
       const screening = screeningMap.get(a.candidate_id);
+      const payment = paymentMap.get(a.candidate_id);
       return {
         applicationId: a.id,
         candidate_id: a.candidate_id,
@@ -222,6 +231,10 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
         unlocked: unlockedAppIds.has(a.id),
         screeningStatus: screening?.status || null,
         screeningSentAt: screening?.created_at || null,
+        paymentStatus: payment?.status || null,
+        paymentAmountPaise: payment?.amount_paise ?? null,
+        paymentManuallyUpdated: payment?.manually_updated ?? null,
+        paymentUpdatedAt: payment?.updated_at || payment?.created_at || null,
       };
     });
 
