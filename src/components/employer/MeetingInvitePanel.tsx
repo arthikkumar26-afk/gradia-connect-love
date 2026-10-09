@@ -10,6 +10,17 @@ import { Video, Send, Loader2, Wand2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 interface Props { candidateId: string; jobTitle?: string | null }
+
+interface InviteLog {
+  id: string;
+  job_title: string | null;
+  platform: string;
+  meeting_link: string;
+  scheduled_at: string | null;
+  subject: string | null;
+  message: string | null;
+  created_at: string;
+}
 const LABEL = { google_meet: "Google Meet", teams: "Microsoft Teams", other: "Online meeting" } as const;
 
 async function errText(error: any) {
