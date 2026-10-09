@@ -491,6 +491,29 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                                   : "Sent"}
                             </Badge>
                           )}
+                          {paymentMode && a.paymentStatus && (
+                            <Badge
+                              variant={
+                                a.paymentStatus === "paid"
+                                  ? "default"
+                                  : a.paymentStatus === "failed" || a.paymentStatus === "expired" || a.paymentStatus === "cancelled"
+                                  ? "destructive"
+                                  : "outline"
+                              }
+                              className="text-xs"
+                            >
+                              <Wallet className="h-3 w-3 mr-1" />
+                              {a.paymentStatus === "paid" && a.paymentManuallyUpdated
+                                ? "Cleared"
+                                : a.paymentStatus === "sent"
+                                ? "Awaiting payment"
+                                : a.paymentStatus === "paid"
+                                ? "Paid"
+                                : a.paymentStatus.charAt(0).toUpperCase() + a.paymentStatus.slice(1)}
+                              {a.paymentAmountPaise ? ` · ₹${(a.paymentAmountPaise / 100).toLocaleString("en-IN")}` : ""}
+                              {a.paymentManuallyUpdated && a.paymentStatus !== "paid" ? " (manual)" : ""}
+                            </Badge>
+                          )}
                         </div>
 
                         {a.unlocked ? (
