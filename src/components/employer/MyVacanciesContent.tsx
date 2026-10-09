@@ -543,6 +543,11 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                                 AI Screening {a.screeningStatus === "completed" ? "completed" : a.screeningStatus === "in_progress" ? "started" : "sent"}: {new Date(a.screeningSentAt).toLocaleDateString()}
                               </p>
                             )}
+                            {paymentMode && a.paymentStatus && a.paymentUpdatedAt && (
+                              <p className="text-xs">
+                                Payment {a.paymentStatus === "paid" ? (a.paymentManuallyUpdated ? "cleared" : "received") : a.paymentStatus === "sent" ? "requested" : a.paymentStatus}: {new Date(a.paymentUpdatedAt).toLocaleDateString()}
+                              </p>
+                            )}
                           </div>
                         ) : (
                           <p className="text-sm text-muted-foreground">
