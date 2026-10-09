@@ -6,3 +6,4 @@
 - Employer-to-candidate payment requests use a shared sync helper with signed paid-link/QR events as immediate confirmation, refreshed notification state and provider idempotency keys; retryable webhook errors prevent profile views from being required for delivery.
 - Payment email templates are owner-isolated records handled through the authenticated payment-request function; this prevents cross-employer template changes.
 - Payment email previews and sends use one escaped-text renderer, with payment links and QR appended by the server; this keeps preview formatting consistent and prevents editable content from replacing payment destinations.
+- Employer campaign drafting uses the existing email-generation function separately from sending; generating a draft never sends emails or deducts campaign wallet points.

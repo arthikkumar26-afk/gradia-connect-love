@@ -11,3 +11,7 @@
 - [x] Deploy automatic paid-link/QR confirmations with retryable failures and idempotent sends; signed-event tests passed without profile views, including duplicates, delivery failure/retry, and manual overrides. Real payment/inbox delivery not tested.
 - [x] Add professional payment templates, editable subject/body, saved templates, and preview before sending.
 - [x] Verify template editing and preview with example recipient, live owner-scoped storage and cleanup, and escaped payment-mail rendering; current candidate account correctly denied employer API access. No real email or payment sent.
+
+# Campaign email drafting
+- [ ] Add an email prompt above the subject/message and generate an editable draft without sending emails.
+- [ ] Verify generation, loading/error states, and draft persistence.
