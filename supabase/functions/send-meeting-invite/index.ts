@@ -42,10 +42,11 @@ Deno.serve(async (req) => {
     const html = `<div style="font-family:Arial,sans-serif;font-size:14px;max-width:600px;color:#222;line-height:1.6">
 <p>Dear ${esc(cand.full_name || "Candidate")},</p>
 ${message ? "" : `<p>Thank you for completing your registration. We are pleased to invite you to an interview${jobTitle ? ` for <b>${esc(jobTitle)}</b>` : ""} with ${company}.</p>`}
+${note}
 <table style="border-collapse:collapse;margin:12px 0">
 <tr><td style="padding:4px 12px 4px 0"><b>Date &amp; time:</b></td><td>${esc(scheduledAt)}</td></tr>
 <tr><td style="padding:4px 12px 4px 0"><b>Platform:</b></td><td>${label}</td></tr>
-</table>${note}
+</table>
 <p><a href="${link}" style="display:inline-block;background:#0f766e;color:#ffffff;padding:10px 22px;border-radius:6px;text-decoration:none;font-weight:bold">Join ${label}</a></p>
 <p style="font-size:13px;color:#555">If the button doesn't work, open: ${link}</p>
 <p>Please join a few minutes early with a stable internet connection, camera and microphone.</p>
