@@ -29,6 +29,7 @@ import { Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import MockInterviewHistory from "@/components/shared/MockInterviewHistory";
 import PaymentRequestPanel from "./PaymentRequestPanel";
+import MeetingInvitePanel from "./MeetingInvitePanel";
 
 interface Props {
   open: boolean;
@@ -258,6 +259,8 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
             {paymentMode && candidateId && (
               <PaymentRequestPanel candidateId={candidateId} jobId={jobId} jobTitle={jobTitle} />
             )}
+
+            {candidateId && <MeetingInvitePanel candidateId={candidateId} jobTitle={jobTitle} />}
 
             {/* AI Screening status & recordings */}
             {candidateId && (
