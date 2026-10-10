@@ -72,7 +72,13 @@ export default function MeetingInvitePanel({ candidateId, jobTitle }: Props) {
   };
 
   const send = async () => {
-    if (!/^https:\/\/\S+$/.test(link.trim())) return toast.error("Paste a valid meeting link starting with https://");
+    const trimmed = link.trim();
+    if (!/^https:\/\/\S+$/.test(trimmed)) return toast.error("Paste a valid meeting link starting with https://");
+    const host = (() => { try { return new URL(trimmed).hostname.toLowerCase(); } catch { return ""; } })();
+    if (platform === "google_meet" && host !== "meet.google.com")
+      return toast.error("That is not a Google Meet link. Open the meeting in Google Meet and copy the link starting with https://meet.google.com/ — calendar.app.google.com links are booking pages, not the meeting.");
+    if (platform === "teams" && !host.includes("teams.microsoft.com") && !host.includes("teams.live.com"))
+      return toast.error("That is not a Microsoft Teams link. Copy the join link starting with https://teams.microsoft.com/.");
     if (!when) return toast.error("Choose the interview date and time");
     setSending(true);
     const { data, error } = await supabase.functions.invoke("send-meeting-invite", {
