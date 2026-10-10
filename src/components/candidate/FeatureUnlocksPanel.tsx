@@ -206,22 +206,79 @@ export const FeatureUnlocksPanel = () => {
 
   return (
     <div className="space-y-8">
-      <AlertDialog open={confirmPlan !== null} onOpenChange={(open) => { if (!open) setConfirmPlan(null); }}>
+      <AlertDialog open={confirmPlan !== null} onOpenChange={(open) => { if (!open) { setConfirmPlan(null); setAppliedCoupon(null); setCouponPlan(null); } }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirm autopay — ₹1 now</AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmPlan && <>Pay a one-time, non-refundable ₹1 confirmation for {CANDIDATE_PLANS[confirmPlan].name}.
-                The full ₹{CANDIDATE_PLANS[confirmPlan].priceInr.toLocaleString("en-IN")} plan amount will be charged tomorrow,
-                then yearly until cancelled. Paid access begins only after the full payment succeeds.</>}
+              {confirmPlan && (() => {
+                const list = CANDIDATE_PLANS[confirmPlan].priceInr;
+                const final = appliedCoupon && couponPlan === confirmPlan ? appliedCoupon.finalAmount : list;
+                return <>Pay a one-time, non-refundable ₹1 confirmation for {CANDIDATE_PLANS[confirmPlan].name}.
+                  The full ₹{final.toLocaleString("en-IN")} plan amount will be charged tomorrow,
+                  then yearly until cancelled. Paid access begins only after the full payment succeeds.</>;
+              })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {confirmPlan && (() => {
+            const list = CANDIDATE_PLANS[confirmPlan].priceInr;
+            const couponActive = !!appliedCoupon && couponPlan === confirmPlan;
+            const final = couponActive ? appliedCoupon!.finalAmount : list;
+            return (
+              <div className="space-y-3 rounded-lg border bg-muted/40 p-3">
+                <CouponInput
+                  key={confirmPlan}
+                  originalAmount={list}
+                  userRole="candidate"
+                  onCouponApplied={(discount, finalAmount, couponId, couponCode) => {
+                    setAppliedCoupon({ discount, finalAmount, couponId, couponCode });
+                    setCouponPlan(confirmPlan);
+                  }}
+                  onCouponRemoved={() => { setAppliedCoupon(null); setCouponPlan(null); }}
+                />
+                <div className="space-y-1 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{CANDIDATE_PLANS[confirmPlan].name} (yearly)</span>
+                    <span className="font-semibold">
+                      {couponActive && (
+                        <span className="mr-1 text-muted-foreground line-through">₹{list.toLocaleString("en-IN")}</span>
+                      )}
+                      ₹{final.toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  {couponActive && (
+                    <div className="flex items-center justify-between text-success">
+                      <span>Coupon {appliedCoupon!.couponCode}</span>
+                      <span>-₹{appliedCoupon!.discount.toLocaleString("en-IN")}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Autopay confirmation (non-refundable)</span>
+                    <span>₹1</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between border-t pt-2 font-semibold">
+                    <span>Pay now</span>
+                    <span>₹1</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Tomorrow&apos;s charge: ₹{final.toLocaleString("en-IN")} (yearly autopay, cancel anytime)
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               if (!confirmPlan) return;
               const selected = CANDIDATE_PLANS[confirmPlan];
-              void upgradePlan(confirmPlan, selected.priceInr, selected.name);
+              const couponActive = !!appliedCoupon && couponPlan === confirmPlan;
+              void upgradePlan(
+                confirmPlan,
+                couponActive ? appliedCoupon!.finalAmount : selected.priceInr,
+                selected.name,
+                couponActive ? appliedCoupon!.couponCode : undefined,
+              );
             }}>Pay ₹1 &amp; authorize autopay</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
