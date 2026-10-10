@@ -18,7 +18,9 @@ import {
   Eye,
   Wallet,
   Plus,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { InlineJobCreationForm } from "./InlineJobCreationForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -93,6 +95,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
   const [walletPoints, setWalletPoints] = useState<number>(0);
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [applicantSearch, setApplicantSearch] = useState("");
 
   const loadVacancies = async () => {
     setLoading(true);
@@ -242,7 +245,13 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
     setLoadingApps(false);
   };
 
-  const lockedApplicants = applicants.filter((a) => !a.unlocked);
+  const q = applicantSearch.trim().toLowerCase();
+  const visibleApplicants = q
+    ? applicants.filter((a) =>
+        [a.full_name, a.email].filter(Boolean).join(" ").toLowerCase().includes(q)
+      )
+    : applicants;
+  const lockedApplicants = visibleApplicants.filter((a) => !a.unlocked);
   const selectedLocked = lockedApplicants.filter((a) => selectedIds.has(a.applicationId));
   const confirmCost = (confirmUnlock?.length || 0) * UNLOCK_COST;
 
@@ -397,6 +406,20 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
               </p>
             ) : (
               <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={applicantSearch}
+                    onChange={(e) => setApplicantSearch(e.target.value)}
+                    placeholder="Search applicants by name or email…"
+                    className="pl-8 h-9"
+                  />
+                </div>
+                {visibleApplicants.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No applicants match "{applicantSearch}".
+                  </p>
+                ) : null}
                 {lockedApplicants.length > 0 && (
                   <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg bg-muted/40 border border-border px-3 py-2">
                     <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -433,7 +456,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                     </div>
                   </div>
                 )}
-                {applicants.map((a) => (
+                {visibleApplicants.map((a) => (
                   <div
                     key={a.applicationId}
                     onClick={a.unlocked ? () => setProfileView(a) : undefined}
