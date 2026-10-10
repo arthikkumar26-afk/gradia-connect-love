@@ -305,6 +305,13 @@ const MockInterview = () => {
         return;
       }
 
+      // Cancelled or rescheduled rounds are no longer valid — block access
+      if ((fetchedSessionData as any).status === 'cancelled') {
+        toast.error("This screening round was cancelled by the employer. Please check your email for a new invitation if one was sent.");
+        navigate('/candidate/dashboard');
+        return;
+      }
+
       setSessionData(fetchedSessionData);
 
       // Override stages from pipeline config if session has interview_type & pipeline_type
