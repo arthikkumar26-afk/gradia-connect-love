@@ -149,13 +149,21 @@ export default function MeetingInvitePanel({ candidateId, jobTitle }: Props) {
             {Object.entries(CATEGORY).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
-        <label className="flex items-center gap-2 text-xs pt-1 cursor-pointer">
-          <input type="checkbox" checked={includePayment} disabled={!payReq} onChange={(e) => setIncludePayment(e.target.checked)} />
-          Add payment link &amp; QR
-          <span className="text-muted-foreground">
-            {payReq ? `(₹${(payReq.amount_paise / 100).toLocaleString("en-IN")} request, ${payReq.status === "failed" ? "failed" : "awaiting payment"})` : "(no open payment request — send a payment mail first)"}
-          </span>
-        </label>
+        {category === "payment_reminder" ? (
+          <p className="text-xs pt-1 text-muted-foreground">
+            {payReq
+              ? `Payment link & QR added automatically — ₹${(payReq.amount_paise / 100).toLocaleString("en-IN")} ${payReq.status === "failed" ? "(failed)" : "(awaiting payment)"}`
+              : "No open payment request for this candidate — send a payment mail from Paid Vacancies first."}
+          </p>
+        ) : (
+          <label className="flex items-center gap-2 text-xs pt-1 cursor-pointer">
+            <input type="checkbox" checked={includePayment} disabled={!payReq} onChange={(e) => setIncludePayment(e.target.checked)} />
+            Add payment link &amp; QR
+            <span className="text-muted-foreground">
+              {payReq ? `(₹${(payReq.amount_paise / 100).toLocaleString("en-IN")} request, ${payReq.status === "failed" ? "failed" : "awaiting payment"})` : "(no open payment request — send a payment mail first)"}
+            </span>
+          </label>
+        )}
       </div>
 
       <div className="space-y-1.5">
