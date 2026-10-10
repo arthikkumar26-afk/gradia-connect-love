@@ -245,7 +245,13 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
     setLoadingApps(false);
   };
 
-  const lockedApplicants = applicants.filter((a) => !a.unlocked);
+  const q = applicantSearch.trim().toLowerCase();
+  const visibleApplicants = q
+    ? applicants.filter((a) =>
+        [a.fullName, a.email].filter(Boolean).join(" ").toLowerCase().includes(q)
+      )
+    : applicants;
+  const lockedApplicants = visibleApplicants.filter((a) => !a.unlocked);
   const selectedLocked = lockedApplicants.filter((a) => selectedIds.has(a.applicationId));
   const confirmCost = (confirmUnlock?.length || 0) * UNLOCK_COST;
 
