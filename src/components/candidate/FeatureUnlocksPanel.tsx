@@ -16,6 +16,7 @@ import { CANDIDATE_PLANS, CANDIDATE_PLAN_ORDER, type CandidatePlan } from "@/con
 import { CANDIDATE_FREELANCER_COMBOS, FREELANCER_PLANS } from "@/config/freelancerPlans";
 import { useCandidateSubscription } from "@/hooks/useCandidateSubscription";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { CouponInput } from "@/components/shared/CouponInput";
 
 const loadRazorpayScript = (): Promise<boolean> =>
   new Promise((resolve) => {
@@ -33,6 +34,9 @@ export const FeatureUnlocksPanel = () => {
   const { plan: currentPlan, refresh: refreshSub } = useCandidateSubscription();
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmPlan, setConfirmPlan] = useState<CandidatePlan | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ discount: number; finalAmount: number; couponId: string; couponCode: string } | null>(null);
+  const [couponPlan, setCouponPlan] = useState<CandidatePlan | null>(null);
+
 
   const pay = async (
     amount: number,
@@ -95,7 +99,12 @@ export const FeatureUnlocksPanel = () => {
     }
   };
 
-  const upgradePlan = async (planId: CandidatePlan, amount: number, label: string) => {
+  const upgradePlan = async (
+    planId: CandidatePlan,
+    amount: number,
+    label: string,
+    couponCode?: string,
+  ) => {
     if (planId === "free") return;
     setBusy(planId);
     try {
@@ -111,7 +120,7 @@ export const FeatureUnlocksPanel = () => {
       }
       const { data: subData, error } = await supabase.functions.invoke(
         "create-candidate-subscription",
-        { body: { plan: planId } },
+        { body: { plan: planId, coupon_code: couponCode } },
       );
       if (error || !subData?.subscription_id) {
         toast({
