@@ -190,9 +190,9 @@ export const UpgradePlanContent = () => {
     const selectedPlan = plans.find((p) => p.id === planId);
     if (!selectedPlan || !user?.id) return;
 
-    const pointsCost = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : selectedPlan.points;
     // ₹5 = 1 point (project-wide wallet pricing). Razorpay charges in INR.
-    const planRupees = pointsCost * 5;
+    // Coupon amounts are in rupees (matching admin-created coupon values).
+    const planRupees = appliedCoupon && selectedPlanForCoupon === planId ? appliedCoupon.finalAmount : selectedPlan.points * 5;
     const amountInRupees = planRupees + addonRupees;
 
     if (amountInRupees <= 0) {
@@ -302,7 +302,7 @@ export const UpgradePlanContent = () => {
                 user_role: "employer",
                 plan_name: selectedPlan.name,
                 discount_applied: appliedCoupon.discount,
-                original_amount: selectedPlan.points,
+                original_amount: selectedPlan.points * 5,
                 final_amount: appliedCoupon.finalAmount,
               });
               await supabase.rpc("increment_coupon_usage" as any, { coupon_id_input: appliedCoupon.couponId });
@@ -527,17 +527,32 @@ export const UpgradePlanContent = () => {
                 </div>
                 <CardTitle className="text-lg">{plan.name}</CardTitle>
                 <p className="text-xs text-muted-foreground">{plan.subtitle}</p>
-                <div className="mt-3">
-                  <span className="text-2xl font-bold text-foreground">
-                    {plan.points === 0 ? "Free" : `${plan.points.toLocaleString()} pts`}
-                  </span>
-                  {plan.points > 0 && (
-                    <span className="text-muted-foreground text-xs">/month</span>
-                  )}
-                </div>
-                {plan.points > 0 && (
-                  <p className="text-[10px] text-muted-foreground mt-1">≈ ₹{(plan.points * 5).toLocaleString("en-IN")}</p>
-                )}
+                {(() => {
+                  const hasCoupon = !!appliedCoupon && selectedPlanForCoupon === plan.id;
+                  const baseRupees = plan.points * 5;
+                  return (
+                    <>
+                      <div className="mt-3">
+                        <span className="text-2xl font-bold text-foreground">
+                          {plan.points === 0 ? "Free" : hasCoupon ? `₹${appliedCoupon!.finalAmount.toLocaleString("en-IN")}` : `${plan.points.toLocaleString()} pts`}
+                        </span>
+                        {plan.points > 0 && (
+                          <span className="text-muted-foreground text-xs">/month</span>
+                        )}
+                      </div>
+                      {plan.points > 0 && (
+                        hasCoupon ? (
+                          <p className="text-[11px] mt-1">
+                            <span className="line-through text-muted-foreground">₹{baseRupees.toLocaleString("en-IN")}</span>{" "}
+                            <span className="font-semibold text-primary">Save ₹{appliedCoupon!.discount.toLocaleString("en-IN")} ({appliedCoupon!.couponCode})</span>
+                          </p>
+                        ) : (
+                          <p className="text-[10px] text-muted-foreground mt-1">≈ ₹{baseRupees.toLocaleString("en-IN")}</p>
+                        )
+                      )}
+                    </>
+                  );
+                })()}
               </CardHeader>
 
               <CardContent className="space-y-4 flex-1 flex flex-col">
@@ -550,25 +565,10 @@ export const UpgradePlanContent = () => {
                   ))}
                 </ul>
 
-                <Button
-                  className="w-full"
-                  variant={isCurrent ? "outline" : plan.popular ? "default" : "outline"}
-                  disabled={isCurrent || loading === plan.id}
-                  onClick={() => handleUpgrade(plan.id, plan.cta)}
-                >
-                  {loading === plan.id
-                    ? "Processing..."
-                    : isCurrent
-                    ? "Current Plan"
-                    : isUpgrade
-                    ? `Upgrade – Pay ₹${(plan.points * 5 + addonRupees).toLocaleString("en-IN")}${addonRupees ? ` (+${addonPoints} pts add-ons)` : ''}`
-                    : `Switch – Pay ₹${(plan.points * 5 + addonRupees).toLocaleString("en-IN")}${addonRupees ? ` (+${addonPoints} pts add-ons)` : ''}`}
-                </Button>
-
-                {/* Coupon Input for paid plans */}
-                {plan.cta === "subscribe" && !isCurrent && (
+                {plan.cta === "subscribe" && !isCurrent && plan.points > 0 && (
                   <CouponInput
-                    originalAmount={plan.points}
+                    key={selectedPlanForCoupon && selectedPlanForCoupon !== plan.id ? `${plan.id}-reset` : plan.id}
+                    originalAmount={plan.points * 5}
                     userRole="employer"
                     onCouponApplied={(discount, finalAmount, couponId, couponCode) => {
                       setAppliedCoupon({ discount, finalAmount, couponId, couponCode });
@@ -580,11 +580,26 @@ export const UpgradePlanContent = () => {
                     }}
                   />
                 )}
-                {appliedCoupon && selectedPlanForCoupon === plan.id && (
-                  <p className="text-xs text-center text-muted-foreground">
-                    Pay {appliedCoupon.finalAmount.toLocaleString()} pts instead of {plan.points.toLocaleString()} pts
-                  </p>
-                )}
+
+                {(() => {
+                  const planRupees = appliedCoupon && selectedPlanForCoupon === plan.id ? appliedCoupon.finalAmount : plan.points * 5;
+                  const total = (planRupees + addonRupees).toLocaleString("en-IN");
+                  const extra = addonRupees ? ` (+${addonPoints} pts add-ons)` : '';
+                  return (
+                    <Button
+                      className="w-full"
+                      variant={isCurrent ? "outline" : plan.popular ? "default" : "outline"}
+                      disabled={isCurrent || loading === plan.id}
+                      onClick={() => handleUpgrade(plan.id, plan.cta)}
+                    >
+                      {loading === plan.id
+                        ? "Processing..."
+                        : isCurrent
+                        ? "Current Plan"
+                        : `${isUpgrade ? "Upgrade" : "Switch"} – Pay ₹${total}${extra}`}
+                    </Button>
+                  );
+                })()}
 
                 {plan.id === "growth" && !isCurrent && (
                   <p className="text-xs text-center text-muted-foreground">14-day free trial included</p>
