@@ -61,7 +61,10 @@ export default function MeetingInvitePanel({ candidateId, jobTitle }: Props) {
       .order("created_at", { ascending: false }).limit(1)
       .then(({ data }) => setPayReq((data?.[0] as PayReq) || null));
   }, [candidateId]);
-  useEffect(() => { if (category === "payment_reminder" && payReq) setIncludePayment(true); }, [category, payReq]);
+  // Payment reminder always includes the link & QR automatically when an open request exists
+  useEffect(() => {
+    if (category === "payment_reminder") setIncludePayment(!!payReq);
+  }, [category, payReq]);
   const isInterview = category === "interview";
 
   const loadLogs = async () => {
