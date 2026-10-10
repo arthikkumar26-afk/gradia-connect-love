@@ -31,6 +31,14 @@ Deno.serve(async (req) => {
     if (!parsed.success) return json({ error: "Please check the meeting link and date." }, 400);
     const { candidateId, jobTitle, platform, meetingLink, scheduledAt, message, subject } = parsed.data;
 
+    // Platform-specific link checks so the candidate gets a joinable meeting link,
+    // not a calendar/booking page (e.g. calendar.app.google.com is NOT a Meet link)
+    const host = new URL(meetingLink).hostname.toLowerCase();
+    if (platform === "google_meet" && host !== "meet.google.com")
+      return json({ error: "That is not a Google Meet link. Open your meeting in Google Meet and copy the link that starts with https://meet.google.com/ — calendar.app.google.com links are booking pages, not the meeting itself." }, 400);
+    if (platform === "teams" && !host.includes("teams.microsoft.com") && !host.includes("teams.live.com"))
+      return json({ error: "That is not a Microsoft Teams meeting link. Copy the join link that starts with https://teams.microsoft.com/." }, 400);
+
     const { data: cand } = await admin.from("profiles").select("full_name,email").eq("id", candidateId).maybeSingle();
     if (!cand?.email) return json({ error: "Candidate has no email address." }, 400);
     const { data: emp } = await admin.from("profiles").select("company_name,full_name").eq("id", u.user.id).maybeSingle();
