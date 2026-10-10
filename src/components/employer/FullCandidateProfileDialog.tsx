@@ -274,7 +274,7 @@ export const FullCandidateProfileDialog = ({ open, onClose, candidateId, resumeU
                         <ChevronDown className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="z-[1600]">
                       <DropdownMenuItem onClick={() => screeningAction("resend")}>
                         <RefreshCw className="h-3.5 w-3.5 mr-2" /> Resend invitation
                       </DropdownMenuItem>
