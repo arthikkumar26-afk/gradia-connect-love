@@ -15,3 +15,7 @@
 # Campaign email drafting
 - [x] Add an email prompt above the subject/message and generate an editable draft without sending emails; include the prompt in existing saved drafts.
 - [x] Verify live email generation and browser generation/error recovery with mocked responses; existing message survives failures, controls re-enable, and build passes. No emails sent; signed-in draft persistence not tested.
+
+# Candidate plan coupons
+- [x] Add a coupon box to the upgrade confirmation card that shows the discounted price, savings and new charge, and pass the code to the subscription function.
+- [x] Validate the code server-side, bill the discounted plan, spend the coupon only once the ₹1 confirmation succeeds, and honor the discounted amount when activating the plan; verified a real 50% code in the live dialog (₹2,499 → ₹1,249) and rejected expired/points-only/unknown codes. No payment completed.

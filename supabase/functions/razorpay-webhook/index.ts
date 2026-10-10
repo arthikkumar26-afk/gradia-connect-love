@@ -216,10 +216,14 @@ serve(async (req) => {
       const pay = parsed?.payload?.payment?.entity;
       const candId = subEntity?.notes?.candidate_id;
       const plan = (subEntity?.notes?.plan || '').toString();
-      const expectedPrices: Record<string, number> = { starter: 99900, advance: 249900, pro_accelerator: 799900, elite: 3499900 };
+      const listPrices: Record<string, number> = { starter: 99900, advance: 249900, pro_accelerator: 799900, elite: 3499900 };
+      // A coupon lowers the contracted plan amount, so honour the amount Razorpay
+      // actually billed for this subscription and fall back to the list price.
+      const contracted = Number(subEntity?.plan?.item?.amount) || 0;
+      const minAmount = contracted > 0 ? contracted : (listPrices[plan] || 0);
       // Never grant a plan for the nominal mandate/setup payment.
       if (candId && plan && pay?.id && pay.status === 'captured' && pay.currency === 'INR'
-        && expectedPrices[plan] && pay.amount >= expectedPrices[plan]) {
+        && minAmount > 0 && pay.amount >= minAmount) {
         const { data: done } = await admin.from('razorpay_webhook_logs').select('id')
           .eq('razorpay_payment_id', pay.id).eq('event_type', 'webhook.autopay_renewed').maybeSingle();
         if (!done) {

@@ -133,6 +133,25 @@ serve(async (req) => {
           return new Response(JSON.stringify({ error: 'Autopay authorization is not confirmed yet' }),
             { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
+        // The mandate is live, so the coupon that lowered this plan is now spent.
+        const couponId = sub.notes?.coupon_id;
+        if (couponId && SUPABASE_SERVICE_ROLE_KEY) {
+          const svc = createClient(supabaseUrl, SUPABASE_SERVICE_ROLE_KEY);
+          const { data: used } = await svc.from('coupon_usages').select('id')
+            .eq('coupon_id', couponId).eq('user_id', candidate_id).limit(1).maybeSingle();
+          if (!used) {
+            await svc.from('coupon_usages').insert({
+              coupon_id: couponId,
+              user_id: candidate_id,
+              user_role: 'candidate',
+              plan_name: `${plan} (yearly autopay)`,
+              discount_applied: Number(sub.notes.discount_rupees) || 0,
+              original_amount: Number(sub.notes.list_price) || 0,
+              final_amount: Number(sub.notes.final_price) || 0,
+            });
+            try { await svc.rpc('increment_coupon_usage', { coupon_id_input: couponId }); } catch {}
+          }
+        }
         return new Response(JSON.stringify({ success: true, autopay_authorized: true,
           plan_activated: false, first_charge_at: sub.start_at,
           message: 'Autopay confirmed. Paid access begins after the full plan charge succeeds.' }),

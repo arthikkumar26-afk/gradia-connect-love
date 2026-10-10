@@ -7,3 +7,4 @@
 - Payment email templates are owner-isolated records handled through the authenticated payment-request function; this prevents cross-employer template changes.
 - Payment email previews and sends use one escaped-text renderer, with payment links and QR appended by the server; this keeps preview formatting consistent and prevents editable content from replacing payment destinations.
 - Employer campaign drafting uses the existing email-generation function separately from sending; generating a draft never sends emails or deducts campaign wallet points.
+- Candidate plan coupons are validated and priced server-side in the subscription-creation function, and the payment webhook activates a plan from the subscription's contracted amount instead of a list price; this keeps admin-issued discounts working and stops unverifiable codes from lowering prices.
