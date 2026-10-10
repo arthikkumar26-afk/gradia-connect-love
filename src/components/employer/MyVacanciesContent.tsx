@@ -18,7 +18,9 @@ import {
   Eye,
   Wallet,
   Plus,
+  Search,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { InlineJobCreationForm } from "./InlineJobCreationForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -93,6 +95,7 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
   const [walletPoints, setWalletPoints] = useState<number>(0);
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [applicantSearch, setApplicantSearch] = useState("");
 
   const loadVacancies = async () => {
     setLoading(true);
