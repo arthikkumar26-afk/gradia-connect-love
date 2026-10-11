@@ -19,3 +19,4 @@
 # Candidate plan coupons
 - [x] Add a coupon box to the upgrade confirmation card that shows the discounted price, savings and new charge, and pass the code to the subscription function.
 - [x] Validate the code server-side, bill the discounted plan, spend the coupon only once the ₹1 confirmation succeeds, and honor the discounted amount when activating the plan; verified a real 50% code in the live dialog (₹2,499 → ₹1,249) and rejected expired/points-only/unknown codes. No payment completed.
+- [x] Remove "tomorrow" from all autopay wording (confirmation popup, payment window, success message); verified the live popup copy.
