@@ -135,7 +135,7 @@ export const FeatureUnlocksPanel = () => {
         subscription_id: subData.subscription_id,
         recurring: 1,
         name: "Gradia",
-        description: `${label} · ₹1 confirmation now · ₹${subData.amount} tomorrow · yearly autopay`,
+        description: `${label} · ₹1 confirmation now · ₹${subData.amount} on renewal · yearly autopay`,
         theme: { color: "#6366f1" },
         // Many UPI apps can't approve autopay mandates from a scanned QR, so
         // offer app-open / UPI ID approval and cards instead of the QR.
@@ -215,7 +215,7 @@ export const FeatureUnlocksPanel = () => {
                 const list = CANDIDATE_PLANS[confirmPlan].priceInr;
                 const final = appliedCoupon && couponPlan === confirmPlan ? appliedCoupon.finalAmount : list;
                 return <>Pay a one-time, non-refundable ₹1 confirmation for {CANDIDATE_PLANS[confirmPlan].name}.
-                  The full ₹{final.toLocaleString("en-IN")} plan amount will be charged tomorrow,
+                  The full ₹{final.toLocaleString("en-IN")} plan amount will be charged after this confirmation,
                   then yearly until cancelled. Paid access begins only after the full payment succeeds.</>;
               })()}
             </AlertDialogDescription>
@@ -261,7 +261,7 @@ export const FeatureUnlocksPanel = () => {
                     <span>₹1</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
-                    Tomorrow&apos;s charge: ₹{final.toLocaleString("en-IN")} (yearly autopay, cancel anytime)
+                    Next charge: ₹{final.toLocaleString("en-IN")} (yearly autopay, cancel anytime)
                   </p>
                 </div>
               </div>
