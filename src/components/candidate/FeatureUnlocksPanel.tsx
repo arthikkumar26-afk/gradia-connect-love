@@ -179,7 +179,7 @@ export const FeatureUnlocksPanel = () => {
           toast({
             title: verification.autopay_authorized ? "Autopay confirmed" : "Plan upgraded!",
             description: verification.autopay_authorized
-              ? `₹1 confirmation received. ₹${subData.amount.toLocaleString("en-IN")} will be charged on ${new Date(subData.first_charge_at * 1000).toLocaleDateString("en-IN")}. Paid access starts after payment succeeds.`
+              ? `₹1 confirmation received. ₹${subData.amount.toLocaleString("en-IN")} will be charged on renewal. Paid access starts after payment succeeds.`
               : `${label} is now active.`,
           });
           await refreshSub();
