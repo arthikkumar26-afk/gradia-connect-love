@@ -204,7 +204,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await supabase.auth.signOut({ scope: "global" });
+      // Local scope: only end this browser's session, never kick other tabs/devices
+      await supabase.auth.signOut({ scope: "local" });
     } catch (err) {
       console.warn("signOut failed, clearing local state anyway:", err);
     }
