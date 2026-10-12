@@ -19,6 +19,8 @@ import {
   Wallet,
   Plus,
   Search,
+  FileSpreadsheet,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { InlineJobCreationForm } from "./InlineJobCreationForm";
@@ -96,6 +98,8 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [applicantSearch, setApplicantSearch] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState("");
 
   const loadVacancies = async () => {
     setLoading(true);
