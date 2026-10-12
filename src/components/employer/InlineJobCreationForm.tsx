@@ -429,43 +429,57 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
       return;
     }
 
-    // For other files, upload to storage and parse
+    // Extract readable text from PDF / Word / Excel in the browser
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const filePath = `requirements/${user.id}/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('resumes')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) {
-        // If storage bucket doesn't exist, try reading file as text
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const text = ev.target?.result as string;
-          if (text) {
-            setRequirementText(text.slice(0, 8000));
-            toast({ title: "File loaded", description: `${file.name} content extracted.` });
+      const name = file.name.toLowerCase();
+      const buf = await file.arrayBuffer();
+      let text = "";
+      if (name.endsWith(".pdf") || file.type === "application/pdf") {
+        const pdfjsLib: any = await import("pdfjs-dist");
+        const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+        const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+        const pages: string[] = [];
+        for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          let line = "", out = "", lastY: number | null = null;
+          for (const it of content.items as any[]) {
+            const y = it.transform?.[5];
+            if (lastY !== null && y !== undefined && Math.abs(y - lastY) > 2) { out += line.trim() + "\n"; line = ""; }
+            line += it.str + (it.hasEOL ? "\n" : " ");
+            if (y !== undefined) lastY = y;
           }
-        };
-        reader.readAsText(file);
+          pages.push((out + line).replace(/[ \t]+/g, " ").trim());
+        }
+        text = pages.join("\n\n");
+      } else if (name.endsWith(".docx")) {
+        const JSZip = (await import("jszip")).default;
+        const zip = await JSZip.loadAsync(buf);
+        const xml = (await zip.file("word/document.xml")?.async("string")) || "";
+        text = xml.replace(/<w:p[^>]*>/g, "\n").replace(/<w:tab\/>/g, " ").replace(/<w:br[^>]*>/g, "\n")
+          .replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+          .replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/\n{3,}/g, "\n\n").trim();
+      } else if (/\.(xlsx|xls|csv)$/.test(name)) {
+        const XLSX = await import("xlsx");
+        const wb = XLSX.read(buf, { type: "array" });
+        text = wb.SheetNames.map((s) => XLSX.utils.sheet_to_csv(wb.Sheets[s])).join("\n\n").trim();
+      } else if (name.endsWith(".doc")) {
+        toast({ title: "Old Word format", description: "Please save the file as .docx or PDF and upload again.", variant: "destructive" });
         return;
+      } else {
+        text = await file.text();
       }
 
-      // For now, extract text client-side for documents
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const content = ev.target?.result as string;
-        if (content) {
-          setRequirementText(content.slice(0, 8000));
-          toast({ title: "File loaded", description: `${file.name} content loaded. Click 'AI Create Vacancy' to process.` });
-        }
-      };
-      reader.readAsText(file);
+      if (!text || text.trim().length < 10) {
+        toast({ title: "No readable text", description: "This file looks scanned. Upload it as an image (PNG/JPG) so AI can read it.", variant: "destructive" });
+        return;
+      }
+      setRequirementText(text.slice(0, 12000));
+      toast({ title: "File loaded", description: `${file.name} content extracted. Click 'AI Create Vacancy' to process.` });
     } catch (err) {
-      console.error("File upload error:", err);
-      toast({ title: "Upload failed", description: "Could not process file.", variant: "destructive" });
+      console.error("File parse error:", err);
+      toast({ title: "Upload failed", description: "Could not read this file. Try PDF, DOCX or an image.", variant: "destructive" });
     }
   };
 
