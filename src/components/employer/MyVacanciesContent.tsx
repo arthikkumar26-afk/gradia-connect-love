@@ -257,6 +257,85 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
     : applicants;
   const lockedApplicants = visibleApplicants.filter((a) => !a.unlocked);
   const selectedLocked = lockedApplicants.filter((a) => selectedIds.has(a.applicationId));
+  const selectedApplicants = visibleApplicants.filter((a) => selectedIds.has(a.applicationId));
+
+  const exportSelectedExcel = async () => {
+    if (selectedApplicants.length === 0 || exporting) return;
+    setExporting(true);
+    const XLSX = await import("xlsx");
+    const candidates: Record<string, unknown>[] = [];
+    const education: Record<string, unknown>[] = [];
+    const experience: Record<string, unknown>[] = [];
+    let done = 0;
+    for (const a of selectedApplicants) {
+      done += 1;
+      setExportProgress(`Reading resume ${done} of ${selectedApplicants.length}…`);
+      let ai: any = null;
+      if (a.resume_url) {
+        try {
+          const { data, error } = await supabase.functions.invoke("ai-parse-resume-profile", {
+            body: { resumeUrl: a.resume_url },
+          });
+          if (!error) ai = data?.profile || null;
+        } catch {
+          ai = null;
+        }
+      }
+      const pick = (dbVal: unknown, aiVal: unknown) =>
+        dbVal !== null && dbVal !== undefined && dbVal !== "" ? dbVal : aiVal ?? "";
+      const name = pick(a.full_name, ai?.full_name);
+      candidates.push({
+        "Full Name": name,
+        Email: pick(a.email, ai?.email),
+        Phone: pick(a.phone, ai?.phone),
+        Location: pick(a.location, ai?.location),
+        "Preferred Role": ai?.preferred_role || "",
+        "Experience Level": ai?.experience_level || "",
+        "Highest Qualification": ai?.highest_qualification || "",
+        Skills: Array.isArray(ai?.skills) ? ai.skills.join(", ") : "",
+        Languages: Array.isArray(ai?.languages) ? ai.languages.join(", ") : "",
+        "Current Salary": ai?.current_salary || "",
+        "Expected Salary": ai?.expected_salary || "",
+        "Applied Date": a.applied_date ? new Date(a.applied_date).toLocaleDateString("en-IN") : "",
+        "Application Status": a.status || "",
+        "AI Screening": a.screeningStatus || "",
+        "Payment Status": a.paymentStatus || "",
+      });
+      (Array.isArray(ai?.education) ? ai.education : []).forEach((e: any) =>
+        education.push({
+          "Full Name": name,
+          Level: e?.education_level || "",
+          "School / College": e?.school_college_name || "",
+          Specialization: e?.specialization || "",
+          "Board / University": e?.board_university || "",
+          "Year of Passing": e?.year_of_passing || "",
+          "Percentage / Marks": e?.percentage_marks || "",
+        })
+      );
+      (Array.isArray(ai?.experience) ? ai.experience : []).forEach((e: any) =>
+        experience.push({
+          "Full Name": name,
+          Designation: e?.designation || "",
+          Organization: e?.organization || "",
+          Department: e?.department || "",
+          Place: e?.place || "",
+          From: e?.from_date || "",
+          To: e?.to_date || "",
+        })
+      );
+    }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(candidates), "Candidates");
+    if (education.length > 0)
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(education), "Education");
+    if (experience.length > 0)
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(experience), "Experience");
+    const safeTitle = (selectedJob?.job_title || "vacancy").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    XLSX.writeFile(wb, `${safeTitle}-applicants.xlsx`);
+    setExporting(false);
+    setExportProgress("");
+    toast({ title: "Excel downloaded", description: `${selectedApplicants.length} profile(s) exported.` });
+  };
   const confirmCost = (confirmUnlock?.length || 0) * UNLOCK_COST;
 
   const handleUnlock = async () => {
