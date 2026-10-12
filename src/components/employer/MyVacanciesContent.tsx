@@ -19,6 +19,8 @@ import {
   Wallet,
   Plus,
   Search,
+  FileSpreadsheet,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { InlineJobCreationForm } from "./InlineJobCreationForm";
@@ -96,6 +98,8 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
   const [profileView, setProfileView] = useState<ApplicantRow | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [applicantSearch, setApplicantSearch] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState("");
 
   const loadVacancies = async () => {
     setLoading(true);
@@ -253,6 +257,85 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
     : applicants;
   const lockedApplicants = visibleApplicants.filter((a) => !a.unlocked);
   const selectedLocked = lockedApplicants.filter((a) => selectedIds.has(a.applicationId));
+  const selectedApplicants = visibleApplicants.filter((a) => selectedIds.has(a.applicationId));
+
+  const exportSelectedExcel = async () => {
+    if (selectedApplicants.length === 0 || exporting) return;
+    setExporting(true);
+    const XLSX = await import("xlsx");
+    const candidates: Record<string, unknown>[] = [];
+    const education: Record<string, unknown>[] = [];
+    const experience: Record<string, unknown>[] = [];
+    let done = 0;
+    for (const a of selectedApplicants) {
+      done += 1;
+      setExportProgress(`Reading resume ${done} of ${selectedApplicants.length}…`);
+      let ai: any = null;
+      if (a.resume_url) {
+        try {
+          const { data, error } = await supabase.functions.invoke("ai-parse-resume-profile", {
+            body: { resumeUrl: a.resume_url },
+          });
+          if (!error) ai = data?.profile || null;
+        } catch {
+          ai = null;
+        }
+      }
+      const pick = (dbVal: unknown, aiVal: unknown) =>
+        dbVal !== null && dbVal !== undefined && dbVal !== "" ? dbVal : aiVal ?? "";
+      const name = pick(a.full_name, ai?.full_name);
+      candidates.push({
+        "Full Name": name,
+        Email: pick(a.email, ai?.email),
+        Phone: pick(a.phone, ai?.phone),
+        Location: pick(a.location, ai?.location),
+        "Preferred Role": ai?.preferred_role || "",
+        "Experience Level": ai?.experience_level || "",
+        "Highest Qualification": ai?.highest_qualification || "",
+        Skills: Array.isArray(ai?.skills) ? ai.skills.join(", ") : "",
+        Languages: Array.isArray(ai?.languages) ? ai.languages.join(", ") : "",
+        "Current Salary": ai?.current_salary || "",
+        "Expected Salary": ai?.expected_salary || "",
+        "Applied Date": a.applied_date ? new Date(a.applied_date).toLocaleDateString("en-IN") : "",
+        "Application Status": a.status || "",
+        "AI Screening": a.screeningStatus || "",
+        "Payment Status": a.paymentStatus || "",
+      });
+      (Array.isArray(ai?.education) ? ai.education : []).forEach((e: any) =>
+        education.push({
+          "Full Name": name,
+          Level: e?.education_level || "",
+          "School / College": e?.school_college_name || "",
+          Specialization: e?.specialization || "",
+          "Board / University": e?.board_university || "",
+          "Year of Passing": e?.year_of_passing || "",
+          "Percentage / Marks": e?.percentage_marks || "",
+        })
+      );
+      (Array.isArray(ai?.experience) ? ai.experience : []).forEach((e: any) =>
+        experience.push({
+          "Full Name": name,
+          Designation: e?.designation || "",
+          Organization: e?.organization || "",
+          Department: e?.department || "",
+          Place: e?.place || "",
+          From: e?.from_date || "",
+          To: e?.to_date || "",
+        })
+      );
+    }
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(candidates), "Candidates");
+    if (education.length > 0)
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(education), "Education");
+    if (experience.length > 0)
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(experience), "Experience");
+    const safeTitle = (selectedJob?.job_title || "vacancy").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    XLSX.writeFile(wb, `${safeTitle}-applicants.xlsx`);
+    setExporting(false);
+    setExportProgress("");
+    toast({ title: "Excel downloaded", description: `${selectedApplicants.length} profile(s) exported.` });
+  };
   const confirmCost = (confirmUnlock?.length || 0) * UNLOCK_COST;
 
   const handleUnlock = async () => {
@@ -420,42 +503,57 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                     No applicants match "{applicantSearch}".
                   </p>
                 ) : null}
-                {lockedApplicants.length > 0 && (
-                  <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg bg-muted/40 border border-border px-3 py-2">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Checkbox
-                        checked={
-                          selectedLocked.length === lockedApplicants.length
-                            ? true
-                            : selectedLocked.length > 0
-                            ? "indeterminate"
-                            : false
-                        }
-                        onCheckedChange={(c) =>
-                          setSelectedIds(
-                            c === true ? new Set(lockedApplicants.map((x) => x.applicationId)) : new Set()
-                          )
-                        }
-                      />
-                      Select all locked ({lockedApplicants.length})
-                    </label>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={selectedLocked.length === 0}
-                        onClick={() => setConfirmUnlock(selectedLocked)}
-                      >
-                        <Unlock className="h-3.5 w-3.5 mr-1" />
-                        Unlock selected ({selectedLocked.length}) · {selectedLocked.length * UNLOCK_COST} pts
-                      </Button>
-                      <Button size="sm" onClick={() => setConfirmUnlock(lockedApplicants)}>
-                        <Unlock className="h-3.5 w-3.5 mr-1" />
-                        Unlock all profiles · {lockedApplicants.length * UNLOCK_COST} pts
-                      </Button>
-                    </div>
+                <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg bg-muted/40 border border-border px-3 py-2">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={
+                        selectedApplicants.length === visibleApplicants.length && visibleApplicants.length > 0
+                          ? true
+                          : selectedApplicants.length > 0
+                          ? "indeterminate"
+                          : false
+                      }
+                      onCheckedChange={(c) =>
+                        setSelectedIds(
+                          c === true ? new Set(visibleApplicants.map((x) => x.applicationId)) : new Set()
+                        )
+                      }
+                    />
+                    Select all ({visibleApplicants.length})
+                  </label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={selectedApplicants.length === 0 || exporting}
+                      onClick={exportSelectedExcel}
+                    >
+                      {exporting ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <FileSpreadsheet className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      {exporting ? exportProgress || "Exporting…" : `Download Excel (${selectedApplicants.length})`}
+                    </Button>
+                    {lockedApplicants.length > 0 && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={selectedLocked.length === 0}
+                          onClick={() => setConfirmUnlock(selectedLocked)}
+                        >
+                          <Unlock className="h-3.5 w-3.5 mr-1" />
+                          Unlock selected ({selectedLocked.length}) · {selectedLocked.length * UNLOCK_COST} pts
+                        </Button>
+                        <Button size="sm" onClick={() => setConfirmUnlock(lockedApplicants)}>
+                          <Unlock className="h-3.5 w-3.5 mr-1" />
+                          Unlock all profiles · {lockedApplicants.length * UNLOCK_COST} pts
+                        </Button>
+                      </>
+                    )}
                   </div>
-                )}
+                </div>
                 {visibleApplicants.map((a) => (
                   <div
                     key={a.applicationId}
@@ -465,20 +563,18 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          {!a.unlocked && (
-                            <Checkbox
-                              onClick={(e) => e.stopPropagation()}
-                              checked={selectedIds.has(a.applicationId)}
-                              onCheckedChange={(c) =>
-                                setSelectedIds((prev) => {
-                                  const n = new Set(prev);
-                                  c === true ? n.add(a.applicationId) : n.delete(a.applicationId);
-                                  return n;
-                                })
-                              }
-                              aria-label="Select profile"
-                            />
-                          )}
+                          <Checkbox
+                            onClick={(e) => e.stopPropagation()}
+                            checked={selectedIds.has(a.applicationId)}
+                            onCheckedChange={(c) =>
+                              setSelectedIds((prev) => {
+                                const n = new Set(prev);
+                                c === true ? n.add(a.applicationId) : n.delete(a.applicationId);
+                                return n;
+                              })
+                            }
+                            aria-label="Select profile"
+                          />
                           {a.unlocked ? (
                             <button
                               type="button"
