@@ -503,42 +503,57 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                     No applicants match "{applicantSearch}".
                   </p>
                 ) : null}
-                {lockedApplicants.length > 0 && (
-                  <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg bg-muted/40 border border-border px-3 py-2">
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Checkbox
-                        checked={
-                          selectedLocked.length === lockedApplicants.length
-                            ? true
-                            : selectedLocked.length > 0
-                            ? "indeterminate"
-                            : false
-                        }
-                        onCheckedChange={(c) =>
-                          setSelectedIds(
-                            c === true ? new Set(lockedApplicants.map((x) => x.applicationId)) : new Set()
-                          )
-                        }
-                      />
-                      Select all locked ({lockedApplicants.length})
-                    </label>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={selectedLocked.length === 0}
-                        onClick={() => setConfirmUnlock(selectedLocked)}
-                      >
-                        <Unlock className="h-3.5 w-3.5 mr-1" />
-                        Unlock selected ({selectedLocked.length}) · {selectedLocked.length * UNLOCK_COST} pts
-                      </Button>
-                      <Button size="sm" onClick={() => setConfirmUnlock(lockedApplicants)}>
-                        <Unlock className="h-3.5 w-3.5 mr-1" />
-                        Unlock all profiles · {lockedApplicants.length * UNLOCK_COST} pts
-                      </Button>
-                    </div>
+                <div className="flex items-center justify-between gap-3 flex-wrap rounded-lg bg-muted/40 border border-border px-3 py-2">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={
+                        selectedApplicants.length === visibleApplicants.length && visibleApplicants.length > 0
+                          ? true
+                          : selectedApplicants.length > 0
+                          ? "indeterminate"
+                          : false
+                      }
+                      onCheckedChange={(c) =>
+                        setSelectedIds(
+                          c === true ? new Set(visibleApplicants.map((x) => x.applicationId)) : new Set()
+                        )
+                      }
+                    />
+                    Select all ({visibleApplicants.length})
+                  </label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={selectedApplicants.length === 0 || exporting}
+                      onClick={exportSelectedExcel}
+                    >
+                      {exporting ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <FileSpreadsheet className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      {exporting ? exportProgress || "Exporting…" : `Download Excel (${selectedApplicants.length})`}
+                    </Button>
+                    {lockedApplicants.length > 0 && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={selectedLocked.length === 0}
+                          onClick={() => setConfirmUnlock(selectedLocked)}
+                        >
+                          <Unlock className="h-3.5 w-3.5 mr-1" />
+                          Unlock selected ({selectedLocked.length}) · {selectedLocked.length * UNLOCK_COST} pts
+                        </Button>
+                        <Button size="sm" onClick={() => setConfirmUnlock(lockedApplicants)}>
+                          <Unlock className="h-3.5 w-3.5 mr-1" />
+                          Unlock all profiles · {lockedApplicants.length * UNLOCK_COST} pts
+                        </Button>
+                      </>
+                    )}
                   </div>
-                )}
+                </div>
                 {visibleApplicants.map((a) => (
                   <div
                     key={a.applicationId}
@@ -548,20 +563,18 @@ export const MyVacanciesContent = ({ employerIdOverride, employerIdsOverride, hi
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          {!a.unlocked && (
-                            <Checkbox
-                              onClick={(e) => e.stopPropagation()}
-                              checked={selectedIds.has(a.applicationId)}
-                              onCheckedChange={(c) =>
-                                setSelectedIds((prev) => {
-                                  const n = new Set(prev);
-                                  c === true ? n.add(a.applicationId) : n.delete(a.applicationId);
-                                  return n;
-                                })
-                              }
-                              aria-label="Select profile"
-                            />
-                          )}
+                          <Checkbox
+                            onClick={(e) => e.stopPropagation()}
+                            checked={selectedIds.has(a.applicationId)}
+                            onCheckedChange={(c) =>
+                              setSelectedIds((prev) => {
+                                const n = new Set(prev);
+                                c === true ? n.add(a.applicationId) : n.delete(a.applicationId);
+                                return n;
+                              })
+                            }
+                            aria-label="Select profile"
+                          />
                           {a.unlocked ? (
                             <button
                               type="button"
