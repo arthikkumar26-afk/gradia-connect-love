@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
     // Load job
     const { data: job, error: jobErr } = await supabase
       .from("jobs")
-      .select("id, job_title, location, category, preferred_role, experience_required, skills, employer_id, status")
+      .select("id, job_title, location, category, experience_required, skills, employer_id, status")
       .eq("id", jobId)
       .maybeSingle();
     if (jobErr || !job) return json({ error: "Job not found" }, 404);
