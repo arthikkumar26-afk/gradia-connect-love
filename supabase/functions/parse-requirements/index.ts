@@ -59,6 +59,22 @@ serve(async (req) => {
       });
     }
 
+    // AI vacancy creation costs wallet points — checked and deducted server-side
+    const AI_VACANCY_COST = 25;
+    const { data: wallet } = await supabaseAdmin
+      .from("wallets").select("id, points_balance").eq("user_id", user.id).maybeSingle();
+    const balance = wallet?.points_balance ?? 0;
+    if (!wallet || balance < AI_VACANCY_COST) {
+      return new Response(JSON.stringify({
+        error: `AI Create Vacancy costs ${AI_VACANCY_COST} pts. Your wallet balance is ${balance} pts. Please load points from the Wallet tab.`,
+        code: "insufficient_points",
+        required: AI_VACANCY_COST,
+        balance,
+      }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -200,7 +216,23 @@ Return ONLY valid JSON with these fields:
       }
     }
 
-    return new Response(JSON.stringify(parsed), {
+    // AI succeeded — deduct the points now
+    const { data: freshWallet } = await supabaseAdmin
+      .from("wallets").select("id, points_balance").eq("user_id", user.id).maybeSingle();
+    if (freshWallet && (freshWallet.points_balance ?? 0) >= AI_VACANCY_COST) {
+      await supabaseAdmin.from("wallets")
+        .update({ points_balance: freshWallet.points_balance - AI_VACANCY_COST, updated_at: new Date().toISOString() })
+        .eq("id", freshWallet.id);
+      await supabaseAdmin.from("wallet_transactions").insert({
+        wallet_id: freshWallet.id,
+        transaction_type: "debit",
+        category: "ai_vacancy",
+        points: AI_VACANCY_COST,
+        description: "AI Create Vacancy — job description generation",
+      });
+    }
+
+    return new Response(JSON.stringify({ ...parsed, points_charged: AI_VACANCY_COST }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

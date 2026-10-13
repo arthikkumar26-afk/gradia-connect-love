@@ -502,11 +502,12 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
 
       if (error) {
         let msg = error.message;
+        let body: any = null;
         try {
-          const body = await (error as any).context?.json?.();
+          body = await (error as any).context?.json?.();
           if (body?.error) msg = body.error;
         } catch { /* ignore */ }
-        if ((error as any).context?.status === 402) {
+        if ((error as any).context?.status === 402 && body?.code !== "insufficient_points") {
           msg = "AI credits are used up. Add credits in Settings → Plans & credits, then try again. You can still fill the vacancy manually.";
         }
         throw new Error(msg);
@@ -952,7 +953,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                   {isParsingRequirements ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing...</>
                   ) : (
-                    <><Sparkles className="h-3.5 w-3.5" /> AI Create Vacancy</>
+                    <><Sparkles className="h-3.5 w-3.5" /> AI Create Vacancy · 25 pts</>
                   )}
                 </Button>
               </div>
