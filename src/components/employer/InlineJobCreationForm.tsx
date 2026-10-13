@@ -500,7 +500,17 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let msg = error.message;
+        try {
+          const body = await (error as any).context?.json?.();
+          if (body?.error) msg = body.error;
+        } catch { /* ignore */ }
+        if ((error as any).context?.status === 402) {
+          msg = "AI credits are used up. Add credits in Settings → Plans & credits, then try again. You can still fill the vacancy manually.";
+        }
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
 
       setPreviewData(data);
