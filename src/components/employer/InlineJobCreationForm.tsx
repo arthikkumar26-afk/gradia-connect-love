@@ -953,7 +953,7 @@ export const InlineJobCreationForm = ({ onJobCreated, onCancel, employerIdOverri
                   {isParsingRequirements ? (
                     <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing...</>
                   ) : (
-                    <><Sparkles className="h-3.5 w-3.5" /> AI Create Vacancy</>
+                    <><Sparkles className="h-3.5 w-3.5" /> AI Create Vacancy · 25 pts</>
                   )}
                 </Button>
               </div>
