@@ -216,7 +216,23 @@ Return ONLY valid JSON with these fields:
       }
     }
 
-    return new Response(JSON.stringify(parsed), {
+    // AI succeeded — deduct the points now
+    const { data: freshWallet } = await supabaseAdmin
+      .from("wallets").select("id, points_balance").eq("user_id", user.id).maybeSingle();
+    if (freshWallet && (freshWallet.points_balance ?? 0) >= AI_VACANCY_COST) {
+      await supabaseAdmin.from("wallets")
+        .update({ points_balance: freshWallet.points_balance - AI_VACANCY_COST, updated_at: new Date().toISOString() })
+        .eq("id", freshWallet.id);
+      await supabaseAdmin.from("wallet_transactions").insert({
+        wallet_id: freshWallet.id,
+        transaction_type: "debit",
+        category: "ai_vacancy",
+        points: AI_VACANCY_COST,
+        description: "AI Create Vacancy — job description generation",
+      });
+    }
+
+    return new Response(JSON.stringify({ ...parsed, points_charged: AI_VACANCY_COST }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
