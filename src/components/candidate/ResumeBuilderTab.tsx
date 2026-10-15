@@ -584,7 +584,7 @@ export default function ResumeBuilderTab() {
     }
   };
 
-  const EXPORT_PDF_POINTS = 50;
+  const RESUME_EXPORT_PRICE = 150;
 
   const handleExport = async () => {
     try {
@@ -608,54 +608,40 @@ export default function ResumeBuilderTab() {
         return;
       }
 
-      // Subscription-quota-based PDF export.
-      // Plan limits (mirrors src/config/candidatePlans.ts):
-      //   basic: 1 download / month
-      //   pro / premium: unlimited
-      const periodStart = new Date();
-      periodStart.setDate(1);
-      periodStart.setHours(0, 0, 0, 0);
-      const psDate = periodStart.toISOString().slice(0, 10);
-
-      const monthlyLimit = activeSub ? Infinity : 1;
-
-      const { data: usageRow } = await supabase
-        .from('candidate_feature_usage')
-        .select('id, used_count')
-        .eq('candidate_id', user.id)
-        .eq('feature', 'resume_download')
-        .eq('period_start', psDate)
-        .maybeSingle();
-
-      const used = usageRow?.used_count ?? 0;
-      if (monthlyLimit !== Infinity && used >= monthlyLimit) {
-        toast({
-          title: 'Monthly download limit reached',
-          description: 'Free plan includes 1 resume PDF per month. Upgrade to Pro or Premium for unlimited downloads.',
-          variant: 'destructive',
-        });
+      // Free plan: pay ₹150 per resume export via Razorpay
+      const loaded = await new Promise<boolean>((resolve) => {
+        if ((window as any).Razorpay) return resolve(true);
+        const s = document.createElement("script");
+        s.src = "https://checkout.razorpay.com/v1/checkout.js";
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+        document.body.appendChild(s);
+      });
+      if (!loaded) {
+        toast({ title: "Could not load payment gateway", variant: "destructive" });
         return;
       }
-
-      // Increment usage
-      if (usageRow) {
-        await supabase
-          .from('candidate_feature_usage')
-          .update({ used_count: used + 1 })
-          .eq('id', usageRow.id);
-      } else {
-        await supabase
-          .from('candidate_feature_usage')
-          .insert({
-            candidate_id: user.id,
-            feature: 'resume_download',
-            period_start: psDate,
-            used_count: 1,
-          });
+      const { data: orderData, error: orderErr } = await supabase.functions.invoke("create-razorpay-order", {
+        body: { amount: RESUME_EXPORT_PRICE, plan_id: "resume_export", plan_name: "Resume PDF Export" },
+      });
+      if (orderErr || !orderData?.order_id) {
+        toast({ title: "Payment setup failed", description: orderErr?.message || "Try again in a moment.", variant: "destructive" });
+        return;
       }
-
-      sonnerToast.success('Generating PDF using your plan quota...');
-      await generatePDF();
+      const rzp = new (window as any).Razorpay({
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        order_id: orderData.order_id,
+        name: "Gradia",
+        description: `Resume PDF Export - ₹${RESUME_EXPORT_PRICE}`,
+        prefill: { email: user.email },
+        handler: async () => {
+          sonnerToast.success("Payment successful! Downloading your resume...");
+          await generatePDF();
+        },
+      });
+      rzp.open();
     } catch (error) {
       console.error("Export error:", error);
       toast({ title: "Export Failed", description: "Something went wrong. Please try again.", variant: "destructive" });

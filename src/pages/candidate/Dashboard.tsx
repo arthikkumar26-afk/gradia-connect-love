@@ -4855,19 +4855,7 @@ const CandidateDashboard = () => {
               </div>
             )}
 
-            {activeMenu === "resume" && (
-              featureUnlocks.isUnlocked("resume") ? (
-                <ResumeBuilderTab />
-              ) : (
-                <LockedFeatureOverlay
-                  feature="resume"
-                  onUnlocked={featureUnlocks.refresh}
-                  onOpenAllPlans={() => setActiveMenu("upgrade")}
-                >
-                  <ResumeBuilderTab />
-                </LockedFeatureOverlay>
-              )
-            )}
+            {activeMenu === "resume" && <ResumeBuilderTab />}
 
 
 
