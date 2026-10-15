@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { safeErrorMessage } from "../_shared/safeError.ts";
@@ -74,7 +75,7 @@ ${safeTranscript || "(No speech was captured by the live transcription)"}
         userContent.push({ type: "image_url", image_url: { url: snapshotDataUrl } });
       }
 
-      const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const aiRes = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

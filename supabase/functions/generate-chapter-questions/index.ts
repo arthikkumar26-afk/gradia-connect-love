@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -23,7 +24,7 @@ serve(async (req) => {
 
     if (action === "extract-chapters") {
       // Extract chapters from PDF text
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${lovableApiKey}`,
@@ -88,7 +89,7 @@ If you cannot find clear chapters, create logical topic groupings from the conte
 
       const totalQuestions = sectionsConfig.reduce((sum: number, s: any) => sum + s.questionCount, 0);
 
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const response = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${lovableApiKey}`,
@@ -401,7 +402,7 @@ Return ONLY valid JSON in this format:
           const imageResults = await Promise.allSettled(
             batch.map(async (iq) => {
               try {
-                const imgResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+                const imgResponse = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
                   method: "POST",
                   headers: {
                     Authorization: `Bearer ${lovableApiKey}`,

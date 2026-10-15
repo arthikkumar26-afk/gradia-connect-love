@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import JSZip from "npm:jszip@3.10.1";
 import { extractText, getDocumentProxy } from "npm:unpdf@0.12.1";
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
     const system = `You rank jobs against a candidate resume. Return ONLY the top 8 matches via the rank_jobs tool. Score 0-100 based on skills, experience, domain overlap. Be strict.`;
     const user = `RESUME:\n${resumeText.slice(0, 12000)}\n\nJOBS:\n${JSON.stringify(jobList)}`;
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResp = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({

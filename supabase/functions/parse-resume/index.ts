@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import JSZip from "https://esm.sh/jszip@3.10.1";
@@ -388,7 +389,7 @@ Return ONLY valid JSON with ALL these fields. Use null for fields that cannot be
     let response: Response | null = null;
     let lastErrorText = "";
     for (let attempt = 0; attempt <= MAX_AI_RETRIES; attempt++) {
-      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      response = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,

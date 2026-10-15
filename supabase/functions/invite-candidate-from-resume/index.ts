@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { safeErrorMessage } from "../_shared/safeError.ts";
@@ -195,7 +196,7 @@ serve(async (req) => {
     let aiSuggestedRoles: Array<{ title: string; why: string }> = [];
     if (LOVABLE_API_KEY && skills.length > 0) {
       try {
-        const roleRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const roleRes = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -226,7 +227,7 @@ serve(async (req) => {
     let personalIntro = `Based on your background${lastDesignation ? ` as ${lastDesignation}` : ""}${experienceLevel ? ` (${experienceLevel})` : ""}, we've handpicked opportunities matching your profile.`;
     if (LOVABLE_API_KEY && skills.length > 0) {
       try {
-        const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const aiRes = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({

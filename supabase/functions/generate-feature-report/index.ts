@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 // Generates a comprehensive feature report scanning the Gradia platform via Lovable AI.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 
@@ -78,7 +79,7 @@ Generate the full feature report now.
 - includeTechnology = ${includeTechnology}
 - includePrice = ${includePrice}`;
 
-    const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const res = await aiFetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,

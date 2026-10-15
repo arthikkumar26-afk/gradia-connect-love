@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -48,7 +49,7 @@ serve(async (req) => {
 
 Make the content professional, engaging, and relevant to the recruitment sector. Use the job details to personalize the content. Do NOT include the full job description verbatim — extract structured highlights.`;
 
-    const response = await fetch(
+    const response = await aiFetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
       {
         method: "POST",

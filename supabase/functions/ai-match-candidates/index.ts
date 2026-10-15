@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -46,7 +47,7 @@ serve(async (req) => {
 
     const user = `Job Description:\n${jobDescription}\n\nCandidates (JSON):\n${JSON.stringify(trimmed)}\n\nReturn JSON of the form:\n{"matches":[{"id":"<candidate id>","score":0-100,"reason":"short reason"}]}\nSort by score desc. Include at most ${topK} entries. Omit candidates with score < 40.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,

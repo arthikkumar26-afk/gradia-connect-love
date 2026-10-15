@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { safeErrorMessage } from "../_shared/safeError.ts";
 
@@ -20,7 +21,7 @@ serve(async (req) => {
 The body should be plain text (line-breaks allowed) and may use placeholders like {{candidate_name}}, {{job_title}}, {{company_name}}, {{date}}, {{time}}, {{location}}, {{hr_name}}.
 Keep the tone polite and professional. No markdown, no code fences.`;
 
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const res = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
