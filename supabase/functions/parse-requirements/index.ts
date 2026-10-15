@@ -170,6 +170,11 @@ Return ONLY valid JSON with these fields:
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (response.status >= 500) {
+        return new Response(JSON.stringify({ error: "The AI service is busy right now. Please try again in a minute. No points were charged." }), {
+          status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       throw new Error(`AI Gateway error: ${response.status}`);
     }
 
