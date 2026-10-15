@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
@@ -154,7 +155,7 @@ Extract keywords that are essential to the answer - nouns, technical terms, spec
       ? `Extract all detailed solutions with step-by-step explanations from this solutions PDF. ${questionCount ? `There should be ${questionCount} solutions.` : ''}\n\nSolutions Content:\n${pdfText}`
       : `Extract all answers and their keywords from this answer key PDF. ${questionCount ? `There should be ${questionCount} answers.` : ''}\n\nAnswer Key Content:\n${pdfText}`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await aiFetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,

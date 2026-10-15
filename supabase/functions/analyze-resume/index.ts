@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -131,7 +132,7 @@ Provide your analysis using the suggest_analysis function.`;
     let fallbackReason: 'success' | 'ai_credits' | 'ai_rate_limit' | 'ai_server' | 'ai_other' | 'ai_exception' | 'parse_failed' = 'success';
 
     try {
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      const response = await aiFetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${LOVABLE_API_KEY}`,

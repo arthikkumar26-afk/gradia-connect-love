@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 // Generate an AI social-media flyer image for a job vacancy
 // Uses Lovable AI Gateway (Gemini image model) — no API key required from user
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
@@ -41,7 +42,7 @@ ${body.highlights ? `Highlights: ${body.highlights}` : ""}
 Style: ${body.style || "modern, bold, professional, gradient accents"}.
 Add an "Apply Now" call-to-action.`;
 
-    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const r = await aiFetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -1,3 +1,4 @@
+import { aiFetch } from "../_shared/aiFetch.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import JSZip from "npm:jszip@3.10.1";
 import { extractText, getDocumentProxy } from "npm:unpdf@0.12.1";
@@ -69,7 +70,7 @@ async function aiExtract(text: string): Promise<any> {
     },
     required: ["full_name", "email", "phone", "location", "preferred_role", "experience_level", "skills", "languages", "highest_qualification", "current_salary", "expected_salary", "education", "experience"],
   };
-  const res = await fetch("https://ai.gateway.lovable.dev/v1/responses", {
+  const res = await aiFetch("https://ai.gateway.lovable.dev/v1/responses", {
     method: "POST",
     headers: { "Lovable-API-Key": key, "Content-Type": "application/json", "X-Lovable-AIG-SDK": "fetch" },
     body: JSON.stringify({
