@@ -78,15 +78,28 @@ async function generateImage(body: Record<string, any>, key: string): Promise<Re
   return jsonResponse({ choices: [{ index: 0, finish_reason: "stop", message: { role: "assistant", content: text, images } }] });
 }
 
+// When Google reports a model overloaded (503) or rate limited (429), try other current
+// Flash models instead of failing the feature; each model has its own capacity and quota.
+const TEXT_FALLBACKS = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+
 async function chatCompletions(body: Record<string, any>, key: string, signal?: AbortSignal | null): Promise<Response> {
-  const payload = { ...body, model: googleModel(body.model) };
-  delete payload.modalities;
-  return fetch(`${GOOGLE_BASE}/openai/chat/completions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-    body: JSON.stringify(payload),
-    signal: signal ?? undefined,
-  });
+  const first = googleModel(body.model);
+  const models = [first, ...TEXT_FALLBACKS.filter((m) => m !== first)];
+  let last: Response | null = null;
+  for (const model of models) {
+    const payload = { ...body, model };
+    delete payload.modalities;
+    const r = await fetch(`${GOOGLE_BASE}/openai/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify(payload),
+      signal: signal ?? undefined,
+    });
+    if (r.status !== 503 && r.status !== 429) return r;
+    console.warn(`Google model ${model} returned ${r.status}; trying next model`);
+    last = new Response(await r.text(), { status: r.status, headers: { "Content-Type": "application/json" } });
+  }
+  return last!;
 }
 
 async function responsesViaChat(body: Record<string, any>, key: string): Promise<Response> {
