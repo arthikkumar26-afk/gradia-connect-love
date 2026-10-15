@@ -7,10 +7,20 @@
 const GOOGLE_BASE = "https://generativelanguage.googleapis.com/v1beta";
 const DEFAULT_TEXT_MODEL = "gemini-3-flash-preview";
 
+// Google no longer serves the 2.5 family to new API keys; map those ids to current equivalents.
+const GOOGLE_RETIRED: Record<string, string> = {
+  "gemini-2.5-flash": DEFAULT_TEXT_MODEL,
+  "gemini-2.5-flash-lite": DEFAULT_TEXT_MODEL,
+  "gemini-2.5-pro": DEFAULT_TEXT_MODEL,
+  "gemini-2.5-flash-image": "gemini-3.1-flash-image",
+  "gemini-2.5-flash-image-preview": "gemini-3.1-flash-image",
+};
+
 function googleModel(model: unknown): string {
   const m = String(model || "");
-  if (m.startsWith("google/")) return m.slice("google/".length);
-  return DEFAULT_TEXT_MODEL;
+  if (!m.startsWith("google/")) return DEFAULT_TEXT_MODEL;
+  const id = m.slice("google/".length);
+  return GOOGLE_RETIRED[id] || id;
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
