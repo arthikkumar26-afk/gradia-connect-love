@@ -1,8 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { Lock, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -41,7 +39,7 @@ export const LockedFeatureOverlay = ({
   onOpenAllPlans,
 }: LockedFeatureOverlayProps) => {
   const def = FEATURE_UNLOCKS[feature];
-  const totalPack = FEATURE_BUNDLES.find((b) => b.id === "total_value")!;
+  const totalPack = FEATURE_BUNDLES.find((b) => b.id === "total_value");
   const elitePlan = CANDIDATE_PLANS.elite;
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -94,7 +92,7 @@ export const LockedFeatureOverlay = ({
           try {
             const features: UnlockFeature[] =
               metaFeature === "bundle_total_value"
-                ? totalPack.features
+                ? (totalPack?.features || [])
                 : metaFeature.startsWith("bundle_")
                 ? (FEATURE_BUNDLES.find((b) => b.id === metaFeature.replace("bundle_", ""))?.features || [])
                 : [feature];
@@ -136,78 +134,34 @@ export const LockedFeatureOverlay = ({
   };
 
   return (
-    <div className="relative">
-      {/* Sample/demo content underneath, slightly dimmed for context */}
-      <div className="pointer-events-none select-none opacity-60">
-        {children}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2" aria-label={`${def.label} payment options`}>
+        <Button
+          size="sm"
+          disabled={loading}
+          onClick={() => handleUnlock(def.price, def.label, def.id)}
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+          Activate · ₹{def.price.toLocaleString("en-IN")}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={loading}
+          onClick={() => handleUnlock(elitePlan.priceInr, elitePlan.name, "bundle_total_value")}
+        >
+          <Sparkles className="h-4 w-4 mr-2" />
+          Elite ₹{elitePlan.priceInr.toLocaleString("en-IN")}
+        </Button>
+        {onOpenAllPlans && (
+          <Button size="sm" variant="link" onClick={onOpenAllPlans}>
+            View plans <ArrowRight className="h-3.5 w-3.5 ml-1" />
+          </Button>
+        )}
+        <span className="text-xs text-muted-foreground">Access for 1 month</span>
       </div>
-
-      {/* Persistent unlock CTA banner on top */}
-      <div className="absolute inset-0 flex items-start justify-center p-4 z-10">
-        <Card className="w-full max-w-2xl mt-6 border-2 border-primary/40 shadow-2xl bg-background/95 backdrop-blur p-6">
-          <div className="flex items-start gap-4">
-            <div className="rounded-full bg-primary/10 p-3">
-              <Lock className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h3 className="text-lg font-bold">{def.label} is locked</h3>
-                <Badge variant="secondary" className="gap-1">
-                  <Sparkles className="h-3 w-3" /> Preview below
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">{def.tagline}</p>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-4">
-                {def.perks.map((p) => (
-                  <li key={p} className="flex items-start gap-1.5 text-xs text-foreground/80">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0 mt-0.5" />
-                    <span>{p}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button
-                  size="lg"
-                  className="flex-1 font-semibold"
-                  disabled={loading}
-                  onClick={() => handleUnlock(def.price, def.label, def.id)}
-                >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Lock className="h-4 w-4 mr-2" />
-                  )}
-                  Unlock for ₹{def.price.toLocaleString("en-IN")}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="flex-1 font-semibold border-primary/40"
-                  disabled={loading}
-                  onClick={() =>
-                    handleUnlock(elitePlan.priceInr, elitePlan.name, "bundle_total_value")
-                  }
-                >
-                  <Sparkles className="h-4 w-4 mr-2 text-primary" />
-                  Elite ₹{elitePlan.priceInr.toLocaleString("en-IN")}
-                </Button>
-              </div>
-
-              {onOpenAllPlans && (
-                <button
-                  onClick={onOpenAllPlans}
-                  className="text-xs text-primary hover:underline mt-3"
-                >
-                  See all bundles & smart combos →
-                </button>
-              )}
-              <p className="text-[11px] text-muted-foreground mt-2">
-                One-time payment · Access valid for 1 month · Powered by Razorpay
-              </p>
-            </div>
-          </div>
-        </Card>
+      <div className="pointer-events-none select-none" ref={(element) => element?.setAttribute("inert", "")}>
+        {children}
       </div>
     </div>
   );
