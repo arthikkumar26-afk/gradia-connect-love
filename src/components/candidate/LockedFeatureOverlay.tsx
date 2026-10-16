@@ -160,7 +160,7 @@ export const LockedFeatureOverlay = ({
         )}
         <span className="text-xs text-muted-foreground">Access for 1 month</span>
       </div>
-      <div className="pointer-events-none select-none" inert="">
+      <div className="pointer-events-none select-none" ref={(element) => element?.setAttribute("inert", "")}>
         {children}
       </div>
     </div>
