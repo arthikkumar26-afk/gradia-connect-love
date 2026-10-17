@@ -1,5 +1,5 @@
 # Plan renewal autopay
-- [ ] Remove candidate locked-feature cards while preserving existing payment requirements; verify the affected sections.
+- [x] Remove candidate locked-feature cards while preserving existing payment requirements; signed-in checks confirmed no lock notices in Pipeline, Suitable Jobs, AI Job Apply and Upskill, with payment controls retained. Build passes; no payment made.
 - [x] Add secure, opt-in wallet-point renewal scheduling with atomic deductions and insufficient-balance handling.
 - [x] Add enable/disable controls and renewal details to employer Payment Methods.
 - [x] Verify renewal behavior and ownership checks with rollback-only tests; verify payment controls with mocked browser responses (live signed-in integration not tested).
